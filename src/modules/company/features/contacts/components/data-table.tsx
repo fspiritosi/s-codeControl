@@ -1,9 +1,18 @@
 'use client';
 
 import { DataTable } from '@/shared/components/data-table';
+import type { DataTableFacetedFilterConfig } from '@/shared/components/data-table';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useState, useMemo } from 'react';
 import { Button } from '@/shared/components/ui/button';
+
+const CONTACTS_FILTERS: DataTableFacetedFilterConfig[] = [
+  { columnId: 'contact_name', title: 'Nombre', type: 'text' },
+  { columnId: 'constact_email', title: 'Email', type: 'text' },
+  { columnId: 'contact_phone', title: 'Teléfono', type: 'text' },
+  { columnId: 'contact_charge', title: 'Cargo', type: 'text' },
+  { columnId: 'customers.name', title: 'Cliente', type: 'text' },
+];
 
 interface DataContactsProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any;
@@ -52,11 +61,10 @@ export function DataContacts<TData extends Record<string, unknown>, TValue>({
     <DataTable
       columns={columns}
       data={filteredData}
-      searchPlaceholder="Buscar por Nombre"
-      searchColumn="contact_name"
-      showSearch
       showColumnToggle
       tableId={localStorageName}
+      facetedFilters={CONTACTS_FILTERS}
+      showFilterToggle
       initialColumnVisibility={initialColumnVisibility}
       pageSizeOptions={[20, 40, 60, 80, 100]}
       emptyMessage="No hay Contactos registrados"

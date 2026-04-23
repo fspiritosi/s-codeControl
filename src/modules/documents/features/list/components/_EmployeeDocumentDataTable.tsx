@@ -90,9 +90,6 @@ export function _EmployeeDocumentDataTable({ data, totalRows, searchParams, mont
       totalRows={totalRows}
       searchParams={searchParams}
       tableId={tableId}
-      searchColumn="resource"
-      searchPlaceholder="Buscar por empleado o documento..."
-      showSearch={true}
       emptyMessage="No se encontraron documentos."
       facetedFilters={facetedFilters}
       showFilterToggle={true}

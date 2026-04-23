@@ -8,6 +8,7 @@ import {
   stateToPrismaParams,
   buildSearchWhere,
   buildFiltersWhere,
+  buildTextFiltersWhere,
 } from '@/shared/components/common/DataTable/helpers';
 
 // Vehicle/Equipment-related queries
@@ -177,13 +178,21 @@ const equipmentPaginatedInclude = {
   contractor_equipment: { include: { contractor: true } },
 };
 
-/** Column map: front-end filter key → Prisma field */
+/** Column map: front-end filter key → Prisma field (faceted / exact match) */
 const equipmentColumnMap: Record<string, string> = {
   status: 'status',
   condition: 'condition',
   type: 'type',
-  brand: 'brand',
   types_of_vehicles: 'type_of_vehicle',
+};
+
+/** Text-based filter columns (contains insensitive) sobre campos string directos */
+const equipmentTextFilterColumns = ['domain', 'intern_number', 'chassis', 'engine', 'serie', 'year'];
+
+/** Text filters sobre FK relations */
+const equipmentFkTextFilters: Record<string, { relation: string; field: string }> = {
+  brand: { relation: 'brand_rel', field: 'name' },
+  model: { relation: 'model_rel', field: 'name' },
 };
 
 /** Search fields for global search */
@@ -213,8 +222,8 @@ function buildEquipmentWhere(
   // 3. Faceted / discrete filters (enums + FK UUIDs)
   const filtersWhere = buildFiltersWhere(state.filters, equipmentColumnMap);
 
-  // 4. Convert BigInt FK filters: brand, type_of_vehicle come as strings from URL
-  const bigIntFields = ['brand', 'type_of_vehicle'] as const;
+  // 4. Convert BigInt FK filters: type_of_vehicle comes as string from URL
+  const bigIntFields = ['type_of_vehicle'] as const;
   for (const field of bigIntFields) {
     if (filtersWhere[field]) {
       const raw = filtersWhere[field];
@@ -229,10 +238,27 @@ function buildEquipmentWhere(
     }
   }
 
+  // 5. Text-based filters (contains insensitive) sobre campos string directos
+  const textFiltersWhere = buildTextFiltersWhere(state.filters, equipmentTextFilterColumns);
+
+  // 6. Text filters sobre FK relations (brand, model)
+  const fkTextFiltersWhere: Record<string, unknown> = {};
+  for (const [columnId, config] of Object.entries(equipmentFkTextFilters)) {
+    const values = state.filters[columnId];
+    const firstValue = values?.[0];
+    if (firstValue) {
+      fkTextFiltersWhere[config.relation] = {
+        is: { [config.field]: { contains: firstValue, mode: 'insensitive' } },
+      };
+    }
+  }
+
   return {
     ...baseWhere,
     ...searchWhere,
     ...filtersWhere,
+    ...textFiltersWhere,
+    ...fkTextFiltersWhere,
   };
 }
 
@@ -351,5 +377,51 @@ export async function getAllEquipmentForExport(
   } catch (error) {
     console.error('Error in getAllEquipmentForExport:', error);
     return [];
+  }
+}
+
+/**
+ * Fetch lean de equipos activos para el picker de /maintenance.
+ * Solo devuelve id, domain y serie — lo mínimo para listar y navegar.
+ */
+export async function fetchActiveEquipmentForPicker(companyId: string) {
+  if (!companyId) return [];
+
+  try {
+    const data = await prisma.vehicles.findMany({
+      where: { company_id: companyId, is_active: true },
+      select: { id: true, domain: true, serie: true, intern_number: true },
+      orderBy: { domain: 'asc' },
+    });
+    return data;
+  } catch (error) {
+    console.error('Error in fetchActiveEquipmentForPicker:', error);
+    return [];
+  }
+}
+
+/**
+ * Devuelve el primer companyId asociado a un profile.
+ * Prioriza empresas donde es owner, luego empresas compartidas.
+ * Usado por /maintenance picker cuando el login es por Invitado.
+ */
+export async function getFirstCompanyIdForProfile(profileId: string): Promise<string | null> {
+  if (!profileId) return null;
+
+  try {
+    const owned = await prisma.company.findFirst({
+      where: { owner_id: profileId, is_active: true },
+      select: { id: true },
+    });
+    if (owned) return owned.id;
+
+    const shared = await prisma.share_company_users.findFirst({
+      where: { profile_id: profileId },
+      select: { company_id: true },
+    });
+    return shared?.company_id ?? null;
+  } catch (error) {
+    console.error('Error in getFirstCompanyIdForProfile:', error);
+    return null;
   }
 }

@@ -72,9 +72,6 @@ export function RepairSolicitudesClient<TData extends Record<string, unknown>>({
         emptyMessage="Sin resultados."
         facetedFilters={facetedFilters}
         initialColumnFilters={initialColumnFilters}
-        showSearch={true}
-        searchColumn="intern_number"
-        searchPlaceholder="Filtrar por numero interno..."
         showColumnToggle={false}
         tableId="repair-solicitudes"
       />

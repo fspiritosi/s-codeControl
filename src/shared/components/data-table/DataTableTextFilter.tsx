@@ -1,8 +1,8 @@
 'use client';
 
 import * as React from 'react';
+import type { Column } from '@tanstack/react-table';
 import { Search, X } from 'lucide-react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
@@ -15,22 +15,25 @@ import {
 import { Separator } from '@/shared/components/ui/separator';
 import { cn } from '@/shared/lib/utils';
 
-interface DataTableTextFilterProps {
-  columnId: string;
+interface DataTableTextFilterProps<TData, TValue> {
+  column?: Column<TData, TValue>;
   title: string;
   placeholder?: string;
 }
 
-export function DataTableTextFilter({
-  columnId,
+function getDisplayValue(filterValue: unknown): string {
+  if (filterValue == null) return '';
+  if (Array.isArray(filterValue)) return filterValue.join(', ');
+  return String(filterValue);
+}
+
+export function DataTableTextFilter<TData, TValue>({
+  column,
   title,
   placeholder,
-}: DataTableTextFilterProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
-
-  const currentValue = searchParams.get(columnId) ?? '';
+}: DataTableTextFilterProps<TData, TValue>) {
+  const rawValue = column?.getFilterValue();
+  const currentValue = getDisplayValue(rawValue);
   const [inputValue, setInputValue] = React.useState(currentValue);
   const hasValue = !!currentValue;
 
@@ -39,14 +42,13 @@ export function DataTableTextFilter({
   }, [currentValue]);
 
   const applyFilter = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value.trim()) {
-      params.set(columnId, value.trim());
+    const trimmed = value.trim();
+    if (!column) return;
+    if (trimmed) {
+      column.setFilterValue(trimmed);
     } else {
-      params.delete(columnId);
+      column.setFilterValue(undefined);
     }
-    params.set('page', '1');
-    router.replace(`${pathname}?${params.toString()}`);
   };
 
   const clearFilter = () => {

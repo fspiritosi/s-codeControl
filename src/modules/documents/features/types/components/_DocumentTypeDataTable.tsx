@@ -103,9 +103,6 @@ export function _DocumentTypeDataTable({ data, totalRows, searchParams, appliesF
         totalRows={totalRows}
         searchParams={searchParams}
         tableId={`document-types-${appliesFilter ?? 'all'}`}
-        searchColumn="name"
-        searchPlaceholder="Buscar tipo de documento..."
-        showSearch={true}
         emptyMessage="No se encontraron tipos de documentos."
         facetedFilters={facetedFilters}
         showFilterToggle={true}

@@ -71,18 +71,19 @@ export function DataTableToolbar<TData>({
             );
           }
 
+          const column = table.getColumn(filter.columnId);
+
           if (filter.type === 'text') {
             return (
               <DataTableTextFilter
                 key={filter.columnId}
-                columnId={filter.columnId}
+                column={column}
                 title={filter.title}
                 placeholder={filter.placeholder}
               />
             );
           }
 
-          const column = table.getColumn(filter.columnId);
           if (!column) return null;
 
           return (

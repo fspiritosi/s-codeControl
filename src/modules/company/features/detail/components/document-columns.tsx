@@ -80,9 +80,6 @@ export const columnsDocuments: ColumnDef<SharedUser>[] = [
         </div>
       );
     },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
   },
   {
     accessorKey: 'alta',
@@ -104,9 +101,6 @@ export const columnsDocuments: ColumnDef<SharedUser>[] = [
           </span>
         </div>
       );
-    },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
     },
   },
   {
@@ -193,9 +187,6 @@ export const columnsDocuments: ColumnDef<SharedUser>[] = [
           </span>
         </div>
       );
-    },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
     },
   },
   {

@@ -88,9 +88,6 @@ export function _EquipmentDataTable({ data, totalRows, searchParams }: Props) {
       totalRows={totalRows}
       searchParams={searchParams}
       tableId="equipment-list"
-      searchColumn="domain"
-      searchPlaceholder="Buscar por dominio, nro. interno, chassis..."
-      showSearch={true}
       emptyMessage="No se encontraron equipos."
       facetedFilters={facetedFilters}
       showFilterToggle={true}

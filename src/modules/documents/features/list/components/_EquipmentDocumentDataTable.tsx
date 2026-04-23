@@ -90,9 +90,6 @@ export function _EquipmentDocumentDataTable({ data, totalRows, searchParams, mon
       totalRows={totalRows}
       searchParams={searchParams}
       tableId={tableId}
-      searchColumn="resource"
-      searchPlaceholder="Buscar por dominio, nro. interno o documento..."
-      showSearch={true}
       emptyMessage="No se encontraron documentos."
       facetedFilters={facetedFilters}
       showFilterToggle={true}
