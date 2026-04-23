@@ -217,15 +217,6 @@ export interface DataTableDateRangeFilterProps {
 }
 
 /**
- * Props del DataTableTextFilter
- */
-export interface DataTableTextFilterProps {
-  columnId: string;
-  title: string;
-  placeholder?: string;
-}
-
-/**
  * Props del DataTableFilterOptions
  */
 export interface DataTableFilterOptionsProps {

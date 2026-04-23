@@ -32,9 +32,6 @@ export default function ChecklistTable({ checklists }: { checklists: CheckListWi
         created_at: e.created_at,
         total_responses: e.form_answers?.length,
       }))}
-      searchColumn="Titulo"
-      searchPlaceholder="Filtrar por nombre o descripción"
-      showSearch={true}
       facetedFilters={facetedFilters}
       showColumnToggle={true}
       onRowClick={(row) => router.push(`/dashboard/forms/${(row as any).id}`)}

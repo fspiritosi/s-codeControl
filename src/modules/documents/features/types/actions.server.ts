@@ -7,6 +7,7 @@ import {
   stateToPrismaParams,
   buildSearchWhere,
   buildFiltersWhere,
+  buildTextFiltersWhere,
 } from '@/shared/components/common/DataTable/helpers';
 
 // ============================================
@@ -56,6 +57,9 @@ const docTypeColumnMap: Record<string, string> = {
 /** Search fields for global search */
 const docTypeSearchFields = ['name'];
 
+/** Text-based filter columns (contains insensitive) */
+const docTypeTextFilterColumns = ['name'];
+
 /**
  * Build the combined `where` clause for document_types, shared between
  * paginated and export queries.
@@ -100,10 +104,14 @@ function buildDocumentTypesWhere(
     filtersWhere.mandatory = filtersWhere.mandatory === 'true';
   }
 
+  // 5. Text-based filters (contains insensitive)
+  const textFiltersWhere = buildTextFiltersWhere(state.filters, docTypeTextFilterColumns);
+
   return {
     ...baseWhere,
     ...searchWhere,
     ...filtersWhere,
+    ...textFiltersWhere,
   };
 }
 

@@ -279,16 +279,32 @@ const employeeColumnMap: Record<string, string> = {
   marital_status: 'marital_status',
   level_of_education: 'level_of_education',
   affiliate_status: 'affiliate_status',
-  // Relation FK fields (front-end name → Prisma FK column)
-  guild: 'guild_id',
-  covenants: 'covenants_id',
-  category: 'category_id',
+  // Relation FK UUID fields (front-end name → Prisma FK column). Faceted filters pasan UUID directo.
   hierarchical_position: 'hierarchical_position',
-  workflow_diagram: 'workflow_diagram',
 };
 
-/** Text-based filter columns that use `contains` instead of exact match */
-const employeeTextFilterColumns = ['allocated_to', 'company_position'];
+/** Text-based filter columns (contains insensitive) sobre campos string directos de employees */
+const employeeTextFilterColumns = [
+  'allocated_to',
+  'company_position',
+  'firstname',
+  'lastname',
+  'cuil',
+  'document_number',
+  'email',
+  'phone',
+  'street',
+  'file',
+  'normal_hours',
+];
+
+/** Text filters sobre FK relations: { columnId: { relation: 'x_rel', field: 'name' } } */
+const employeeFkTextFilters: Record<string, { relation: string; field: string }> = {
+  guild: { relation: 'guild_rel', field: 'name' },
+  covenants: { relation: 'covenants_rel', field: 'name' },
+  category: { relation: 'category_rel', field: 'name' },
+  workflow_diagram: { relation: 'workflow_diagram_rel', field: 'name' },
+};
 
 /** Shared include clause for paginated / export queries */
 const employeePaginatedInclude = {
@@ -359,11 +375,24 @@ function buildEmployeesWhere(state: ReturnType<typeof parseSearchParams>, compan
     filtersWhere.birthplace = birthplaceValues.length === 1 ? birthplaceValues[0] : { in: birthplaceValues };
   }
 
+  // 7. Text filters sobre FK relations (guild, covenants, category, workflow_diagram)
+  const fkTextFiltersWhere: Record<string, unknown> = {};
+  for (const [columnId, config] of Object.entries(employeeFkTextFilters)) {
+    const values = state.filters[columnId];
+    const firstValue = values?.[0];
+    if (firstValue) {
+      fkTextFiltersWhere[config.relation] = {
+        is: { [config.field]: { contains: firstValue, mode: 'insensitive' } },
+      };
+    }
+  }
+
   return {
     ...baseWhere,
     ...searchWhere,
     ...filtersWhere,
     ...textFiltersWhere,
+    ...fkTextFiltersWhere,
   };
 }
 

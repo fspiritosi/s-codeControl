@@ -2,8 +2,23 @@
 import { columns } from '@/modules/company/features/detail/components/columns';
 import { columnsGuests } from '@/modules/company/features/detail/components/columnsGuests';
 import { DataTable } from '@/shared/components/data-table';
+import type { DataTableFacetedFilterConfig } from '@/shared/components/data-table';
 import { getAllUsers, getOwnerUser } from '@/modules/company/features/users/actions.server';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+
+const EMPLOYEE_USERS_FILTERS: DataTableFacetedFilterConfig[] = [
+  { columnId: 'fullname', title: 'Nombre', type: 'text' },
+  { columnId: 'email', title: 'Correo', type: 'text' },
+  { columnId: 'role', title: 'Rol', type: 'text' },
+  { columnId: 'alta', title: 'Fecha de alta', type: 'text' },
+];
+
+const GUEST_USERS_FILTERS: DataTableFacetedFilterConfig[] = [
+  { columnId: 'fullname', title: 'Nombre', type: 'text' },
+  { columnId: 'email', title: 'Correo', type: 'text' },
+  { columnId: 'customerName', title: 'Nombre del cliente', type: 'text' },
+  { columnId: 'alta', title: 'Fecha de alta', type: 'text' },
+];
 
 //import cookies from 'js-cookie';
 //import { cookies } from 'next/headers';
@@ -71,12 +86,24 @@ export default async function UsersTabComponent() {
         </TabsList>
         <TabsContent value="employ">
           <div className="p-8">
-            <DataTable data={data || []} columns={columns} searchColumn="fullname" searchPlaceholder="Filtrar Nombre" showSearch />
+            <DataTable
+              data={data || []}
+              columns={columns}
+              facetedFilters={EMPLOYEE_USERS_FILTERS}
+              showFilterToggle
+              tableId="company-users-employees"
+            />
           </div>
         </TabsContent>
         <TabsContent value="guests">
           <div className="p-8">
-            <DataTable data={guestsData || []} columns={columnsGuests} searchColumn="fullname" searchPlaceholder="Filtrar Nombre" showSearch />
+            <DataTable
+              data={guestsData || []}
+              columns={columnsGuests}
+              facetedFilters={GUEST_USERS_FILTERS}
+              showFilterToggle
+              tableId="company-users-guests"
+            />
           </div>
         </TabsContent>
       </Tabs>

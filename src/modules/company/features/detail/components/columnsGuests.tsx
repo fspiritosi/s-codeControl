@@ -148,9 +148,6 @@ export const columnsGuests: ColumnDef<SharedUser>[] = [
         </div>
       );
     },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
   },
   {
     id: 'actions',

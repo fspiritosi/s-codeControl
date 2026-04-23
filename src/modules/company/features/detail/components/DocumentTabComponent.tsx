@@ -1,5 +1,15 @@
 import { DataTable } from '@/shared/components/data-table';
+import type { DataTableFacetedFilterConfig } from '@/shared/components/data-table';
 import { columnsDocuments } from '@/modules/company/features/detail/components/document-columns';
+
+const DOCUMENT_COMPANY_FILTERS: DataTableFacetedFilterConfig[] = [
+  { columnId: 'fullname', title: 'Nombre del documento', type: 'text' },
+  { columnId: 'email', title: 'Subido por', type: 'text' },
+  { columnId: 'role', title: 'Rol', type: 'text' },
+  { columnId: 'alta', title: 'Subido el', type: 'text' },
+  { columnId: 'private', title: 'Acceso', type: 'text' },
+  { columnId: 'vencimiento', title: 'Vencimiento', type: 'text' },
+];
 // TODO: Phase 8 — migrate .from() queries to Prisma server actions and .auth to NextAuth
 import { supabaseServer } from '@/shared/lib/supabase/server';
 import { cookies } from 'next/headers';
@@ -88,7 +98,13 @@ export default async function DocumentTabComponent() {
   return (
     <div>
       <div className="px-8 pb-8">
-        <DataTable data={documentCompany || []} columns={columnsDocuments} searchColumn="fullname" searchPlaceholder="Filtrar Nombre" showSearch />
+        <DataTable
+          data={documentCompany || []}
+          columns={columnsDocuments}
+          facetedFilters={DOCUMENT_COMPANY_FILTERS}
+          showFilterToggle
+          tableId="company-documents"
+        />
       </div>
     </div>
   );

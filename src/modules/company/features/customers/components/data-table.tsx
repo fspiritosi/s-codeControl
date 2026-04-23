@@ -1,9 +1,17 @@
 'use client';
 
 import { DataTable } from '@/shared/components/data-table';
+import type { DataTableFacetedFilterConfig } from '@/shared/components/data-table';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useState, useMemo } from 'react';
 import { Button } from '@/shared/components/ui/button';
+
+const CUSTOMERS_FILTERS: DataTableFacetedFilterConfig[] = [
+  { columnId: 'cuit', title: 'CUIT', type: 'text' },
+  { columnId: 'name', title: 'Nombre', type: 'text' },
+  { columnId: 'client_email', title: 'Email', type: 'text' },
+  { columnId: 'client_phone', title: 'Teléfono', type: 'text' },
+];
 
 interface DataCustomersProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[] | any;
@@ -46,11 +54,10 @@ export function DataCustomers<TData extends Record<string, unknown>, TValue>({
     <DataTable
       columns={columns}
       data={filteredData}
-      searchPlaceholder="Buscar por nombre"
-      searchColumn="name"
-      showSearch
       showColumnToggle
       tableId={localStorageName}
+      facetedFilters={CUSTOMERS_FILTERS}
+      showFilterToggle
       initialColumnVisibility={initialColumnVisibility}
       pageSizeOptions={[20, 40, 60, 80, 100]}
       emptyMessage="No hay Clientes registrados"

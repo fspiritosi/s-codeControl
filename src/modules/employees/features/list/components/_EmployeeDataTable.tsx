@@ -140,9 +140,6 @@ export function _EmployeeDataTable({ data, totalRows, searchParams }: Props) {
       totalRows={totalRows}
       searchParams={searchParams}
       tableId="employees-list"
-      searchColumn="full_name"
-      searchPlaceholder="Buscar por nombre, CUIL, DNI o email..."
-      showSearch={true}
       emptyMessage="No se encontraron empleados."
       facetedFilters={facetedFilters}
       showFilterToggle={true}

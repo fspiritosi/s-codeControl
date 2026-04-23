@@ -132,9 +132,6 @@ export const columns: ColumnDef<SharedUser>[] = [
         </div>
       );
     },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
   },
   {
     accessorKey: 'alta',
@@ -147,9 +144,6 @@ export const columns: ColumnDef<SharedUser>[] = [
           </span>
         </div>
       );
-    },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
     },
   },
 
