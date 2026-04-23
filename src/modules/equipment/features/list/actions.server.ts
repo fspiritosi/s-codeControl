@@ -353,3 +353,49 @@ export async function getAllEquipmentForExport(
     return [];
   }
 }
+
+/**
+ * Fetch lean de equipos activos para el picker de /maintenance.
+ * Solo devuelve id, domain y serie — lo mínimo para listar y navegar.
+ */
+export async function fetchActiveEquipmentForPicker(companyId: string) {
+  if (!companyId) return [];
+
+  try {
+    const data = await prisma.vehicles.findMany({
+      where: { company_id: companyId, is_active: true },
+      select: { id: true, domain: true, serie: true, intern_number: true },
+      orderBy: { domain: 'asc' },
+    });
+    return data;
+  } catch (error) {
+    console.error('Error in fetchActiveEquipmentForPicker:', error);
+    return [];
+  }
+}
+
+/**
+ * Devuelve el primer companyId asociado a un profile.
+ * Prioriza empresas donde es owner, luego empresas compartidas.
+ * Usado por /maintenance picker cuando el login es por Invitado.
+ */
+export async function getFirstCompanyIdForProfile(profileId: string): Promise<string | null> {
+  if (!profileId) return null;
+
+  try {
+    const owned = await prisma.company.findFirst({
+      where: { owner_id: profileId, is_active: true },
+      select: { id: true },
+    });
+    if (owned) return owned.id;
+
+    const shared = await prisma.share_company_users.findFirst({
+      where: { profile_id: profileId },
+      select: { company_id: true },
+    });
+    return shared?.company_id ?? null;
+  } catch (error) {
+    console.error('Error in getFirstCompanyIdForProfile:', error);
+    return null;
+  }
+}

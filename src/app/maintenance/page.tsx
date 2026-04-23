@@ -1,6 +1,14 @@
 'use client';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/shared/components/ui/card';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/shared/components/ui/command';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
 import { handleSupabaseError } from '@/shared/lib/errorHandler';
@@ -8,6 +16,10 @@ import { handleSupabaseError } from '@/shared/lib/errorHandler';
 import { supabaseBrowser } from '@/shared/lib/supabase/browser';
 import { fetchProfileBySupabaseUserId } from '@/shared/actions/auth';
 import { fetchEmployeeByCuil } from '@/shared/actions/catalogs';
+import {
+  fetchActiveEquipmentForPicker,
+  getFirstCompanyIdForProfile,
+} from '@/modules/equipment/features/list/actions.server';
 import { validarCUIL } from '@/shared/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import cookies from 'js-cookie';
@@ -19,6 +31,13 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+type PickerEquipment = {
+  id: string;
+  domain: string | null;
+  serie: string | null;
+  intern_number: string;
+};
+
 export default function CodeControlLoginPage() {
   return (
     <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Cargando...</div>}>
@@ -28,8 +47,9 @@ export default function CodeControlLoginPage() {
 }
 
 function CodeControlLogin() {
-  const [step, setStep] = useState('selection');
+  const [step, setStep] = useState<'selection' | 'login' | 'pick-equipment'>('selection');
   const [loginType, setLoginType] = useState<'empleado' | 'invitado' | ''>('');
+  const [equipmentList, setEquipmentList] = useState<PickerEquipment[]>([]);
   const supabase = supabaseBrowser();
   const searchParams = useSearchParams();
   const equipment_id = searchParams.get('equipment');
@@ -89,9 +109,8 @@ function CodeControlLogin() {
   async function onSubmit({ cuil, email, password }: z.infer<typeof formSchema>) {
     toast.promise(
       async () => {
-        if (!equipment_id) {
-          throw new Error('No se ha seleccionado un equipo. Por favor, intente escanear el código QR nuevamente.');
-        }
+        let companyIdForPicker: string | null = null;
+
         if (loginType === 'invitado' && email && password) {
           const { data, error } = await supabase.auth.signInWithPassword({ email, password });
           if (error) {
@@ -99,28 +118,56 @@ function CodeControlLogin() {
           }
           const empleado = await fetchProfileBySupabaseUserId(data.user.id);
           cookies.set('empleado_name', `${empleado?.[0]?.fullname || ''}`, { expires: 1 / 24 });
-          router.push(`/maintenance/${equipment_id}`);
+
+          if (equipment_id) {
+            router.push(`/maintenance/${equipment_id}`);
+            return;
+          }
+          companyIdForPicker = await getFirstCompanyIdForProfile(data.user.id);
         } else {
           const employeeData = await fetchEmployeeByCuil(cuil || '');
 
-          if (employeeData && employeeData.length > 0) {
-            const empleado = employeeData[0];
-            //Setear una cookie con el id del empleado que se borre en 1 hora
-            cookies.set('empleado_id', empleado.id, { expires: 1 / 24 });
-            cookies.set('empleado_name', `${empleado.firstname} ${empleado.lastname}`, { expires: 1 / 24 });
-            router.push(`/maintenance/${equipment_id}`);
-          } else {
+          if (!employeeData || employeeData.length === 0) {
             throw new Error('Empleado no encontrado.');
           }
+          const empleado = employeeData[0];
+          cookies.set('empleado_id', empleado.id, { expires: 1 / 24 });
+          cookies.set('empleado_name', `${empleado.firstname} ${empleado.lastname}`, { expires: 1 / 24 });
+
+          if (equipment_id) {
+            router.push(`/maintenance/${equipment_id}`);
+            return;
+          }
+          companyIdForPicker = empleado.company_id ?? null;
         }
+
+        if (!companyIdForPicker) {
+          throw new Error('No se encontró una empresa asociada a este usuario.');
+        }
+
+        const equipments = await fetchActiveEquipmentForPicker(companyIdForPicker);
+        if (equipments.length === 0) {
+          throw new Error('No hay equipos activos en esta empresa.');
+        }
+
+        setEquipmentList(equipments);
+        setStep('pick-equipment');
+        return 'picker';
       },
       {
         loading: 'Iniciando sesión...',
-        success: 'Sesión iniciada correctamente.',
+        success: (result) =>
+          result === 'picker'
+            ? 'Seleccione un equipo para continuar.'
+            : 'Sesión iniciada correctamente.',
         error: (error) => error,
       }
     );
   }
+
+  const handleEquipmentPick = (id: string) => {
+    router.push(`/maintenance/${id}`);
+  };
 
   const handleSelection = (type: 'empleado' | 'invitado') => {
     setLoginType(type);
@@ -165,6 +212,39 @@ function CodeControlLogin() {
               >
                 Mecanico
               </Button>
+            </div>
+          ) : step === 'pick-equipment' ? (
+            <div className="space-y-4">
+              <CardDescription className="text-center text-gray-700">
+                Seleccione el equipo al que desea acceder.
+              </CardDescription>
+              <Command className="rounded-lg border shadow-sm">
+                <CommandInput placeholder="Buscar por dominio, serie o número interno..." />
+                <CommandList className="max-h-[300px]">
+                  <CommandEmpty>Sin resultados.</CommandEmpty>
+                  <CommandGroup>
+                    {equipmentList.map((eq) => {
+                      const displayLabel = eq.domain ?? eq.serie ?? eq.intern_number;
+                      const subtitle = eq.intern_number ? `Nº interno: ${eq.intern_number}` : '';
+                      return (
+                        <CommandItem
+                          key={eq.id}
+                          value={`${eq.domain ?? ''} ${eq.serie ?? ''} ${eq.intern_number ?? ''}`}
+                          onSelect={() => handleEquipmentPick(eq.id)}
+                          className="cursor-pointer"
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-medium">{displayLabel}</span>
+                            {subtitle && (
+                              <span className="text-xs text-muted-foreground">{subtitle}</span>
+                            )}
+                          </div>
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
             </div>
           ) : (
             <Form {...form}>
