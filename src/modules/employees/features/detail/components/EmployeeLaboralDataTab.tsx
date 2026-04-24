@@ -17,7 +17,19 @@ import { cn } from '@/shared/lib/utils';
 import { names } from '@/shared/types/types';
 import { CalendarIcon } from '@radix-ui/react-icons';
 import { es } from 'date-fns/locale';
-import { parse as dateFnsParse, format } from 'date-fns';
+import { parse as dateFnsParse, format, isValid as isValidDate } from 'date-fns';
+
+function normalizeDate(value: unknown): Date | null {
+  if (!value) return null;
+  if (value instanceof Date) return isValidDate(value) ? value : null;
+  if (typeof value === 'string') {
+    const iso = new Date(value);
+    if (isValidDate(iso)) return iso;
+    const parsed = dateFnsParse(value, 'yyyy-MM-dd', new Date());
+    return isValidDate(parsed) ? parsed : null;
+  }
+  return null;
+}
 import { Check } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
 
@@ -72,10 +84,7 @@ export function EmployeeLaboralDataTab({
                   control={form.control}
                   name="date_of_admission"
                   render={({ field }) => {
-                    const value = field.value;
-                    if (value === 'undefined/undefined/undefined' || value === 'Invalid Date') {
-                      field.value = '';
-                    }
+                    const normalized = normalizeDate(field.value);
                     return (
                       <FormItem className="flex flex-col">
                         <FormLabel>
@@ -89,11 +98,11 @@ export function EmployeeLaboralDataTab({
                                 variant="outline"
                                 className={cn(
                                   'w-[300px] pl-3 text-left font-normal',
-                                  !field.value && 'text-muted-foreground'
+                                  !normalized && 'text-muted-foreground'
                                 )}
                               >
-                                {field.value ? (
-                                  format(dateFnsParse(String(field.value), 'yyyy-MM-dd', new Date()), 'dd/MM/yyyy')
+                                {normalized ? (
+                                  format(normalized, 'dd/MM/yyyy')
                                 ) : (
                                   <span>Elegir fecha</span>
                                 )}
@@ -104,13 +113,13 @@ export function EmployeeLaboralDataTab({
                           <PopoverContent className="flex w-full flex-col space-y-2 p-2" align="start">
                             <Select
                               onValueChange={(e) => {
-                                setMonth(new Date(e));
-                                setYear(e);
                                 const newYear = parseInt(e, 10);
-                                const dateWithNewYear = new Date(field.value);
+                                const base = normalized ?? new Date();
+                                const dateWithNewYear = new Date(base);
                                 dateWithNewYear.setFullYear(newYear);
-                                field.onChange(dateWithNewYear);
+                                setYear(e);
                                 setMonth(dateWithNewYear);
+                                field.onChange(dateWithNewYear);
                               }}
                               value={years || today.getFullYear().toString()}
                             >
@@ -137,11 +146,7 @@ export function EmployeeLaboralDataTab({
                               toDate={today}
                               locale={es}
                               mode="single"
-                              selected={
-                                field.value
-                                  ? dateFnsParse(String(field.value), 'yyyy-MM-dd', new Date())
-                                  : today
-                              }
+                              selected={normalized ?? today}
                               onSelect={(e) => {
                                 field.onChange(e);
                               }}
