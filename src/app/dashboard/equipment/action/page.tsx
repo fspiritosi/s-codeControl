@@ -90,6 +90,7 @@ export default async function EquipmentFormAction({ searchParams: searchParamsPr
               type_of_repair_new_entry
               created_solicitudes
               defaultValue="created_solicitudes"
+              searchParams={searchParams}
             />
           </TabsContent>
         </VehiclesForm>

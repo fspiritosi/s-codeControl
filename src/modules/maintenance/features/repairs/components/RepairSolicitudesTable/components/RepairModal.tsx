@@ -9,7 +9,11 @@ import { Label } from '@/shared/components/ui/label';
 import { Separator } from '@/shared/components/ui/separator';
 import { storage } from '@/shared/lib/storage';
 import { updateVehicleById } from '@/modules/equipment/features/create/actions.server';
-import { fetchRepairSolicitudesByEquipment, updateRepairSolicitude } from '@/modules/maintenance/features/repairs/actions.server';
+import {
+  fetchRepairLogsBySolicitudId,
+  fetchRepairSolicitudesByEquipment,
+  updateRepairSolicitude,
+} from '@/modules/maintenance/features/repairs/actions.server';
 import { cn } from '@/shared/lib/utils';
 import { PersonIcon } from '@radix-ui/react-icons';
 import { format, isToday, isTomorrow, isYesterday, differenceInDays, startOfDay } from 'date-fns';
@@ -19,7 +23,7 @@ function formatCalendar(dateStr: string): string {
   const date = new Date(dateStr);
   const now = new Date();
   if (isToday(date)) return `Hoy, ${format(date, 'h:mm a')}`;
-  if (isTomorrow(date)) return `Ma\u00f1ana, ${format(date, 'h:mm a')}`;
+  if (isTomorrow(date)) return `Mañana, ${format(date, 'h:mm a')}`;
   if (isYesterday(date)) return `Ayer, ${format(date, 'h:mm a')}`;
   const daysDiff = differenceInDays(startOfDay(now), startOfDay(date));
   if (daysDiff > 0 && daysDiff < 7) return `El ${format(date, 'EEEE', { locale: es })} pasado a las ${format(date, 'h:mm a')}`;
@@ -36,11 +40,28 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
   const [imageUrl, setImageUrl] = useState<string[]>([]);
   const [imagesMechanic, setImagesMechanic] = useState<(string | null)[]>([null, null, null]);
   const [repairSolicitudes, setRepairSolicitudes] = useState<any>([]);
-  const [repairLogs, setRepairLogs] = useState(row.original.repairlogs);
-  const fetchRepairsLogs = async () => {
-    const data = await fetchRepairSolicitudesByEquipment(row.original.vehicle_id);
-    setRepairSolicitudes(data);
-  };
+  const [repairLogs, setRepairLogs] = useState<any[] | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const isLogsLoading = isOpen && repairLogs === null;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    Promise.all([
+      fetchRepairLogsBySolicitudId(row.original.id),
+      fetchRepairSolicitudesByEquipment(row.original.vehicle_id),
+    ])
+      .then(([logs, solicitudes]) => {
+        if (cancelled) return;
+        setRepairLogs(logs);
+        setRepairSolicitudes(solicitudes);
+      })
+      .catch(console.error);
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, row.original.id, row.original.vehicle_id]);
+
   useEffect(() => {
     const fetchImageUrls = async () => {
       if (row.original.user_images) {
@@ -61,10 +82,6 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
       });
     setImagesMechanic(modifiedStringsMechanic);
   }, [row.original.user_images]);
-  useEffect(() => {
-    setRepairLogs(row.original.repairlogs);
-    fetchRepairsLogs();
-  }, [row.original.repairlogs]);
   const endingStates = ['Finalizado', 'Cancelado', 'Rechazado'];
 
   const router = useRouter();
@@ -80,13 +97,10 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
 
     let newStatus = '';
 
-    // Si la reparación actualizada es un estado de cierre
     if (endingStates.includes('Cancelado')) {
-      // Si no hay más reparaciones pendientes, el vehículo está operativo
       if (pendingRepairs.length === 0) {
         newStatus = 'operativo';
       } else {
-        // Si hay otras reparaciones pendientes, calcular el estado basado en ellas
         if (pendingRepairs.some((e: any) => e.state === 'En reparación')) {
           newStatus = 'en reparación';
         } else if (pendingRepairs.some((e: any) => e.reparation_type.criticity === 'Alta')) {
@@ -110,7 +124,7 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
 
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger>
         {onlyView ? <>{action}</> : <Button variant="outline">Ver detalles de reparación</Button>}
       </DialogTrigger>
@@ -250,21 +264,26 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
           <div className="grid gap-2">
             <CardTitle>Eventos de la reparacion</CardTitle>
           </div>
-          <div className="relative flex flex-col gap-4 justify-start  w-full">
-            <div className="absolute left-[19px] top-0 bottom-0 w-px bg-muted-foreground/20 " />
-            {row.original.repairlogs.map((log: any, index: any) => {
-              const state = statuses.find((status) => status.value === log.title);
-              const fullName =
-                log.modified_by_user?.fullname ??
-                `${log.modified_by_employee?.firstname} ${log.modified_by_employee?.lastname}`;
+          {isLogsLoading ? (
+            <CardDescription>Cargando eventos...</CardDescription>
+          ) : (
+            <div className="relative flex flex-col gap-4 justify-start  w-full">
+              {(repairLogs?.length ?? 0) > 0 && (
+                <div className="absolute left-[19px] top-0 bottom-0 w-px bg-muted-foreground/20 " />
+              )}
+              {(repairLogs ?? []).map((log: any, index: number) => {
+                const state = statuses.find((status) => status.value === log.title);
+                const fullName =
+                  log.modified_by_user?.fullname ??
+                  `${log.modified_by_employee?.firstname ?? ''} ${log.modified_by_employee?.lastname ?? ''}`.trim();
+                const logsCount = (repairLogs ?? []).length;
 
-              return (
-                <>
-                  <div className="relative flex items-start gap-4">
+                return (
+                  <div key={log.id} className="relative flex items-start gap-4">
                     <div
                       className={cn(
                         'relative  flex max-h-[40px] max-w-[40px] size-10 items-center justify-center rounded-full  text-primary-foreground aspect-square flex-shrink-0',
-                        index + 1 === row.original.repairlogs.length ? 'bg-primary' : 'bg-muted-foreground'
+                        index + 1 === logsCount ? 'bg-primary' : 'bg-muted-foreground'
                       )}
                     >
                       {index + 1}
@@ -285,7 +304,7 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
                         </div>
                       </div>
                       <CardDescription>
-                        {log.description} <br></br>
+                        {log.description} <br />
                       </CardDescription>
                       <CardDescription className="m-0 flex gap-2 items-center">
                         <PersonIcon />
@@ -293,10 +312,10 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
                       </CardDescription>
                     </div>
                   </div>
-                </>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
         <DialogClose id="close-modal-mechanic-colum2" />
         {onlyView ? (

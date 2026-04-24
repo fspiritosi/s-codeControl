@@ -14,7 +14,7 @@ import { Separator } from '@/shared/components/ui/separator';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { handleSupabaseError } from '@/shared/lib/errorHandler';
 import { storage } from '@/shared/lib/storage';
-import { fetchRepairSolicitudesByEquipment, updateRepairSolicitude } from '@/modules/maintenance/features/repairs/actions.server';
+import { fetchRepairLogsBySolicitudId, updateRepairSolicitude } from '@/modules/maintenance/features/repairs/actions.server';
 import { cn } from '@/shared/lib/utils';
 import { formatDocumentTypeName } from '@/shared/lib/utils/utils';
 import { FormattedSolicitudesRepair } from '@/shared/types/types';
@@ -50,62 +50,41 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
   {
     accessorKey: 'title',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Titulo" className="ml-2" />,
-    cell: ({ row }) => {
-      return (
-        <RepairModal
-          row={row}
-          onlyView
-          action={
-            <div className="flex space-x-2">
-              <CardTitle className="max-w-[300px] truncate font-medium hover:underline">
-                {row.getValue('title')}
-              </CardTitle>
-            </div>
-          }
-        />
-      );
-    },
-    filterFn: (row, columnId, filterValue) => {
-      const cellValue = row.getValue(columnId);
-
-      if (typeof cellValue === 'string' && Array.isArray(filterValue)) {
-        return filterValue.some((value) => cellValue.toLowerCase().includes(value.toLowerCase()));
-      }
-
-      return false;
-    },
+    cell: ({ row }) => (
+      <RepairModal
+        row={row}
+        onlyView
+        action={
+          <div className="flex space-x-2">
+            <CardTitle className="max-w-[300px] truncate font-medium hover:underline">
+              {row.getValue('title')}
+            </CardTitle>
+          </div>
+        }
+      />
+    ),
   },
   {
-    accessorKey: 'id',
+    accessorKey: 'user_description',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Descripcion" />,
-    cell: ({ row }) => {
-      return (
-        <div className="flex space-x-2">
-          <span className="max-w-[400px] truncate font-medium">{row.original.user_description}</span>
-        </div>
-      );
-    },
+    cell: ({ row }) => (
+      <div className="flex space-x-2">
+        <span className="max-w-[400px] truncate font-medium">{row.original.user_description}</span>
+      </div>
+    ),
   },
-
   {
     accessorKey: 'state',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Estado" />,
     cell: ({ row }) => {
       const state = statuses.find((status) => status.value === row.original.state);
-
-      if (!state) {
-        return null;
-      }
-
+      if (!state) return null;
       return (
-        <div className={`flex  items-center ${state.color}`}>
+        <div className={`flex items-center ${state.color}`}>
           {state.icon && <state.icon className={`mr-2 h-4 w-4 ${state.color}`} />}
           <span>{state.label}</span>
         </div>
       );
-    },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
     },
   },
   {
@@ -114,10 +93,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
     cell: ({ row }) => {
       const priority = criticidad.find((priority) => priority.value === row.getValue('priority'));
       const label = labels.find((label) => label.value === row.original.priority);
-      if (!priority) {
-        return null;
-      }
-
+      if (!priority) return null;
       return (
         <Badge
           variant={label?.value === 'Baja' ? 'success' : label?.value === 'Media' ? 'yellow' : 'destructive'}
@@ -128,36 +104,24 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
         </Badge>
       );
     },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
   },
   {
     accessorKey: 'intern_number',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Numero interno" />,
-    cell: ({ row }) => {
-      return <div className="flex items-center">{row.original.intern_number}</div>;
-    },
+    cell: ({ row }) => <div className="flex items-center">{row.original.intern_number}</div>,
   },
   {
     accessorKey: 'domain',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Equipo" />,
-    cell: ({ row }) => {
-      return <div className="flex items-center">{row.original.domain}</div>;
-    },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
+    cell: ({ row }) => <div className="flex items-center">{row.original.domain}</div>,
   },
   {
-    accessorKey: 'fecha',
+    accessorKey: 'created_at',
+    id: 'created_at',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Fecha" />,
-    cell: ({ row }) => {
-      return <div className="flex items-center">{formatDateFns(new Date(row.original.created_at), 'dd/MM/yyyy')}</div>;
-    },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
+    cell: ({ row }) => (
+      <div className="flex items-center">{formatDateFns(new Date(row.original.created_at), 'dd/MM/yyyy')}</div>
+    ),
   },
   {
     id: 'actions',
@@ -167,11 +131,11 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
       const [images, setImages] = useState<(string | null)[]>([null, null, null]);
       const [files, setFiles] = useState<(File | undefined)[]>([undefined, undefined, undefined]);
       const [status, setStatus] = useState<string>(row.original.solicitud_status);
-      // const [mechanic_description, setMechanic_description] = useState('');
       const router = useRouter();
       const endingStates = ['Finalizado', 'Cancelado', 'Rechazado'];
-      const [repairLogs, setRepairLogs] = useState(row.original.repairlogs);
-      const [repairSolicitudes, setRepairSolicitudes] = useState<any>([]);
+      const [repairLogs, setRepairLogs] = useState<any[] | null>(null);
+      const [isOpen, setIsOpen] = useState(false);
+      const isLogsLoading = isOpen && repairLogs === null;
       const FormSchema = z.object({
         mechanic_description:
           row.original.state !== status && status !== 'Programado'
@@ -200,16 +164,18 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
             : z.date().optional(),
       });
 
-
       useEffect(() => {
-        setRepairLogs(row.original.repairlogs);
-        fetchRepairsLogs();
-      }, [row.original.repairlogs]);
-
-      const fetchRepairsLogs = async () => {
-        const data = await fetchRepairSolicitudesByEquipment(row.original.vehicle_id);
-        setRepairSolicitudes(data);
-      };
+        if (!isOpen) return;
+        let cancelled = false;
+        fetchRepairLogsBySolicitudId(row.original.id)
+          .then((logs) => {
+            if (!cancelled) setRepairLogs(logs);
+          })
+          .catch(console.error);
+        return () => {
+          cancelled = true;
+        };
+      }, [isOpen, row.original.id]);
 
       useEffect(() => {
         const fetchImageUrls = async () => {
@@ -238,7 +204,6 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
         input.accept = 'image/*';
         input.onchange = (event) => {
           const file = (event.target as HTMLInputElement).files?.[0];
-          // const files
           if (file) {
             const newFiles = [...files];
             newFiles[index] = file;
@@ -256,7 +221,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
       };
       const formatImages = (image: File | undefined, domain: string, index: number) => {
         if (!image) return;
-        const maintenanceName = formatDocumentTypeName(row.original.title); //Aqui va el nombre del mantenimiento
+        const maintenanceName = formatDocumentTypeName(row.original.title);
         const user_pictures = row.original.user_images.filter((e) => e);
         const str = user_pictures[index];
         const regex = /\(([^)]+)\)/;
@@ -284,18 +249,15 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
           const mechanic_images = mechanic_imagesData
             .map((e) => e?.url)
             .filter((u): u is string => typeof u === 'string');
-          const vehicle_id = row.original.vehicle_id;
           const mechanic_description = form.getValues('mechanic_description');
 
-
-          const { data, error } = await updateRepairSolicitude(row.original.id, {
-              state: status,
-              mechanic_description,
-              mechanic_images,
-              kilometer: form.getValues('kilometer'),
-              scheduled: form.getValues('scheduled'),
-            });
-
+          const { error } = await updateRepairSolicitude(row.original.id, {
+            state: status,
+            mechanic_description,
+            mechanic_images,
+            kilometer: form.getValues('kilometer'),
+            scheduled: form.getValues('scheduled'),
+          });
 
           mechanic_imagesData
             .filter((e) => e)
@@ -307,8 +269,6 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
             console.error(error);
             throw new Error(handleSupabaseError(error));
           }
-
-          // El backend recalcula vehicle.condition automáticamente al actualizar state
         } else if (shouldUpdateStatus) {
           await saveNewStatus();
         } else if (shouldUpdateFiles) {
@@ -330,10 +290,7 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
           console.error(error);
           throw new Error(handleSupabaseError(error));
         }
-
-        // El backend recalcula vehicle.condition automáticamente
       };
-
 
       const updateRepair = async () => {
         let mechanic_imagesData = files.map((file, index) =>
@@ -384,8 +341,16 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
       function onSubmit() {
         handleSaveChangues();
       }
+
+      const logsList = repairLogs ?? [];
+      const repairLogsKilometers =
+        logsList.length > 0
+          ? Number(logsList[logsList.length - 1]?.kilometer ?? 0) -
+            Number(logsList[0]?.kilometer ?? 0)
+          : 0;
+
       return (
-        <Dialog>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button variant="outline">Reparar equipo</Button>
           </DialogTrigger>
@@ -454,14 +419,6 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
               {row.original.state !== status && (
                 <div className="grid gap-4">
                   <div className="grid gap-2">
-                    {/* <Label>Descripción del nuevo estado de la solicitud</Label>
-                    <Textarea
-                      placeholder="Informa al usuario acerca del nuevo estado"
-                      value={mechanic_description}
-                      onChange={(e) => {
-                        setMechanic_description(e.target.value);
-                      }}
-                    /> */}
                     <Form {...form}>
                       <form id="miFormulario" onSubmit={form.handleSubmit(onSubmit)}>
                         {status !== 'Programado' && (
@@ -675,58 +632,58 @@ export const mechanicColums: ColumnDef<FormattedSolicitudesRepair[0]>[] = [
                 </div>
               )}
               <div className="grid gap-2">
-                <CardTitle>
-                  Kilometros totales de la reparacion:{' '}
-                  {repairLogs[repairLogs.length - 1].kilometer - repairLogs[0].kilometer} kms
-                </CardTitle>
+                {isLogsLoading ? (
+                  <CardDescription>Cargando eventos de la reparación...</CardDescription>
+                ) : logsList.length > 0 ? (
+                  <CardTitle>
+                    Kilometros totales de la reparacion: {repairLogsKilometers} kms
+                  </CardTitle>
+                ) : null}
               </div>
-              <div className="relative flex flex-col gap-4 justify-start  w-full">
-                <div className="absolute left-[19px] top-0 bottom-0 w-px bg-muted-foreground/20 " />
-                {repairLogs.map((log: any, index) => {
+              <div className="relative flex flex-col gap-4 justify-start w-full">
+                {logsList.length > 0 && (
+                  <div className="absolute left-[19px] top-0 bottom-0 w-px bg-muted-foreground/20 " />
+                )}
+                {logsList.map((log: any, index: number) => {
                   const state = statuses.find((status) => status.value === log.title);
                   const fullName =
                     log.modified_by_user?.fullname ??
-                    `${log.modified_by_employee?.firstname} ${log.modified_by_employee?.lastname}`;
+                    `${log.modified_by_employee?.firstname ?? ''} ${log.modified_by_employee?.lastname ?? ''}`.trim();
 
                   return (
-                    <>
-                      <div className="relative flex items-start gap-4">
-                        <div
-                          className={cn(
-                            'relative  flex max-h-[40px] max-w-[40px] size-10 items-center justify-center rounded-full  text-primary-foreground aspect-square flex-shrink-0',
-                            index + 1 === repairLogs.length ? 'bg-primary' : 'bg-muted-foreground'
-                          )}
-                        >
-                          {index + 1}
-                        </div>
-                        <div className="flex flex-col gap-1  w-full">
-                          <div className="flex items-center justify-between w-full">
-                            <div className="flex gap-2 items-center">
-                              <div className="font-medium flex items-center">
-                                {state?.icon && <state.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
-                                <span>{state?.label}</span>
-                              </div>
-                              <CardDescription className="m-0 flex gap-2 items-center">
-                                <PersonIcon />
-                                {fullName}
-                              </CardDescription>
-                            </div>
-                            <div className="text-muted-foreground text-sm flex gap-2 items-center">
-                              <Badge variant={'outline'} className="m-0 flex items-center p-1">
-                                {log.kilometer} kms
-                              </Badge>
-                              <CardDescription>
-                                {' '}
-                                {formatCalendar(log.created_at)}
-                              </CardDescription>
-                            </div>
-                          </div>
-                          <CardDescription>
-                            {log.description} <br></br>
-                          </CardDescription>
-                        </div>
+                    <div key={log.id} className="relative flex items-start gap-4">
+                      <div
+                        className={cn(
+                          'relative flex max-h-[40px] max-w-[40px] size-10 items-center justify-center rounded-full text-primary-foreground aspect-square flex-shrink-0',
+                          index + 1 === logsList.length ? 'bg-primary' : 'bg-muted-foreground'
+                        )}
+                      >
+                        {index + 1}
                       </div>
-                    </>
+                      <div className="flex flex-col gap-1 w-full">
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex gap-2 items-center">
+                            <div className="font-medium flex items-center">
+                              {state?.icon && <state.icon className="mr-2 h-4 w-4 text-muted-foreground" />}
+                              <span>{state?.label}</span>
+                            </div>
+                            <CardDescription className="m-0 flex gap-2 items-center">
+                              <PersonIcon />
+                              {fullName}
+                            </CardDescription>
+                          </div>
+                          <div className="text-muted-foreground text-sm flex gap-2 items-center">
+                            <Badge variant={'outline'} className="m-0 flex items-center p-1">
+                              {log.kilometer} kms
+                            </Badge>
+                            <CardDescription>{formatCalendar(log.created_at)}</CardDescription>
+                          </div>
+                        </div>
+                        <CardDescription>
+                          {log.description} <br />
+                        </CardDescription>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
