@@ -1,8 +1,16 @@
 import RepairsSkeleton from '@/shared/components/common/Skeletons/RepairsSkeleton';
 import RepairTypes from '@/modules/maintenance/features/repairs/components/RepairTypes';
 import Viewcomponent from '@/shared/components/common/ViewComponent';
+import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
 import { Suspense } from 'react';
-async function MantenimientoPage() {
+
+async function MantenimientoPage({
+  searchParams,
+}: {
+  searchParams: Promise<DataTableSearchParams>;
+}) {
+  const resolved = await searchParams;
+
   const viewData = {
     defaultValue: 'type_of_repairs',
     tabsValues: [
@@ -22,6 +30,7 @@ async function MantenimientoPage() {
               type_of_repair_new_entry2
               type_of_repair_new_entry3
               mechanic
+              searchParams={resolved}
             />
           ),
         },

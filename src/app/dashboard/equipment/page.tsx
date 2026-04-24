@@ -88,7 +88,12 @@ export default async function Equipment({
               <CardDescription>Genera solicitudes de mantenimiento para tus equipos</CardDescription>
             </CardHeader>
             <CardContent>
-              <RepairTypes type_of_repair_new_entry created_solicitudes defaultValue="created_solicitudes" />
+              <RepairTypes
+                type_of_repair_new_entry
+                created_solicitudes
+                defaultValue="created_solicitudes"
+                searchParams={resolved}
+              />
             </CardContent>
           </Card>
         </UrlTabsContent>

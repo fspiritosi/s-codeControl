@@ -5,6 +5,7 @@ import { TypeOfRepair } from '@/shared/types/types';
 import { cookies } from 'next/headers';
 import InfoComponent from '@/shared/components/common/InfoComponent';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
 import RepairNewEntry from './RepairEntry';
 import RepairNewEntryMultiple from './RepairEntryMultiple';
 import RepairSolicitudes from './RepairSolicitudesTable/RepairSolicitudes';
@@ -19,6 +20,7 @@ async function RepairTypes({
   defaultValue,
   mechanic,
   equipment_id,
+  searchParams,
 }: {
   type_of_repair_new_entry?: boolean;
   type_of_repair_new_entry2?: boolean;
@@ -28,6 +30,7 @@ async function RepairTypes({
   defaultValue?: string;
   mechanic?: boolean;
   equipment_id?: string;
+  searchParams?: DataTableSearchParams;
 }) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const supabase = await supabaseServer();
@@ -112,7 +115,11 @@ async function RepairTypes({
         />
       </TabsContent>
       <TabsContent value="created_solicitudes">
-        <RepairSolicitudes mechanic={mechanic} default_equipment_id={equipment_id} />
+        <RepairSolicitudes
+          mechanic={mechanic}
+          default_equipment_id={equipment_id}
+          searchParams={searchParams}
+        />
       </TabsContent>
     </Tabs>
   );

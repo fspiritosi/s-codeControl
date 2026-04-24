@@ -13,68 +13,41 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
   {
     accessorKey: 'title',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Titulo" className="ml-2" />,
-    cell: ({ row }) => {
-      return (
-        <RepairModal
-          row={row}
-          onlyView
-          action={
-            <div className="flex space-x-2">
-              <CardTitle className="max-w-[300px] truncate font-medium hover:underline">
-                {row.getValue('title')}
-              </CardTitle>
-            </div>
-          }
-        />
-      );
-    },
-    filterFn: (row, columnId, filterValue) => {
-      const cellValue = row.getValue(columnId);
-
-      if (typeof cellValue === 'string' && Array.isArray(filterValue)) {
-        return filterValue.some((value) => cellValue.toLowerCase().includes(value.toLowerCase()));
-      }
-
-      return false;
-    },
+    cell: ({ row }) => (
+      <RepairModal
+        row={row}
+        onlyView
+        action={
+          <div className="flex space-x-2">
+            <CardTitle className="max-w-[300px] truncate font-medium hover:underline">
+              {row.getValue('title')}
+            </CardTitle>
+          </div>
+        }
+      />
+    ),
   },
   {
-    accessorKey: 'id',
+    accessorKey: 'user_description',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Descripcion" />,
-    cell: ({ row }) => {
-      return (
-        <div className="flex space-x-2">
-          <span className="max-w-[400px] truncate font-medium">{row.original.user_description}</span>
-        </div>
-      );
-    },
+    cell: ({ row }) => (
+      <div className="flex space-x-2">
+        <span className="max-w-[400px] truncate font-medium">{row.original.user_description}</span>
+      </div>
+    ),
   },
-  // {
-  //   accessorKey: 'id',
-  //   header: ({ column }) => <DataTableColumnHeader column={column} title="Task" />,
-  //   cell: ({ row }) => <div className="w-[80px]">{row.getValue('id')}</div>,
-  //   enableSorting: false,
-  //   enableHiding: false,
-  // },
   {
     accessorKey: 'state',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Estado" />,
     cell: ({ row }) => {
       const state = statuses.find((status) => status.value === row.original.state);
-
-      if (!state) {
-        return null;
-      }
-
+      if (!state) return null;
       return (
-        <div className={`flex  items-center ${state.color}`}>
+        <div className={`flex items-center ${state.color}`}>
           {state.icon && <state.icon className={`mr-2 h-4 w-4 ${state.color}`} />}
           <span>{state.label}</span>
         </div>
       );
-    },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
     },
   },
   {
@@ -83,10 +56,7 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
     cell: ({ row }) => {
       const priority = criticidad.find((priority) => priority.value === row.getValue('priority'));
       const label = labels.find((label) => label.value === row.original.priority);
-      if (!priority) {
-        return null;
-      }
-
+      if (!priority) return null;
       return (
         <Badge
           variant={label?.value === 'Baja' ? 'success' : label?.value === 'Media' ? 'yellow' : 'destructive'}
@@ -97,41 +67,27 @@ export const repairSolicitudesColums: ColumnDef<FormattedSolicitudesRepair[0]>[]
         </Badge>
       );
     },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
   },
   {
     accessorKey: 'intern_number',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Numero interno" />,
-    cell: ({ row }) => {
-      return <div className="flex items-center">{row.original.intern_number}</div>;
-    },
+    cell: ({ row }) => <div className="flex items-center">{row.original.intern_number}</div>,
   },
   {
     accessorKey: 'domain',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Equipo" />,
-    cell: ({ row }) => {
-      return <div className="flex items-center">{row.original.domain}</div>;
-    },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
+    cell: ({ row }) => <div className="flex items-center">{row.original.domain}</div>,
   },
   {
-    accessorKey: 'fecha',
+    accessorKey: 'created_at',
+    id: 'created_at',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Fecha" />,
-    cell: ({ row }) => {
-      return <div className="flex items-center">{format(new Date(row.original.created_at), 'dd/MM/yyyy')}</div>;
-    },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
+    cell: ({ row }) => (
+      <div className="flex items-center">{format(new Date(row.original.created_at), 'dd/MM/yyyy')}</div>
+    ),
   },
   {
     id: 'actions',
-    cell: ({ row }) => {
-      return <RepairModal row={row} />;
-    },
+    cell: ({ row }) => <RepairModal row={row} />,
   },
 ];

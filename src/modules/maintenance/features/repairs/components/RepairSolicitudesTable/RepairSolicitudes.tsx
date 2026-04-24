@@ -1,62 +1,38 @@
-import { RepairsSolicituds } from '@/shared/types/types';
-import { cookies } from 'next/headers';
+import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import { getRepairSolicitudesPaginated } from '@/modules/maintenance/features/repairs/actions.server';
 import { repairSolicitudesColums } from './components/columns';
 import { mechanicColums } from './components/mechanicColumns';
-import { RepairSolicitudesClient } from './RepairSolicitudesClient';
+import { RepairSolicitudesDataTable } from './_RepairSolicitudesDataTable';
+
+interface Props {
+  mechanic?: boolean;
+  default_equipment_id?: string;
+  searchParams?: DataTableSearchParams;
+}
 
 export default async function RepairSolicitudes({
   mechanic,
   default_equipment_id,
-}: {
-  mechanic?: boolean;
-  default_equipment_id?: string;
-}) {
-  const URL = process.env.NEXT_PUBLIC_BASE_URL;
-  const coockiesStore = await cookies();
-  const company_id = coockiesStore.get('actualComp')?.value;
-  const repairRes = await fetch(`${URL}/api/repair_solicitud?actual=${company_id}`).then((res) =>
-    res.json()
-  );
-  const repair_solicitudes = repairRes?.data?.repair_solicitudes ?? repairRes?.repair_solicitudes ?? [];
-
-  const Allrepairs = default_equipment_id
-    ? (repair_solicitudes as RepairsSolicituds).filter((repair) => repair.equipment_id.id === default_equipment_id)
-    : (repair_solicitudes as RepairsSolicituds);
-
-
-  const repairsFormatted = Allrepairs.map((repair) => {
-    return {
-      id: repair.id,
-      title: repair.reparation_type.name,
-      state: repair.state,
-      label: '',
-      priority: repair.reparation_type.criticity,
-      created_at: repair.created_at,
-      equipment: `${repair.equipment_id?.domain} - ${repair.equipment_id?.intern_number}`,
-      description: repair.user_description,
-      user_description: repair.user_description,
-      year: repair.equipment_id.year,
-      brand: repair.equipment_id.brand.name,
-      model: repair.equipment_id.model.name,
-      domain: repair.equipment_id.domain ?? repair.equipment_id.serie,
-      engine: repair.equipment_id.engine,
-      serie: repair.equipment_id.serie,
-      status: repair.equipment_id.status,
-      chassis: repair.equipment_id.chassis,
-      picture: repair.equipment_id.picture,
-      type_of_equipment: repair.equipment_id.type.name,
-      solicitud_status: repair.state,
-      type_of_maintenance: repair.reparation_type.type_of_maintenance,
-      user_images: repair.user_images,
-      mechanic_images: repair.mechanic_images,
-      repairlogs: repair.repairlogs,
-      mechanic_description: repair.mechanic_description,
-      vehicle_id: repair.equipment_id.id,
-      vehicle_condition: repair.equipment_id.condition,
-      intern_number: repair.equipment_id.intern_number,
-      kilometer: repair.kilometer,
-    };
+  searchParams,
+}: Props) {
+  const params = searchParams ?? {};
+  const { data, total } = await getRepairSolicitudesPaginated(params, {
+    mechanic,
+    defaultEquipmentId: default_equipment_id,
   });
 
-  return <RepairSolicitudesClient data={repairsFormatted as any} columns={(mechanic ? mechanicColums : repairSolicitudesColums) as any} />;
+  const columns = (mechanic ? mechanicColums : repairSolicitudesColums) as any;
+  const tableId = mechanic ? 'repair-solicitudes-mechanic' : 'repair-solicitudes';
+
+  return (
+    <RepairSolicitudesDataTable
+      data={data as any[]}
+      totalRows={total}
+      searchParams={params}
+      columns={columns}
+      mechanic={mechanic}
+      defaultEquipmentId={default_equipment_id}
+      tableId={tableId}
+    />
+  );
 }
