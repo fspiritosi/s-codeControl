@@ -11,7 +11,10 @@ export const fetchWorkDiagrams = async () => {
 
   try {
     const data = await prisma.work_diagram.findMany({
-      where: { is_active: true },
+      where: {
+        is_active: true,
+        OR: [{ company_id: companyId }, { company_id: null }],
+      },
       select: { id: true, name: true },
     });
     return data;
@@ -51,9 +54,15 @@ export const fetchCovenants = async () => {
 };
 
 export const fetchHierrarchicalPositions = async () => {
+  const { companyId } = await getActionContext();
+  if (!companyId) return [];
+
   try {
     const data = await prisma.hierarchy.findMany({
-      where: { is_active: true },
+      where: {
+        is_active: true,
+        OR: [{ company_id: companyId }, { company_id: null }],
+      },
     });
     return data;
   } catch (error) {

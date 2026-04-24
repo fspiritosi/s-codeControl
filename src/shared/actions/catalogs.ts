@@ -1,5 +1,6 @@
 'use server';
 import { prisma } from '@/shared/lib/prisma';
+import { getActionContext } from '@/shared/lib/server-action-context';
 
 // --- From shared/queries.ts ---
 
@@ -124,8 +125,13 @@ export const fetchIndustryTypes = async () => {
 // --- From employees/queries.ts ---
 
 export const fetchHierarchy = async () => {
+  const { companyId } = await getActionContext();
   try {
-    const data = await prisma.hierarchy.findMany();
+    const data = await prisma.hierarchy.findMany({
+      where: companyId
+        ? { OR: [{ company_id: companyId }, { company_id: null }] }
+        : undefined,
+    });
     return data ?? [];
   } catch (error) {
     console.error('Error fetching hierarchy:', error);
@@ -134,8 +140,13 @@ export const fetchHierarchy = async () => {
 };
 
 export const fetchAllWorkDiagrams = async () => {
+  const { companyId } = await getActionContext();
   try {
-    const data = await prisma.work_diagram.findMany();
+    const data = await prisma.work_diagram.findMany({
+      where: companyId
+        ? { OR: [{ company_id: companyId }, { company_id: null }] }
+        : undefined,
+    });
     return data ?? [];
   } catch (error) {
     console.error('Error fetching work diagrams:', error);
@@ -200,9 +211,15 @@ export const fetchAllBrandVehicles = async () => {
 };
 
 export const fetchAllHierarchies = async () => {
+  const { companyId } = await getActionContext();
   try {
     const data = await prisma.hierarchy.findMany({
-      where: { is_active: true },
+      where: {
+        is_active: true,
+        ...(companyId
+          ? { OR: [{ company_id: companyId }, { company_id: null }] }
+          : {}),
+      },
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
     });
