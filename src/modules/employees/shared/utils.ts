@@ -71,14 +71,37 @@ export const fetchHierrarchicalPositions = async () => {
   }
 };
 
+export const fetchTypesOfContracts = async () => {
+  const { companyId } = await getActionContext();
+  if (!companyId) return [];
+
+  try {
+    const data = await prisma.types_of_contracts.findMany({
+      where: {
+        is_active: true,
+        OR: [{ company_id: companyId }, { company_id: null }],
+      },
+      orderBy: { name: 'asc' },
+    });
+    return data;
+  } catch (error) {
+    console.error('Error fetching types of contracts:', error);
+    return [];
+  }
+};
+
 export const setEmployeeDataOptions = async () => {
-  const workDiagrams = await fetchWorkDiagrams();
-  const guilds = await fetchGuilds();
-  const covenants = await fetchCovenants();
-  const categories = await _fetchAllCategories();
-  const hierarchicalPositions = await fetchHierrarchicalPositions();
-  const customers = await fetchCustomers();
-  const provinces = await fetchProvinces();
+  const [workDiagrams, guilds, covenants, categories, hierarchicalPositions, customers, provinces, typesOfContracts] =
+    await Promise.all([
+      fetchWorkDiagrams(),
+      fetchGuilds(),
+      fetchCovenants(),
+      _fetchAllCategories(),
+      fetchHierrarchicalPositions(),
+      fetchCustomers(),
+      fetchProvinces(),
+      fetchTypesOfContracts(),
+    ]);
 
   return {
     workflow_diagram: workDiagrams.map((diagram) => diagram.name),
@@ -94,6 +117,6 @@ export const setEmployeeDataOptions = async () => {
     document_type: ['DNI', 'LE', 'LC', 'PASAPORTE'],
     level_of_education: ['Primario', 'Secundario', 'Terciario', 'Posgrado', 'Universitario'],
     status: ['Avalado', 'Completo', 'Incompleto', 'No avalado', 'Completo con doc vencida'],
-    type_of_contract: ['Período de prueba', 'A tiempo indeterminado', 'Plazo fijo'],
+    type_of_contract: typesOfContracts.map((t) => t.name),
   };
 };

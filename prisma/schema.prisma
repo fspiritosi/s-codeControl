@@ -151,11 +151,6 @@ enum training_status {
   Publicado
 }
 
-enum type_of_contract_enum {
-  Periodo_de_prueba      @map("Período de prueba")
-  A_tiempo_indeterminado @map("A tiempo indeterminado")
-  Plazo_fijo             @map("Plazo fijo")
-}
 
 enum type_of_maintenance_ENUM {
   Correctivo
@@ -283,6 +278,7 @@ model company {
   documentsCompanies     documents_company[]
   hierarchy              hierarchy[]
   work_diagram           work_diagram[]
+  types_of_contracts     types_of_contracts[]
 
   // Almacenes y Compras
   products                    products[]
@@ -342,7 +338,7 @@ model employees {
   city                   BigInt
   hierarchical_position  String?                      @db.Uuid
   workflow_diagram       String?                      @db.Uuid
-  type_of_contract       type_of_contract_enum
+  type_of_contract       String
   allocated_to           String[]                     @db.Uuid
   company_id             String?                      @db.Uuid
   is_active              Boolean?                     @default(true)
@@ -490,6 +486,18 @@ model work_diagram {
   employees employees[]
 
   @@map("work-diagram")
+}
+
+model types_of_contracts {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz
+  name       String
+  is_active  Boolean  @default(true)
+  company_id String?  @db.Uuid
+
+  company company? @relation(fields: [company_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  @@index([company_id])
 }
 
 model document_types {
