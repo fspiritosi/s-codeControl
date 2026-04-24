@@ -5,25 +5,19 @@ import {
   UrlTabsList,
   UrlTabsTrigger,
 } from '@/shared/components/ui/url-tabs';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/shared/components/ui/table';
-import { Badge } from '@/shared/components/ui/badge';
 import { ParameterCrudTable } from './ParameterCrudTable';
 import {
   createHierarchyParameter,
+  createTypeOfContractParameter,
   createWorkDiagramParameter,
   getHierarchyParameters,
-  getTypeOfContractValues,
+  getTypesOfContractsParameters,
   getWorkDiagramParameters,
   toggleHierarchyParameterActive,
+  toggleTypeOfContractParameterActive,
   toggleWorkDiagramParameterActive,
   updateHierarchyParameter,
+  updateTypeOfContractParameter,
   updateWorkDiagramParameter,
 } from '../actions.server';
 
@@ -42,7 +36,7 @@ export default async function SettingsView({ currentTab }: Props) {
   const [hierarchy, workDiagrams, contractTypes] = await Promise.all([
     getHierarchyParameters(),
     getWorkDiagramParameters(),
-    getTypeOfContractValues(),
+    getTypesOfContractsParameters(),
   ]);
 
   return (
@@ -111,30 +105,24 @@ export default async function SettingsView({ currentTab }: Props) {
           <CardHeader>
             <CardTitle>Tipo de contrato</CardTitle>
             <CardDescription>
-              Valores fijos del sistema. Próximamente serán editables por empresa.
+              Modalidades contractuales que se pueden asignar a los empleados. Los marcados
+              como &quot;Sistema&quot; son del catálogo base y no se pueden modificar.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead className="w-[140px]">Origen</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {contractTypes.map((c) => (
-                    <TableRow key={c.id}>
-                      <TableCell className="font-medium">{c.name}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-xs">Sistema</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <ParameterCrudTable
+              title="Listado"
+              entityLabel="Tipo de contrato"
+              items={contractTypes.map((c) => ({
+                id: c.id,
+                name: c.name,
+                is_active: c.is_active,
+                company_id: c.company_id,
+              }))}
+              createAction={createTypeOfContractParameter}
+              updateAction={updateTypeOfContractParameter}
+              toggleActiveAction={toggleTypeOfContractParameterActive}
+            />
           </CardContent>
         </Card>
       </UrlTabsContent>

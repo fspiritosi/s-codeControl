@@ -219,14 +219,110 @@ export async function toggleWorkDiagramParameterActive(id: string, isActive: boo
 }
 
 // ============================================================
-// Type of Contract (read-only, enum del sistema — Fase 2 lo convierte en tabla)
+// Types of Contracts (Tipos de contrato)
 // ============================================================
 
-export async function getTypeOfContractValues() {
-  // Hardcoded del enum type_of_contract_enum
-  return [
-    { id: 'Periodo_de_prueba', name: 'Período de prueba', is_active: true },
-    { id: 'A_tiempo_indeterminado', name: 'A tiempo indeterminado', is_active: true },
-    { id: 'Plazo_fijo', name: 'Plazo fijo', is_active: true },
-  ];
+export async function getTypesOfContractsParameters() {
+  const { companyId } = await getActionContext();
+  if (!companyId) return [];
+
+  try {
+    return await prisma.types_of_contracts.findMany({
+      where: { OR: [{ company_id: companyId }, { company_id: null }] },
+      orderBy: [{ is_active: 'desc' }, { name: 'asc' }],
+    });
+  } catch (error) {
+    console.error('Error in getTypesOfContractsParameters:', error);
+    return [];
+  }
+}
+
+export async function createTypeOfContractParameter(name: string) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return { error: 'No company context' };
+
+  const trimmed = name.trim();
+  if (!trimmed) return { error: 'El nombre no puede estar vacío' };
+
+  try {
+    const existing = await prisma.types_of_contracts.findFirst({
+      where: {
+        name: { equals: trimmed, mode: 'insensitive' },
+        OR: [{ company_id: companyId }, { company_id: null }],
+      },
+      select: { id: true },
+    });
+    if (existing) return { error: 'Ya existe un tipo de contrato con ese nombre' };
+
+    await prisma.types_of_contracts.create({
+      data: { name: trimmed, company_id: companyId, is_active: true },
+    });
+    revalidatePath('/dashboard/settings');
+    return { error: null };
+  } catch (error) {
+    console.error('Error creating type of contract:', error);
+    return { error: String(error) };
+  }
+}
+
+export async function updateTypeOfContractParameter(id: string, name: string) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return { error: 'No company context' };
+
+  const trimmed = name.trim();
+  if (!trimmed) return { error: 'El nombre no puede estar vacío' };
+
+  try {
+    const current = await prisma.types_of_contracts.findUnique({ where: { id } });
+    if (!current) return { error: 'Tipo de contrato no encontrado' };
+    if (current.company_id && current.company_id !== companyId) {
+      return { error: 'No se puede editar un tipo de contrato de otra empresa' };
+    }
+    if (current.company_id === null) {
+      return { error: 'No se puede editar un tipo de contrato del catálogo del sistema' };
+    }
+
+    const duplicate = await prisma.types_of_contracts.findFirst({
+      where: {
+        id: { not: id },
+        name: { equals: trimmed, mode: 'insensitive' },
+        OR: [{ company_id: companyId }, { company_id: null }],
+      },
+      select: { id: true },
+    });
+    if (duplicate) return { error: 'Ya existe un tipo de contrato con ese nombre' };
+
+    await prisma.types_of_contracts.update({ where: { id }, data: { name: trimmed } });
+    revalidatePath('/dashboard/settings');
+    return { error: null };
+  } catch (error) {
+    console.error('Error updating type of contract:', error);
+    return { error: String(error) };
+  }
+}
+
+export async function toggleTypeOfContractParameterActive(id: string, isActive: boolean) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return { error: 'No company context' };
+
+  try {
+    const current = await prisma.types_of_contracts.findUnique({ where: { id } });
+    if (!current) return { error: 'Tipo de contrato no encontrado' };
+    if (current.company_id && current.company_id !== companyId) {
+      return { error: 'No se puede modificar un tipo de contrato de otra empresa' };
+    }
+    if (current.company_id === null) {
+      return { error: 'No se puede modificar un tipo de contrato del catálogo del sistema' };
+    }
+
+    await prisma.types_of_contracts.update({
+      where: { id },
+      data: { is_active: isActive },
+    });
+    revalidatePath('/dashboard/settings');
+    return { error: null };
+  } catch (error) {
+    console.error('Error toggling type of contract:', error);
+    return { error: String(error) };
+  }
 }
