@@ -8,6 +8,7 @@ import {
   GraduationCap,
   HelpCircle,
   LayoutDashboard,
+  Settings,
   ShoppingCart,
   Truck,
   Users,
@@ -30,10 +31,14 @@ const ALL_LINKS = [
   { name: 'Formularios', href: '/dashboard/forms', icon: <ClipboardList size={sizeIcons} />, position: 9 },
   { name: 'Operaciones', href: '/dashboard/operations', icon: <Calendar size={sizeIcons} />, position: 10 },
   { name: 'HSE', href: '/dashboard/hse', icon: <GraduationCap size={sizeIcons} />, position: 11 },
-  { name: 'Ayuda', href: '/dashboard/help', icon: <HelpCircle size={sizeIcons} />, position: 12 },
+  { name: 'Configuración', href: '/dashboard/settings', icon: <Settings size={sizeIcons} />, position: 12 },
+  { name: 'Ayuda', href: '/dashboard/help', icon: <HelpCircle size={sizeIcons} />, position: 13 },
 ];
 
-const GUEST_HIDDEN = new Set(['empresa', 'operaciones', 'mantenimiento', 'documentacion']);
+const GUEST_HIDDEN = new Set(['empresa', 'operaciones', 'mantenimiento', 'documentacion', 'configuracion']);
+
+// M\u00f3dulos siempre visibles para no-Invitados (no dependen de los m\u00f3dulos contratados)
+const ALWAYS_VISIBLE = new Set(['configuracion']);
 
 const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
@@ -47,7 +52,9 @@ function filterLinksByRole(role: string | null, modules: string[]) {
   if (modules.length === 0) return ALL_LINKS;
 
   const modulesNorm = new Set(modules.map(normalize));
-  return ALL_LINKS.filter((link) => modulesNorm.has(normalize(link.name)));
+  return ALL_LINKS.filter(
+    (link) => modulesNorm.has(normalize(link.name)) || ALWAYS_VISIBLE.has(normalize(link.name))
+  );
 }
 
 async function SideBarContainer() {
