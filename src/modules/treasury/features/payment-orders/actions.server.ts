@@ -222,6 +222,16 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
   }
 }
 
+/**
+ * Confirma una orden de pago. Por cada payment genera:
+ *   - CASH → cash_movement tipo EXPENSE en la caja (requiere sesión abierta)
+ *   - TRANSFER → bank_movement tipo TRANSFER_OUT + actualiza balance
+ *   - DEBIT_CARD / CREDIT_CARD → bank_movement tipo DEBIT + actualiza balance
+ *   - CHECK → solo queda registrado en payment_order_payments.check_number
+ *     (el cheque propio se carga aparte desde el módulo de cheques)
+ *   - ACCOUNT → no impacta tesorería (cuenta corriente con proveedor)
+ * Todo en una transacción: si cualquier paso falla, aborta la confirmación.
+ */
 export async function confirmPaymentOrder(id: string) {
   const { companyId } = await getActionContext();
   if (!companyId) return { error: 'No company selected' };
@@ -232,14 +242,121 @@ export async function confirmPaymentOrder(id: string) {
   try {
     const order = await prisma.payment_orders.findFirst({
       where: { id, company_id: companyId },
-      select: { id: true, status: true },
+      include: { payments: true },
     });
     if (!order) return { error: 'Orden no encontrada' };
     if (order.status !== 'DRAFT') return { error: 'Solo se pueden confirmar órdenes en borrador' };
 
-    await prisma.payment_orders.update({
-      where: { id },
-      data: { status: 'CONFIRMED', confirmed_at: new Date(), confirmed_by: user.id },
+    // Validaciones previas (fallan fuera de transacción para mensajes claros)
+    for (const p of order.payments) {
+      if (p.payment_method === 'CASH') {
+        if (!p.cash_register_id) {
+          return { error: 'Hay un pago en efectivo sin caja asignada' };
+        }
+        const openSession = await prisma.cash_register_sessions.findFirst({
+          where: { cash_register_id: p.cash_register_id, status: 'OPEN' },
+          select: { id: true },
+        });
+        if (!openSession) {
+          const register = await prisma.cash_registers.findUnique({
+            where: { id: p.cash_register_id },
+            select: { code: true },
+          });
+          return {
+            error: `La caja ${register?.code ?? ''} no tiene sesión abierta. Abrila antes de confirmar.`,
+          };
+        }
+      }
+      if (
+        (p.payment_method === 'TRANSFER' ||
+          p.payment_method === 'DEBIT_CARD' ||
+          p.payment_method === 'CREDIT_CARD') &&
+        !p.bank_account_id
+      ) {
+        return { error: 'Hay un pago con tarjeta/transferencia sin cuenta bancaria asignada' };
+      }
+      if (p.bank_account_id) {
+        const account = await prisma.bank_accounts.findUnique({
+          where: { id: p.bank_account_id },
+          select: { status: true },
+        });
+        if (account?.status === 'CLOSED') {
+          return { error: 'Una de las cuentas bancarias del pago está cerrada' };
+        }
+      }
+    }
+
+    // Ejecutar en transacción: confirmar + generar movimientos
+    await prisma.$transaction(async (tx) => {
+      for (const p of order.payments) {
+        const amount = Number(p.amount);
+
+        if (p.payment_method === 'CASH' && p.cash_register_id) {
+          const session = await tx.cash_register_sessions.findFirst({
+            where: { cash_register_id: p.cash_register_id, status: 'OPEN' },
+            select: { id: true },
+          });
+          if (!session) throw new Error('Sesión de caja cerrada durante la confirmación');
+
+          await tx.cash_movements.create({
+            data: {
+              session_id: session.id,
+              cash_register_id: p.cash_register_id,
+              company_id: companyId,
+              type: 'EXPENSE',
+              amount,
+              description: `Orden de pago ${order.full_number}`,
+              reference: p.reference || order.full_number,
+              created_by: user.id!,
+            },
+          });
+        }
+
+        if (
+          (p.payment_method === 'TRANSFER' ||
+            p.payment_method === 'DEBIT_CARD' ||
+            p.payment_method === 'CREDIT_CARD') &&
+          p.bank_account_id
+        ) {
+          const movementType =
+            p.payment_method === 'TRANSFER' ? 'TRANSFER_OUT' : 'DEBIT';
+
+          const account = await tx.bank_accounts.findUnique({
+            where: { id: p.bank_account_id },
+            select: { balance: true },
+          });
+          if (!account) throw new Error('Cuenta bancaria no encontrada');
+
+          await tx.bank_movements.create({
+            data: {
+              bank_account_id: p.bank_account_id,
+              company_id: companyId,
+              type: movementType,
+              amount,
+              date: new Date(),
+              description: `Orden de pago ${order.full_number}`,
+              reference: p.reference || order.full_number,
+              payment_order_id: order.id,
+              created_by: user.id!,
+            },
+          });
+
+          await tx.bank_accounts.update({
+            where: { id: p.bank_account_id },
+            data: { balance: Number(account.balance) - amount },
+          });
+        }
+
+        // CHECK: no genera movimiento automático. El cheque propio se crea
+        // manualmente desde el módulo de cheques y el bank_movement se emite
+        // cuando el banco lo debita (status CASHED).
+        // ACCOUNT: no impacta tesorería.
+      }
+
+      await tx.payment_orders.update({
+        where: { id },
+        data: { status: 'CONFIRMED', confirmed_at: new Date(), confirmed_by: user.id! },
+      });
     });
 
     revalidatePath('/dashboard/treasury');
