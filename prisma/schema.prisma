@@ -90,6 +90,7 @@ enum modulos {
   proveedores
   almacenes
   compras
+  tesoreria
 }
 
 enum nationality_enum {
@@ -290,6 +291,15 @@ model company {
   purchase_invoices           purchase_invoices[]
   receiving_notes             receiving_notes[]
   withdrawal_orders           withdrawal_orders[]
+
+  // Tesorería
+  cash_registers         cash_registers[]
+  cash_register_sessions cash_register_sessions[]
+  cash_movements         cash_movements[]
+  bank_accounts          bank_accounts[]
+  bank_movements         bank_movements[]
+  checks                 checks[]
+  payment_orders         payment_orders[]
 }
 
 model industry_type {
@@ -674,6 +684,7 @@ model customers {
   contractor_equipment contractor_equipment[]
   share_company_users  share_company_users[]
   dailyreportrows      dailyreportrows[]
+  checks               checks[]
 }
 
 model contacts {
@@ -1550,6 +1561,8 @@ model suppliers {
   purchase_orders   purchase_orders[]
   purchase_invoices purchase_invoices[]
   receiving_notes   receiving_notes[]
+  payment_orders    payment_orders[]
+  checks            checks[]
 
   @@unique([company_id, code])
   @@unique([company_id, tax_id])
@@ -1724,14 +1737,16 @@ model purchase_invoices {
   created_at          DateTime                          @default(now()) @db.Timestamptz
   updated_at          DateTime                          @default(now()) @updatedAt @db.Timestamptz
 
-  company          company                       @relation(fields: [company_id], references: [id])
-  supplier         suppliers                     @relation(fields: [supplier_id], references: [id])
-  purchase_order   purchase_orders?              @relation(fields: [purchase_order_id], references: [id])
-  original_invoice purchase_invoices?            @relation("purchase_invoice_credit_notes", fields: [original_invoice_id], references: [id])
-  credit_notes     purchase_invoices[]           @relation("purchase_invoice_credit_notes")
-  lines            purchase_invoice_lines[]
-  installments     purchase_order_installments[]
-  receiving_notes  receiving_notes[]
+  company             company                       @relation(fields: [company_id], references: [id])
+  supplier            suppliers                     @relation(fields: [supplier_id], references: [id])
+  purchase_order      purchase_orders?              @relation(fields: [purchase_order_id], references: [id])
+  original_invoice    purchase_invoices?            @relation("purchase_invoice_credit_notes", fields: [original_invoice_id], references: [id])
+  credit_notes        purchase_invoices[]           @relation("purchase_invoice_credit_notes")
+  lines               purchase_invoice_lines[]
+  installments        purchase_order_installments[]
+  receiving_notes     receiving_notes[]
+  payment_order_items payment_order_items[]
+  cash_movements      cash_movements[]
 
   @@unique([company_id, supplier_id, full_number])
   @@index([purchase_order_id])
@@ -1851,4 +1866,330 @@ model withdrawal_order_lines {
 
   order   withdrawal_orders @relation(fields: [order_id], references: [id], onDelete: Cascade)
   product products          @relation(fields: [product_id], references: [id])
+}
+
+// ============================================================
+// ENUMS — Tesorería
+// ============================================================
+
+enum cash_register_status {
+  ACTIVE
+  INACTIVE
+}
+
+enum session_status {
+  OPEN
+  CLOSED
+}
+
+enum cash_movement_type {
+  OPENING
+  CLOSING
+  INCOME
+  EXPENSE
+  ADJUSTMENT
+}
+
+enum bank_account_type {
+  CHECKING
+  SAVINGS
+  CREDIT
+  CASH
+  VIRTUAL_WALLET
+}
+
+enum bank_account_status {
+  ACTIVE
+  INACTIVE
+  CLOSED
+}
+
+enum bank_movement_type {
+  DEPOSIT
+  WITHDRAWAL
+  TRANSFER_IN
+  TRANSFER_OUT
+  CHECK
+  DEBIT
+  FEE
+  INTEREST
+}
+
+enum payment_method {
+  CASH
+  CHECK
+  TRANSFER
+  DEBIT_CARD
+  CREDIT_CARD
+  ACCOUNT
+}
+
+enum payment_order_status {
+  DRAFT
+  CONFIRMED
+  CANCELLED
+}
+
+enum check_type {
+  OWN
+  THIRD_PARTY
+}
+
+enum check_status {
+  PORTFOLIO
+  DEPOSITED
+  CLEARED
+  REJECTED
+  ENDORSED
+  DELIVERED
+  CASHED
+  VOIDED
+}
+
+// ============================================================
+// MODELS — Tesorería (Cajas Físicas)
+// ============================================================
+
+model cash_registers {
+  id         String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id String               @db.Uuid
+  code       String
+  name       String
+  location   String?
+  status     cash_register_status @default(ACTIVE)
+  is_default Boolean              @default(false)
+  created_by String?
+  created_at DateTime             @default(now()) @db.Timestamptz
+  updated_at DateTime             @default(now()) @updatedAt @db.Timestamptz
+
+  company              company                  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  sessions             cash_register_sessions[]
+  movements            cash_movements[]
+  payment_order_payments payment_order_payments[]
+
+  @@unique([company_id, code])
+  @@index([company_id, status])
+}
+
+model cash_register_sessions {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cash_register_id String         @db.Uuid
+  company_id       String         @db.Uuid
+  session_number   Int
+  status           session_status @default(OPEN)
+  opening_balance  Decimal        @default(0) @db.Decimal(15, 2)
+  expected_balance Decimal        @default(0) @db.Decimal(15, 2)
+  actual_balance   Decimal?       @db.Decimal(15, 2)
+  difference       Decimal?       @db.Decimal(15, 2)
+  opening_notes    String?
+  closing_notes    String?
+  opened_by        String
+  closed_by        String?
+  opened_at        DateTime       @default(now()) @db.Timestamptz
+  closed_at        DateTime?      @db.Timestamptz
+  created_at       DateTime       @default(now()) @db.Timestamptz
+  updated_at       DateTime       @default(now()) @updatedAt @db.Timestamptz
+
+  cash_register cash_registers   @relation(fields: [cash_register_id], references: [id], onDelete: Cascade)
+  company       company          @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  movements     cash_movements[]
+
+  @@unique([cash_register_id, session_number])
+  @@index([company_id, status])
+  @@index([cash_register_id, status])
+}
+
+model cash_movements {
+  id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  session_id          String             @db.Uuid
+  cash_register_id    String             @db.Uuid
+  company_id          String             @db.Uuid
+  type                cash_movement_type
+  amount              Decimal            @db.Decimal(15, 2)
+  date                DateTime           @default(now()) @db.Timestamptz
+  description         String
+  reference           String?
+  purchase_invoice_id String?            @db.Uuid
+  created_by          String
+  created_at          DateTime           @default(now()) @db.Timestamptz
+  updated_at          DateTime           @default(now()) @updatedAt @db.Timestamptz
+
+  session          cash_register_sessions @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  cash_register    cash_registers         @relation(fields: [cash_register_id], references: [id], onDelete: Cascade)
+  company          company                @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  purchase_invoice purchase_invoices?     @relation(fields: [purchase_invoice_id], references: [id])
+
+  @@index([company_id, date])
+  @@index([session_id, type])
+  @@index([cash_register_id, date])
+}
+
+// ============================================================
+// MODELS — Tesorería (Bancos)
+// ============================================================
+
+model bank_accounts {
+  id             String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id     String              @db.Uuid
+  bank_name      String
+  account_number String
+  account_type   bank_account_type
+  cbu            String?
+  alias          String?
+  currency       String              @default("ARS")
+  balance        Decimal             @default(0) @db.Decimal(15, 2)
+  status         bank_account_status @default(ACTIVE)
+  created_by     String?
+  created_at     DateTime            @default(now()) @db.Timestamptz
+  updated_at     DateTime            @default(now()) @updatedAt @db.Timestamptz
+
+  company                company                  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  movements              bank_movements[]
+  payment_order_payments payment_order_payments[]
+  checks                 checks[]
+
+  @@unique([company_id, account_number])
+  @@index([company_id, status])
+}
+
+model bank_movements {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bank_account_id  String             @db.Uuid
+  company_id       String             @db.Uuid
+  type             bank_movement_type
+  amount           Decimal            @db.Decimal(15, 2)
+  date             DateTime           @db.Timestamptz
+  description      String
+  reference        String?
+  statement_number String?
+  reference_type   String?
+  reference_id     String?            @db.Uuid
+  payment_order_id String?            @db.Uuid
+  reconciled       Boolean            @default(false)
+  reconciled_at    DateTime?          @db.Timestamptz
+  reconciled_by    String?
+  created_by       String
+  created_at       DateTime           @default(now()) @db.Timestamptz
+  updated_at       DateTime           @default(now()) @updatedAt @db.Timestamptz
+
+  bank_account  bank_accounts  @relation(fields: [bank_account_id], references: [id], onDelete: Cascade)
+  company       company        @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  payment_order payment_orders? @relation(fields: [payment_order_id], references: [id])
+  check         checks?
+
+  @@index([company_id, date])
+  @@index([bank_account_id, date])
+  @@index([reconciled])
+}
+
+// ============================================================
+// MODELS — Tesorería (Órdenes de Pago)
+// ============================================================
+
+model payment_orders {
+  id           String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id   String               @db.Uuid
+  supplier_id  String?              @db.Uuid
+  number       Int
+  full_number  String
+  date         DateTime             @db.Timestamptz
+  total_amount Decimal              @db.Decimal(15, 2)
+  notes        String?
+  status       payment_order_status @default(DRAFT)
+  document_url String?
+  document_key String?
+  created_by   String
+  confirmed_by String?
+  confirmed_at DateTime?            @db.Timestamptz
+  created_at   DateTime             @default(now()) @db.Timestamptz
+  updated_at   DateTime             @default(now()) @updatedAt @db.Timestamptz
+
+  company        company                  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  supplier       suppliers?               @relation(fields: [supplier_id], references: [id])
+  items          payment_order_items[]
+  payments       payment_order_payments[]
+  bank_movements bank_movements[]
+
+  @@unique([company_id, number])
+  @@index([company_id, status])
+  @@index([supplier_id, status])
+}
+
+model payment_order_items {
+  id               String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payment_order_id String  @db.Uuid
+  invoice_id       String? @db.Uuid
+  amount           Decimal @db.Decimal(15, 2)
+
+  payment_order payment_orders     @relation(fields: [payment_order_id], references: [id], onDelete: Cascade)
+  invoice       purchase_invoices? @relation(fields: [invoice_id], references: [id])
+
+  @@index([payment_order_id])
+  @@index([invoice_id])
+}
+
+model payment_order_payments {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payment_order_id String         @db.Uuid
+  payment_method   payment_method
+  amount           Decimal        @db.Decimal(15, 2)
+  cash_register_id String?        @db.Uuid
+  bank_account_id  String?        @db.Uuid
+  check_number     String?
+  card_last4       String?
+  reference        String?
+
+  payment_order payment_orders  @relation(fields: [payment_order_id], references: [id], onDelete: Cascade)
+  cash_register cash_registers? @relation(fields: [cash_register_id], references: [id])
+  bank_account  bank_accounts?  @relation(fields: [bank_account_id], references: [id])
+  check         checks?
+
+  @@index([payment_order_id])
+}
+
+// ============================================================
+// MODELS — Tesorería (Cheques)
+// ============================================================
+
+model checks {
+  id                       String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id               String       @db.Uuid
+  type                     check_type
+  status                   check_status @default(PORTFOLIO)
+  check_number             String
+  bank_name                String
+  branch                   String?
+  account_number           String?
+  amount                   Decimal      @db.Decimal(15, 2)
+  issue_date               DateTime     @db.Timestamptz
+  due_date                 DateTime     @db.Timestamptz
+  drawer_name              String
+  drawer_tax_id            String?
+  payee_name               String?
+  customer_id              String?      @db.Uuid
+  supplier_id              String?      @db.Uuid
+  payment_order_payment_id String?      @unique @db.Uuid
+  bank_account_id          String?      @db.Uuid
+  bank_movement_id         String?      @unique @db.Uuid
+  endorsed_to_name         String?
+  endorsed_to_tax_id       String?
+  endorsed_at              DateTime?    @db.Timestamptz
+  rejected_at              DateTime?    @db.Timestamptz
+  rejection_reason         String?
+  deposited_at             DateTime?    @db.Timestamptz
+  cleared_at               DateTime?    @db.Timestamptz
+  notes                    String?
+  created_by               String
+  created_at               DateTime     @default(now()) @db.Timestamptz
+  updated_at               DateTime     @default(now()) @updatedAt @db.Timestamptz
+
+  company               company                 @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  customer              customers?              @relation(fields: [customer_id], references: [id])
+  supplier              suppliers?              @relation(fields: [supplier_id], references: [id])
+  bank_account          bank_accounts?          @relation(fields: [bank_account_id], references: [id])
+  bank_movement         bank_movements?         @relation(fields: [bank_movement_id], references: [id])
+  payment_order_payment payment_order_payments? @relation(fields: [payment_order_payment_id], references: [id])
+
+  @@index([company_id, type, status])
+  @@index([company_id, due_date])
 }
