@@ -131,6 +131,7 @@ export async function getDocuments(company_id: string, filters?: {
     .select('*,docs_types(id, name,short_description)')
     .eq('company_id', company_id)
     .order('created_at', { ascending: false })
+    .limit(200)
 
   if (filters?.status) {
     query = query.eq('status', filters.status)

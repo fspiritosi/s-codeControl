@@ -11,16 +11,6 @@ export const fetchCompaniesByOwner = async (ownerId: string) => {
         share_company_users: { include: { profile: true } },
         city_rel: { select: { name: true, id: true } },
         province_rel: { select: { name: true, id: true } },
-        employees: {
-          include: {
-            city_rel: { select: { name: true } },
-            province_rel: { select: { name: true } },
-            workflow_diagram_rel: { select: { name: true } },
-            hierarchy_rel: { select: { name: true } },
-            birthplace_rel: { select: { name: true } },
-            contractor_employee: { include: { contractor: true } },
-          },
-        },
       },
     });
     return (data ?? []);
@@ -42,16 +32,6 @@ export const fetchSharedCompaniesByProfile = async (profileId: string) => {
             share_company_users: { include: { profile: true } },
             city_rel: { select: { name: true, id: true } },
             province_rel: { select: { name: true, id: true } },
-            employees: {
-              include: {
-                city_rel: { select: { name: true } },
-                province_rel: { select: { name: true } },
-                workflow_diagram_rel: { select: { name: true } },
-                hierarchy_rel: { select: { name: true } },
-                birthplace_rel: { select: { name: true } },
-                contractor_employee: { include: { contractor: true } },
-              },
-            },
           },
         },
       },

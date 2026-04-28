@@ -27,6 +27,8 @@ export async function GET(request: NextRequest) {
         },
         reparation_type_rel: true,
         repairlogs: {
+          orderBy: { created_at: 'desc' },
+          take: 15,
           include: {
             employee: true,
             user: true,

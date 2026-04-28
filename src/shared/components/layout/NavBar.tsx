@@ -9,6 +9,8 @@ import {
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
 import { useLoggedUserStore } from '@/shared/store/loggedUser';
+import { startNotificationPolling, stopNotificationPolling } from '@/shared/store/uiStore';
+import { useEffect } from 'react';
 import {
   BellIcon,
   CheckCircledIcon,
@@ -64,6 +66,11 @@ export default function NavBar() {
   const actualUser = useLoggedUserStore((state) => state.profile);
   const notifications = useLoggedUserStore((state) => state.notifications);
   const markAllAsRead = useLoggedUserStore((state) => state.markAllAsRead);
+
+  useEffect(() => {
+    startNotificationPolling();
+    return () => stopNotificationPolling();
+  }, []);
 
   const handleCloseSidebar = () => {
     useLoggedUserStore.getState().toggleSidebar();
