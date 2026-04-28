@@ -1,6 +1,7 @@
 import { prisma } from '@/shared/lib/prisma';
 import { apiSuccess, apiError } from '@/shared/lib/api-response';
 import { serializeBigInt } from '@/shared/lib/utils';
+import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -25,10 +26,17 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // Sin employee_id: filtrar por la empresa actual de la cookie.
+  // Antes traía diagramas de TODAS las empresas (bug + egress masivo).
+  const cookiesStore = await cookies();
+  const company_id = searchParams.get('actual') ?? cookiesStore.get('actualComp')?.value;
+  if (!company_id) return apiSuccess({ data: [] });
+
   try {
     const employees_diagram = await prisma.employees_diagram.findMany({
+      where: { employee: { company_id } },
       include: {
-        employee: true,
+        employee: { select: { id: true, firstname: true, lastname: true, company_id: true } },
         diagram_type_rel: true,
       },
     });

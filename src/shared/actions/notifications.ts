@@ -6,6 +6,8 @@ export const fetchNotificationsByCompany = async (companyId: string) => {
   try {
     const notifications = await prisma.notifications.findMany({
       where: { company_id: companyId },
+      orderBy: { created_at: 'desc' },
+      take: 50,
     });
 
     if (!notifications?.length) return [];

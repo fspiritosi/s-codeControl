@@ -26,13 +26,8 @@ export const useUiStore = create<UiState>((set, get) => ({
     const companyId = useCompanyStore.getState().actualCompany?.id;
     if (!companyId) return;
 
-    const notifications = await fetchNotificationsByCompany(companyId);
-
-    const sorted = notifications?.sort(
-      (a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    ) as Notifications[];
-
-    set({ notifications: sorted });
+    const notifications = (await fetchNotificationsByCompany(companyId)) as Notifications[];
+    set({ notifications: notifications ?? [] });
   },
 
   markAllAsRead: async () => {
@@ -49,25 +44,63 @@ export const useUiStore = create<UiState>((set, get) => ({
   },
 }));
 
-// Polling replacement for real-time subscription (15s for notifications - more time-sensitive)
+// Polling de notificaciones — controlado por componentes que lo necesiten.
+// Se pausa con la pestaña en background para no consumir egress mientras nadie mira.
+const POLL_INTERVAL_MS = 60_000;
 let notificationPollInterval: NodeJS.Timeout | null = null;
+let visibilityListenerAttached = false;
+let activeSubscribers = 0;
 
-function startNotificationPolling() {
-  if (notificationPollInterval) return;
-  notificationPollInterval = setInterval(() => {
-    useUiStore.getState().allNotifications();
-  }, 15000);
+function tick() {
+  if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+  useUiStore.getState().allNotifications();
 }
 
-function stopNotificationPolling() {
+function ensureInterval() {
+  if (notificationPollInterval) return;
+  notificationPollInterval = setInterval(tick, POLL_INTERVAL_MS);
+}
+
+function clearPollInterval() {
   if (notificationPollInterval) {
     clearInterval(notificationPollInterval);
     notificationPollInterval = null;
   }
 }
 
-if (typeof window !== 'undefined') {
-  startNotificationPolling();
+function handleVisibilityChange() {
+  if (activeSubscribers === 0) return;
+  if (document.visibilityState === 'visible') {
+    ensureInterval();
+    tick();
+  } else {
+    clearPollInterval();
+  }
+}
+
+function startNotificationPolling() {
+  if (typeof window === 'undefined') return;
+  activeSubscribers += 1;
+  if (!visibilityListenerAttached) {
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    visibilityListenerAttached = true;
+  }
+  if (document.visibilityState === 'visible') {
+    ensureInterval();
+    tick();
+  }
+}
+
+function stopNotificationPolling() {
+  if (typeof window === 'undefined') return;
+  activeSubscribers = Math.max(0, activeSubscribers - 1);
+  if (activeSubscribers === 0) {
+    clearPollInterval();
+    if (visibilityListenerAttached) {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      visibilityListenerAttached = false;
+    }
+  }
 }
 
 export { startNotificationPolling, stopNotificationPolling };

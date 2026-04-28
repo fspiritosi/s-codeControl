@@ -30,6 +30,7 @@ function formatCalendar(dateStr: string): string {
   if (daysDiff < 0 && daysDiff > -7) return `${format(date, 'EEEE', { locale: es })} a las ${format(date, 'h:mm a')}`;
   return format(date, 'dd/MM/yyyy');
 }
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
@@ -216,9 +217,13 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
                       <Card>
                         <Link target="_blank" href={image || ''}>
                           <CardContent className="flex aspect-square items-center justify-center p-1">
-                            <img
+                            <Image
                               src={image}
                               alt={`Imagen ${index + 1}`}
+                              width={400}
+                              height={400}
+                              loading="lazy"
+                              sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
                               className="w-full h-full object-cover rounded-lg"
                             />
                           </CardContent>
@@ -238,21 +243,30 @@ function RepairModal({ row, onlyView, action }: { row: any; onlyView?: boolean; 
               <Carousel className="w-full">
                 <CarouselContent className="p-2">
                   {imagesMechanic?.length
-                    ? imagesMechanic?.map((image, index) => (
-                        <CarouselItem key={crypto.randomUUID()} className="md:basis-1/2 lg:basis-1/3  overflow-hidden">
-                          <Card className="">
-                            <Link target="_blank" href={image || ''}>
-                              <CardContent className="flex aspect-square items-center justify-center p-1">
-                                <img
-                                  src={image || ''}
-                                  alt={`Imagen ${index + 1}`}
-                                  className="w-full h-full object-cover rounded-lg"
-                                />
-                              </CardContent>
-                            </Link>
-                          </Card>
-                        </CarouselItem>
-                      ))
+                    ? imagesMechanic?.map((image, index) =>
+                        image ? (
+                          <CarouselItem
+                            key={crypto.randomUUID()}
+                            className="md:basis-1/2 lg:basis-1/3  overflow-hidden"
+                          >
+                            <Card className="">
+                              <Link target="_blank" href={image}>
+                                <CardContent className="flex aspect-square items-center justify-center p-1">
+                                  <Image
+                                    src={image}
+                                    alt={`Imagen ${index + 1}`}
+                                    width={400}
+                                    height={400}
+                                    loading="lazy"
+                                    sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                                    className="w-full h-full object-cover rounded-lg"
+                                  />
+                                </CardContent>
+                              </Link>
+                            </Card>
+                          </CarouselItem>
+                        ) : null
+                      )
                     : null}
                 </CarouselContent>
                 <CarouselPrevious />
