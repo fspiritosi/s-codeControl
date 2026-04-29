@@ -1,15 +1,30 @@
 'use server';
 
 /**
- * Re-exports de los actions de auditoría manual de alertas. Vive en el módulo
- * `documents/audit` para mantener la frontera modular: los componentes UI
- * importan desde acá, no directamente desde `shared/lib/documentAlerts`.
+ * Wrappers locales sobre los helpers de `shared/lib/documentAlerts`. Los
+ * archivos `'use server'` no permiten re-exports — Next.js solo expone
+ * funciones declaradas en el propio archivo como server actions.
  */
-export {
-  auditPendingDocumentsForEmployees,
-  auditPendingDocumentsForEquipment,
-  confirmPendingDocumentsForEmployees,
-  confirmPendingDocumentsForEquipment,
+
+import {
+  auditPendingDocumentsForEmployees as _auditEmployees,
+  auditPendingDocumentsForEquipment as _auditEquipment,
+  confirmPendingDocumentsForEmployees as _confirmEmployees,
+  confirmPendingDocumentsForEquipment as _confirmEquipment,
 } from '@/shared/lib/documentAlerts';
 
-export type { PendingAuditEntry, PendingAuditResult } from '@/shared/lib/documentAlerts';
+export async function auditPendingDocumentsForEmployees() {
+  return _auditEmployees();
+}
+
+export async function auditPendingDocumentsForEquipment() {
+  return _auditEquipment();
+}
+
+export async function confirmPendingDocumentsForEmployees(employeeIds: string[]) {
+  return _confirmEmployees(employeeIds);
+}
+
+export async function confirmPendingDocumentsForEquipment(vehicleIds: string[]) {
+  return _confirmEquipment(vehicleIds);
+}

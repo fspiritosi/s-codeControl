@@ -19,8 +19,8 @@ import {
   auditPendingDocumentsForEquipment,
   confirmPendingDocumentsForEmployees,
   confirmPendingDocumentsForEquipment,
-  type PendingAuditResult,
 } from '../actions.server';
+import type { PendingAuditResult } from '@/shared/lib/documentAlerts';
 
 interface Props {
   kind: 'employees' | 'equipment';
