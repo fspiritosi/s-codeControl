@@ -31,13 +31,14 @@ export function PurchaseOrdersDataTable({ data, totalRows, searchParams }: Props
   const facetedFilters = FILTER_CONFIG.map((filter) => {
     if (filter.type !== 'faceted' || !facets?.[filter.columnId]) return filter;
     const labelMap = filter.columnId === 'status' ? PO_STATUS_LABELS : PO_INVOICING_STATUS_LABELS;
+    const entries = facets[filter.columnId];
     return {
       ...filter,
-      options: facets[filter.columnId].map((f) => ({
+      options: entries.map((f) => ({
         label: labelMap[f.value] || f.value,
         value: f.value,
-        count: f.count,
       })),
+      externalCounts: new Map(entries.map((f) => [f.value, f.count])),
     };
   });
 

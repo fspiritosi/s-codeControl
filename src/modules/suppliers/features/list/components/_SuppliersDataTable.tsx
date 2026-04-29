@@ -33,13 +33,14 @@ export function SuppliersDataTable({ data, totalRows, searchParams }: Props) {
     if (filter.type !== 'faceted' || !facets?.[filter.columnId]) return filter;
 
     const labelMap = filter.columnId === 'status' ? SUPPLIER_STATUS_LABELS : TAX_CONDITION_LABELS;
+    const entries = facets[filter.columnId];
     return {
       ...filter,
-      options: facets[filter.columnId].map((f) => ({
+      options: entries.map((f) => ({
         label: labelMap[f.value] || f.value,
         value: f.value,
-        count: f.count,
       })),
+      externalCounts: new Map(entries.map((f) => [f.value, f.count])),
     };
   });
 

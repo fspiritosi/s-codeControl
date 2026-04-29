@@ -857,13 +857,42 @@ function mapEmployeeDocOrderBy(sortBy: string | null | undefined, sortOrder: str
   }
 }
 
-/** Shared include clause for employee document paginated/export queries */
-const employeeDocPaginatedInclude = {
-  document_type: true,
+/**
+ * Select específico para queries paginadas/exportación de documentos de empleados.
+ * Solo incluye los campos que `formatEmployeeDocuments` realmente lee — evita
+ * traer payload sobrante (relaciones anidadas innecesarias) en cada fila.
+ */
+const employeeDocPaginatedSelect = {
+  id: true,
+  created_at: true,
+  state: true,
+  validity: true,
+  period: true,
+  document_path: true,
+  is_active: true,
+  document_type: {
+    select: {
+      id: true,
+      name: true,
+      applies: true,
+      mandatory: true,
+      is_it_montlhy: true,
+      multiresource: true,
+      explired: true,
+    },
+  },
   employee: {
-    include: {
+    select: {
+      id: true,
+      firstname: true,
+      lastname: true,
+      document_number: true,
+      is_active: true,
+      termination_date: true,
       contractor_employee: {
-        include: { contractor: true },
+        select: {
+          contractor: { select: { name: true } },
+        },
       },
     },
   },
@@ -995,7 +1024,7 @@ export async function getEmployeeDocumentsPaginated(
     const [data, total] = await Promise.all([
       prisma.documents_employees.findMany({
         where,
-        include: employeeDocPaginatedInclude,
+        select: employeeDocPaginatedSelect,
         skip,
         take,
         orderBy: mappedOrderBy,
@@ -1125,7 +1154,7 @@ export async function getAllEmployeeDocumentsForExport(
 
     const data = await prisma.documents_employees.findMany({
       where,
-      include: employeeDocPaginatedInclude,
+      select: employeeDocPaginatedSelect,
       orderBy: mappedOrderBy,
     });
 
@@ -1140,15 +1169,37 @@ export async function getAllEmployeeDocumentsForExport(
 // EQUIPMENT DOCUMENTS — Paginated / Facets / Export
 // ============================================================================
 
-/** Shared include clause for equipment document paginated/export queries */
-const equipmentDocPaginatedInclude = {
-  document_type: true,
+/**
+ * Select específico para queries paginadas/exportación de documentos de equipos.
+ * Solo trae los campos que `formatVehiculesDocuments` realmente lee.
+ */
+const equipmentDocPaginatedSelect = {
+  id: true,
+  created_at: true,
+  state: true,
+  validity: true,
+  period: true,
+  document_path: true,
+  is_active: true,
+  document_type: {
+    select: {
+      id: true,
+      name: true,
+      applies: true,
+      mandatory: true,
+      is_it_montlhy: true,
+      multiresource: true,
+      explired: true,
+    },
+  },
   vehicle: {
-    include: {
-      type_rel: true,
-      type_of_vehicle_rel: true,
-      model_rel: true,
-      brand_rel: true,
+    select: {
+      id: true,
+      domain: true,
+      intern_number: true,
+      serie: true,
+      is_active: true,
+      type_of_vehicle_rel: { select: { name: true } },
     },
   },
 } as const;
@@ -1276,7 +1327,7 @@ export async function getEquipmentDocumentsPaginated(
     const [data, total] = await Promise.all([
       prisma.documents_equipment.findMany({
         where,
-        include: equipmentDocPaginatedInclude,
+        select: equipmentDocPaginatedSelect,
         skip,
         take,
         orderBy: mappedOrderBy,
@@ -1406,7 +1457,7 @@ export async function getAllEquipmentDocumentsForExport(
 
     const data = await prisma.documents_equipment.findMany({
       where,
-      include: equipmentDocPaginatedInclude,
+      select: equipmentDocPaginatedSelect,
       orderBy: mappedOrderBy,
     });
 

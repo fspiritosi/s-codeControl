@@ -30,13 +30,14 @@ export function ReceivingNotesDataTable({ data, totalRows, searchParams }: Props
 
   const facetedFilters = FILTER_CONFIG.map((filter) => {
     if (filter.type !== 'faceted' || !facets?.[filter.columnId]) return filter;
+    const entries = facets[filter.columnId];
     return {
       ...filter,
-      options: facets[filter.columnId].map((f) => ({
+      options: entries.map((f) => ({
         label: RECEIVING_NOTE_STATUS_LABELS[f.value] || f.value,
         value: f.value,
-        count: f.count,
       })),
+      externalCounts: new Map(entries.map((f) => [f.value, f.count])),
     };
   });
 

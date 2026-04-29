@@ -1,10 +1,12 @@
 'use server';
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
+import { ensurePendingDocumentsForEmployee } from '@/shared/lib/documentAlerts';
 
 export const createEmployee = async (employee: Record<string, unknown>) => {
   try {
     const data = await prisma.employees.create({ data: employee as any });
+    await ensurePendingDocumentsForEmployee(data.id);
     return { data: [data], error: null };
   } catch (error) {
     console.error('Error creating employee:', error);
@@ -31,6 +33,14 @@ export const updateEmployeeByDocNumberFull = async (documentNumber: string, empl
       where: { document_number: documentNumber },
       data: employee as any,
     });
+    // Reevaluar alertas obligatorias para este empleado tras la edición
+    const updated = await prisma.employees.findFirst({
+      where: { document_number: documentNumber },
+      select: { id: true },
+    });
+    if (updated?.id) {
+      await ensurePendingDocumentsForEmployee(updated.id);
+    }
     return { data: [data], error: null };
   } catch (error) {
     console.error('Error updating employee:', error);
