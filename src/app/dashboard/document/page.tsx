@@ -10,6 +10,7 @@ import CompanyTabs from '@/modules/documents/features/list/components/CompanyTab
 import EmployeeDocumentsTabs from '@/modules/documents/features/list/components/EmployeeDocumentsTabs';
 import EquipmentTabs from '@/modules/documents/features/list/components/EquipmentTabs';
 import TypesDocumentsView from '@/modules/documents/features/types/components/TypesDocumentsView';
+import { AuditAlertsButton } from '@/modules/documents/features/audit/components/AuditAlertsButton';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
 
 const VALID_TABS = ['employees', 'equipment', 'company', 'types'] as const;
@@ -42,6 +43,9 @@ export default async function DocumentPage({
     ? typedData?.filter((e) => !e.id_document_types.private)
     : typedData;
 
+  // Solo roles administrativos (no Invitado) pueden disparar la auditoría manual
+  const canAudit = !!session.role && session.role !== 'Invitado';
+
   return (
     <Suspense fallback={<PageTableSkeleton />}>
       <UrlTabs value={currentTab} paramName="tab" baseUrl="/dashboard/document">
@@ -59,7 +63,10 @@ export default async function DocumentPage({
                 <CardTitle>Documentos cargados</CardTitle>
                 <CardDescription>Aquí encontrarás todos los documentos de tus empleados</CardDescription>
               </div>
-              <DocumentNav onlyEmployees onlyEquipment />
+              <div className="flex items-center gap-2">
+                {canAudit && <AuditAlertsButton kind="employees" />}
+                <DocumentNav onlyEmployees onlyEquipment />
+              </div>
             </CardHeader>
             <CardContent>
               <EmployeeDocumentsTabs searchParams={resolved} />
@@ -74,7 +81,10 @@ export default async function DocumentPage({
                 <CardTitle>Documentos cargados</CardTitle>
                 <CardDescription>Aquí encontrarás todos los documentos de tus equipos</CardDescription>
               </div>
-              <DocumentNav onlyEmployees onlyEquipment />
+              <div className="flex items-center gap-2">
+                {canAudit && <AuditAlertsButton kind="equipment" />}
+                <DocumentNav onlyEmployees onlyEquipment />
+              </div>
             </CardHeader>
             <CardContent>
               <EquipmentTabs searchParams={resolved} />
