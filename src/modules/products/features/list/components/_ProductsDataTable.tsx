@@ -30,17 +30,15 @@ export function ProductsDataTable({ data, totalRows, searchParams }: Props) {
 
   const facetedFilters = FILTER_CONFIG.map((filter) => {
     if (filter.type !== 'faceted' || !facets?.[filter.columnId]) return filter;
-
+    const labelMap = filter.columnId === 'type' ? PRODUCT_TYPE_LABELS : PRODUCT_STATUS_LABELS;
+    const entries = facets[filter.columnId];
     return {
       ...filter,
-      options: facets[filter.columnId].map((f: { value: string; count: number }) => {
-        const labelMap = filter.columnId === 'type' ? PRODUCT_TYPE_LABELS : PRODUCT_STATUS_LABELS;
-        return {
-          label: labelMap[f.value] || f.value,
-          value: f.value,
-          count: f.count,
-        };
-      }),
+      options: entries.map((f) => ({
+        label: labelMap[f.value] || f.value,
+        value: f.value,
+      })),
+      externalCounts: new Map(entries.map((f) => [f.value, f.count])),
     };
   });
 

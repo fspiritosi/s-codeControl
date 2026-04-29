@@ -25,7 +25,12 @@ export function WithdrawalsDataTable({ data, totalRows, searchParams }: Props) {
 
   const facetedFilters = FILTER_CONFIG.map((f) => {
     if (f.type !== 'faceted' || !facets?.[f.columnId]) return f;
-    return { ...f, options: facets[f.columnId].map((e) => ({ label: STATUS_LABELS[e.value] || e.value, value: e.value, count: e.count })) };
+    const entries = facets[f.columnId];
+    return {
+      ...f,
+      options: entries.map((e) => ({ label: STATUS_LABELS[e.value] || e.value, value: e.value })),
+      externalCounts: new Map(entries.map((e) => [e.value, e.count])),
+    };
   });
 
   return <DataTable columns={withdrawalColumns as any} data={data} totalRows={totalRows} searchParams={searchParams}
