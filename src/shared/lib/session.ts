@@ -24,6 +24,19 @@ const EMPTY_SESSION: Session = {
   sharedCompanies: [],
 };
 
+// Convierte los BigInt de un company para que JSON.stringify (usado por
+// unstable_cache y por el RSC payload al cliente) no rompa con
+// "Do not know how to serialize a BigInt".
+function serializeCompany<T extends { city?: bigint | number | null; province_id?: bigint | number | null }>(
+  c: T
+): T {
+  return {
+    ...c,
+    city: c.city != null ? Number(c.city) : c.city,
+    province_id: c.province_id != null ? Number(c.province_id) : c.province_id,
+  };
+}
+
 // Cacheado a nivel de request por user+companyId. Evita refetch en cada navegación
 // del layout (queries se quedaban fuera del scope de React.cache entre requests).
 // Invalidación implícita por cambio de companyId en cookie; revalidate de 60s para profile/companies.
@@ -70,14 +83,20 @@ const buildSessionForUser = unstable_cache(
         null
       : null;
 
+    const safeCompanies = (companies || []).map(serializeCompany);
+    const safeShared = (sharedEntries || []).map((e: any) => ({
+      ...e,
+      company: e.company ? serializeCompany(e.company) : e.company,
+    }));
+
     return {
       user: { id: userId, email: userEmail },
       profile,
       company: company ? { id: company.id, company_name: company.company_name, owner_id: company.owner_id } : null,
       role,
       modules,
-      companies: companies || [],
-      sharedCompanies: sharedEntries || [],
+      companies: safeCompanies,
+      sharedCompanies: safeShared,
     };
   },
   ['session-data'],
