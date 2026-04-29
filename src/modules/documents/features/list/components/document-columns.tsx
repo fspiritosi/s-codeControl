@@ -7,6 +7,7 @@ import { Button } from '@/shared/components/ui/button';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { DocumentRowActions } from './DocumentRowActions';
+import { UploadPendingDocumentDialog } from '@/modules/documents/features/manage/components/UploadPendingDocumentDialog';
 
 const stateVariantMap: Record<
   string,
@@ -107,11 +108,14 @@ export const permanentDocumentColumns: ColumnDef<any>[] = [
       const isPending = row.original.state?.toLowerCase() === 'pendiente';
       if (isPending) {
         return (
-          <Link href={`/dashboard/document/${row.original.id}?resource=${row.original.applies}`}>
-            <Button variant="outline" size="sm">
-              Subir documento
-            </Button>
-          </Link>
+          <UploadPendingDocumentDialog
+            rowId={row.original.id}
+            kind="employee"
+            documentName={row.original.documentName ?? 'Documento'}
+            resourceLabel={row.original.resource ?? ''}
+            expires={!!row.original.expires}
+            monthly={!!row.original.isItMonthly}
+          />
         );
       }
       return (
@@ -225,11 +229,14 @@ export const monthlyDocumentColumns: ColumnDef<any>[] = [
       const isPending = row.original.state?.toLowerCase() === 'pendiente';
       if (isPending) {
         return (
-          <Link href={`/dashboard/document/${row.original.id}?resource=${row.original.applies}`}>
-            <Button variant="outline" size="sm">
-              Subir documento
-            </Button>
-          </Link>
+          <UploadPendingDocumentDialog
+            rowId={row.original.id}
+            kind="employee"
+            documentName={row.original.documentName ?? 'Documento'}
+            resourceLabel={row.original.resource ?? ''}
+            expires={!!row.original.expires}
+            monthly={!!row.original.isItMonthly}
+          />
         );
       }
       return (

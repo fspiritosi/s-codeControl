@@ -1,5 +1,8 @@
 'use server';
 import { prisma } from '@/shared/lib/prisma';
+import { storageServer } from '@/shared/lib/storage-server';
+import { calculateNameOFDocument } from '@/shared/lib/utils';
+import { fetchCurrentUser } from '@/shared/actions/auth';
 
 // -- Document state mutations --
 
@@ -208,3 +211,137 @@ export const deleteDocumentEquipmentById = async (id: string) => {
     return { error: String(error) };
   }
 };
+
+// -- Upload pending document --
+
+/**
+ * Upload de un documento pendiente desde el listado de Documentos.
+ * Recibe el FormData con el archivo + datos opcionales (validity, period).
+ * Calcula el path en storage, sube el archivo y actualiza la fila a estado 'presentado'.
+ */
+export async function uploadPendingDocument(formData: FormData) {
+  try {
+    const rowId = formData.get('rowId') as string;
+    const kind = formData.get('kind') as 'employee' | 'equipment';
+    const file = formData.get('file') as File | null;
+    const validityISO = (formData.get('validity') as string | null) || null;
+    const period = (formData.get('period') as string | null) || null;
+
+    if (!rowId || !kind || !file) {
+      return { ok: false, error: 'Faltan datos para cargar el documento' };
+    }
+
+    const user = await fetchCurrentUser();
+    if (!user?.id) return { ok: false, error: 'No autenticado' };
+
+    if (kind === 'employee') {
+      const row = await prisma.documents_employees.findUnique({
+        where: { id: rowId },
+        include: {
+          document_type: true,
+          employee: { include: { company: true } },
+        },
+      });
+      if (!row || !row.document_type || !row.employee || !row.employee.company) {
+        return { ok: false, error: 'Documento no encontrado' };
+      }
+      if (row.state !== 'pendiente') {
+        return { ok: false, error: 'El documento ya no está pendiente' };
+      }
+
+      const company = row.employee.company;
+      const docType = row.document_type;
+      const appliesLabel = `${row.employee.firstname} ${row.employee.lastname}`;
+      const fileExtension = file.name.split('.').pop() || 'bin';
+      const version = validityISO
+        ? new Date(validityISO).toISOString().slice(0, 10).split('-').reverse().join('-')
+        : period || 'v0';
+
+      const path = calculateNameOFDocument(
+        company.company_name || '',
+        company.company_cuit || '',
+        appliesLabel,
+        docType.name || '',
+        version,
+        fileExtension,
+        'documentos-empleados'
+      );
+
+      await storageServer.upload('document_files', path, file, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: file.type,
+      });
+
+      await prisma.documents_employees.update({
+        where: { id: rowId },
+        data: {
+          document_path: path,
+          state: 'presentado',
+          validity: validityISO,
+          period: period,
+          created_at: new Date(),
+          user_id: user.id,
+        },
+      });
+
+      return { ok: true };
+    }
+
+    // equipment
+    const row = await prisma.documents_equipment.findUnique({
+      where: { id: rowId },
+      include: {
+        document_type: true,
+        vehicle: { include: { company: true } },
+      },
+    });
+    if (!row || !row.document_type || !row.vehicle || !row.vehicle.company) {
+      return { ok: false, error: 'Documento no encontrado' };
+    }
+    if (row.state !== 'pendiente') {
+      return { ok: false, error: 'El documento ya no está pendiente' };
+    }
+
+    const company = row.vehicle.company;
+    const docType = row.document_type;
+    const appliesLabel = (row.vehicle.domain || row.vehicle.serie || row.vehicle.intern_number || '').toLowerCase();
+    const fileExtension = file.name.split('.').pop() || 'bin';
+    const version = validityISO
+      ? new Date(validityISO).toISOString().slice(0, 10).split('-').reverse().join('-')
+      : period || 'v0';
+
+    const path = calculateNameOFDocument(
+      company.company_name || '',
+      company.company_cuit || '',
+      appliesLabel,
+      docType.name || '',
+      version,
+      fileExtension,
+      'documentos-equipos'
+    );
+
+    await storageServer.upload('document_files', path, file, {
+      cacheControl: '3600',
+      upsert: true,
+      contentType: file.type,
+    });
+
+    await prisma.documents_equipment.update({
+      where: { id: rowId },
+      data: {
+        document_path: path,
+        state: 'presentado',
+        validity: validityISO,
+        period: period,
+        created_at: new Date(),
+        user_id: user.id,
+      },
+    });
+
+    return { ok: true };
+  } catch (error) {
+    console.error('Error uploading pending document:', error);
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
