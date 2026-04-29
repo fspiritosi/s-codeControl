@@ -9,6 +9,7 @@ import {
   buildFiltersWhere,
   buildTextFiltersWhere,
 } from '@/shared/components/common/DataTable/helpers';
+import { ensurePendingDocumentsForType } from '@/shared/lib/documentAlerts';
 
 // ============================================
 // TYPES
@@ -285,6 +286,10 @@ export async function createDocumentType(input: CreateDocumentTypeInput) {
       },
     });
 
+    if (created.mandatory && created.is_active) {
+      await ensurePendingDocumentsForType(created.id);
+    }
+
     return { data: created, error: null };
   } catch (error) {
     console.error('Error creating document type:', error);
@@ -328,7 +333,7 @@ export async function updateDocumentType(
     // If not conditional, force conditions to empty
     const conditions = input.special ? (input.conditions ?? []) : [];
 
-    await prisma.document_types.update({
+    const updated = await prisma.document_types.update({
       where: { id },
       data: {
         name: input.name,
@@ -344,6 +349,10 @@ export async function updateDocumentType(
         conditions,
       },
     });
+
+    if (updated.mandatory && updated.is_active) {
+      await ensurePendingDocumentsForType(updated.id);
+    }
 
     return { error: null };
   } catch (error) {
