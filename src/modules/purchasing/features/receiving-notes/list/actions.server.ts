@@ -3,7 +3,13 @@
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
-import { parseSearchParams, stateToPrismaParams, buildFiltersWhere } from '@/shared/components/common/DataTable/helpers';
+import {
+  parseSearchParams,
+  stateToPrismaParams,
+  buildFiltersWhere,
+  buildTextFiltersWhere,
+  buildDateRangeFiltersWhere,
+} from '@/shared/components/common/DataTable/helpers';
 import { revalidatePath } from 'next/cache';
 import { updatePurchaseOrderStatus } from '@/modules/purchasing/features/purchase-orders/list/actions.server';
 import { updatePurchaseInvoiceReceivingStatus } from '@/modules/purchasing/features/invoices/list/actions.server';
@@ -27,6 +33,22 @@ export async function getReceivingNotesPaginated(searchParams: DataTableSearchPa
 
     const filtersWhere = buildFiltersWhere(state.filters, { status: 'status' });
     Object.assign(where, filtersWhere);
+
+    const textWhere = buildTextFiltersWhere(state.filters, ['full_number']);
+    Object.assign(where, textWhere);
+
+    const supplierFilter = state.filters.supplier?.[0];
+    if (supplierFilter) {
+      where.supplier = { business_name: { contains: supplierFilter, mode: 'insensitive' } };
+    }
+
+    const warehouseFilter = state.filters.warehouse?.[0];
+    if (warehouseFilter) {
+      where.warehouse = { name: { contains: warehouseFilter, mode: 'insensitive' } };
+    }
+
+    const dateWhere = buildDateRangeFiltersWhere(state.filters, ['reception_date']);
+    Object.assign(where, dateWhere);
 
     const [data, total] = await Promise.all([
       prisma.receiving_notes.findMany({

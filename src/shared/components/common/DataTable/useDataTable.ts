@@ -28,6 +28,12 @@ interface UseDataTableOptions {
   defaultPageSize?: number;
   /** Columnas que se pueden filtrar via URL */
   filterableColumns?: string[];
+  /**
+   * Params externos al DataTable que se preservan en cambios de filtros y reset.
+   * Útil para mantener pestañas (`tab`) u otros params de navegación al limpiar
+   * filtros. Default: `['tab']`.
+   */
+  preserveParams?: string[];
 }
 
 interface UseDataTableReturn {
@@ -86,7 +92,11 @@ interface UseDataTableReturn {
  * ```
  */
 export function useDataTable(options: UseDataTableOptions = {}): UseDataTableReturn {
-  const { defaultPageSize = DEFAULT_PAGE_SIZE, filterableColumns = [] } = options;
+  const {
+    defaultPageSize = DEFAULT_PAGE_SIZE,
+    filterableColumns = [],
+    preserveParams = ['tab'],
+  } = options;
 
   const router = useRouter();
   const pathname = usePathname();
@@ -191,6 +201,12 @@ export function useDataTable(options: UseDataTableOptions = {}): UseDataTableRet
       const filters: Record<string, string[]> = {};
       let search = '';
 
+      // Preservar params externos al DataTable (ej. tab) que están en state.filters
+      // pero que TanStack no tracking — se perderían si solo copiáramos newFilters.
+      preserveParams.forEach((key) => {
+        if (state.filters[key]) filters[key] = state.filters[key];
+      });
+
       newFilters.forEach((filter) => {
         if (filter.id === 'global') {
           search = filter.value as string;
@@ -206,7 +222,7 @@ export function useDataTable(options: UseDataTableOptions = {}): UseDataTableRet
         page: 0, // Reset to first page on filter change
       });
     },
-    [columnFilters, updateURL]
+    [columnFilters, state.filters, updateURL, preserveParams]
   );
 
   const onGlobalFilterChange = useCallback(
@@ -220,8 +236,15 @@ export function useDataTable(options: UseDataTableOptions = {}): UseDataTableRet
   );
 
   const resetFilters = useCallback(() => {
-    router.push(pathname, { scroll: false });
-  }, [pathname, router]);
+    // Preservar params externos al DataTable (ej. tab) al limpiar filtros
+    const newParams = new URLSearchParams();
+    preserveParams.forEach((key) => {
+      const value = searchParams.get(key);
+      if (value) newParams.set(key, value);
+    });
+    const queryString = newParams.toString();
+    router.push(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
+  }, [pathname, router, searchParams, preserveParams]);
 
   return {
     state,

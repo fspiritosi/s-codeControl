@@ -3,7 +3,13 @@
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
-import { parseSearchParams, stateToPrismaParams, buildFiltersWhere } from '@/shared/components/common/DataTable/helpers';
+import {
+  parseSearchParams,
+  stateToPrismaParams,
+  buildFiltersWhere,
+  buildTextFiltersWhere,
+  buildDateRangeFiltersWhere,
+} from '@/shared/components/common/DataTable/helpers';
 import { revalidatePath } from 'next/cache';
 
 // ============================================================
@@ -29,6 +35,17 @@ export async function getPurchaseOrdersPaginated(searchParams: DataTableSearchPa
 
     const filtersWhere = buildFiltersWhere(state.filters, { status: 'status', invoicing_status: 'invoicing_status' });
     Object.assign(where, filtersWhere);
+
+    const textWhere = buildTextFiltersWhere(state.filters, ['full_number']);
+    Object.assign(where, textWhere);
+
+    const supplierFilter = state.filters.supplier?.[0];
+    if (supplierFilter) {
+      where.supplier = { business_name: { contains: supplierFilter, mode: 'insensitive' } };
+    }
+
+    const dateWhere = buildDateRangeFiltersWhere(state.filters, ['issue_date']);
+    Object.assign(where, dateWhere);
 
     const [data, total] = await Promise.all([
       prisma.purchase_orders.findMany({
