@@ -212,6 +212,79 @@ export async function deleteProduct(id: string) {
   }
 }
 
+export async function getProductById(id: string) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return null;
+
+  const product = await prisma.products.findFirst({
+    where: { id, company_id: companyId },
+  });
+  if (!product) return null;
+
+  return {
+    ...product,
+    cost_price: Number(product.cost_price),
+    sale_price: Number(product.sale_price),
+    vat_rate: Number(product.vat_rate),
+    min_stock: product.min_stock != null ? Number(product.min_stock) : null,
+    max_stock: product.max_stock != null ? Number(product.max_stock) : null,
+  };
+}
+
+export async function getProductStockByWarehouse(productId: string) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return [];
+
+  const stocks = await prisma.warehouse_stocks.findMany({
+    where: {
+      product_id: productId,
+      warehouse: { company_id: companyId },
+    },
+    include: {
+      warehouse: { select: { id: true, code: true, name: true, type: true } },
+    },
+    orderBy: { warehouse: { name: 'asc' } },
+  });
+
+  return stocks.map((s) => ({
+    id: s.id,
+    warehouse_id: s.warehouse_id,
+    warehouse_code: s.warehouse.code,
+    warehouse_name: s.warehouse.name,
+    warehouse_type: s.warehouse.type,
+    quantity: Number(s.quantity),
+    reserved_qty: Number(s.reserved_qty),
+    available_qty: Number(s.available_qty),
+    updated_at: s.updated_at.toISOString(),
+  }));
+}
+
+export async function getProductMovements(productId: string, limit = 100) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return [];
+
+  const movements = await prisma.stock_movements.findMany({
+    where: { product_id: productId, company_id: companyId },
+    include: {
+      warehouse: { select: { code: true, name: true } },
+    },
+    orderBy: { date: 'desc' },
+    take: limit,
+  });
+
+  return movements.map((m) => ({
+    id: m.id,
+    type: m.type,
+    quantity: Number(m.quantity),
+    warehouse_code: m.warehouse.code,
+    warehouse_name: m.warehouse.name,
+    reference_type: m.reference_type,
+    reference_id: m.reference_id,
+    notes: m.notes,
+    date: m.date.toISOString(),
+  }));
+}
+
 export async function getProductsByCompany() {
   const { companyId } = await getActionContext();
   if (!companyId) return [];
