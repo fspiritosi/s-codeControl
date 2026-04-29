@@ -1,6 +1,7 @@
 'use server';
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
+import { ensurePendingDocumentsForEquipment } from '@/shared/lib/documentAlerts';
 
 export const UpdateVehicle = async (vehicleId: string, vehicleData: any) => {
   const { companyId } = await getActionContext();
@@ -10,6 +11,7 @@ export const UpdateVehicle = async (vehicleId: string, vehicleData: any) => {
       where: { id: vehicleId },
       data: vehicleData,
     });
+    await ensurePendingDocumentsForEquipment(vehicleId);
   } catch (error) {
     console.error(error);
   }
@@ -18,6 +20,7 @@ export const UpdateVehicle = async (vehicleId: string, vehicleData: any) => {
 export const insertVehicle = async (vehicleData: any) => {
   try {
     const data = await prisma.vehicles.create({ data: vehicleData });
+    await ensurePendingDocumentsForEquipment(data.id);
     return { data, error: null };
   } catch (error) {
     console.error('Error inserting vehicle:', error);
@@ -31,6 +34,7 @@ export const updateVehicleById = async (vehicleId: string, updateData: Record<st
       where: { id: vehicleId },
       data: updateData as any,
     });
+    await ensurePendingDocumentsForEquipment(vehicleId);
     return { data, error: null };
   } catch (error) {
     console.error('Error updating vehicle:', error);
@@ -44,6 +48,7 @@ export const updateVehicleByIdAndCompany = async (vehicleId: string, companyId: 
       where: { id: vehicleId, company_id: companyId },
       data: updateData as any,
     });
+    await ensurePendingDocumentsForEquipment(vehicleId);
     return { data, error: null };
   } catch (error) {
     console.error('Error updating vehicle:', error);
