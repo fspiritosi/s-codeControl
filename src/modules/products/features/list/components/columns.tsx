@@ -122,7 +122,8 @@ function ActionsCell({ product }: { product: Product }) {
   );
 }
 
-export const productColumns: ColumnDef<Product>[] = [
+export function buildProductColumns({ showCompany }: { showCompany: boolean }): ColumnDef<Product>[] {
+  const cols: ColumnDef<Product>[] = [
   {
     accessorKey: 'code',
     header: 'Código',
@@ -196,4 +197,21 @@ export const productColumns: ColumnDef<Product>[] = [
     meta: { excludeFromExport: true },
     cell: ({ row }) => <ActionsCell product={row.original} />,
   },
-];
+  ];
+
+  if (showCompany) {
+    cols.splice(cols.length - 1, 0, {
+      id: 'company_name',
+      header: 'Empresa',
+      meta: { title: 'Empresa' },
+      cell: ({ row }) => (
+        <span className="text-sm">{(row.original as any).company?.company_name ?? '-'}</span>
+      ),
+    });
+  }
+
+  return cols;
+}
+
+// Compatibilidad con consumidores existentes (sin grupo).
+export const productColumns: ColumnDef<Product>[] = buildProductColumns({ showCompany: false });

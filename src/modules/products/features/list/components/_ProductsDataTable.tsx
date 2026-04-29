@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { DataTable } from '@/shared/components/common/DataTable';
 import type { DataTableFacetedFilterConfig } from '@/shared/components/common/DataTable/types';
-import { productColumns } from './columns';
+import { buildProductColumns } from './columns';
+import { useMemo } from 'react';
 import { getProductFacets, getAllProductsForExport } from '../actions.server';
 import { PRODUCT_TYPE_LABELS, PRODUCT_STATUS_LABELS } from '@/modules/products/shared/types';
 
@@ -19,9 +20,11 @@ interface Props {
   data: any[];
   totalRows: number;
   searchParams: Record<string, string | undefined>;
+  showCompany?: boolean;
 }
 
-export function ProductsDataTable({ data, totalRows, searchParams }: Props) {
+export function ProductsDataTable({ data, totalRows, searchParams, showCompany = false }: Props) {
+  const columns = useMemo(() => buildProductColumns({ showCompany }), [showCompany]);
   const [facets, setFacets] = useState<Record<string, { value: string; count: number }[]> | null>(null);
 
   useEffect(() => {
@@ -44,7 +47,7 @@ export function ProductsDataTable({ data, totalRows, searchParams }: Props) {
 
   return (
     <DataTable
-      columns={productColumns as any}
+      columns={columns as any}
       data={data}
       totalRows={totalRows}
       searchParams={searchParams}

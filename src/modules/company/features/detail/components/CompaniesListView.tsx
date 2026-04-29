@@ -1,0 +1,60 @@
+'use client';
+import ModalCompany from '@/modules/company/features/detail/components/ModalCompany';
+import { useCompanyData } from '@/shared/hooks/useCompanyData';
+import { useLoggedUserStore } from '@/shared/store/loggedUser';
+import { company } from '@/shared/types/types';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import Modal from 'react-modal';
+import { CardsGrid } from '@/shared/components/common/CardsGrid';
+
+function setupModalAppElement() {
+  if (typeof window !== 'undefined' && window.document) {
+    Modal.setAppElement('body');
+  }
+}
+
+export function CompaniesListView() {
+  const router = useRouter();
+  const { fetchCompanies } = useCompanyData();
+
+  useEffect(() => {
+    setupModalAppElement();
+    fetchCompanies();
+    const interval = setInterval(fetchCompanies, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<company | null>(null);
+  const allCompanies = useLoggedUserStore((state) => state.allCompanies);
+
+  const handleCardClick = (card: any) => {
+    setSelectedCard(card);
+    setModalIsOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalIsOpen(false);
+    router.refresh();
+  };
+
+  if (!allCompanies) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div>Cargando...</div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="rounded-lg shadow-2xl p-4">
+        <CardsGrid allCompanies={allCompanies} onCardClick={handleCardClick} />
+      </div>
+      {modalIsOpen && (
+        <ModalCompany isOpen={modalIsOpen} onClose={handleCloseModal} selectedCard={selectedCard} />
+      )}
+    </>
+  );
+}

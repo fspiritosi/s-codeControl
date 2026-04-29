@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { DataTable } from '@/shared/components/common/DataTable';
 import type { DataTableFacetedFilterConfig } from '@/shared/components/common/DataTable/types';
-import { warehouseColumns } from './columns';
+import { buildWarehouseColumns } from './columns';
 import { getWarehouseFacets } from '../actions.server';
 import { WAREHOUSE_TYPE_LABELS } from '@/modules/warehouse/shared/types';
 
@@ -17,9 +17,11 @@ interface Props {
   data: any[];
   totalRows: number;
   searchParams: Record<string, string | undefined>;
+  showCompany?: boolean;
 }
 
-export function WarehousesDataTable({ data, totalRows, searchParams }: Props) {
+export function WarehousesDataTable({ data, totalRows, searchParams, showCompany = false }: Props) {
+  const columns = useMemo(() => buildWarehouseColumns({ showCompany }), [showCompany]);
   const [facets, setFacets] = useState<Record<string, { value: string; count: number }[]> | null>(null);
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export function WarehousesDataTable({ data, totalRows, searchParams }: Props) {
 
   return (
     <DataTable
-      columns={warehouseColumns as any}
+      columns={columns as any}
       data={data}
       totalRows={totalRows}
       searchParams={searchParams}

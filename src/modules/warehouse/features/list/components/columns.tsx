@@ -14,7 +14,8 @@ import { WAREHOUSE_TYPE_LABELS, type Warehouse } from '@/modules/warehouse/share
 import { MoreHorizontal, Eye, Pencil } from 'lucide-react';
 import Link from 'next/link';
 
-export const warehouseColumns: ColumnDef<Warehouse>[] = [
+export function buildWarehouseColumns({ showCompany }: { showCompany: boolean }): ColumnDef<Warehouse>[] {
+  const cols: ColumnDef<Warehouse>[] = [
   {
     accessorKey: 'name',
     header: 'Almacén',
@@ -101,4 +102,20 @@ export const warehouseColumns: ColumnDef<Warehouse>[] = [
       </div>
     ),
   },
-];
+  ];
+
+  if (showCompany) {
+    cols.splice(cols.length - 1, 0, {
+      id: 'company_name',
+      header: 'Empresa',
+      meta: { title: 'Empresa' },
+      cell: ({ row }) => (
+        <span className="text-sm">{(row.original as any).company?.company_name ?? '-'}</span>
+      ),
+    });
+  }
+
+  return cols;
+}
+
+export const warehouseColumns: ColumnDef<Warehouse>[] = buildWarehouseColumns({ showCompany: false });

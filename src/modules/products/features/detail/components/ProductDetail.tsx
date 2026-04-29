@@ -26,6 +26,8 @@ interface StockRow {
   warehouse_code: string;
   warehouse_name: string;
   warehouse_type: string;
+  warehouse_company_id?: string;
+  warehouse_company_name?: string;
   quantity: number;
   reserved_qty: number;
   available_qty: number;
@@ -38,6 +40,8 @@ interface MovementRow {
   quantity: number;
   warehouse_code: string;
   warehouse_name: string;
+  company_id?: string;
+  company_name?: string;
   reference_type: string | null;
   reference_id: string | null;
   notes: string | null;
@@ -48,11 +52,12 @@ interface Props {
   product: Product;
   stocks: StockRow[];
   movements: MovementRow[];
+  showCompany?: boolean;
 }
 
 const INBOUND = new Set(['PURCHASE', 'TRANSFER_IN', 'RETURN', 'PRODUCTION']);
 
-export default function ProductDetail({ product, stocks, movements }: Props) {
+export default function ProductDetail({ product, stocks, movements, showCompany = false }: Props) {
   const totalStock = stocks.reduce((acc, s) => acc + s.quantity, 0);
   const totalAvailable = stocks.reduce((acc, s) => acc + s.available_qty, 0);
   const totalReserved = stocks.reduce((acc, s) => acc + s.reserved_qty, 0);
@@ -135,6 +140,7 @@ export default function ProductDetail({ product, stocks, movements }: Props) {
                 <TableRow>
                   <TableHead>Almacén</TableHead>
                   <TableHead>Tipo</TableHead>
+                  {showCompany && <TableHead>Empresa</TableHead>}
                   <TableHead className="text-right">Stock</TableHead>
                   <TableHead className="text-right">Reservado</TableHead>
                   <TableHead className="text-right">Disponible</TableHead>
@@ -158,6 +164,9 @@ export default function ProductDetail({ product, stocks, movements }: Props) {
                         {WAREHOUSE_TYPE_LABELS[s.warehouse_type] || s.warehouse_type}
                       </Badge>
                     </TableCell>
+                    {showCompany && (
+                      <TableCell className="text-sm">{s.warehouse_company_name ?? '-'}</TableCell>
+                    )}
                     <TableCell className="text-right tabular-nums">{s.quantity}</TableCell>
                     <TableCell className="text-right tabular-nums">{s.reserved_qty}</TableCell>
                     <TableCell className="text-right tabular-nums font-medium">
@@ -191,6 +200,7 @@ export default function ProductDetail({ product, stocks, movements }: Props) {
                   <TableHead>Fecha</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Almacén</TableHead>
+                  {showCompany && <TableHead>Empresa</TableHead>}
                   <TableHead className="text-right">Cantidad</TableHead>
                   <TableHead>Referencia</TableHead>
                   <TableHead>Notas</TableHead>
@@ -214,6 +224,9 @@ export default function ProductDetail({ product, stocks, movements }: Props) {
                         <p>{m.warehouse_name}</p>
                         <p className="text-xs text-muted-foreground font-mono">{m.warehouse_code}</p>
                       </TableCell>
+                      {showCompany && (
+                        <TableCell className="text-sm">{m.company_name ?? '-'}</TableCell>
+                      )}
                       <TableCell
                         className={`text-right tabular-nums font-medium ${isInbound ? 'text-green-700' : 'text-red-700'}`}
                       >

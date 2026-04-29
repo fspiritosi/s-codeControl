@@ -247,10 +247,12 @@ model company {
   province_id   BigInt?
   owner_id      String?  @db.Uuid
   by_defect     Boolean? @default(false)
+  company_group_id String? @db.Uuid
 
-  city_rel     cities     @relation("company_city", fields: [city], references: [id])
-  province_rel provinces? @relation("company_province", fields: [province_id], references: [id])
-  owner        profile?   @relation("company_owner", fields: [owner_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  city_rel      cities          @relation("company_city", fields: [city], references: [id])
+  province_rel  provinces?      @relation("company_province", fields: [province_id], references: [id])
+  owner         profile?        @relation("company_owner", fields: [owner_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  company_group company_groups? @relation(fields: [company_group_id], references: [id], onUpdate: Cascade, onDelete: SetNull)
 
   employees              employees[]
   vehicles               vehicles[]
@@ -300,6 +302,14 @@ model company {
   bank_movements         bank_movements[]
   checks                 checks[]
   payment_orders         payment_orders[]
+}
+
+model company_groups {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String
+  created_at DateTime @default(now()) @db.Timestamptz
+
+  companies company[]
 }
 
 model industry_type {

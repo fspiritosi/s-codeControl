@@ -1,64 +1,55 @@
-'use client';
-import ModalCompany from '@/modules/company/features/detail/components/ModalCompany';
-import { useCompanyData } from '@/shared/hooks/useCompanyData';
-import { useLoggedUserStore } from '@/shared/store/loggedUser';
-import { company } from '@/shared/types/types';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import Modal from 'react-modal';
-import { CardsGrid } from '@/shared/components/common/CardsGrid';
+import { Suspense } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { UrlTabs, UrlTabsContent, UrlTabsList, UrlTabsTrigger } from '@/shared/components/ui/url-tabs';
+import { CompaniesListView } from '@/modules/company/features/detail/components/CompaniesListView';
+import { CompanyGroupsView } from '@/modules/company/features/groups/components/CompanyGroupsView';
+import {
+  listCompanyGroups,
+  listAllCompaniesForGrouping,
+} from '@/modules/company/features/groups/actions.server';
 
-function setupModalAppElement() {
-  if (window.document) {
-    Modal.setAppElement('body');
-  }
-}
+const VALID_TABS = ['companies', 'groups'] as const;
+type CompanyTab = (typeof VALID_TABS)[number];
 
-export default function allCompany() {
-  const router = useRouter();
-  const { fetchCompanies } = useCompanyData();
+export default async function CompanyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const resolved = await searchParams;
+  const currentTab: CompanyTab = VALID_TABS.includes(resolved.tab as CompanyTab)
+    ? (resolved.tab as CompanyTab)
+    : 'companies';
 
-  useEffect(() => {
-    setupModalAppElement();
-    fetchCompanies();
-    const interval = setInterval(fetchCompanies, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [selectedCard, setSelectedCard] = useState<company | null>(null);
-  const allCompanies = useLoggedUserStore((state) => state.allCompanies);
-
-  const handleCardClick = (card: any) => {
-    setSelectedCard(card);
-    setModalIsOpen(true);
-  };
-
-  const clearSelectedCard = () => {
-    setSelectedCard(null);
-  };
-
-  const handleCloseModal = () => {
-    setModalIsOpen(false);
-    router.refresh();
-  };
-
-  if (!allCompanies) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div>Cargando...</div>
-      </div>
-    );
-  }
+  const [groups, allCompanies] = await Promise.all([
+    listCompanyGroups(),
+    listAllCompaniesForGrouping(),
+  ]);
 
   return (
-    <section className="">
-      <h2 className="text-3xl pb-5 pl-10">Todas las Compañias</h2>
-      <p className="pl-10 max-w-1/2">Aquí se verán todas las compañías</p>
-      <div className=" rounded-lg shadow-2xl p-4">
-        <CardsGrid allCompanies={allCompanies} onCardClick={handleCardClick} />
-      </div>
-      {modalIsOpen && <ModalCompany isOpen={modalIsOpen} onClose={handleCloseModal} selectedCard={selectedCard} />}
-    </section>
+    <Suspense fallback={<div className="p-10">Cargando...</div>}>
+      <UrlTabs value={currentTab} paramName="tab" baseUrl="/dashboard/company">
+        <UrlTabsList>
+          <UrlTabsTrigger value="companies">Compañías</UrlTabsTrigger>
+          <UrlTabsTrigger value="groups">Grupos compartidos</UrlTabsTrigger>
+        </UrlTabsList>
+
+        <UrlTabsContent value="companies">
+          <Card>
+            <CardHeader>
+              <CardTitle>Todas las Compañías</CardTitle>
+              <CardDescription>Aquí se verán todas las compañías</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CompaniesListView />
+            </CardContent>
+          </Card>
+        </UrlTabsContent>
+
+        <UrlTabsContent value="groups">
+          <CompanyGroupsView groups={groups} allCompanies={allCompanies} />
+        </UrlTabsContent>
+      </UrlTabs>
+    </Suspense>
   );
 }

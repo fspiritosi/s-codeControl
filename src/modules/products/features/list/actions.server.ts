@@ -2,6 +2,7 @@
 
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
+import { getCompanyScope } from '@/shared/lib/company-scope';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
 import {
   parseSearchParams,
@@ -18,8 +19,8 @@ const productColumnMap: Record<string, string> = {
   status: 'status',
 };
 
-function buildProductsWhere(state: ReturnType<typeof parseSearchParams>, companyId: string) {
-  const baseWhere: Record<string, unknown> = { company_id: companyId };
+function buildProductsWhere(state: ReturnType<typeof parseSearchParams>, companyIds: string[]) {
+  const baseWhere: Record<string, unknown> = { company_id: { in: companyIds } };
 
   if (state.search) {
     Object.assign(baseWhere, buildSearchWhere(state.search, productSearchFields));
@@ -38,14 +39,14 @@ function buildProductsWhere(state: ReturnType<typeof parseSearchParams>, company
 }
 
 export async function getProductsPaginated(searchParams: DataTableSearchParams) {
-  const { companyId } = await getActionContext();
-  if (!companyId) return { data: [], total: 0 };
+  const scope = await getCompanyScope();
+  if (!scope) return { data: [], total: 0 };
 
   try {
     const state = parseSearchParams(searchParams);
     const { skip, take } = stateToPrismaParams(state);
 
-    const where = buildProductsWhere(state, companyId);
+    const where = buildProductsWhere(state, scope.visibleCompanyIds);
 
     const [data, total] = await Promise.all([
       prisma.products.findMany({
@@ -53,6 +54,7 @@ export async function getProductsPaginated(searchParams: DataTableSearchParams) 
         skip,
         take,
         orderBy: [{ status: 'asc' }, { name: 'asc' }],
+        include: { company: { select: { id: true, company_name: true } } },
       }),
       prisma.products.count({ where }),
     ]);
@@ -74,19 +76,19 @@ export async function getProductsPaginated(searchParams: DataTableSearchParams) 
 }
 
 export async function getProductFacets(): Promise<Record<string, { value: string; count: number }[]>> {
-  const { companyId } = await getActionContext();
-  if (!companyId) return {};
+  const scope = await getCompanyScope();
+  if (!scope) return {};
 
   try {
     const [typeGroups, statusGroups] = await Promise.all([
       prisma.products.groupBy({
         by: ['type'],
-        where: { company_id: companyId },
+        where: { company_id: { in: scope.visibleCompanyIds } },
         _count: true,
       }),
       prisma.products.groupBy({
         by: ['status'],
-        where: { company_id: companyId },
+        where: { company_id: { in: scope.visibleCompanyIds } },
         _count: true,
       }),
     ]);
@@ -102,11 +104,11 @@ export async function getProductFacets(): Promise<Record<string, { value: string
 }
 
 export async function getAllProductsForExport() {
-  const { companyId } = await getActionContext();
-  if (!companyId) return [];
+  const scope = await getCompanyScope();
+  if (!scope) return [];
 
   const data = await prisma.products.findMany({
-    where: { company_id: companyId },
+    where: { company_id: { in: scope.visibleCompanyIds } },
     orderBy: { name: 'asc' },
   });
 
@@ -121,13 +123,13 @@ export async function getAllProductsForExport() {
 }
 
 export async function createProduct(data: Record<string, unknown>) {
-  const { companyId } = await getActionContext();
-  if (!companyId) throw new Error('No company selected');
+  const scope = await getCompanyScope();
+  if (!scope) throw new Error('No company selected');
 
   try {
-    // Auto-generate code
+    // Auto-generate code (scoped to the visible group to avoid duplicates across the group)
     const lastProduct = await prisma.products.findFirst({
-      where: { company_id: companyId },
+      where: { company_id: { in: scope.visibleCompanyIds } },
       orderBy: { code: 'desc' },
       select: { code: true },
     });
@@ -137,7 +139,7 @@ export async function createProduct(data: Record<string, unknown>) {
 
     const product = await prisma.products.create({
       data: {
-        company_id: companyId,
+        company_id: scope.activeCompanyId,
         code,
         name: data.name as string,
         description: (data.description as string) || null,
@@ -213,11 +215,12 @@ export async function deleteProduct(id: string) {
 }
 
 export async function getProductById(id: string) {
-  const { companyId } = await getActionContext();
-  if (!companyId) return null;
+  const scope = await getCompanyScope();
+  if (!scope) return null;
 
   const product = await prisma.products.findFirst({
-    where: { id, company_id: companyId },
+    where: { id, company_id: { in: scope.visibleCompanyIds } },
+    include: { company: { select: { id: true, company_name: true } } },
   });
   if (!product) return null;
 
@@ -232,16 +235,24 @@ export async function getProductById(id: string) {
 }
 
 export async function getProductStockByWarehouse(productId: string) {
-  const { companyId } = await getActionContext();
-  if (!companyId) return [];
+  const scope = await getCompanyScope();
+  if (!scope) return [];
 
   const stocks = await prisma.warehouse_stocks.findMany({
     where: {
       product_id: productId,
-      warehouse: { company_id: companyId },
+      warehouse: { company_id: { in: scope.visibleCompanyIds } },
     },
     include: {
-      warehouse: { select: { id: true, code: true, name: true, type: true } },
+      warehouse: {
+        select: {
+          id: true,
+          code: true,
+          name: true,
+          type: true,
+          company: { select: { id: true, company_name: true } },
+        },
+      },
     },
     orderBy: { warehouse: { name: 'asc' } },
   });
@@ -252,6 +263,8 @@ export async function getProductStockByWarehouse(productId: string) {
     warehouse_code: s.warehouse.code,
     warehouse_name: s.warehouse.name,
     warehouse_type: s.warehouse.type,
+    warehouse_company_id: s.warehouse.company.id,
+    warehouse_company_name: s.warehouse.company.company_name,
     quantity: Number(s.quantity),
     reserved_qty: Number(s.reserved_qty),
     available_qty: Number(s.available_qty),
@@ -260,13 +273,17 @@ export async function getProductStockByWarehouse(productId: string) {
 }
 
 export async function getProductMovements(productId: string, limit = 100) {
-  const { companyId } = await getActionContext();
-  if (!companyId) return [];
+  const scope = await getCompanyScope();
+  if (!scope) return [];
 
   const movements = await prisma.stock_movements.findMany({
-    where: { product_id: productId, company_id: companyId },
+    where: {
+      product_id: productId,
+      warehouse: { company_id: { in: scope.visibleCompanyIds } },
+    },
     include: {
       warehouse: { select: { code: true, name: true } },
+      company: { select: { id: true, company_name: true } },
     },
     orderBy: { date: 'desc' },
     take: limit,
@@ -278,6 +295,8 @@ export async function getProductMovements(productId: string, limit = 100) {
     quantity: Number(m.quantity),
     warehouse_code: m.warehouse.code,
     warehouse_name: m.warehouse.name,
+    company_id: m.company.id,
+    company_name: m.company.company_name,
     reference_type: m.reference_type,
     reference_id: m.reference_id,
     notes: m.notes,
@@ -286,11 +305,11 @@ export async function getProductMovements(productId: string, limit = 100) {
 }
 
 export async function getProductsByCompany() {
-  const { companyId } = await getActionContext();
-  if (!companyId) return [];
+  const scope = await getCompanyScope();
+  if (!scope) return [];
 
   return prisma.products.findMany({
-    where: { company_id: companyId, status: 'ACTIVE' },
+    where: { company_id: { in: scope.visibleCompanyIds }, status: 'ACTIVE' },
     select: { id: true, code: true, name: true, unit_of_measure: true, cost_price: true, vat_rate: true, track_stock: true },
     orderBy: { name: 'asc' },
   });
