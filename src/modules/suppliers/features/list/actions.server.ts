@@ -8,6 +8,7 @@ import {
   stateToPrismaParams,
   buildSearchWhere,
   buildFiltersWhere,
+  buildTextFiltersWhere,
 } from '@/shared/components/common/DataTable/helpers';
 import { revalidatePath } from 'next/cache';
 
@@ -18,6 +19,8 @@ const supplierColumnMap: Record<string, string> = {
   tax_condition: 'tax_condition',
 };
 
+const supplierTextColumns = ['business_name', 'tax_id', 'email', 'phone'];
+
 function buildSuppliersWhere(state: ReturnType<typeof parseSearchParams>, companyId: string) {
   const baseWhere: Record<string, unknown> = { company_id: companyId };
 
@@ -27,6 +30,9 @@ function buildSuppliersWhere(state: ReturnType<typeof parseSearchParams>, compan
 
   const filtersWhere = buildFiltersWhere(state.filters, supplierColumnMap);
   Object.assign(baseWhere, filtersWhere);
+
+  const textWhere = buildTextFiltersWhere(state.filters, supplierTextColumns);
+  Object.assign(baseWhere, textWhere);
 
   return baseWhere;
 }
