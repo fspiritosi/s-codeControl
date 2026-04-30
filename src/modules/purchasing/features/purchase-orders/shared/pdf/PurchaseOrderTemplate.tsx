@@ -47,11 +47,29 @@ export function PurchaseOrderTemplate({ data }: PurchaseOrderTemplateProps) {
     deliveryNotes,
     notes,
     linkedDocuments,
+    pdfSettings,
   } = data;
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        {/* HEADER PERSONALIZADO (Configuración » PDF) */}
+        {pdfSettings?.headerText ? (
+          <Text
+            style={{
+              fontSize: 8,
+              color: '#444',
+              marginBottom: 8,
+              textAlign: 'center',
+              borderBottom: 1,
+              borderBottomColor: '#ddd',
+              paddingBottom: 4,
+            }}
+          >
+            {pdfSettings.headerText}
+          </Text>
+        ) : null}
+
         {/* HEADER */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
@@ -256,8 +274,22 @@ export function PurchaseOrderTemplate({ data }: PurchaseOrderTemplateProps) {
           <LinkedDocumentsSection data={linkedDocuments} />
         )}
 
+        {/* FIRMA (si esta empresa firma este tipo de PDF) */}
+        {pdfSettings?.signatureUrl ? (
+          <View style={{ marginTop: 30, alignItems: 'flex-end' }}>
+            <Image
+              src={pdfSettings.signatureUrl}
+              style={{ width: 140, height: 60, objectFit: 'contain' }}
+            />
+            <Text style={{ fontSize: 8, color: '#666', marginTop: 2 }}>Firma autorizada</Text>
+          </View>
+        ) : null}
+
         {/* FOOTER */}
         <View style={styles.footer}>
+          {pdfSettings?.footerText ? (
+            <Text style={{ marginBottom: 2 }}>{pdfSettings.footerText}</Text>
+          ) : null}
           <Text>
             Documento generado electronicamente -{' '}
             {format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })}

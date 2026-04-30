@@ -46,7 +46,8 @@ type WithdrawalOrderRaw = {
  */
 export function mapWithdrawalOrderDataForPDF(
   order: WithdrawalOrderRaw,
-  company: CompanyPDFData
+  company: CompanyPDFData,
+  pdfSettings?: WithdrawalOrderPDFData['pdfSettings']
 ): WithdrawalOrderPDFData {
   return {
     company: {
@@ -93,5 +94,6 @@ export function mapWithdrawalOrderDataForPDF(
     })),
 
     notes: order.notes || undefined,
+    pdfSettings,
   };
 }

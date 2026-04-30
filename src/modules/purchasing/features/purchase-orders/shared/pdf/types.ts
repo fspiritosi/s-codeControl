@@ -68,4 +68,11 @@ export interface PurchaseOrderPDFData {
 
   // Documentos vinculados (opcional)
   linkedDocuments?: LinkedDocumentsData;
+
+  // Configuración de PDF de la empresa (opcional)
+  pdfSettings?: {
+    headerText?: string | null;
+    footerText?: string | null;
+    signatureUrl?: string | null;
+  };
 }

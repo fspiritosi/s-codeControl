@@ -59,7 +59,8 @@ type PurchaseOrderRaw = {
 export function mapPurchaseOrderDataForPDF(
   order: PurchaseOrderRaw,
   company: CompanyPDFData,
-  linkedDocuments?: LinkedDocumentsData
+  linkedDocuments?: LinkedDocumentsData,
+  pdfSettings?: PurchaseOrderPDFData['pdfSettings']
 ): PurchaseOrderPDFData {
   return {
     company: {
@@ -117,5 +118,6 @@ export function mapPurchaseOrderDataForPDF(
     deliveryNotes: order.delivery_notes || undefined,
     notes: order.notes || undefined,
     linkedDocuments,
+    pdfSettings,
   };
 }
