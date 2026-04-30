@@ -10,6 +10,7 @@ async function EmployeeDocumentsTabs({ searchParams = {} }: { searchParams?: Dat
         <TabsList>
           <TabsTrigger value="permanentes">Documentos permanentes</TabsTrigger>
           <TabsTrigger value="mensuales">Documentos mensuales</TabsTrigger>
+          <TabsTrigger value="baja">Documentos de baja</TabsTrigger>
         </TabsList>
       </CardContent>
       <TabsContent value="permanentes">
@@ -17,6 +18,9 @@ async function EmployeeDocumentsTabs({ searchParams = {} }: { searchParams?: Dat
       </TabsContent>
       <TabsContent value="mensuales">
         <EmployeeDocumentList searchParams={searchParams} monthly />
+      </TabsContent>
+      <TabsContent value="baja">
+        <EmployeeDocumentList searchParams={searchParams} downDocument />
       </TabsContent>
     </Tabs>
   );

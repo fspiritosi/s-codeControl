@@ -104,6 +104,10 @@ export function EmployeeRowActions({ row }: EmployeeRowActionsProps) {
   const [showModal, setShowModal] = useState(false);
   const [integerModal, setIntegerModal] = useState(false);
   const [document, setDocument] = useState('');
+  const [admissionMode, setAdmissionMode] = useState<'keep' | 'new'>('keep');
+  const [newAdmissionDate, setNewAdmissionDate] = useState<string>(
+    () => new Date().toISOString().slice(0, 10)
+  );
   const user = row.original;
 
   const handleOpenModal = (id: string) => {
@@ -134,12 +138,18 @@ export function EmployeeRowActions({ row }: EmployeeRowActionsProps) {
   async function reintegerEmployee() {
     const documentToUpdate = useLoggedUserStore
       ?.getState()
-      ?.active_and_inactive_employees.find((e: any) => e.document_number === document)
-      .documents_employees?.filter((e: any) => e.id_document_types.down_document)
+      ?.active_and_inactive_employees?.find((e: any) => e.document_number === document)
+      ?.documents_employees?.filter((e: any) => e.id_document_types?.down_document)
       ?.map((e: any) => e.id);
 
     try {
-      await reactivateEmployeeByDocNumber(document);
+      const dateOverride = admissionMode === 'new' ? newAdmissionDate : null;
+      const result = await reactivateEmployeeByDocNumber(document, dateOverride);
+
+      if (result?.error) {
+        toast('Error al reintegrar al empleado', { description: result.error });
+        return;
+      }
 
       if (documentToUpdate?.length) {
         await resetDocumentEmployeesForReintegration(documentToUpdate);
@@ -198,11 +208,49 @@ export function EmployeeRowActions({ row }: EmployeeRowActionsProps) {
         <AlertDialog defaultOpen onOpenChange={() => setIntegerModal(!integerModal)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Estas completamente seguro?</AlertDialogTitle>
+              <AlertDialogTitle>Reintegrar empleado</AlertDialogTitle>
               <AlertDialogDescription>
-                {`Estas a punto de reintegrar al empleado ${user.full_name}, quien fue dado de baja por ${user.reason_for_termination} el dia ${user.termination_date}. Al reintegrar al empleado, se borraran estas razones. Si estas seguro de que deseas reintegrarlo, haz clic en 'Continuar'. De lo contrario, haz clic en 'Cancelar'.`}
+                {`Estás a punto de reintegrar al empleado ${user.full_name}, quien fue dado de baja por ${user.reason_for_termination} el día ${user.termination_date ? format(new Date(user.termination_date), 'dd/MM/yyyy') : '—'}. Se limpiarán los datos de baja.`}
               </AlertDialogDescription>
             </AlertDialogHeader>
+
+            <div className="space-y-3 py-2">
+              <p className="text-sm font-medium">Fecha de alta</p>
+              <div className="flex flex-col gap-2 text-sm">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="admissionMode"
+                    value="keep"
+                    checked={admissionMode === 'keep'}
+                    onChange={() => setAdmissionMode('keep')}
+                  />
+                  <span>
+                    Mantener fecha original
+                    {user.date_of_admission ? ` (${format(new Date(user.date_of_admission), 'dd/MM/yyyy')})` : ''}
+                  </span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="admissionMode"
+                    value="new"
+                    checked={admissionMode === 'new'}
+                    onChange={() => setAdmissionMode('new')}
+                  />
+                  <span>Asignar nueva fecha de alta</span>
+                </label>
+                {admissionMode === 'new' && (
+                  <input
+                    type="date"
+                    value={newAdmissionDate}
+                    onChange={(e) => setNewAdmissionDate(e.target.value)}
+                    className="ml-6 rounded-md border px-2 py-1 text-sm w-fit"
+                  />
+                )}
+              </div>
+            </div>
+
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction onClick={() => reintegerEmployee()}>Continuar</AlertDialogAction>

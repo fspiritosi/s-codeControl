@@ -17,7 +17,7 @@ import { cn } from '@/shared/lib/utils';
 import { names } from '@/shared/types/types';
 import { CalendarIcon } from '@radix-ui/react-icons';
 import { es } from 'date-fns/locale';
-import { parse as dateFnsParse, format, isValid as isValidDate } from 'date-fns';
+import { parse as dateFnsParse, format, isValid as isValidDate, intervalToDuration } from 'date-fns';
 
 function normalizeDate(value: unknown): Date | null {
   if (!value) return null;
@@ -29,6 +29,18 @@ function normalizeDate(value: unknown): Date | null {
     return isValidDate(parsed) ? parsed : null;
   }
   return null;
+}
+
+function formatSeniority(start: Date | null, end: Date | null): string {
+  if (!start) return '—';
+  const reference = end ?? new Date();
+  if (reference < start) return '—';
+  const { years = 0, months = 0, days = 0 } = intervalToDuration({ start, end: reference });
+  const parts: string[] = [];
+  parts.push(`${years} ${years === 1 ? 'año' : 'años'}`);
+  parts.push(`${months} ${months === 1 ? 'mes' : 'meses'}`);
+  parts.push(`${days} ${days === 1 ? 'día' : 'días'}`);
+  return parts.join(', ');
 }
 import { Check } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
@@ -78,6 +90,12 @@ export function EmployeeLaboralDataTab({
       <div className="min-w-full max-w-sm flex flex-wrap gap-8">
         {LABORALDATA?.map((data) => {
           if (data.name === 'date_of_admission') {
+            const watchedAdmission = form.watch('date_of_admission');
+            const watchedTermination = form.watch('termination_date');
+            const seniority = formatSeniority(
+              normalizeDate(watchedAdmission),
+              normalizeDate(watchedTermination)
+            );
             return (
               <div key={data.name} className="w-[300px] flex flex-col gap-2">
                 <FormField
@@ -158,6 +176,10 @@ export function EmployeeLaboralDataTab({
                     );
                   }}
                 />
+                <div className="rounded-md border bg-muted/30 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Antigüedad</p>
+                  <p className="text-sm font-medium">{seniority}</p>
+                </div>
               </div>
             );
           }

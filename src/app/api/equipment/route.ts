@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const vehiclesRaw = await prisma.vehicles.findMany({
-      where: { company_id },
+      where: { company_id, is_active: true },
       include: {
         type_of_vehicle_rel: { select: { name: true } },
         brand_rel: { select: { name: true } },

@@ -90,21 +90,8 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
 
     set({ active_and_inactive_employees: setEmployeesToShow(mappedEmployees) });
 
-    const activeEmployees = mappedEmployees?.filter((e: Record<string, any>) => {
-      if (e.is_active) return true;
-      return e.documents_employees
-        ?.filter((d: Record<string, any>) => (d.document_type || d.id_document_types)?.down_document)
-        ?.some((doc: Record<string, any>) => doc.state === 'pendiente');
-    });
-
-    const inactiveEmployees = mappedEmployees?.filter((e: Record<string, any>) => {
-      return (
-        !e.is_active &&
-        e.documents_employees
-          .filter((d: Record<string, any>) => (d.document_type || d.id_document_types)?.down_document)
-          .every((doc: Record<string, any>) => doc.state === 'presentado')
-      );
-    });
+    const activeEmployees = mappedEmployees?.filter((e: Record<string, any>) => e.is_active);
+    const inactiveEmployees = mappedEmployees?.filter((e: Record<string, any>) => !e.is_active);
 
     if (active) {
       return setEmployeesToShow(activeEmployees);

@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   }
   try {
     const employees = await prisma.employees.findMany({
-      where: { company_id },
+      where: { company_id, is_active: true },
     });
     return apiSuccess({ employees: serializeBigInt(employees) });
   } catch (error) {

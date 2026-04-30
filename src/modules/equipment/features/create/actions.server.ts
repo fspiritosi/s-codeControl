@@ -2,6 +2,7 @@
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
 import { ensurePendingDocumentsForEquipment } from '@/shared/lib/documentAlerts';
+import { revalidatePath } from 'next/cache';
 
 export const UpdateVehicle = async (vehicleId: string, vehicleData: any) => {
   const { companyId } = await getActionContext();
@@ -144,6 +145,13 @@ export const reactivateVehicle = async (vehicleId: string, companyId: string) =>
         reason_for_termination: null,
       } as any,
     });
+
+    if (data.count === 0) {
+      return { data, error: 'No se encontró el equipo para reactivar' };
+    }
+
+    revalidatePath('/dashboard/equipment');
+    revalidatePath('/dashboard/document');
     return { data, error: null };
   } catch (error) {
     console.error('Error reactivating vehicle:', error);
@@ -157,10 +165,17 @@ export const deactivateVehicle = async (vehicleId: string, companyId: string, te
       where: { id: vehicleId, company_id: companyId },
       data: {
         is_active: false,
-        termination_date: terminationDate,
+        termination_date: new Date(terminationDate),
         reason_for_termination: reason,
       } as any,
     });
+
+    if (data.count === 0) {
+      return { data, error: 'No se encontró el equipo para dar de baja' };
+    }
+
+    revalidatePath('/dashboard/equipment');
+    revalidatePath('/dashboard/document');
     return { data, error: null };
   } catch (error) {
     console.error('Error deactivating vehicle:', error);
