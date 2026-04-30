@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { DataTable } from '@/shared/components/common/DataTable';
 import type { DataTableFacetedFilterConfig } from '@/shared/components/common/DataTable/types';
-import { movementColumns } from './columns';
+import { buildMovementColumns } from './columns';
 import { getMovementTypeFacets } from '@/modules/warehouse/features/list/actions.server';
 import { STOCK_MOVEMENT_TYPE_LABELS } from '@/modules/warehouse/shared/types';
 
@@ -19,9 +19,11 @@ interface Props {
   data: any[];
   totalRows: number;
   searchParams: Record<string, string | undefined>;
+  showCompany?: boolean;
 }
 
-export function MovementsDataTable({ data, totalRows, searchParams }: Props) {
+export function MovementsDataTable({ data, totalRows, searchParams, showCompany = false }: Props) {
+  const columns = useMemo(() => buildMovementColumns({ showCompany }), [showCompany]);
   const [facets, setFacets] = useState<Record<string, { value: string; count: number }[]> | null>(null);
 
   useEffect(() => {
@@ -43,7 +45,7 @@ export function MovementsDataTable({ data, totalRows, searchParams }: Props) {
 
   return (
     <DataTable
-      columns={movementColumns as any}
+      columns={columns as any}
       data={data}
       totalRows={totalRows}
       searchParams={searchParams}

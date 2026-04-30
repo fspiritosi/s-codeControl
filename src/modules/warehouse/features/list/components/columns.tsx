@@ -2,11 +2,20 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/shared/components/ui/badge';
-import { buttonVariants } from '@/shared/components/ui/button';
+import { Button, buttonVariants } from '@/shared/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/shared/components/ui/dropdown-menu';
 import { WAREHOUSE_TYPE_LABELS, type Warehouse } from '@/modules/warehouse/shared/types';
+import { MoreHorizontal, Eye, Pencil } from 'lucide-react';
 import Link from 'next/link';
 
-export const warehouseColumns: ColumnDef<Warehouse>[] = [
+export function buildWarehouseColumns({ showCompany }: { showCompany: boolean }): ColumnDef<Warehouse>[] {
+  const cols: ColumnDef<Warehouse>[] = [
   {
     accessorKey: 'name',
     header: 'Almacén',
@@ -61,10 +70,52 @@ export const warehouseColumns: ColumnDef<Warehouse>[] = [
   {
     id: 'actions',
     header: '',
+    meta: { excludeFromExport: true },
     cell: ({ row }) => (
-      <Link href={`/dashboard/warehouse/${row.original.id}`} className={buttonVariants({ variant: 'outline', size: 'sm' })}>
-        Ver stock
-      </Link>
+      <div className="flex items-center gap-2">
+        <Link
+          href={`/dashboard/warehouse/${row.original.id}`}
+          className={buttonVariants({ variant: 'outline', size: 'sm' })}
+        >
+          Ver stock
+        </Link>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="size-8">
+              <MoreHorizontal className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link href={`/dashboard/warehouse/${row.original.id}`}>
+                <Eye className="size-4 mr-2" /> Ver detalle
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href={`/dashboard/warehouse/${row.original.id}/edit`}>
+                <Pencil className="size-4 mr-2" /> Editar
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     ),
   },
-];
+  ];
+
+  if (showCompany) {
+    cols.splice(cols.length - 1, 0, {
+      id: 'company_name',
+      header: 'Empresa',
+      meta: { title: 'Empresa' },
+      cell: ({ row }) => (
+        <span className="text-sm">{(row.original as any).company?.company_name ?? '-'}</span>
+      ),
+    });
+  }
+
+  return cols;
+}
+
+export const warehouseColumns: ColumnDef<Warehouse>[] = buildWarehouseColumns({ showCompany: false });

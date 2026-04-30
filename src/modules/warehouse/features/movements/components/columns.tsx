@@ -5,7 +5,8 @@ import { Badge } from '@/shared/components/ui/badge';
 import { STOCK_MOVEMENT_TYPE_LABELS, MOVEMENT_TYPE_COLORS, type StockMovement } from '@/modules/warehouse/shared/types';
 import { format } from 'date-fns';
 
-export const movementColumns: ColumnDef<StockMovement>[] = [
+export function buildMovementColumns({ showCompany }: { showCompany: boolean }): ColumnDef<StockMovement>[] {
+  const cols: ColumnDef<StockMovement>[] = [
   {
     accessorKey: 'date',
     header: 'Fecha',
@@ -72,4 +73,20 @@ export const movementColumns: ColumnDef<StockMovement>[] = [
       </span>
     ),
   },
-];
+  ];
+
+  if (showCompany) {
+    cols.splice(cols.length - 1, 0, {
+      id: 'company_name',
+      header: 'Empresa',
+      meta: { title: 'Empresa' },
+      cell: ({ row }) => (
+        <span className="text-sm">{(row.original as any).company?.company_name ?? '-'}</span>
+      ),
+    });
+  }
+
+  return cols;
+}
+
+export const movementColumns: ColumnDef<StockMovement>[] = buildMovementColumns({ showCompany: false });

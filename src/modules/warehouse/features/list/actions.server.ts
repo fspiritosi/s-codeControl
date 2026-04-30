@@ -2,6 +2,7 @@
 
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
+import { getCompanyScope } from '@/shared/lib/company-scope';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
 import {
   parseSearchParams,
@@ -10,14 +11,13 @@ import {
   buildFiltersWhere,
 } from '@/shared/components/common/DataTable/helpers';
 import { revalidatePath } from 'next/cache';
-import { Prisma } from '@/generated/prisma/client';
 
 // ============================================================
 // WAREHOUSE CRUD
 // ============================================================
 
-function buildWarehousesWhere(state: ReturnType<typeof parseSearchParams>, companyId: string) {
-  const baseWhere: Record<string, unknown> = { company_id: companyId };
+function buildWarehousesWhere(state: ReturnType<typeof parseSearchParams>, companyIds: string[]) {
+  const baseWhere: Record<string, unknown> = { company_id: { in: companyIds } };
 
   if (state.search) {
     Object.assign(baseWhere, buildSearchWhere(state.search, ['name', 'code']));
@@ -30,13 +30,13 @@ function buildWarehousesWhere(state: ReturnType<typeof parseSearchParams>, compa
 }
 
 export async function getWarehousesPaginated(searchParams: DataTableSearchParams) {
-  const { companyId } = await getActionContext();
-  if (!companyId) return { data: [], total: 0 };
+  const scope = await getCompanyScope();
+  if (!scope) return { data: [], total: 0 };
 
   try {
     const state = parseSearchParams(searchParams);
     const { skip, take } = stateToPrismaParams(state);
-    const where = buildWarehousesWhere(state, companyId);
+    const where = buildWarehousesWhere(state, scope.visibleCompanyIds);
 
     const [data, total] = await Promise.all([
       prisma.warehouses.findMany({
@@ -46,6 +46,7 @@ export async function getWarehousesPaginated(searchParams: DataTableSearchParams
         orderBy: [{ is_active: 'desc' }, { name: 'asc' }],
         include: {
           _count: { select: { stocks: true, movements: true } },
+          company: { select: { id: true, company_name: true } },
         },
       }),
       prisma.warehouses.count({ where }),
@@ -59,13 +60,13 @@ export async function getWarehousesPaginated(searchParams: DataTableSearchParams
 }
 
 export async function getWarehouseFacets(): Promise<Record<string, { value: string; count: number }[]>> {
-  const { companyId } = await getActionContext();
-  if (!companyId) return {};
+  const scope = await getCompanyScope();
+  if (!scope) return {};
 
   try {
     const typeGroups = await prisma.warehouses.groupBy({
       by: ['type'],
-      where: { company_id: companyId },
+      where: { company_id: { in: scope.visibleCompanyIds } },
       _count: true,
     });
 
@@ -107,10 +108,14 @@ export async function createWarehouse(data: Record<string, unknown>) {
 }
 
 export async function getWarehouseById(id: string) {
-  return prisma.warehouses.findUnique({
-    where: { id },
+  const scope = await getCompanyScope();
+  if (!scope) return null;
+
+  return prisma.warehouses.findFirst({
+    where: { id, company_id: { in: scope.visibleCompanyIds } },
     include: {
       _count: { select: { stocks: true, movements: true } },
+      company: { select: { id: true, company_name: true } },
     },
   });
 }
@@ -149,11 +154,11 @@ export async function toggleWarehouseActive(id: string) {
 }
 
 export async function getWarehousesByCompany() {
-  const { companyId } = await getActionContext();
-  if (!companyId) return [];
+  const scope = await getCompanyScope();
+  if (!scope) return [];
 
   return prisma.warehouses.findMany({
-    where: { company_id: companyId, is_active: true },
+    where: { company_id: { in: scope.visibleCompanyIds }, is_active: true },
     select: { id: true, code: true, name: true },
     orderBy: { name: 'asc' },
   });
@@ -168,7 +173,15 @@ export async function getWarehouseStocks(warehouseId: string) {
     const stocks = await prisma.warehouse_stocks.findMany({
       where: { warehouse_id: warehouseId },
       include: {
-        product: { select: { id: true, code: true, name: true, unit_of_measure: true } },
+        product: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            unit_of_measure: true,
+            company: { select: { id: true, company_name: true } },
+          },
+        },
       },
       orderBy: { product: { name: 'asc' } },
     });
@@ -334,14 +347,16 @@ export async function transferStock(data: {
 // ============================================================
 
 export async function getStockMovementsPaginated(searchParams: DataTableSearchParams) {
-  const { companyId } = await getActionContext();
-  if (!companyId) return { data: [], total: 0 };
+  const scope = await getCompanyScope();
+  if (!scope) return { data: [], total: 0 };
 
   try {
     const state = parseSearchParams(searchParams);
     const { skip, take } = stateToPrismaParams(state);
 
-    const where: Record<string, unknown> = { company_id: companyId };
+    const where: Record<string, unknown> = {
+      warehouse: { company_id: { in: scope.visibleCompanyIds } },
+    };
 
     if (state.search) {
       where.OR = [
@@ -367,6 +382,7 @@ export async function getStockMovementsPaginated(searchParams: DataTableSearchPa
         include: {
           product: { select: { code: true, name: true, unit_of_measure: true } },
           warehouse: { select: { code: true, name: true } },
+          company: { select: { id: true, company_name: true } },
         },
         skip,
         take,
@@ -388,13 +404,13 @@ export async function getStockMovementsPaginated(searchParams: DataTableSearchPa
 }
 
 export async function getMovementTypeFacets(): Promise<Record<string, { value: string; count: number }[]>> {
-  const { companyId } = await getActionContext();
-  if (!companyId) return {};
+  const scope = await getCompanyScope();
+  if (!scope) return {};
 
   try {
     const typeGroups = await prisma.stock_movements.groupBy({
       by: ['type'],
-      where: { company_id: companyId },
+      where: { warehouse: { company_id: { in: scope.visibleCompanyIds } } },
       _count: true,
     });
 
