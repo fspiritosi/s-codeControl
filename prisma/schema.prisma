@@ -302,6 +302,22 @@ model company {
   bank_movements         bank_movements[]
   checks                 checks[]
   payment_orders         payment_orders[]
+
+  // Configuración
+  pdf_settings pdf_settings?
+}
+
+model pdf_settings {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id          String   @unique @db.Uuid
+  header_text         String?
+  footer_text         String?
+  signature_image_url String?
+  signed_pdf_keys     String[] @default([])
+  created_at          DateTime @default(now()) @db.Timestamptz
+  updated_at          DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  company company @relation(fields: [company_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
 }
 
 model company_groups {

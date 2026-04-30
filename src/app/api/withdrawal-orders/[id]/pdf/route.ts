@@ -90,10 +90,24 @@ export async function GET(
       email: company.contact_email ?? '',
     };
 
+    // Configuración de PDF de la empresa (header/footer/firma)
+    const pdfSettingsRow = await prisma.pdf_settings.findUnique({
+      where: { company_id: companyId },
+    });
+    const isSigned = pdfSettingsRow?.signed_pdf_keys.includes('withdrawal-order') ?? false;
+    const pdfSettings = pdfSettingsRow
+      ? {
+          headerText: pdfSettingsRow.header_text,
+          footerText: pdfSettingsRow.footer_text,
+          signatureUrl: isSigned ? pdfSettingsRow.signature_image_url : null,
+        }
+      : undefined;
+
     // Mapear y generar PDF
     const pdfData = mapWithdrawalOrderDataForPDF(
       withdrawalOrder as any,
-      companyData
+      companyData,
+      pdfSettings
     );
 
     const pdfBuffer = await generateWithdrawalOrderPDF(pdfData);

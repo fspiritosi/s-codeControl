@@ -31,8 +31,8 @@ export default function EmployeeComponent({
     form,
     form2,
     accion,
-    readOnly,
-    setReadOnly,
+    readOnly: rawReadOnly,
+    setReadOnly: rawSetReadOnly,
     accordion1Errors,
     accordion2Errors,
     accordion3Errors,
@@ -56,6 +56,12 @@ export default function EmployeeComponent({
     guildId,
     covenantsId,
   } = useEmployeeFormLogic(user, guild, covenants, categories);
+
+  // Empleados dados de baja: forzar solo lectura. La única acción habilitada
+  // es reactivar (botón en EmployeeHeader); editar campos queda bloqueado.
+  const isInactive = user && user.is_active === false;
+  const readOnly = isInactive ? true : rawReadOnly;
+  const setReadOnly = isInactive ? () => {} : rawSetReadOnly;
 
   return (
     <section>
@@ -149,7 +155,7 @@ export default function EmployeeComponent({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <p className="w-fit">
-                    {accion !== 'view' || !readOnly ? (
+                    {!isInactive && (accion !== 'view' || !readOnly) ? (
                       <Button type="submit" className="mt-5 ml-2">
                         {accion === 'edit' || accion === 'view' ? 'Guardar cambios' : 'Agregar empleado'}
                       </Button>

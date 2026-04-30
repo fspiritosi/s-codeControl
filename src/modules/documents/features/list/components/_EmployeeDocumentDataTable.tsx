@@ -19,6 +19,7 @@ interface Props {
   totalRows: number;
   searchParams: DataTableSearchParams;
   monthly?: boolean;
+  downDocument?: boolean;
 }
 
 const FILTER_DEFINITIONS: { columnId: string; title: string; type: 'faceted' | 'text' | 'dateRange' }[] = [
@@ -32,14 +33,18 @@ const FILTER_DEFINITIONS: { columnId: string; title: string; type: 'faceted' | '
 
 const DEFAULT_VISIBLE_FILTERS = new Set(['state', 'resource', 'documentName']);
 
-export function _EmployeeDocumentDataTable({ data, totalRows, searchParams, monthly }: Props) {
+export function _EmployeeDocumentDataTable({ data, totalRows, searchParams, monthly, downDocument }: Props) {
   const [facets, setFacets] = useState<Record<string, FacetEntry[]> | null>(null);
   const columns = monthly ? monthlyDocumentColumns : permanentDocumentColumns;
-  const tableId = monthly ? 'employee-docs-monthly' : 'employee-docs-permanent';
+  const tableId = downDocument
+    ? 'employee-docs-baja'
+    : monthly
+      ? 'employee-docs-monthly'
+      : 'employee-docs-permanent';
 
   useEffect(() => {
-    getEmployeeDocumentFacets({ monthly }).then(setFacets).catch(console.error);
-  }, [monthly]);
+    getEmployeeDocumentFacets({ monthly, downDocument }).then(setFacets).catch(console.error);
+  }, [monthly, downDocument]);
 
   const buildFacetConfig = (entries: FacetEntry[] | undefined) => {
     if (!entries || entries.length === 0) return { options: [], externalCounts: new Map<string, number>() };
@@ -96,11 +101,19 @@ export function _EmployeeDocumentDataTable({ data, totalRows, searchParams, mont
       initialFilterVisibility={initialFilterVisibility}
       initialColumnVisibility={initialColumnVisibility}
       exportConfig={{
-        fetchAllData: () => getAllEmployeeDocumentsForExport(searchParams, { monthly }),
+        fetchAllData: () => getAllEmployeeDocumentsForExport(searchParams, { monthly, downDocument }),
         options: {
-          filename: monthly ? 'documentos-mensuales-empleados' : 'documentos-permanentes-empleados',
-          sheetName: monthly ? 'Mensuales' : 'Permanentes',
-          title: monthly ? 'Documentos Mensuales de Empleados' : 'Documentos Permanentes de Empleados',
+          filename: downDocument
+            ? 'documentos-baja-empleados'
+            : monthly
+              ? 'documentos-mensuales-empleados'
+              : 'documentos-permanentes-empleados',
+          sheetName: downDocument ? 'Baja' : monthly ? 'Mensuales' : 'Permanentes',
+          title: downDocument
+            ? 'Documentos de Baja de Empleados'
+            : monthly
+              ? 'Documentos Mensuales de Empleados'
+              : 'Documentos Permanentes de Empleados',
           includeDate: true,
         },
       }}

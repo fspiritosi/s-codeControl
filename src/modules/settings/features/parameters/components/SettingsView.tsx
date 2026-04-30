@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import {
   UrlTabs,
   UrlTabsContent,
@@ -20,19 +21,47 @@ import {
   updateTypeOfContractParameter,
   updateWorkDiagramParameter,
 } from '../actions.server';
+import { getPdfSettings } from '@/modules/settings/features/pdf/actions.server';
+import { PdfSettingsForm } from '@/modules/settings/features/pdf/components/PdfSettingsForm';
 
-const VALID_TABS = ['hierarchy', 'work-diagram', 'contract-type'] as const;
-type SettingsTab = (typeof VALID_TABS)[number];
+const VALID_SECTIONS = ['employees', 'pdf'] as const;
+type Section = (typeof VALID_SECTIONS)[number];
 
 interface Props {
-  currentTab?: string;
+  currentSection?: string;
 }
 
-export default async function SettingsView({ currentTab }: Props) {
-  const tab: SettingsTab = VALID_TABS.includes(currentTab as SettingsTab)
-    ? (currentTab as SettingsTab)
-    : 'hierarchy';
+export default async function SettingsView({ currentSection }: Props) {
+  const section: Section = (VALID_SECTIONS as readonly string[]).includes(currentSection ?? '')
+    ? (currentSection as Section)
+    : 'employees';
 
+  return (
+    <section className="space-y-4">
+      <div>
+        <h2 className="text-2xl font-bold">Configuración</h2>
+        <p className="text-sm text-muted-foreground">Parámetros del sistema</p>
+      </div>
+
+      <UrlTabs value={section} paramName="section" baseUrl="/dashboard/settings">
+        <UrlTabsList>
+          <UrlTabsTrigger value="employees">Empleados</UrlTabsTrigger>
+          <UrlTabsTrigger value="pdf">PDF</UrlTabsTrigger>
+        </UrlTabsList>
+
+        <UrlTabsContent value="employees">
+          {section === 'employees' && <EmployeesSection />}
+        </UrlTabsContent>
+
+        <UrlTabsContent value="pdf">
+          {section === 'pdf' && <PdfSection />}
+        </UrlTabsContent>
+      </UrlTabs>
+    </section>
+  );
+}
+
+async function EmployeesSection() {
   const [hierarchy, workDiagrams, contractTypes] = await Promise.all([
     getHierarchyParameters(),
     getWorkDiagramParameters(),
@@ -40,14 +69,14 @@ export default async function SettingsView({ currentTab }: Props) {
   ]);
 
   return (
-    <UrlTabs value={tab} paramName="tab" baseUrl="/dashboard/settings">
-      <UrlTabsList>
-        <UrlTabsTrigger value="hierarchy">Puestos jerárquicos</UrlTabsTrigger>
-        <UrlTabsTrigger value="work-diagram">Diagramas de trabajo</UrlTabsTrigger>
-        <UrlTabsTrigger value="contract-type">Tipo de contrato</UrlTabsTrigger>
-      </UrlTabsList>
+    <Tabs defaultValue="hierarchy" className="space-y-4">
+      <TabsList>
+        <TabsTrigger value="hierarchy">Puestos jerárquicos</TabsTrigger>
+        <TabsTrigger value="work-diagram">Diagramas de trabajo</TabsTrigger>
+        <TabsTrigger value="contract-type">Tipos de contrato</TabsTrigger>
+      </TabsList>
 
-      <UrlTabsContent value="hierarchy">
+      <TabsContent value="hierarchy">
         <Card>
           <CardHeader>
             <CardTitle>Puestos jerárquicos</CardTitle>
@@ -72,9 +101,9 @@ export default async function SettingsView({ currentTab }: Props) {
             />
           </CardContent>
         </Card>
-      </UrlTabsContent>
+      </TabsContent>
 
-      <UrlTabsContent value="work-diagram">
+      <TabsContent value="work-diagram">
         <Card>
           <CardHeader>
             <CardTitle>Diagramas de trabajo</CardTitle>
@@ -98,15 +127,15 @@ export default async function SettingsView({ currentTab }: Props) {
             />
           </CardContent>
         </Card>
-      </UrlTabsContent>
+      </TabsContent>
 
-      <UrlTabsContent value="contract-type">
+      <TabsContent value="contract-type">
         <Card>
           <CardHeader>
-            <CardTitle>Tipo de contrato</CardTitle>
+            <CardTitle>Tipos de contrato</CardTitle>
             <CardDescription>
-              Modalidades contractuales que se pueden asignar a los empleados. Los marcados
-              como &quot;Sistema&quot; son del catálogo base y no se pueden modificar.
+              Modalidades contractuales que se pueden asignar a los empleados. Los marcados como
+              &quot;Sistema&quot; son del catálogo base y no se pueden modificar.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -125,7 +154,21 @@ export default async function SettingsView({ currentTab }: Props) {
             />
           </CardContent>
         </Card>
-      </UrlTabsContent>
-    </UrlTabs>
+      </TabsContent>
+    </Tabs>
   );
+}
+
+async function PdfSection() {
+  const settings = await getPdfSettings();
+  if (!settings) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          No hay empresa activa.
+        </CardContent>
+      </Card>
+    );
+  }
+  return <PdfSettingsForm initial={settings} />;
 }

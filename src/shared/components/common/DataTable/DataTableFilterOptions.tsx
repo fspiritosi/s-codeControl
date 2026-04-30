@@ -1,18 +1,20 @@
 'use client';
 
 import * as React from 'react';
-import { SlidersHorizontal } from 'lucide-react';
+import { Check, SlidersHorizontal } from 'lucide-react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
+import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/shared/components/ui/dropdown-menu';
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/shared/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { saveTableFilterVisibility } from '@/shared/actions/table-preferences';
 
 import type { DataTableFacetedFilterConfig } from './types';
@@ -52,29 +54,45 @@ export function DataTableFilterOptions({
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <Popover>
+      <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="h-8 gap-1.5">
           <SlidersHorizontal className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">Filtros</span>
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuLabel>Mostrar filtros</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {filters.map((filter) => {
-          const isVisible = filterVisibility[filter.columnId] !== false;
-          return (
-            <DropdownMenuCheckboxItem
-              key={filter.columnId}
-              checked={isVisible}
-              onCheckedChange={(value) => toggleFilter(filter.columnId, !!value)}
-            >
-              {filter.title}
-            </DropdownMenuCheckboxItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </PopoverTrigger>
+      <PopoverContent className="w-[240px] p-0" align="end">
+        <Command>
+          <CommandInput placeholder="Buscar filtro..." />
+          <CommandList>
+            <CommandEmpty>Sin resultados.</CommandEmpty>
+            <CommandGroup heading="Mostrar filtros">
+              {filters.map((filter) => {
+                const isVisible = filterVisibility[filter.columnId] !== false;
+                return (
+                  <CommandItem
+                    key={filter.columnId}
+                    value={filter.title}
+                    onSelect={() => toggleFilter(filter.columnId, !isVisible)}
+                  >
+                    <div
+                      className={cn(
+                        'mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary',
+                        isVisible
+                          ? 'bg-primary text-primary-foreground'
+                          : 'opacity-50 [&_svg]:invisible'
+                      )}
+                    >
+                      <Check className="h-4 w-4" />
+                    </div>
+                    <span>{filter.title}</span>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

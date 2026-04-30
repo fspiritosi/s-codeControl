@@ -19,7 +19,7 @@ export const fetchAllEquipmentWithRelations = async () => {
 
   try {
     const data = await prisma.vehicles.findMany({
-      where: { company_id: companyId },
+      where: { company_id: companyId, is_active: true },
       include: {
         brand_rel: true,
         model_rel: true,
@@ -100,7 +100,7 @@ export const fetchAllEquipment = async (company_equipment_id?: string) => {
 
   try {
     const data = await prisma.vehicles.findMany({
-      where: { company_id: (companyId ?? company_equipment_id) || '' },
+      where: { company_id: (companyId ?? company_equipment_id) || '', is_active: true },
       include: {
         brand_rel: true,
         model_rel: true,

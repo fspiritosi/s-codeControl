@@ -7,6 +7,7 @@ import { CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/c
 import BackButton from '@/shared/components/common/BackButton';
 import { Loader } from 'lucide-react';
 import { EmployeeTerminationDialog } from './EmployeeTerminationDialog';
+import { EmployeeReactivateDialog } from './EmployeeReactivateDialog';
 import { UseFormReturn } from 'react-hook-form';
 
 interface EmployeeHeaderProps {
@@ -74,20 +75,31 @@ export function EmployeeHeader({
         )}
         {role !== 'Invitado' && readOnly && accion === 'view' ? (
           <div className="flex flex-grap gap-2">
-            <Button
-              variant="default"
-              onClick={() => {
-                setReadOnly(false);
-              }}
-            >
-              Habilitar edición
-            </Button>
+            {user?.is_active ? (
+              <Button
+                variant="default"
+                onClick={() => {
+                  setReadOnly(false);
+                }}
+              >
+                Habilitar edición
+              </Button>
+            ) : (
+              <EmployeeReactivateDialog
+                documentNumber={user?.document_number ?? ''}
+                fullName={`${user?.lastname ?? ''} ${user?.firstname ?? ''}`.trim()}
+                reasonForTermination={user?.reason_for_termination ?? null}
+                terminationDate={user?.termination_date ?? null}
+                dateOfAdmission={user?.date_of_admission ?? null}
+              />
+            )}
             <BackButton />
           </div>
         ) : (
           !readOnly &&
           accion !== 'new' &&
-          role !== 'Invitado' && (
+          role !== 'Invitado' &&
+          user?.is_active && (
             <div className="flex flex-grap gap-2">
               <EmployeeTerminationDialog
                 showModal={showModal}

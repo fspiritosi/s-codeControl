@@ -54,6 +54,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Fragment, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -100,6 +101,7 @@ export function EquipmentRowActions({ row }: EquipmentRowActionsProps) {
     role = roleRaw?.join('');
   }
 
+  const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [integerModal, setIntegerModal] = useState(false);
   const [domain, setDomain] = useState('');
@@ -126,13 +128,18 @@ export function EquipmentRowActions({ row }: EquipmentRowActionsProps) {
 
   async function reintegerEquipment() {
     try {
-      await reactivateVehicle(equipment.id, actualCompany?.id || '');
+      const result = await reactivateVehicle(equipment.id, actualCompany?.id || '');
+
+      if (result?.error) {
+        toast.error('Error al reintegrar el equipo', { description: result.error });
+        return;
+      }
 
       setIntegerModal(!integerModal);
-
       setShowDeletedEquipment(false);
+      router.refresh();
       toast.success('Equipo reintegrado', {
-        description: `El equipo ${equipment?.engine} ha sido reintegrado`,
+        description: `El equipo ${equipment?.domain ?? equipment?.engine} ha sido reintegrado`,
       });
     } catch (error: any) {
       const message = await errorTranslate(error?.message);
@@ -147,15 +154,20 @@ export function EquipmentRowActions({ row }: EquipmentRowActionsProps) {
     };
 
     try {
-      await deactivateVehicle(
+      const result = await deactivateVehicle(
         equipment.id,
         actualCompany?.id || '',
         data.termination_date,
         data.reason_for_termination
       );
 
-      setShowModal(!showModal);
+      if (result?.error) {
+        toast.error('Error al dar de baja el equipo', { description: result.error });
+        return;
+      }
 
+      setShowModal(!showModal);
+      router.refresh();
       toast.success('Equipo eliminado', {
         description: `El equipo ${equipment.domain} ha sido dado de baja`,
       });
@@ -171,9 +183,9 @@ export function EquipmentRowActions({ row }: EquipmentRowActionsProps) {
         <AlertDialog defaultOpen onOpenChange={() => setIntegerModal(!integerModal)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Estas completamente seguro?</AlertDialogTitle>
+              <AlertDialogTitle>Reintegrar equipo</AlertDialogTitle>
               <AlertDialogDescription>
-                {`Estas a punto de reintegrar al equipo ${equipment.id}, quien fue dado de baja por ${equipment.reason_for_termination} el dia ${equipment.termination_date}. Al reintegrar al equipo, se borraran estas razones. Si estas seguro de que deseas reintegrarlo, haz clic en 'Continuar'. De lo contrario, haz clic en 'Cancelar'.`}
+                {`Estás a punto de reintegrar el equipo ${equipment.domain ?? equipment.intern_number ?? ''}, dado de baja por ${equipment.reason_for_termination} el día ${equipment.termination_date ? format(new Date(equipment.termination_date), 'dd/MM/yyyy') : '—'}. Se limpiarán los datos de baja.`}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

@@ -38,7 +38,7 @@ export async function AddCompany(formData: FormData, url: string) {
   }
 }
 
-export async function EditCompany(formData: FormData, url: string) {
+export async function EditCompany(formData: FormData, url: string, companyId?: string) {
   const session = await auth();
   if (!session?.user) return { error: { message: 'No autenticado' }, data: null };
 
@@ -59,26 +59,43 @@ export async function EditCompany(formData: FormData, url: string) {
     country: formData.get('country') as string,
     industry: formData.get('industry') as string,
     description: formData.get('description') as string,
-    by_defect: true,
+    by_defect: formData.get('by_defect') === 'true',
     company_logo: url ?? '',
   };
 
-  const companyRecord = await prisma.company.findFirst({
-    where: { company_cuit: formattedData.company_cuit },
-    select: { id: true },
-  });
+  // Buscar por id si vino (modo edición desde la page); sino fallback a cuit
+  // por compatibilidad con consumidores antiguos.
+  const companyRecord = companyId
+    ? await prisma.company.findUnique({ where: { id: companyId }, select: { id: true } })
+    : await prisma.company.findFirst({
+        where: { company_cuit: formattedData.company_cuit },
+        select: { id: true },
+      });
+
+  if (!companyRecord?.id) {
+    return {
+      error: {
+        message: companyId
+          ? 'No se encontró la compañía a editar'
+          : `No se encontró la compañía con CUIT ${formattedData.company_cuit}`,
+      },
+      data: null,
+    };
+  }
 
   try {
     const data = await prisma.company.update({
-      where: { id: companyRecord?.id || '' },
+      where: { id: companyRecord.id },
       data: formattedData as any,
     });
 
     revalidatePath('/dashboard', 'layout');
+    revalidatePath('/dashboard/company', 'layout');
 
     return { error: null, data: [data] };
   } catch (companyError: any) {
-    return { error: { message: companyError.message }, data: null };
+    console.error('[EditCompany] prisma error:', companyError);
+    return { error: { message: companyError?.message ?? String(companyError) }, data: null };
   }
 }
 

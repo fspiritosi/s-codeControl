@@ -125,7 +125,7 @@ export const fetchAllEmployees = async (role?: string) => {
 
   try {
     const data = await prisma.employees.findMany({
-      where: { company_id: companyId },
+      where: { company_id: companyId, is_active: true },
     });
     return data;
   } catch (error) {

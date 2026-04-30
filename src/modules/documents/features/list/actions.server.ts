@@ -899,13 +899,21 @@ const employeeDocPaginatedSelect = {
 } as const;
 
 /**
- * Build the monthly/permanent filter for the document_type relation.
+ * Build the monthly/permanent/baja filter for the document_type relation.
+ *
+ * - downDocument=true   → solo tipos `down_document=true` (no se constrain monthly).
+ * - monthly=true        → tipos mensuales no-baja.
+ * - default             → tipos permanentes no-baja.
  */
-function buildDocTypeMonthlyFilter(monthly?: boolean) {
-  if (monthly) {
-    return { is_it_montlhy: true };
+function buildDocTypeFilter(options?: { monthly?: boolean; downDocument?: boolean }) {
+  if (options?.downDocument) {
+    return { down_document: true };
   }
-  return { NOT: { is_it_montlhy: true } };
+  // Permanentes/Mensuales: excluir tipos de baja.
+  if (options?.monthly) {
+    return { is_it_montlhy: true, NOT: { down_document: true } };
+  }
+  return { NOT: { OR: [{ is_it_montlhy: true }, { down_document: true }] } };
 }
 
 /**
@@ -914,16 +922,17 @@ function buildDocTypeMonthlyFilter(monthly?: boolean) {
 function buildEmployeeDocumentsWhere(
   state: ReturnType<typeof parseSearchParams>,
   companyId: string,
-  options?: { monthly?: boolean }
+  options?: { monthly?: boolean; downDocument?: boolean }
 ) {
-  // 1. Base where — always scope to active employees + active doc types
+  // 1. Base where — scope a empleados (activos vs inactivos según downDocument) + tipos activos
   const docTypeFilter: Record<string, unknown> = {
     is_active: true,
-    ...buildDocTypeMonthlyFilter(options?.monthly),
+    ...buildDocTypeFilter(options),
   };
 
+  const employeeIsActive = options?.downDocument ? false : true;
   const baseWhere: Record<string, unknown> = {
-    employee: { is: { company_id: companyId, is_active: true } },
+    employee: { is: { company_id: companyId, is_active: employeeIsActive } },
     document_type: { is: docTypeFilter },
   };
 
@@ -1009,7 +1018,7 @@ function buildEmployeeDocumentsWhere(
  */
 export async function getEmployeeDocumentsPaginated(
   searchParams: DataTableSearchParams,
-  options?: { monthly?: boolean }
+  options?: { monthly?: boolean; downDocument?: boolean }
 ) {
   const { companyId } = await getActionContext();
   if (!companyId) return { data: [], total: 0 };
@@ -1046,7 +1055,7 @@ export async function getEmployeeDocumentsPaginated(
  * Returns a record keyed by field name, each containing an array of { value, count }.
  */
 export async function getEmployeeDocumentFacets(
-  options?: { monthly?: boolean }
+  options?: { monthly?: boolean; downDocument?: boolean }
 ): Promise<Record<string, { value: string; count: number }[]>> {
   const { companyId } = await getActionContext();
   if (!companyId) return {};
@@ -1054,11 +1063,12 @@ export async function getEmployeeDocumentFacets(
   try {
     const docTypeFilter: Record<string, unknown> = {
       is_active: true,
-      ...buildDocTypeMonthlyFilter(options?.monthly),
+      ...buildDocTypeFilter(options),
     };
 
+    const employeeIsActive = options?.downDocument ? false : true;
     const baseWhere = {
-      employee: { is: { company_id: companyId, is_active: true } },
+      employee: { is: { company_id: companyId, is_active: employeeIsActive } },
       document_type: { is: docTypeFilter },
     };
 
@@ -1142,7 +1152,7 @@ export async function getEmployeeDocumentFacets(
  */
 export async function getAllEmployeeDocumentsForExport(
   searchParams: DataTableSearchParams,
-  options?: { monthly?: boolean }
+  options?: { monthly?: boolean; downDocument?: boolean }
 ) {
   const { companyId } = await getActionContext();
   if (!companyId) return [];
@@ -1229,7 +1239,7 @@ function buildEquipmentDocumentsWhere(
 ) {
   const docTypeFilter: Record<string, unknown> = {
     is_active: true,
-    ...buildDocTypeMonthlyFilter(options?.monthly),
+    ...buildDocTypeFilter({ monthly: options?.monthly }),
   };
 
   const baseWhere: Record<string, unknown> = {
@@ -1357,7 +1367,7 @@ export async function getEquipmentDocumentFacets(
   try {
     const docTypeFilter: Record<string, unknown> = {
       is_active: true,
-      ...buildDocTypeMonthlyFilter(options?.monthly),
+      ...buildDocTypeFilter({ monthly: options?.monthly }),
     };
 
     const baseWhere = {

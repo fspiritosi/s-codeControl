@@ -5,10 +5,11 @@ import type { DataTableSearchParams } from '@/shared/components/common/DataTable
 interface Props {
   searchParams: DataTableSearchParams;
   monthly?: boolean;
+  downDocument?: boolean;
 }
 
-export async function EmployeeDocumentList({ searchParams, monthly }: Props) {
-  const { data, total } = await getEmployeeDocumentsPaginated(searchParams, { monthly });
+export async function EmployeeDocumentList({ searchParams, monthly, downDocument }: Props) {
+  const { data, total } = await getEmployeeDocumentsPaginated(searchParams, { monthly, downDocument });
 
   return (
     <_EmployeeDocumentDataTable
@@ -16,6 +17,7 @@ export async function EmployeeDocumentList({ searchParams, monthly }: Props) {
       totalRows={total}
       searchParams={searchParams}
       monthly={monthly}
+      downDocument={downDocument}
     />
   );
 }
