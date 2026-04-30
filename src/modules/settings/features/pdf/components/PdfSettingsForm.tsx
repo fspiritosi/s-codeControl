@@ -27,9 +27,8 @@ import {
   upsertPdfSettings,
   uploadSignatureImage,
   removeSignatureImage,
-  SIGNABLE_PDF_KEYS,
-  type PdfSettingsData,
 } from '../actions.server';
+import { SIGNABLE_PDF_KEYS, type PdfSettingsData } from '../types';
 
 interface Props {
   initial: PdfSettingsData;

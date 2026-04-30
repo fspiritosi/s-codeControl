@@ -5,13 +5,13 @@ import PageTableSkeleton from '@/shared/components/common/Skeletons/PageTableSke
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ section?: string }>;
 }) {
   const resolved = await searchParams;
 
   return (
     <Suspense fallback={<PageTableSkeleton />}>
-      <SettingsView currentTab={resolved.tab} />
+      <SettingsView currentSection={resolved.section} />
     </Suspense>
   );
 }
