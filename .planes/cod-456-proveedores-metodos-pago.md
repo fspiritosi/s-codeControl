@@ -1,7 +1,7 @@
 # COD-456 — Métodos de pago en Proveedores
 
 **Fecha de inicio:** 2026-05-04
-**Estado:** Implementación en progreso (Fase 2 de 5 completada)
+**Estado:** Implementación en progreso (Fase 3 de 5 completada)
 
 **Decisiones finales pre-implementación (2026-05-04):**
 - Persistencia: `updateSupplier` recibe el array completo y hace diff en una sola transacción (lo más simple).
@@ -183,7 +183,7 @@ De `CLAUDE.md` y memorias del usuario:
 #### Fase 3: UI sub-form en `SupplierForm` con `useFieldArray`
 - **Objetivo:** Permitir alta / edición / baja de métodos de pago dentro del mismo formulario de crear y editar proveedor.
 - **Tareas:**
-  - [ ] Crear `src/modules/suppliers/features/create/components/SupplierPaymentMethodsField.tsx`:
+  - [x] Crear `src/modules/suppliers/features/create/components/SupplierPaymentMethodsField.tsx`:
     - Recibe `control` del RHF padre.
     - Usa `useFieldArray({ name: 'payment_methods' })`.
     - Render: `Card` "Métodos de pago" con:
@@ -193,7 +193,7 @@ De `CLAUDE.md` y memorias del usuario:
       - Botón eliminar por fila (`remove(index)`).
       - `RadioGroup` o checkbox "Predeterminado" exclusivo: al marcar uno, desmarca los demás vía `setValue` (evita depender solo del backend).
     - Mostrar errores de validación inline (Zod messages).
-  - [ ] Modificar `src/modules/suppliers/features/create/components/SupplierForm.tsx`:
+  - [x] Modificar `src/modules/suppliers/features/create/components/SupplierForm.tsx`:
     - Agregar `payment_methods` al `defaultValues` (vacío en alta; precargado desde `supplier.payment_methods` en edición).
     - Insertar `<SupplierPaymentMethodsField control={form.control} />` como nueva `Card` entre la card de "Datos comerciales" y "Notas" (verificar layout actual).
     - En `onSubmit`: pasar `payment_methods` a `createSupplier` / `updateSupplier`.
@@ -300,6 +300,20 @@ _Pendiente - ejecutar `/disenar cod-456-proveedores-metodos-pago`_
 - **Verificaciones:**
   - `npm run check-types`: sin errores nuevos en suppliers/payment-methods. Persisten errores **preexistentes** en `src/modules/hse/features/training/**` (no introducidos por esta fase).
   - `npm run lint`: el script falla por configuración del repo (`Invalid project directory provided, no such directory: .../lint`) — bug preexistente del comando, no de los archivos tocados.
+
+### Fase 3: UI sub-form en SupplierForm
+- **Estado:** Completada (2026-05-04)
+- **Archivos modificados:**
+  - `src/modules/suppliers/features/create/components/SupplierPaymentMethodsField.tsx` — nuevo. Sub-form con `useFieldArray`. Toggle Switch "Acepta cheques" que `append`/`remove` el ítem `CHECK`. Lista repetible de cuentas `ACCOUNT` con `bank_name`, `account_holder`, `account_holder_tax_id`, `account_type` (Select con `SUPPLIER_ACCOUNT_TYPE_LABELS`), `cbu` (filtra a dígitos en `onChange` con maxLength 22), `alias`, `currency` (`ARS`/`USD`). Botón "Agregar cuenta bancaria" y botón eliminar por fila. `RadioGroup` exclusivo "Método predeterminado" con opción "Sin predeterminado": al cambiar usa `update()` para setear `is_default` true/false en cada fila. Errores Zod inline + mensaje del array (`payment_methods.message` y `payment_methods.root.message`).
+  - `src/modules/suppliers/features/create/components/SupplierForm.tsx` — agregado import del nuevo componente, `payment_methods` mapeado en `defaultValues` (vacío en alta, normalizado desde `supplier.payment_methods` en edición), y `<SupplierPaymentMethodsField control={form.control} />` insertado entre la card "Datos comerciales" y los botones de acción. `onSubmit` ya incluye `payment_methods` en `values` (nada más que tocar; `createSupplier` y `updateSupplier` ya manejan el array desde Fase 2).
+- **Notas / decisiones:**
+  - El `RadioGroup` usa el valor sentinel `__none__` para "Sin predeterminado" (RadioGroup no acepta string vacío como value sin disparar warnings de Radix).
+  - `update()` se usa en lugar de `setValue` masivo porque mantiene la `key` estable de `useFieldArray` y evita re-render del input activo.
+  - El label del default para cuentas muestra `bank_name + últimos 4 del CBU` (los primeros 4 enmascarados) para distinguir cuentas con mismo banco.
+  - Se evitó colocar el sub-form dentro de la card "Datos comerciales" (que actualmente embebe "Notas") para no romper el layout existente; se inserta como card propia.
+- **Verificaciones:**
+  - `npm run check-types`: sin errores en `src/modules/suppliers`. Persisten errores **preexistentes** en `src/modules/hse/features/training/**`.
+  - `npm run lint`: bug preexistente del comando — ignorado por instrucción del usuario.
 
 ## 5. Verificación
 _Pendiente - ejecutar `/verificar cod-456-proveedores-metodos-pago`_
