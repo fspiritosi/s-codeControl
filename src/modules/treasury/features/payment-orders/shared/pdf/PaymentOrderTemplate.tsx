@@ -23,8 +23,32 @@ function fmtAmount(n: number): string {
   return `$${n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+// Inlined desde @/modules/suppliers para evitar cross-module imports.
+function formatCbu(cbu: string | null | undefined): string {
+  if (!cbu) return '—';
+  const clean = cbu.trim();
+  if (clean.length === 0) return '—';
+  if (clean.length !== 22) return clean;
+  return clean.match(/.{1,4}/g)?.join(' ') ?? clean;
+}
+
+const ACCOUNT_TYPE_LABELS: Record<'CHECKING' | 'SAVINGS', string> = {
+  CHECKING: 'Cuenta corriente',
+  SAVINGS: 'Caja de ahorro',
+};
+
 export function PaymentOrderTemplate({ data }: { data: PaymentOrderPDFData }) {
-  const { company, paymentOrder, supplier, invoices, payments, totalAmount, amountInWords, pdfSettings } = data;
+  const {
+    company,
+    paymentOrder,
+    supplier,
+    supplierPaymentMethods,
+    invoices,
+    payments,
+    totalAmount,
+    amountInWords,
+    pdfSettings,
+  } = data;
 
   return (
     <Document>
@@ -84,6 +108,72 @@ export function PaymentOrderTemplate({ data }: { data: PaymentOrderPDFData }) {
             <Text style={styles.infoValue}>ARS</Text>
           </View>
         </View>
+
+        {supplierPaymentMethods && supplierPaymentMethods.length > 0 ? (
+          <View>
+            <Text style={styles.sectionTitle}>Cuentas del proveedor</Text>
+            {supplierPaymentMethods.map((m, i) => {
+              if (m.type === 'CHECK') {
+                return (
+                  <View key={i} style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Cheque:</Text>
+                    <Text style={styles.infoValue}>
+                      Acepta cheques
+                      {m.isDefault ? ' (Predeterminado)' : ''}
+                    </Text>
+                  </View>
+                );
+              }
+              const accountTypeLabel = m.accountType
+                ? ACCOUNT_TYPE_LABELS[m.accountType]
+                : '';
+              const headerParts = [
+                m.bankName ?? 'Cuenta bancaria',
+                accountTypeLabel,
+                m.currency,
+              ].filter(Boolean);
+              return (
+                <View
+                  key={i}
+                  style={{
+                    marginBottom: 6,
+                    paddingBottom: 4,
+                    borderBottomWidth: 0.5,
+                    borderBottomColor: '#cbd5e1',
+                  }}
+                >
+                  <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold' }}>
+                    {headerParts.join(' - ')}
+                    {m.isDefault ? ' (Predeterminado)' : ''}
+                  </Text>
+                  {m.cbu ? (
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>CBU:</Text>
+                      <Text style={styles.infoValue}>{formatCbu(m.cbu)}</Text>
+                    </View>
+                  ) : null}
+                  {m.alias ? (
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Alias:</Text>
+                      <Text style={styles.infoValue}>{m.alias}</Text>
+                    </View>
+                  ) : null}
+                  {m.accountHolder ? (
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Titular:</Text>
+                      <Text style={styles.infoValue}>
+                        {m.accountHolder}
+                        {m.accountHolderTaxId
+                          ? ` (CUIT/CUIL: ${m.accountHolderTaxId})`
+                          : ''}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              );
+            })}
+          </View>
+        ) : null}
 
         {invoices.length > 0 ? (
           <View>

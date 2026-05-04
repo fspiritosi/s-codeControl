@@ -7,6 +7,7 @@ import {
   generatePaymentOrderPDF,
   getPaymentOrderFileName,
   amountToSpanishWords,
+  mapSupplierPaymentMethodsForPDF,
 } from '../pdf';
 import type { PaymentOrderPDFData } from '../pdf';
 import type { CompanyPDFData } from '@/shared/actions/export';
@@ -32,6 +33,10 @@ export async function sendPaymentOrderPaidEmail(
             address: true,
             phone: true,
             email: true,
+            payment_methods: {
+              where: { status: 'ACTIVE' },
+              orderBy: [{ is_default: 'desc' }, { created_at: 'asc' }],
+            },
           },
         },
         items: {
@@ -115,6 +120,9 @@ export async function sendPaymentOrderPaidEmail(
         phone: order.supplier?.phone ?? undefined,
         email: order.supplier?.email ?? undefined,
       },
+      supplierPaymentMethods: mapSupplierPaymentMethodsForPDF(
+        order.supplier?.payment_methods
+      ),
       invoices: order.items
         .filter((it) => it.invoice)
         .map((it) => ({

@@ -20,6 +20,18 @@ export interface PaymentOrderPDFPayment {
   amount: number;
 }
 
+export interface SupplierPaymentMethodPDFItem {
+  type: 'CHECK' | 'ACCOUNT';
+  bankName?: string;
+  accountHolder?: string;
+  accountHolderTaxId?: string;
+  accountType?: 'CHECKING' | 'SAVINGS';
+  cbu?: string;
+  alias?: string;
+  currency?: string;
+  isDefault: boolean;
+}
+
 export interface PaymentOrderPDFData {
   company: CompanyPDFData;
   paymentOrder: {
@@ -37,6 +49,7 @@ export interface PaymentOrderPDFData {
     phone?: string;
     email?: string;
   };
+  supplierPaymentMethods?: SupplierPaymentMethodPDFItem[];
   invoices: PaymentOrderPDFInvoice[];
   payments: PaymentOrderPDFPayment[];
   totalAmount: number;
