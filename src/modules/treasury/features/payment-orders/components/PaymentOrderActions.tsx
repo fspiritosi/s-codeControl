@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/shared/components/ui/alert-dialog';
-import { BadgeCheck, CheckCircle, XCircle } from 'lucide-react';
+import { BadgeCheck, CheckCircle, Download, XCircle } from 'lucide-react';
 import {
   cancelPaymentOrder,
   confirmPaymentOrder,
@@ -78,10 +78,16 @@ export function PaymentOrderActions({ id, status }: Props) {
     });
   };
 
-  if (status === 'CANCELLED' || status === 'PAID') return null;
+  const isTerminal = status === 'CANCELLED' || status === 'PAID';
 
   return (
     <div className="flex gap-2">
+      <Button size="sm" variant="outline" asChild>
+        <a href={`/api/payment-orders/${id}/pdf`} target="_blank" rel="noopener noreferrer">
+          <Download className="size-4 mr-1" />
+          Descargar PDF
+        </a>
+      </Button>
       {status === 'DRAFT' && (
         <Button size="sm" onClick={handleConfirm} disabled={isPending}>
           <CheckCircle className="size-4 mr-1" />
@@ -98,10 +104,12 @@ export function PaymentOrderActions({ id, status }: Props) {
           Marcar como Pagada
         </Button>
       )}
-      <Button size="sm" variant="destructive" onClick={handleCancel} disabled={isPending}>
-        <XCircle className="size-4 mr-1" />
-        Anular
-      </Button>
+      {!isTerminal && (
+        <Button size="sm" variant="destructive" onClick={handleCancel} disabled={isPending}>
+          <XCircle className="size-4 mr-1" />
+          Anular
+        </Button>
+      )}
 
       <AlertDialog open={confirmPaidOpen} onOpenChange={setConfirmPaidOpen}>
         <AlertDialogContent>
