@@ -1,0 +1,408 @@
+"Title","Description","Status","Priority","Estimate","Labels"
+"M0-T01 · Verificar setup de testing y dependencias","Verificar si el proyecto tiene Vitest/Jest configurado. Verificar versiones de `decimal.js`, `@react-pdf/renderer`, `xlsx`. Si falta framework de testing, configurar Vitest. Instalar `@react-pdf/renderer` si falta.
+
+**Criterio**: package.json con framework de tests instalado. Un test trivial pasa. Las 3 deps verificadas.
+
+Ver [diseno.md §3.7 y §12.4](./diseno.md).","Backlog","High","2","costos,M0,testing,backend"
+"M0-T02 · Migration e0: registrar módulo 'costos' en catálogo","Crear migration que inserta row en tabla `modules` con `name='costos'`, `description='Gestión de Costos de Servicios'`, `price=0`. NO se toca el enum `modulos`. Activar en `hired_modules` para Transporte SP en staging.
+
+**Criterio**: Migration aplicada. SELECT name FROM modules WHERE name='costos' retorna 1 row. Transporte SP tiene un row en hired_modules apuntando a este módulo.
+
+Ver [diseno.md §3.1](./diseno.md).","Backlog","High","2","costos,M0,db,backend"
+"M0-T03 · Crear scaffold de carpetas del módulo costos","Crear estructura `src/modules/costos/{features,shared}` con `shared/{types,utils,constants,pdf}` y `index.ts` placeholders.
+
+**Criterio**: Estructura creada y commiteada. npm run lint pasa.
+
+Ver [diseno.md §1.1](./diseno.md).","Backlog","Medium","1","costos,M0,backend"
+"M0-T04 · Helper assertModuloHabilitado y access.ts","Implementar `src/modules/costos/shared/utils/access.ts` con `assertModuloHabilitado(companyId, moduleName)`. Test unitario.
+
+**Criterio**: Si no hay hired_modules con module.name='costos' para la empresa, throw error. Si hay, no throw.
+
+Dependencias: → M0-T02.","Backlog","High","2","costos,M0,backend"
+"M0-T05 · Crear layout protegido /dashboard/costos/layout.tsx","Layout server-component que verifica módulo costos habilitado y redirige a /dashboard?error=modulo_no_habilitado si no.
+
+**Criterio**: Usuario sin módulo es redirigido. Usuario con módulo entra. loading.tsx y error.tsx básicos.
+
+Dependencias: → M0-T04.
+Ver [diseno.md §3.2](./diseno.md).","Backlog","High","2","costos,M0,frontend,backend"
+"M0-T06 · Agregar entrada al sidebar (SideLinks.tsx)","Agregar item 'Gestión de Costos' en `SideLinks.tsx` con icono Calculator (lucide). Verificar si el sidebar actual filtra por hired_modules; si no, agregar el filtrado.
+
+**Criterio**: Usuario admin de Transporte SP ve la entrada. Usuario de otra empresa NO la ve. Click navega a /dashboard/costos.
+
+Ver [diseno.md §3.4](./diseno.md).","Backlog","High","3","costos,M0,frontend"
+"M0-T07 · Formatters ARS centralizados","Crear `src/shared/lib/utils/formatters.ts` con `formatCurrencyARS`, `formatPercentage`. Tests unitarios.
+
+**Criterio**: 100k → '$ 100.000,00'; 0.85 → '85,00%'. Maneja null/undefined/NaN retornando '—'.
+
+Ver [diseno.md §3.6](./diseno.md).","Backlog","Medium","2","costos,M0,frontend"
+"M0-T08 · Helpers de Decimal y período","Crear `src/modules/costos/shared/utils/decimal.ts` (toClientNumber, toClientString, parseDecimal) y `periodo.ts` (parsePeriodo, formatPeriodo, comparePeriodos, nextPeriodo, prevPeriodo). Tests.
+
+**Criterio**: 100% cobertura. parsePeriodo rechaza '2026-13', '202604'.","Backlog","High","3","costos,M0,backend"
+"M0-T09 · Bucket Supabase Storage 'costos-pdfs'","Crear bucket en Supabase staging. Definir políticas RLS: lectura solo si el usuario tiene share_company_users para el companyId del path. Documentar comandos.
+
+**Criterio**: Bucket creado. Políticas aplicadas. Test manual de subida + URL firmada.
+
+Ver [diseno.md §3.5](./diseno.md).","Backlog","High","3","costos,M0,backend,deploy"
+"M0-T10 · Constantes del módulo costos","Crear `src/modules/costos/shared/constants/index.ts` con `COSTOS_MODULE_NAME`, `COSTOS_PDF_BUCKET`, `COSTOS_PDF_PATHS` helper, `COSTOS_SIGNED_URL_TTL`, `COSTOS_PONDERACION_TOLERANCIA`.","Backlog","Medium","1","costos,M0,backend"
+"M0-T11 · Página dashboard placeholder de costos","Página /dashboard/costos/page.tsx con dashboard placeholder (cards de CCT, Servicios, Composiciones, Liquidaciones con conteos en 0). Landing del módulo.
+
+Dependencias: → M0-T05, M0-T06.","Backlog","Medium","2","costos,M0,frontend"
+"M1-T01 · Migration e1: modelos del configurador CCT","Migration con `config_cct`, `categoria_cct`, `concepto_cct`, `valor_concepto_categoria`, `tope_imponible` + enums `tipo_concepto_cct`, `ambito_concepto_cct`, `clase_calculo_concepto`. Relaciones inversas en company. Indices según diseño §2.2.
+
+**Criterio**: Migration aplica. npm run gentypes y prisma generate ok.","Backlog","High","4","costos,M1,db,backend"
+"M1-T02 · Tipos compartidos cct.types.ts","Tipos con `CreateCCTInput`, `CategoriaInput`, `ConceptoInput`, **discriminated union `ParametrosConcepto`** (7 variantes), `TopeInput`, `ContextoCalculo`, `ConceptoResuelto`, `CCTResuelto`.
+
+**Criterio**: TS compila. ParametrosConcepto permite narrowing por clase.
+
+Dependencias: → M1-T01.
+Ver [diseno.md §4.2](./diseno.md).","Backlog","High","3","costos,M1,backend"
+"M1-T03 · Motor de conceptos: dispatcher + clases simples","`motor-conceptos.ts` con `resolverConceptos`, dispatcher por clase. Implementar 4 clases simples: FIJO_GLOBAL, FIJO_POR_CATEGORIA, POR_ANTIGUEDAD_VALOR, POR_ANTIGUEDAD_PCT. Tests unitarios por clase.
+
+**Criterio**: Cada clase tiene su test. Trace string legible para auditoría.
+
+Dependencias: → M1-T02.
+Ver [diseno.md §4.3](./diseno.md).","Backlog","High","6","costos,M1,backend,golden-test"
+"M1-T04 · Motor de conceptos: clases por porcentaje + topológico","Implementar PCT_CONCEPTO, PCT_SUMA_CONCEPTOS. Implementar ordenamiento topológico de conceptos según dependencias. Detectar ciclos (throw ConceptoCiclicoError). Tests.
+
+**Criterio**: Test con 5 conceptos interdependientes resuelve. Test de ciclo lanza error claro.
+
+Dependencias: → M1-T03.","Backlog","High","6","costos,M1,backend"
+"M1-T05 · Motor de conceptos: POR_UNIDAD + topes imponibles","Implementar POR_UNIDAD (con derivación opcional, recargo, soporte horas/días). Aplicar tope_codigo con consulta a tope_imponible de vigencia más reciente. Tests.
+
+**Criterio**: Test de hs nocturnas con recargo 30%. Test de jubilación 11% sobre suma con tope.
+
+Dependencias: → M1-T04.","Backlog","High","4","costos,M1,backend"
+"M1-T06 · Función resolverCCT (top-level con queries)","Función top-level que carga conceptos+valores+topes desde Prisma y llama a resolverConceptos. Manejo de errores y companyId scoping.
+
+**Criterio**: 1 query batched para conceptos, 1 para valores, 1 para topes. No N+1. Test con CCT de fixture.
+
+Dependencias: → M1-T05.","Backlog","High","3","costos,M1,backend"
+"M1-T07 · Validador validarConceptosCCT","Validar al guardar un concepto: referencias existentes, no introduce ciclo, tope_codigo existe, ámbito coherente con dependencias.
+
+**Criterio**: Tests para cada caso. Mensaje de error legible.
+
+Dependencias: → M1-T04.","Backlog","High","3","costos,M1,backend"
+"M1-T08 · Server Actions CCT (CRUD CCT y paritarias)","actions.server.ts con listCCTs, getCCT, createCCT, clonarParitaria (clona categorías + conceptos del período anterior), closeParitaria, deleteCCT (con guarda).
+
+**Criterio**: Queries scoped por companyId. Tests integración.
+
+Dependencias: → M1-T01.
+Ver [diseno.md §4.1](./diseno.md).","Backlog","High","4","costos,M1,backend"
+"M1-T09 · Server Actions CCT (Categorías y Conceptos)","Acciones addCategoria, updateCategoria, deleteCategoria, addConcepto, updateConcepto, deleteConcepto, reorderConceptos, setValorPorCategoria, bulkSetValores. Validar conceptos antes de persistir.
+
+**Criterio**: Bloqueo si CCT tiene composiciones/liquidaciones (modo solo lectura). Tests.
+
+Dependencias: → M1-T07, M1-T08.","Backlog","High","4","costos,M1,backend"
+"M1-T10 · Server Actions Topes Imponibles","listTopes, addTope, updateTope, deleteTope. Acceso restringido a profile.role==='Admin'.
+
+**Criterio**: Test que usuario no-admin recibe error 403.","Backlog","Medium","2","costos,M1,backend"
+"M1-T11 · UI: PanelCCT con selectores","Server Component PanelCCT.tsx que renderiza SelectorCCT + SelectorParitaria + tabs. Página /dashboard/costos/configuracion-cct.
+
+**Criterio**: UI navegable. Selectores dispatchan. Tabs muestran placeholders.
+
+Dependencias: → M1-T08.
+Ver [diseno.md §4.4-§4.5](./diseno.md).","Backlog","Medium","4","costos,M1,frontend"
+"M1-T12 · UI: FormNuevoCCT y FormNuevaParitaria","Sheets para crear nuevo CCT y nueva paritaria (clona). RHF + Zod.
+
+**Criterio**: Validación. Crear CCT inserta. Clonar paritaria copia conceptos.
+
+Dependencias: → M1-T11.","Backlog","Medium","3","costos,M1,frontend"
+"M1-T13 · UI: TabCategorias (DataTable + CRUD)","DataTable con columnas codigo, nombre, orden. Edit/delete. Botón 'Nueva categoría' → Dialog. Drag-and-drop para reordenar.
+
+**Criterio**: CRUD funcional. Reordenamiento persiste.
+
+Dependencias: → M1-T09, M1-T11.","Backlog","Medium","4","costos,M1,frontend"
+"M1-T14 · UI: TabConceptos con DataTable filtrable","DataTable con columnas codigo, nombre, tipo, ámbito, clase, orden. Filtros por tipo y ámbito. Botón 'Nuevo concepto'.
+
+**Criterio**: Filtros funcionan. Click en fila abre Sheet.
+
+Dependencias: → M1-T11.","Backlog","Medium","4","costos,M1,frontend"
+"M1-T15 · UI: FormConcepto con form dinámico ParametrosFormByClase","Sheet con campos generales + bloque 'Parámetros' que cambia según clase. Para PCT_CONCEPTO/PCT_SUMA_CONCEPTOS, selectores de 'concepto referenciado' leen los conceptos del CCT.
+
+**Criterio**: Cambiar la clase resetea solo parámetros. Valida con Zod. Errores legibles.
+
+Dependencias: → M1-T09, M1-T14.","Backlog","High","6","costos,M1,frontend"
+"M1-T16 · UI: TabValoresPorCategoria","Filtra conceptos con clase FIJO_POR_CATEGORIA. Grilla concepto × categoría con celdas editables in-place. Bulk save.
+
+**Criterio**: Carga rápida. Edición optimista con rollback en error.
+
+Dependencias: → M1-T09, M1-T11.","Backlog","Medium","4","costos,M1,frontend"
+"M1-T17 · UI: PanelTopesImponibles (admin)","Página /dashboard/costos/topes-imponibles con DataTable: codigo, vigencia_desde, valor, fuente. CRUD vía Dialog. Acceso restringido a admin del sistema.
+
+**Criterio**: Usuario no-admin recibe redirect/403.
+
+Dependencias: → M1-T10.","Backlog","Medium","3","costos,M1,frontend"
+"M1-T18 · Seed CCT 545/08 UOCRA Petroleros","scripts/seed-cct-545-08.ts con CCT 545/08 + 7 categorías (G B / H B / I B / J B / M B / VII B / OFESP) + ~25 conceptos con sus parámetros y valores. Idempotente (ON CONFLICT).
+
+**Criterio**: Ejecución crea el CCT completo. Re-ejecución es no-op.
+
+Dependencias: → M1-T09.
+Ver [diseno.md §4.6](./diseno.md).","Backlog","High","6","costos,M1,seed,backend"
+"M1-T19 · Tests golden: 3 recibos (motor de conceptos)","3 tests con fixtures CCT 545/08 + inputs de Bide/Guiñazu/Moragues que validan que el motor reproduce los conceptos del recibo (cantidad de líneas, valores, totales) ±$0.01.
+
+**Criterio**: 3 tests verdes. Diferencias documentadas en referencias/README.md.
+
+Dependencias: → M1-T06, M1-T18.","Backlog","Urgent","6","costos,M1,testing,golden-test,bloqueante"
+"M1-T20 · Validación de período activo único por CCT × empresa","Constraint a nivel app: al crear/clonar paritaria, cerrar vigencia_hasta del período anterior. Solo un período con vigencia_hasta=null por (company_id, cct_codigo).
+
+**Criterio**: Test reproduce el caso. Mensaje de error si se intenta tener 2 activos.
+
+Dependencias: → M1-T08.","Backlog","Medium","2","costos,M1,backend"
+"M2-T01 · Migration e2: modelos de equipos y combustible","Migration con costo_equipo, item_mantenimiento, registro_combustible + relaciones inversas en vehicles y company.
+
+**Criterio**: Migration aplica. Tipos regenerados.
+
+Ver [diseno.md §2.3](./diseno.md).","Backlog","High","3","costos,M2,db,backend"
+"M2-T02 · Tipos compartidos equipo y combustible","equipo.types.ts y combustible.types.ts con CostoEquipoInput, ItemMantInput, VehiculoConCosto, RegistroCombustibleInput.","Backlog","Medium","2","costos,M2,backend"
+"M2-T03 · Motor de amortización y mantenimiento","calcular-amortizacion.ts y calcular-mantenimiento.ts con funciones puras según diseño §5.2. Tests con valores reales.
+
+**Criterio**: PECOM 319M valor compra → costo mensual $7,794,945. AESA 247M → $6,656,716.
+
+Dependencias: → M2-T01.","Backlog","High","4","costos,M2,backend,golden-test"
+"M2-T04 · Server Actions equipos","equipos/actions.server.ts con listVehiculosConCosto, getCostoEquipo, upsertCostoEquipo, CRUD de items, bulkAddItemsMantenimiento.
+
+**Criterio**: Reusa vehicles existentes. Tests integración. Scope por companyId.
+
+Dependencias: → M2-T01, M2-T03.","Backlog","High","4","costos,M2,backend"
+"M2-T05 · Server Actions combustible","combustible/actions.server.ts con listRegistrosCombustible, upsertRegistroCombustible, deleteRegistroCombustible. Constraint único servicio+vehicle+período.
+
+**Criterio**: Tests CRUD.
+
+Dependencias: → M2-T01.","Backlog","Medium","2","costos,M2,backend"
+"M2-T06 · UI: TablaEquiposCosto + ResumenCostoEquipo","DataTable de vehículos con columnas: vehículo, valor compra, costo mensual calculado, items count. Click → detalle.
+
+**Criterio**: Costo mensual calculado en server.
+
+Dependencias: → M2-T04.","Backlog","Medium","4","costos,M2,frontend"
+"M2-T07 · UI: FormCostoEquipo + tabla de items","Página /dashboard/costos/equipos/[vehicleId]. Form de costo_equipo arriba + DataTable de items abajo con CRUD.
+
+**Criterio**: Form valida. Items con feedback inmediato.
+
+Dependencias: → M2-T04, M2-T06.","Backlog","Medium","4","costos,M2,frontend"
+"M2-T08 · UI: ImportarItemsDialog (carga rápida)","Dialog que acepta CSV/JSON pegado con items. Parser tolerante. Preview antes de insertar.
+
+**Criterio**: Carga 30+ items en una operación. Manejo de errores.
+
+Dependencias: → M2-T07.","Backlog","Medium","3","costos,M2,frontend"
+"M2-T09 · UI: Combustible (lista + form mensual)","Página /dashboard/costos/combustible con DataTable. Form mensual editable. Selector de servicio.
+
+**Criterio**: Carga mensual ágil. Suma agregada por servicio.
+
+Dependencias: → M2-T05.","Backlog","Medium","4","costos,M2,frontend"
+"M2-T10 · Tests golden: combustible PECOM","Test reproduciendo combustible PECOM Jun25: 950 lts × 1596 + 47.5 lts × 3227.5 = $1,669,506.
+
+Dependencias: → M2-T05.","Backlog","High","2","costos,M2,testing,golden-test"
+"M3-T01 · Migration e3: servicio_contrato + MOD + OCP","Migration con servicio_contrato (FK a config_cct), asignacion_mod (FK a categoria_cct), asignacion_equipo_servicio, item_ocp + relaciones inversas en customers, employees, vehicles, company, config_cct, categoria_cct.
+
+**Criterio**: Migration aplica. Tipos regenerados.
+
+Ver [diseno.md §2.4](./diseno.md).","Backlog","Urgent","4","costos,M3,db,backend,bloqueante"
+"M3-T02 · Tipos compartidos servicio, mod, ocp","servicio.types.ts, mod.types.ts, ocp.types.ts con todos los tipos del diseño §10.2.","Backlog","Medium","3","costos,M3,backend"
+"M3-T03 · Server Actions servicios (CRUD)","servicios/actions.server.ts con listServicios, getServicio, createServicio, updateServicio, deleteServicio, asignarEquiposServicio. Validar customer_id y config_cct_id pertenecen a la empresa.
+
+**Criterio**: Tests integración con scope multi-tenant.
+
+Dependencias: → M3-T01.","Backlog","High","4","costos,M3,backend"
+"M3-T04 · Server Actions MOD (asignaciones)","mod/actions.server.ts con CRUD de asignacion_mod. Validar que categoria_cct_id pertenece al CCT del servicio. Manejo de overrides_calculo JSON.
+
+**Criterio**: Si la categoría no es del CCT del servicio, rechazar. Tests.
+
+Dependencias: → M3-T03.","Backlog","High","3","costos,M3,backend"
+"M3-T05 · Server Actions OCP","ocp/actions.server.ts con CRUD de items. Agrupación por grupo.
+
+Dependencias: → M3-T01.","Backlog","Medium","2","costos,M3,backend"
+"M3-T06 · Motor MOD del servicio (calcular-mod.ts)","Implementar calcularMOD(servicioId, periodo) según §6.2. Itera asignaciones, construye contexto, invoca motor de conceptos, suma. Tests integración.
+
+**Criterio**: ResumenMOD completo. Coincide con planillas PECOM y AESA.
+
+Dependencias: → M1-T06, M3-T04.","Backlog","Urgent","6","costos,M3,backend,bloqueante"
+"M3-T07 · Motor OCP (calcular-ocp.ts)","calcularOCP(servicioId) según §6.3. Tests.
+
+**Criterio**: Test golden contra PECOM ($522,447) y AESA ($486,939).
+
+Dependencias: → M3-T05.","Backlog","High","2","costos,M3,backend"
+"M3-T08 · UI: Listado de servicios + crear","Página /dashboard/costos/servicios con DataTable. Sheet 'Nuevo servicio' (customer, CCT, fechas, márgenes, config_servicio).
+
+**Criterio**: Lista y crea. Filtros por customer y estado.
+
+Dependencias: → M3-T03.","Backlog","Medium","4","costos,M3,frontend"
+"M3-T09 · UI: Detalle de servicio (tabs container)","Página /dashboard/costos/servicios/[id] con tabs: General, MOD, OCP, Equipos, Composición (placeholder). Layout shadcn Tabs.
+
+Dependencias: → M3-T08.","Backlog","Medium","4","costos,M3,frontend"
+"M3-T10 · UI: Tab MOD (asignaciones + resumen)","DataTable de asignaciones (empleado, categoría, antigüedad, afectación, hs estimadas). Sheet con selector de empleado, categoría (filtrada por CCT), inputs de overrides. Card 'Resumen MOD' con desglose por chofer + total.
+
+**Criterio**: Suma del resumen coincide con motor. Edición re-calcula.
+
+Dependencias: → M3-T06, M3-T09.","Backlog","High","6","costos,M3,frontend"
+"M3-T11 · UI: Tab OCP (items + resumen)","DataTable agrupado por grupo. CRUD inline. Card 'Resumen OCP' con totales por grupo y total general.
+
+Dependencias: → M3-T07, M3-T09.","Backlog","Medium","4","costos,M3,frontend"
+"M3-T12 · UI: Tab Equipos (asignaciones + resumen)","DataTable de asignaciones de equipos. Form con selector de vehículo (con costo_equipo cargado), afectación, km mensuales.
+
+**Criterio**: Suma de costo mensual de equipos coincide con planilla.
+
+Dependencias: → M3-T03, M3-T09.","Backlog","Medium","3","costos,M3,frontend"
+"M3-T13 · UI: Páginas transversales mano-de-obra y otros-costos-personal","Páginas listado transversales con filtro por servicio.
+
+Dependencias: → M3-T10, M3-T11.","Backlog","Medium","3","costos,M3,frontend"
+"M3-T14 · Test golden: bruto MOD coincide con bruto recibo (3 choferes) [P-2]","Test que arma servicio fictio con los 3 choferes Bide/Guiñazu/Moragues con sus categorías y antigüedades, y valida que calcularMOD produce un bruto remunerativo idéntico al de cada recibo ±$0.01. **Criterio del HITO P-2**.
+
+Dependencias: → M3-T06, M1-T19.","Backlog","Urgent","4","costos,M3,testing,golden-test,bloqueante"
+"M3-T15 · Cobertura ≥80% de motor MOD/OCP","Asegurar cobertura ≥80% en calcular-mod.ts, calcular-ocp.ts, motor-conceptos.ts. Agregar tests faltantes.
+
+Dependencias: → M3-T14.","Backlog","High","3","costos,M3,testing"
+"M4-T01 · Migration e4: composición + outputs","Migration con composicion_costo, tipo_output_servicio, output_composicion. Relaciones inversas.
+
+Ver [diseno.md §2.5](./diseno.md).","Backlog","High","3","costos,M4,db,backend"
+"M4-T02 · Tipos compartidos composición","composicion.types.ts con ComposicionDetalle, TipoOutputInput, FormulaOutput (discriminated union), ResumenEquipos, ResumenCombustible.","Backlog","Medium","2","costos,M4,backend"
+"M4-T03 · Motor de composición (calcular-composicion.ts)","calcularComposicion(servicioId, periodo) que llama a los 4 sub-motores (MOD/OCP/Equipos/Combustible), suma, aplica márgenes con divisor + licencia ordenanza.
+
+**Criterio**: Test golden PECOM Jun25 → $23,560,093.
+
+Dependencias: → M3-T06, M3-T07, M2-T03.
+Ver [diseno.md §7.2](./diseno.md).","Backlog","Urgent","6","costos,M4,backend,bloqueante"
+"M4-T04 · Calculador de outputs derivados","calcular-outputs.ts con dispatcher por tipo de fórmula (precio_div_kms_x_factor, precio_div_dias, precio_div_dias_x_horas, pct_sobre_precio).
+
+**Criterio**: Tests por tipo. Ingeniería inversa de los factores PECOM (km excedente, día feriado, hora extra, descuento 7%) documentada.
+
+Dependencias: → M4-T03.","Backlog","High","4","costos,M4,backend"
+"M4-T05 · Server Actions composición","composicion/actions.server.ts con listComposiciones, getComposicion, calcularComposicion, persistirComposicion, regenerarPDF, getSignedUrlPDF.
+
+**Criterio**: Tests integración. Idempotencia.
+
+Dependencias: → M4-T03, M4-T04.","Backlog","High","4","costos,M4,backend"
+"M4-T06 · Server Actions tipo_output_servicio","CRUD de outputs configurables por servicio.","Backlog","Medium","2","costos,M4,backend"
+"M4-T07 · PDF template composición (@react-pdf/renderer)","composicion-template.tsx con secciones: Header (datos empresa+cliente+servicio), Costo Industrial, Márgenes, Precios + outputs. renderComposicionPDF(detalle) que devuelve Buffer.
+
+**Criterio**: Test que renderiza PDF y verifica strings. Visual coherente con planilla.
+
+Dependencias: → M4-T03.
+Ver [diseno.md §7.4](./diseno.md).","Backlog","High","6","costos,M4,pdf,frontend"
+"M4-T08 · Helper Storage para PDFs","shared/utils/storage.ts con subirPDF(path, buffer) y getSignedUrlPDF(path).
+
+Dependencias: → M0-T09.","Backlog","High","3","costos,M4,backend"
+"M4-T09 · UI: Listado de composiciones","Página /dashboard/costos/composicion con DataTable. Filtros por servicio y período. Acción 'Nueva composición'.
+
+Dependencias: → M4-T05.","Backlog","Medium","3","costos,M4,frontend"
+"M4-T10 · UI: Detalle de composición + exportar PDF","Página /dashboard/costos/composicion/[id] con cards de Resumen Industrial, Márgenes, Precios + Outputs. Botón 'Exportar PDF'. Botón 'Recalcular' (advierte si difiere del snapshot).
+
+Dependencias: → M4-T05, M4-T07, M4-T08.","Backlog","High","6","costos,M4,frontend"
+"M4-T11 · UI: Config outputs por servicio","ConfigOutputsServicio.tsx con CRUD de tipo_output_servicio con form dinámico según tipo de fórmula.
+
+Dependencias: → M4-T06.","Backlog","Medium","4","costos,M4,frontend"
+"M4-T12 · UI: Embed composición en tab del servicio","Tab 'Composición' en /dashboard/costos/servicios/[id] que muestra composiciones de ese servicio + botón 'Generar composición de período YYYY-MM'.
+
+Dependencias: → M3-T09, M4-T10.","Backlog","Medium","3","costos,M4,frontend"
+"M4-T13 · Tests golden: composición PECOM y AESA","Test PECOM Jun25 ($23,560,093) y AESA Abr26 ($27,183,638). Verificar outputs específicos de cada servicio.
+
+Dependencias: → M4-T03, M4-T04.","Backlog","Urgent","4","costos,M4,testing,golden-test,bloqueante"
+"M5-T01 · Migration e5: fórmula polinómica","Migration con formula_polinomica, componente_formula, periodo_formula_polinomica, valor_componente_periodo + enum tipo_indice_polinomico.
+
+Ver [diseno.md §2.6](./diseno.md).","Backlog","High","3","costos,M5,db,backend"
+"M5-T02 · Tipos compartidos fórmula polinómica","formula-polinomica.types.ts con CreateFormulaInput, ComponenteInput, CalculoPeriodoPolinomico.","Backlog","Medium","2","costos,M5,backend"
+"M5-T03 · Motor polinómico (calcular-formula-polinomica.ts)","calcularPeriodoFormula, calcularSerieFormula, validarPonderaciones según diseño §8.2. Implementar P = PB × (1 + Σ Pi × ΔIi%) con decimal.js. Manejo de retroactivos.
+
+**Criterio**: Test golden PECOM Jul25 → ajuste 5.769%, valor 20,016,571.
+
+Dependencias: → M5-T01.","Backlog","Urgent","6","costos,M5,backend,bloqueante"
+"M5-T04 · Server Actions fórmula","formula-polinomica/actions.server.ts con CRUD de fórmula y componentes, inicializarPonderacionesDesdeComposicion (lee composición más reciente y arma 4 componentes I001-I004).
+
+**Criterio**: Validación de ponderaciones suma 1.0. Tests.
+
+Dependencias: → M5-T03.","Backlog","High","4","costos,M5,backend"
+"M5-T05 · Server Actions períodos polinómica","upsertPeriodo, listPeriodos, deletePeriodo. Cálculo automático de valor_ajustado y retroactivo_acumulado al cargar índices.
+
+**Criterio**: Test reproduciendo serie completa Jun25–Feb26.
+
+Dependencias: → M5-T03.","Backlog","High","4","costos,M5,backend"
+"M5-T06 · UI: Lista de fórmulas y configuración","/dashboard/costos/formula-polinomica con listado de servicios + estado de fórmula. Click → detalle.
+
+Dependencias: → M5-T04.","Backlog","Medium","4","costos,M5,frontend"
+"M5-T07 · UI: Detalle fórmula con componentes","Card config + Card componentes (tabla con ponderaciones + sumatoria visible, rojo si ≠ 1.0). Botón 'Inicializar desde composición'.
+
+Dependencias: → M5-T06.","Backlog","Medium","5","costos,M5,frontend"
+"M5-T08 · UI: Tabla de períodos con índices","DataTable con columnas: período, valores de cada índice, ajuste %, valor ajustado, importe certificado, retroactivo. Form para cargar/editar índices.
+
+**Criterio**: Cálculo en cada cambio.
+
+Dependencias: → M5-T05, M5-T07.","Backlog","High","5","costos,M5,frontend"
+"M5-T09 · UI: Gráfico de evolución (recharts)","GraficoEvolucionTarifa.tsx con recharts. Línea de valor_ajustado + línea de importe_certificado por período. Tooltip con retroactivo.
+
+Dependencias: → M5-T08.","Backlog","Medium","4","costos,M5,frontend"
+"M5-T10 · UI: Resumen de retroactivos","Card que agrega retroactivos pendientes por servicio/período. Útil para gestión comercial.
+
+Dependencias: → M5-T08.","Backlog","Medium","3","costos,M5,frontend"
+"M5-T11 · Test golden: serie completa PECOM Jun25–Feb26 [P-3]","Test que carga fórmula PECOM con ponderaciones y precio_base reales, simula los 9 períodos con sus índices y valida cada valor_ajustado ±$0.01. **Criterio del HITO P-3**.
+
+Dependencias: → M5-T03, M5-T05.","Backlog","Urgent","4","costos,M5,testing,golden-test,bloqueante"
+"M6-T01 · Migration e6: liquidación","Migration con liquidacion_sueldo (FK a categoria_cct) + enum estado_liquidacion. Relaciones inversas.
+
+Ver [diseno.md §2.7](./diseno.md).","Backlog","High","3","costos,M6,db,backend"
+"M6-T02 · Tipos compartidos liquidación","liquidacion.types.ts con InputsLiquidacion, LiquidacionResultado, LiquidacionDetalle.","Backlog","Medium","2","costos,M6,backend"
+"M6-T03 · Motor de liquidación (calcular-liquidacion-cct.ts)","calcularLiquidacion(employeeId, categoriaCCTId, cctId, periodo, inputs). Reusa motor de conceptos con ámbito 'liquidacion'. Sub-cálculo de SAC con sus aportes.
+
+**Criterio**: Tests golden contra los 3 recibos. Neto coincide ±$0.01.
+
+Dependencias: → M1-T06.
+Ver [diseno.md §9.2](./diseno.md).","Backlog","Urgent","6","costos,M6,backend,bloqueante"
+"M6-T04 · Server Actions liquidación","liquidacion/actions.server.ts con listLiquidaciones, getLiquidacion, generarBorrador, actualizarBorrador, recalcularLiquidacion, confirmarLiquidacion, marcarPagada.
+
+**Criterio**: Estados borrador→confirmada→pagada. No editar inputs si estado≠borrador.
+
+Dependencias: → M6-T03.","Backlog","High","5","costos,M6,backend"
+"M6-T05 · Bulk: generar borradores de nómina del mes","Server action que toma un período y genera borradores para todos los empleados con asignación activa. Manejo de errores parciales.
+
+**Criterio**: Test integración con 5 empleados. Reporte de éxitos/fallos.
+
+Dependencias: → M6-T04.","Backlog","High","4","costos,M6,backend"
+"M6-T06 · PDF template recibo (@react-pdf/renderer)","recibo-template.tsx con header empresa, datos empleado, tablas de conceptos rem+no-rem+descuentos, tabla SAC, totales, firma. A4 portrait.
+
+**Criterio**: PDF coincide con estructura del recibo Bide. Valores correctos.
+
+Dependencias: → M6-T03.","Backlog","High","6","costos,M6,pdf,frontend"
+"M6-T07 · Server Actions PDF recibo","generarReciboPDF, getSignedUrlRecibo. Subida a costos-pdfs/liquidaciones/{companyId}/{employeeId}/{periodo}.pdf.
+
+Dependencias: → M6-T06, M4-T08.","Backlog","High","2","costos,M6,backend,pdf"
+"M6-T08 · UI: Listado de liquidaciones","/dashboard/costos/liquidacion-sueldos con DataTable. Filtros por período, estado, empleado. Botones 'Nueva liquidación' y 'Generar nómina del mes'.
+
+Dependencias: → M6-T04.","Backlog","Medium","4","costos,M6,frontend"
+"M6-T09 · UI: Form nueva liquidación + bulk","Sheet con selector de empleado, período, inputs (días, hs nocturnas, hs extras 50/100, días feriado, días desarraigo, inputs extra JSON). Botón 'Generar nómina del mes' con confirmación.
+
+Dependencias: → M6-T05, M6-T08.","Backlog","High","5","costos,M6,frontend"
+"M6-T10 · UI: Detalle liquidación + preview recibo","Página /dashboard/costos/liquidacion-sueldos/[id] con datos del empleado, inputs editables (si borrador), card 'Preview del recibo' con render HTML idéntico al PDF, botones según estado.
+
+**Criterio**: Preview HTML coincide con PDF. Flujo de estados visible.
+
+Dependencias: → M6-T04, M6-T07.","Backlog","High","6","costos,M6,frontend"
+"M6-T11 · UI: Resumen de nómina (totales agregados)","Card con totales del período: total bruto, total descuentos, total neto, conteo de liquidaciones por estado.
+
+Dependencias: → M6-T08.","Backlog","Medium","3","costos,M6,frontend"
+"M6-T12 · Tests golden: 3 recibos reales [P-4]","Test que reproduce las 3 liquidaciones reales con sus inputs y valida neto_a_pagar ±$0.01 (Bide $3,063,102 / Guiñazu $2,733,369 / Moragues $4,089,370). **Criterio del HITO P-4**.
+
+Dependencias: → M6-T03.","Backlog","Urgent","4","costos,M6,testing,golden-test,bloqueante"
+"M6-T13 · Auditoría: log de generación/confirmación de liquidación","Registrar en tabla de auditoría cada confirmación: quién, cuándo, qué liquidación. Verificar si existe debug_logs o similar.
+
+**Criterio**: Tests verifican el log se escribe.","Backlog","Medium","2","costos,M6,backend"
+"M6-T14 · Deploy: aplicar migrations en producción","Plan de deploy: aplicar las 7 migrations en orden (e0..e6) en producción. npm run push-migrations. Validar que ningún query existente se rompe.
+
+**Criterio**: Migrations aplicadas. App productiva sin errores.","Backlog","Urgent","3","costos,M6,deploy,bloqueante"
+"M6-T15 · Deploy: insertar 'modules' row 'costos' en producción","SQL manual para insertar row de catálogo en producción. Activar hired_modules para Transporte SP.
+
+Dependencias: → M6-T14.","Backlog","Urgent","1","costos,M6,deploy"
+"M6-T16 · Deploy: bucket costos-pdfs en producción","Crear bucket en Supabase prod con políticas RLS (mismo procedimiento que staging).
+
+Dependencias: → M6-T14, M0-T09.","Backlog","Urgent","2","costos,M6,deploy"
+"M6-T17 · Deploy: ejecutar seed CCT 545/08 en producción","Ejecutar seed-cct-545-08.ts en producción. Validar que las 7 categorías y los conceptos quedaron creados.
+
+Dependencias: → M6-T15, M1-T18.","Backlog","Urgent","2","costos,M6,deploy,seed"
+"M6-T18 · Smoke tests end-to-end en producción","Login con usuario Transporte SP, recorrer las 9 pantallas, generar una composición real, generar una liquidación real, descargar ambos PDFs.
+
+**Criterio**: Todo funciona. Capturas de cada pantalla.
+
+Dependencias: → M6-T17.","Backlog","Urgent","4","costos,M6,testing,deploy"
+"M6-T19 · Capacitación con cliente","Sesión con Transporte SP para mostrar el módulo: configuración de CCT, creación de servicios, generación de composiciones, liquidaciones. Material de soporte (video screencast).
+
+Dependencias: → M6-T18.","Backlog","High","4","costos,M6,deploy"
+"M6-T20 · Documentación de operación","Manual de uso para el cliente: cómo cargar nueva paritaria, generar liquidación masiva, cargar índices polinómicos, configurar nuevos servicios. Markdown en repo + PDF.
+
+Dependencias: → M6-T19.","Backlog","Medium","3","costos,M6,deploy"
