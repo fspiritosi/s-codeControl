@@ -1,10 +1,9 @@
-import type { SupplierPaymentMethodPDFItem } from './types';
+import type { PaymentOrderPDFDestination } from './types';
 
 type RawSupplierPaymentMethod = {
   type: string;
   bank_name: string | null;
   account_holder: string | null;
-  account_holder_tax_id: string | null;
   account_type: string | null;
   cbu: string | null;
   alias: string | null;
@@ -13,27 +12,30 @@ type RawSupplierPaymentMethod = {
 };
 
 /**
- * Mapea los métodos de pago del proveedor (filas Prisma) al formato esperado
- * por el PDF de Orden de Pago. Filtra tipos no soportados (solo CHECK | ACCOUNT).
+ * Mapea el supplier_payment_method asociado a una línea de pago al destino
+ * que se renderiza dentro de la tabla "Detalle de los medios de pago" del PDF.
  */
-export function mapSupplierPaymentMethodsForPDF(
-  methods: RawSupplierPaymentMethod[] | null | undefined
-): SupplierPaymentMethodPDFItem[] {
-  if (!methods || methods.length === 0) return [];
-  return methods
-    .filter((m) => m.type === 'CHECK' || m.type === 'ACCOUNT')
-    .map((m) => ({
-      type: m.type as 'CHECK' | 'ACCOUNT',
-      bankName: m.bank_name ?? undefined,
-      accountHolder: m.account_holder ?? undefined,
-      accountHolderTaxId: m.account_holder_tax_id ?? undefined,
+export function mapPaymentDestinationForPDF(
+  method: RawSupplierPaymentMethod | null | undefined
+): PaymentOrderPDFDestination | undefined {
+  if (!method) return undefined;
+  if (method.type === 'CHECK') {
+    return { kind: 'CHECK', isDefault: method.is_default };
+  }
+  if (method.type === 'ACCOUNT') {
+    return {
+      kind: 'ACCOUNT',
+      bankName: method.bank_name ?? undefined,
+      accountHolder: method.account_holder ?? undefined,
       accountType:
-        m.account_type === 'CHECKING' || m.account_type === 'SAVINGS'
-          ? m.account_type
+        method.account_type === 'CHECKING' || method.account_type === 'SAVINGS'
+          ? method.account_type
           : undefined,
-      cbu: m.cbu ?? undefined,
-      alias: m.alias ?? undefined,
-      currency: m.currency ?? undefined,
-      isDefault: m.is_default,
-    }));
+      cbu: method.cbu ?? undefined,
+      alias: method.alias ?? undefined,
+      currency: method.currency ?? undefined,
+      isDefault: method.is_default,
+    };
+  }
+  return undefined;
 }

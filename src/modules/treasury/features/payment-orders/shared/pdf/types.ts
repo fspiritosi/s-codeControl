@@ -8,6 +8,19 @@ export interface PaymentOrderPDFInvoice {
   appliedAmount: number;
 }
 
+export type PaymentOrderPDFDestination =
+  | {
+      kind: 'ACCOUNT';
+      bankName?: string;
+      accountHolder?: string;
+      accountType?: 'CHECKING' | 'SAVINGS';
+      cbu?: string;
+      alias?: string;
+      currency?: string;
+      isDefault: boolean;
+    }
+  | { kind: 'CHECK'; isDefault: boolean };
+
 export interface PaymentOrderPDFPayment {
   method: string;
   bankName?: string;
@@ -18,18 +31,7 @@ export interface PaymentOrderPDFPayment {
   cardLast4?: string;
   reference?: string;
   amount: number;
-}
-
-export interface SupplierPaymentMethodPDFItem {
-  type: 'CHECK' | 'ACCOUNT';
-  bankName?: string;
-  accountHolder?: string;
-  accountHolderTaxId?: string;
-  accountType?: 'CHECKING' | 'SAVINGS';
-  cbu?: string;
-  alias?: string;
-  currency?: string;
-  isDefault: boolean;
+  destination?: PaymentOrderPDFDestination;
 }
 
 export interface PaymentOrderPDFData {
@@ -49,7 +51,6 @@ export interface PaymentOrderPDFData {
     phone?: string;
     email?: string;
   };
-  supplierPaymentMethods?: SupplierPaymentMethodPDFItem[];
   invoices: PaymentOrderPDFInvoice[];
   payments: PaymentOrderPDFPayment[];
   totalAmount: number;

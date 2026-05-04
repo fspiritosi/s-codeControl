@@ -7,7 +7,7 @@ import {
   generatePaymentOrderPDF,
   getPaymentOrderFileName,
   amountToSpanishWords,
-  mapSupplierPaymentMethodsForPDF,
+  mapPaymentDestinationForPDF,
 } from '../pdf';
 import type { PaymentOrderPDFData } from '../pdf';
 import type { CompanyPDFData } from '@/shared/actions/export';
@@ -33,10 +33,6 @@ export async function sendPaymentOrderPaidEmail(
             address: true,
             phone: true,
             email: true,
-            payment_methods: {
-              where: { status: 'ACTIVE' },
-              orderBy: [{ is_default: 'desc' }, { created_at: 'asc' }],
-            },
           },
         },
         items: {
@@ -55,6 +51,18 @@ export async function sendPaymentOrderPaidEmail(
           include: {
             cash_register: { select: { code: true, name: true } },
             bank_account: { select: { bank_name: true, account_number: true } },
+            supplier_payment_method: {
+              select: {
+                type: true,
+                bank_name: true,
+                account_holder: true,
+                account_type: true,
+                cbu: true,
+                alias: true,
+                currency: true,
+                is_default: true,
+              },
+            },
           },
         },
       },
@@ -120,9 +128,6 @@ export async function sendPaymentOrderPaidEmail(
         phone: order.supplier?.phone ?? undefined,
         email: order.supplier?.email ?? undefined,
       },
-      supplierPaymentMethods: mapSupplierPaymentMethodsForPDF(
-        order.supplier?.payment_methods
-      ),
       invoices: order.items
         .filter((it) => it.invoice)
         .map((it) => ({
@@ -142,6 +147,7 @@ export async function sendPaymentOrderPaidEmail(
         cardLast4: p.card_last4 ?? undefined,
         reference: p.reference ?? undefined,
         amount: Number(p.amount),
+        destination: mapPaymentDestinationForPDF(p.supplier_payment_method),
       })),
       totalAmount,
       amountInWords: amountToSpanishWords(totalAmount),

@@ -33,7 +33,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/shared/components/ui/table';
-import { createPaymentOrder, getPendingPurchaseInvoices } from '../actions.server';
+import {
+  createPaymentOrder,
+  getPendingPurchaseInvoices,
+  getSupplierPaymentMethodsForPaymentOrder,
+} from '../actions.server';
 import { PAYMENT_METHOD_LABELS } from '../../../shared/validators';
 
 interface Supplier {
@@ -78,9 +82,57 @@ interface PaymentDraft {
   amount: string;
   cash_register_id: string | null;
   bank_account_id: string | null;
+  supplier_payment_method_id: string | null;
   check_number: string;
   card_last4: string;
   reference: string;
+}
+
+interface SupplierPaymentMethodOpt {
+  id: string;
+  type: 'CHECK' | 'ACCOUNT' | string;
+  bank_name: string | null;
+  account_holder: string | null;
+  account_type: string | null;
+  cbu: string | null;
+  alias: string | null;
+  currency: string | null;
+  is_default: boolean;
+}
+
+const ACCOUNT_TYPE_SHORT: Record<string, string> = {
+  CHECKING: 'CC',
+  SAVINGS: 'CA',
+};
+
+function describeSupplierMethod(m: SupplierPaymentMethodOpt): string {
+  if (m.type === 'CHECK') return 'Acepta cheques';
+  const accType = m.account_type ? ACCOUNT_TYPE_SHORT[m.account_type] ?? m.account_type : '';
+  const parts = [m.bank_name ?? 'Cuenta bancaria', accType, m.currency].filter(Boolean);
+  const tail = m.cbu
+    ? `CBU ${m.cbu.slice(-4).padStart(m.cbu.length, '•')}`
+    : m.alias
+      ? `Alias ${m.alias}`
+      : '';
+  return tail ? `${parts.join(' · ')} · ${tail}` : parts.join(' · ');
+}
+
+function pickDefaultMethodForPaymentMethod(
+  methods: SupplierPaymentMethodOpt[],
+  pm: PaymentMethod
+): string | null {
+  const filtered = filterMethodsByPaymentMethod(methods, pm);
+  const def = filtered.find((m) => m.is_default);
+  return def?.id ?? null;
+}
+
+function filterMethodsByPaymentMethod(
+  methods: SupplierPaymentMethodOpt[],
+  pm: PaymentMethod
+): SupplierPaymentMethodOpt[] {
+  if (pm === 'TRANSFER') return methods.filter((m) => m.type === 'ACCOUNT');
+  if (pm === 'CHECK') return methods.filter((m) => m.type === 'CHECK');
+  return [];
 }
 
 interface Props {
@@ -97,6 +149,7 @@ function emptyPayment(): PaymentDraft {
     amount: '',
     cash_register_id: null,
     bank_account_id: null,
+    supplier_payment_method_id: null,
     check_number: '',
     card_last4: '',
     reference: '',
@@ -111,17 +164,39 @@ export function NewPaymentOrderForm({ suppliers, cashRegisters, bankAccounts }: 
   const [date, setDate] = useState(today());
   const [notes, setNotes] = useState('');
   const [pendingInvoices, setPendingInvoices] = useState<InvoiceOption[] | null>(null);
+  const [supplierPaymentMethods, setSupplierPaymentMethods] = useState<
+    SupplierPaymentMethodOpt[]
+  >([]);
   const isLoadingInvoices = !!supplierId && pendingInvoices === null;
 
   const [items, setItems] = useState<ItemDraft[]>([]);
   const [payments, setPayments] = useState<PaymentDraft[]>([emptyPayment()]);
 
   useEffect(() => {
-    if (!supplierId) return;
+    if (!supplierId) {
+      setSupplierPaymentMethods([]);
+      return;
+    }
     let cancelled = false;
-    getPendingPurchaseInvoices(supplierId)
-      .then((data) => {
-        if (!cancelled) setPendingInvoices(data);
+    Promise.all([
+      getPendingPurchaseInvoices(supplierId),
+      getSupplierPaymentMethodsForPaymentOrder(supplierId),
+    ])
+      .then(([invoices, methods]) => {
+        if (cancelled) return;
+        setPendingInvoices(invoices);
+        const opts = methods as SupplierPaymentMethodOpt[];
+        setSupplierPaymentMethods(opts);
+        // Auto-asignar default por línea según método
+        setPayments((prev) =>
+          prev.map((p) => ({
+            ...p,
+            supplier_payment_method_id: pickDefaultMethodForPaymentMethod(
+              opts,
+              p.payment_method
+            ),
+          }))
+        );
       })
       .catch(console.error);
     return () => {
@@ -132,6 +207,10 @@ export function NewPaymentOrderForm({ suppliers, cashRegisters, bankAccounts }: 
   const handleSupplierChange = (newId: string) => {
     if (newId !== supplierId) {
       setPendingInvoices(null);
+      setSupplierPaymentMethods([]);
+      setPayments((prev) =>
+        prev.map((p) => ({ ...p, supplier_payment_method_id: null }))
+      );
     }
     setSupplierId(newId);
   };
@@ -209,6 +288,7 @@ export function NewPaymentOrderForm({ suppliers, cashRegisters, bankAccounts }: 
           amount: p.amount.trim(),
           cash_register_id: p.cash_register_id,
           bank_account_id: p.bank_account_id,
+          supplier_payment_method_id: p.supplier_payment_method_id,
           check_number: p.check_number.trim() || null,
           card_last4: p.card_last4.trim() || null,
           reference: p.reference.trim() || null,
@@ -426,13 +506,18 @@ export function NewPaymentOrderForm({ suppliers, cashRegisters, bankAccounts }: 
                   <Label>Método</Label>
                   <Select
                     value={p.payment_method}
-                    onValueChange={(v) =>
+                    onValueChange={(v) => {
+                      const newMethod = v as PaymentMethod;
                       updatePayment(idx, {
-                        payment_method: v as PaymentMethod,
+                        payment_method: newMethod,
                         cash_register_id: null,
                         bank_account_id: null,
-                      })
-                    }
+                        supplier_payment_method_id: pickDefaultMethodForPaymentMethod(
+                          supplierPaymentMethods,
+                          newMethod
+                        ),
+                      });
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -527,6 +612,46 @@ export function NewPaymentOrderForm({ suppliers, cashRegisters, bankAccounts }: 
                     />
                   </div>
                 )}
+
+                {(() => {
+                  if (supplierPaymentMethods.length === 0) return null;
+                  if (
+                    p.payment_method !== 'TRANSFER' &&
+                    p.payment_method !== 'CHECK'
+                  )
+                    return null;
+                  const filtered = filterMethodsByPaymentMethod(
+                    supplierPaymentMethods,
+                    p.payment_method
+                  );
+                  if (filtered.length === 0) return null;
+                  return (
+                    <div className="md:col-span-3 space-y-1.5">
+                      <Label>Destino del proveedor (opcional)</Label>
+                      <Select
+                        value={p.supplier_payment_method_id ?? '__none__'}
+                        onValueChange={(v) =>
+                          updatePayment(idx, {
+                            supplier_payment_method_id: v === '__none__' ? null : v,
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">— Sin destino —</SelectItem>
+                          {filtered.map((m) => (
+                            <SelectItem key={m.id} value={m.id}>
+                              {describeSupplierMethod(m)}
+                              {m.is_default ? ' (Predeterminado)' : ''}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           ))}

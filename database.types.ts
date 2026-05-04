@@ -2758,6 +2758,7 @@ export type Database = {
           payment_method: Database["public"]["Enums"]["payment_method"]
           payment_order_id: string
           reference: string | null
+          supplier_payment_method_id: string | null
         }
         Insert: {
           amount: number
@@ -2769,6 +2770,7 @@ export type Database = {
           payment_method: Database["public"]["Enums"]["payment_method"]
           payment_order_id: string
           reference?: string | null
+          supplier_payment_method_id?: string | null
         }
         Update: {
           amount?: number
@@ -2780,6 +2782,7 @@ export type Database = {
           payment_method?: Database["public"]["Enums"]["payment_method"]
           payment_order_id?: string
           reference?: string | null
+          supplier_payment_method_id?: string | null
         }
         Relationships: [
           {
@@ -2801,6 +2804,13 @@ export type Database = {
             columns: ["payment_order_id"]
             isOneToOne: false
             referencedRelation: "payment_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_order_payments_supplier_payment_method_id_fkey"
+            columns: ["supplier_payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_payment_methods"
             referencedColumns: ["id"]
           },
         ]

@@ -42,7 +42,6 @@ export function PaymentOrderTemplate({ data }: { data: PaymentOrderPDFData }) {
     company,
     paymentOrder,
     supplier,
-    supplierPaymentMethods,
     invoices,
     payments,
     totalAmount,
@@ -109,72 +108,6 @@ export function PaymentOrderTemplate({ data }: { data: PaymentOrderPDFData }) {
           </View>
         </View>
 
-        {supplierPaymentMethods && supplierPaymentMethods.length > 0 ? (
-          <View>
-            <Text style={styles.sectionTitle}>Cuentas del proveedor</Text>
-            {supplierPaymentMethods.map((m, i) => {
-              if (m.type === 'CHECK') {
-                return (
-                  <View key={i} style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Cheque:</Text>
-                    <Text style={styles.infoValue}>
-                      Acepta cheques
-                      {m.isDefault ? ' (Predeterminado)' : ''}
-                    </Text>
-                  </View>
-                );
-              }
-              const accountTypeLabel = m.accountType
-                ? ACCOUNT_TYPE_LABELS[m.accountType]
-                : '';
-              const headerParts = [
-                m.bankName ?? 'Cuenta bancaria',
-                accountTypeLabel,
-                m.currency,
-              ].filter(Boolean);
-              return (
-                <View
-                  key={i}
-                  style={{
-                    marginBottom: 6,
-                    paddingBottom: 4,
-                    borderBottomWidth: 0.5,
-                    borderBottomColor: '#cbd5e1',
-                  }}
-                >
-                  <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold' }}>
-                    {headerParts.join(' - ')}
-                    {m.isDefault ? ' (Predeterminado)' : ''}
-                  </Text>
-                  {m.cbu ? (
-                    <View style={styles.infoRow}>
-                      <Text style={styles.infoLabel}>CBU:</Text>
-                      <Text style={styles.infoValue}>{formatCbu(m.cbu)}</Text>
-                    </View>
-                  ) : null}
-                  {m.alias ? (
-                    <View style={styles.infoRow}>
-                      <Text style={styles.infoLabel}>Alias:</Text>
-                      <Text style={styles.infoValue}>{m.alias}</Text>
-                    </View>
-                  ) : null}
-                  {m.accountHolder ? (
-                    <View style={styles.infoRow}>
-                      <Text style={styles.infoLabel}>Titular:</Text>
-                      <Text style={styles.infoValue}>
-                        {m.accountHolder}
-                        {m.accountHolderTaxId
-                          ? ` (CUIT/CUIL: ${m.accountHolderTaxId})`
-                          : ''}
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-              );
-            })}
-          </View>
-        ) : null}
-
         {invoices.length > 0 ? (
           <View>
             <Text style={styles.sectionTitle}>Detalles de Valores a Cancelar</Text>
@@ -221,12 +154,44 @@ export function PaymentOrderTemplate({ data }: { data: PaymentOrderPDFData }) {
                       : p.cardLast4
                         ? `Tarjeta •••• ${p.cardLast4}`
                         : '-';
+                let destinationLine: string | null = null;
+                if (p.destination) {
+                  if (p.destination.kind === 'CHECK') {
+                    destinationLine = '→ Cheque al proveedor';
+                  } else {
+                    const accountTypeLabel = p.destination.accountType
+                      ? ACCOUNT_TYPE_LABELS[p.destination.accountType]
+                      : '';
+                    const parts = [
+                      p.destination.bankName ?? 'Cuenta bancaria',
+                      accountTypeLabel,
+                      p.destination.currency,
+                    ].filter(Boolean);
+                    const cbu = p.destination.cbu ? formatCbu(p.destination.cbu) : null;
+                    const tail = cbu
+                      ? ` · CBU ${cbu}`
+                      : p.destination.alias
+                        ? ` · Alias ${p.destination.alias}`
+                        : '';
+                    destinationLine = `→ ${parts.join(' · ')}${tail}`;
+                  }
+                  if (p.destination.isDefault) {
+                    destinationLine += ' (Predeterminado)';
+                  }
+                }
                 return (
                   <View key={i} style={styles.tableRow}>
                     <Text style={styles.payMethod}>
                       {PAYMENT_METHOD_LABELS[p.method] ?? p.method}
                     </Text>
-                    <Text style={styles.payDetail}>{detail}</Text>
+                    <View style={styles.payDetail}>
+                      <Text>{detail}</Text>
+                      {destinationLine ? (
+                        <Text style={{ fontSize: 8, color: '#475569', marginTop: 2 }}>
+                          {destinationLine}
+                        </Text>
+                      ) : null}
+                    </View>
                     <Text style={styles.payRef}>{p.reference || '-'}</Text>
                     <Text style={styles.payAmount}>{fmtAmount(p.amount)}</Text>
                   </View>

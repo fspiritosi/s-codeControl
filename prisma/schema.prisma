@@ -1622,6 +1622,7 @@ model supplier_payment_methods {
 
   supplier      suppliers @relation(fields: [supplier_id], references: [id], onDelete: Cascade)
   company       company   @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  payment_order_payments payment_order_payments[]
 
   @@index([supplier_id])
   @@index([company_id, supplier_id])
@@ -2191,22 +2192,25 @@ model payment_order_items {
 }
 
 model payment_order_payments {
-  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  payment_order_id String         @db.Uuid
-  payment_method   payment_method
-  amount           Decimal        @db.Decimal(15, 2)
-  cash_register_id String?        @db.Uuid
-  bank_account_id  String?        @db.Uuid
-  check_number     String?
-  card_last4       String?
-  reference        String?
+  id                         String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payment_order_id           String         @db.Uuid
+  payment_method             payment_method
+  amount                     Decimal        @db.Decimal(15, 2)
+  cash_register_id           String?        @db.Uuid
+  bank_account_id            String?        @db.Uuid
+  supplier_payment_method_id String?        @db.Uuid
+  check_number               String?
+  card_last4                 String?
+  reference                  String?
 
-  payment_order payment_orders  @relation(fields: [payment_order_id], references: [id], onDelete: Cascade)
-  cash_register cash_registers? @relation(fields: [cash_register_id], references: [id])
-  bank_account  bank_accounts?  @relation(fields: [bank_account_id], references: [id])
-  check         checks?
+  payment_order           payment_orders            @relation(fields: [payment_order_id], references: [id], onDelete: Cascade)
+  cash_register           cash_registers?           @relation(fields: [cash_register_id], references: [id])
+  bank_account            bank_accounts?            @relation(fields: [bank_account_id], references: [id])
+  supplier_payment_method supplier_payment_methods? @relation(fields: [supplier_payment_method_id], references: [id], onDelete: SetNull)
+  check                   checks?
 
   @@index([payment_order_id])
+  @@index([supplier_payment_method_id])
 }
 
 // ============================================================
