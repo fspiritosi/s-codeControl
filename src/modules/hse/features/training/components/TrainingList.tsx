@@ -60,11 +60,11 @@ export function TrainingList({
 
   return (
     <div className="divide-y rounded border">
-      {trainings.map((training) => {
+      {trainings.map((training: any) => {
         const status = training.status === 'Publicado' || training.status === 'Borrador' ? training.status : 'Borrador';
         const tags = training.tags
-          .filter((tag): tag is NonNullable<typeof tag> => tag !== null)
-          .map((tag) => ({
+          .filter((tag: any): tag is NonNullable<typeof tag> => tag !== null)
+          .map((tag: any) => ({
             ...tag,
             color: tag.color ?? undefined,
           }));
@@ -79,7 +79,7 @@ export function TrainingList({
                 {/* Tags */}
                 {tags.length > 0 && (
                   <div className="flex gap-1 flex-wrap">
-                    {tags.slice(0, 2).map((tag, index) => (
+                    {tags.slice(0, 2).map((tag: any, index: any) => (
                       <Badge
                         key={index}
                         variant="outline"
@@ -117,7 +117,7 @@ export function TrainingList({
                   <Users className="h-3 w-3 mr-1" />
                   {
                     Array.from(
-                      new Set(training.attempts?.filter((attempt) => attempt.passed).map((a) => a.employee_id))
+                      new Set(training.attempts?.filter((attempt: any) => attempt.passed).map((a: any) => a.employee_id))
                     ).length
                   }
                   /{training.totalEmployees} completaron

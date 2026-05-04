@@ -101,9 +101,9 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
   };
 
   // Filtrar capacitaciones por estado para cada tab
-  const publishedTrainings = trainings.filter((training) => training.status === 'Publicado');
-  const draftTrainings = trainings.filter((training) => training.status === 'Borrador');
-  const archivedTrainings = trainings.filter((training) => training.status === 'Archivado');
+  const publishedTrainings = trainings.filter((training: any) => training.status === 'Publicado');
+  const draftTrainings = trainings.filter((training: any) => training.status === 'Borrador');
+  const archivedTrainings = trainings.filter((training: any) => training.status === 'Archivado');
   
   // Determinar el conjunto de capacitaciones actualmente seleccionado por tab
   const [tab, setTab] = useState<'published' | 'draft' | 'archived'>('published');
@@ -113,7 +113,7 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
     archivedTrainings;
 
   // Filtrar capacitaciones por búsqueda y etiquetas
-  const filteredTrainings = currentTabTrainings.filter((training) => {
+  const filteredTrainings = currentTabTrainings.filter((training: any) => {
     const matchesSearch = training.title.toLowerCase().includes(searchTerm.toLowerCase());
 
     // Si no hay etiquetas seleccionadas, mostrar todas las capacitaciones que coincidan con la búsqueda
@@ -199,7 +199,7 @@ export default function TrainingSection({ trainings, allTags }: TrainingSectionP
             <div className="w-full md:w-[180px]">
               <MultiSelectCombobox
                 options={
-                  allTags?.map((tag) => ({
+                  allTags?.map((tag: any) => ({
                     label: tag.name,
                     value: tag.id,
                   })) || []

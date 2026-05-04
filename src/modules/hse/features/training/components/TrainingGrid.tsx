@@ -59,11 +59,11 @@ export function TrainingGrid({
 }: TrainingGridProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-      {trainings.map((training) => {
+      {trainings.map((training: any) => {
         const status = training.status; // Default to 'Borrador' if status is invalid
         const tags = training.tags
-          .filter((tag): tag is NonNullable<typeof tag> => tag !== null)
-          .map((tag) => ({
+          .filter((tag: any): tag is NonNullable<typeof tag> => tag !== null)
+          .map((tag: any) => ({
             ...tag,
             color: tag.color ?? undefined,
           }));
@@ -97,7 +97,7 @@ export function TrainingGrid({
               <div className="flex items-center text-sm text-muted-foreground">
                 <Users className="h-4 w-4 mr-2" />
                 {
-                  Array.from(new Set(training.attempts?.filter((attempt) => attempt.passed).map((a) => a.employee_id)))
+                  Array.from(new Set(training.attempts?.filter((attempt: any) => attempt.passed).map((a: any) => a.employee_id)))
                     .length
                 }
                 /{training.totalEmployees} completaron
