@@ -13,6 +13,7 @@ export type StorageBucket =
   | 'daily_reports'
   | 'logo'
   | 'documents'
+  | 'purchase_invoices'
 
 export interface UploadOptions {
   cacheControl?: string

@@ -12,7 +12,7 @@ import { fetchTrainingById, updateTrainingStatus } from '../actions.server';
 function OverviewTab({ training }: { training: Awaited<ReturnType<typeof fetchTrainingById>> }) {
   // Calcular métricas importantes
   const completedCount = Array.from(
-    new Set(training?.attempts?.filter((attempt) => attempt.passed).map((a) => a.employee_id))
+    new Set(training?.attempts?.filter((attempt: any) => attempt.passed).map((a: any) => a.employee_id))
   ).length;
   const totalEmployees = training?.employees?.total?.totalEmployees || 0;
 
@@ -186,7 +186,7 @@ function OverviewTab({ training }: { training: Awaited<ReturnType<typeof fetchTr
           <div className="flex justify-between">
             <span className="text-muted-foreground">Etiquetas:</span>
             <div className="flex flex-wrap gap-1 justify-end">
-              {training?.tags?.map((tag, index) => (
+              {training?.tags?.map((tag: any, index: any) => (
                 <Badge key={index} variant="outline" className="text-xs">
                   {tag}
                 </Badge>

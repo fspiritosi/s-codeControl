@@ -5,6 +5,7 @@
 export const SIGNABLE_PDF_KEYS = [
   { key: 'purchase-order', label: 'Órdenes de compra' },
   { key: 'withdrawal-order', label: 'Retiros de mercadería' },
+  { key: 'payment-order', label: 'Órdenes de pago' },
 ] as const;
 
 export type SignablePdfKey = (typeof SIGNABLE_PDF_KEYS)[number]['key'];

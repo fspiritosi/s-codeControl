@@ -24,6 +24,7 @@ export const paymentOrderPaymentSchema = z
     amount: amountString.refine((v) => parseFloat(v) > 0, 'Debe ser mayor a 0'),
     cash_register_id: z.string().uuid().optional().nullable(),
     bank_account_id: z.string().uuid().optional().nullable(),
+    supplier_payment_method_id: z.string().uuid().optional().nullable(),
     check_number: z.string().max(50).optional().nullable(),
     card_last4: z.string().max(4).optional().nullable(),
     reference: z.string().max(100).optional().nullable(),

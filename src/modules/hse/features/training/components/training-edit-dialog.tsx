@@ -188,7 +188,7 @@ export function TrainingEditDialog({ training, allTags, open, onOpenChange, sele
               {formData.tags.map((tag: string, index: number) => (
                 <Badge key={index} variant="secondary" className="flex items-center gap-1 px-3 py-1">
                   <TagIcon className="h-3 w-3" />
-                  {allTags.find((t) => t.id === tag)?.name}
+                  {allTags.find((t: any) => t.id === tag)?.name}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -202,7 +202,7 @@ export function TrainingEditDialog({ training, allTags, open, onOpenChange, sele
             </div>
             <div className="flex gap-2">
               <MultiSelectCombobox
-                options={allTags.map((tag) => ({ value: tag.id, label: tag.name }))}
+                options={allTags.map((tag: any) => ({ value: tag.id, label: tag.name }))}
                 placeholder="Seleccionar etiquetas"
                 emptyMessage="No se encontraron etiquetas"
                 selectedValues={formData.tags || []}

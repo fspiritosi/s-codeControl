@@ -286,6 +286,7 @@ model company {
   // Almacenes y Compras
   products                    products[]
   suppliers                   suppliers[]
+  supplier_payment_methods    supplier_payment_methods[]
   warehouses                  warehouses[]
   stock_movements             stock_movements[]
   purchase_orders             purchase_orders[]
@@ -1437,6 +1438,11 @@ enum supplier_status {
   BLOCKED
 }
 
+enum supplier_account_type {
+  CHECKING
+  SAVINGS
+}
+
 enum warehouse_type {
   MAIN
   BRANCH
@@ -1589,9 +1595,37 @@ model suppliers {
   receiving_notes   receiving_notes[]
   payment_orders    payment_orders[]
   checks            checks[]
+  payment_methods   supplier_payment_methods[]
 
   @@unique([company_id, code])
   @@unique([company_id, tax_id])
+}
+
+model supplier_payment_methods {
+  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  supplier_id           String                 @db.Uuid
+  company_id            String                 @db.Uuid
+  type                  payment_method
+  bank_name             String?
+  account_holder        String?
+  account_holder_tax_id String?
+  account_type          supplier_account_type?
+  cbu                   String?                @db.VarChar(22)
+  alias                 String?
+  currency              String?
+  is_default            Boolean                @default(false)
+  status                supplier_status        @default(ACTIVE)
+  created_at            DateTime               @default(now()) @db.Timestamptz
+  updated_at            DateTime               @default(now()) @updatedAt @db.Timestamptz
+  created_by            String?                @db.Uuid
+  updated_by            String?                @db.Uuid
+
+  supplier      suppliers @relation(fields: [supplier_id], references: [id], onDelete: Cascade)
+  company       company   @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  payment_order_payments payment_order_payments[]
+
+  @@index([supplier_id])
+  @@index([company_id, supplier_id])
 }
 
 // ============================================================
@@ -1953,6 +1987,7 @@ enum payment_method {
 enum payment_order_status {
   DRAFT
   CONFIRMED
+  PAID
   CANCELLED
 }
 
@@ -2127,6 +2162,8 @@ model payment_orders {
   created_by   String
   confirmed_by String?
   confirmed_at DateTime?            @db.Timestamptz
+  paid_by      String?
+  paid_at      DateTime?            @db.Timestamptz
   created_at   DateTime             @default(now()) @db.Timestamptz
   updated_at   DateTime             @default(now()) @updatedAt @db.Timestamptz
 
@@ -2155,22 +2192,25 @@ model payment_order_items {
 }
 
 model payment_order_payments {
-  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  payment_order_id String         @db.Uuid
-  payment_method   payment_method
-  amount           Decimal        @db.Decimal(15, 2)
-  cash_register_id String?        @db.Uuid
-  bank_account_id  String?        @db.Uuid
-  check_number     String?
-  card_last4       String?
-  reference        String?
+  id                         String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payment_order_id           String         @db.Uuid
+  payment_method             payment_method
+  amount                     Decimal        @db.Decimal(15, 2)
+  cash_register_id           String?        @db.Uuid
+  bank_account_id            String?        @db.Uuid
+  supplier_payment_method_id String?        @db.Uuid
+  check_number               String?
+  card_last4                 String?
+  reference                  String?
 
-  payment_order payment_orders  @relation(fields: [payment_order_id], references: [id], onDelete: Cascade)
-  cash_register cash_registers? @relation(fields: [cash_register_id], references: [id])
-  bank_account  bank_accounts?  @relation(fields: [bank_account_id], references: [id])
-  check         checks?
+  payment_order           payment_orders            @relation(fields: [payment_order_id], references: [id], onDelete: Cascade)
+  cash_register           cash_registers?           @relation(fields: [cash_register_id], references: [id])
+  bank_account            bank_accounts?            @relation(fields: [bank_account_id], references: [id])
+  supplier_payment_method supplier_payment_methods? @relation(fields: [supplier_payment_method_id], references: [id], onDelete: SetNull)
+  check                   checks?
 
   @@index([payment_order_id])
+  @@index([supplier_payment_method_id])
 }
 
 // ============================================================

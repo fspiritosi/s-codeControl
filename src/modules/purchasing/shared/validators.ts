@@ -50,7 +50,16 @@ export const purchaseInvoiceSchema = z.object({
   purchase_order_id: z.string().uuid().optional().or(z.literal('')),
   purchase_order_ids: z.array(z.string().uuid()).optional().default([]),
   lines: z.array(purchaseInvoiceLineSchema).min(1, 'Debe agregar al menos una línea'),
+  attachment: z.any().optional(),
 });
+
+// MIME types y tamaño máximo para adjunto de Factura de Compra
+export const PURCHASE_INVOICE_ATTACHMENT_ALLOWED_MIME = [
+  'image/jpeg',
+  'image/png',
+  'application/pdf',
+] as const;
+export const PURCHASE_INVOICE_ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
 // ============================================================
 // Receiving Note

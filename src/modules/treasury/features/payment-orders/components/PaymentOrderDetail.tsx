@@ -25,11 +25,13 @@ export async function PaymentOrderDetail({ id }: { id: string }) {
   if (!order) notFound();
 
   const variant =
-    order.status === 'CONFIRMED'
-      ? 'default'
-      : order.status === 'CANCELLED'
-        ? 'destructive'
-        : 'outline';
+    order.status === 'PAID'
+      ? 'success'
+      : order.status === 'CONFIRMED'
+        ? 'default'
+        : order.status === 'CANCELLED'
+          ? 'destructive'
+          : 'outline';
 
   return (
     <div className="space-y-6">
@@ -46,7 +48,7 @@ export async function PaymentOrderDetail({ id }: { id: string }) {
             {format(new Date(order.created_at), 'dd/MM/yyyy HH:mm')}
           </p>
         </div>
-        <Badge variant={variant}>{PAYMENT_ORDER_STATUS_LABELS[order.status]}</Badge>
+        <Badge variant={variant as any}>{PAYMENT_ORDER_STATUS_LABELS[order.status]}</Badge>
         <PaymentOrderActions id={order.id} status={order.status} />
       </div>
 
@@ -131,28 +133,51 @@ export async function PaymentOrderDetail({ id }: { id: string }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {order.payments.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell>
-                    <Badge variant="outline">{PAYMENT_METHOD_LABELS[p.payment_method]}</Badge>
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {p.cash_register
-                      ? `${p.cash_register.code} — ${p.cash_register.name}`
-                      : p.bank_account
-                        ? `${p.bank_account.bank_name} ${p.bank_account.account_number}`
-                        : p.check_number
-                          ? `Cheque #${p.check_number}`
-                          : p.card_last4
-                            ? `•••• ${p.card_last4}`
-                            : '-'}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {p.reference ?? '-'}
-                  </TableCell>
-                  <TableCell className="text-right font-mono">${p.amount.toFixed(2)}</TableCell>
-                </TableRow>
-              ))}
+              {order.payments.map((p) => {
+                const dest = p.supplier_payment_method;
+                let destLabel: string | null = null;
+                if (dest) {
+                  if (dest.type === 'CHECK') {
+                    destLabel = 'Cheque al proveedor';
+                  } else if (dest.type === 'ACCOUNT') {
+                    const cbuTail = dest.cbu
+                      ? ` · CBU ${dest.cbu.slice(-4).padStart(dest.cbu.length, '•')}`
+                      : dest.alias
+                        ? ` · Alias ${dest.alias}`
+                        : '';
+                    destLabel = `${dest.bank_name ?? 'Cuenta bancaria'}${cbuTail}`;
+                  }
+                }
+                return (
+                  <TableRow key={p.id}>
+                    <TableCell>
+                      <Badge variant="outline">{PAYMENT_METHOD_LABELS[p.payment_method]}</Badge>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      <div>
+                        {p.cash_register
+                          ? `${p.cash_register.code} — ${p.cash_register.name}`
+                          : p.bank_account
+                            ? `${p.bank_account.bank_name} ${p.bank_account.account_number}`
+                            : p.check_number
+                              ? `Cheque #${p.check_number}`
+                              : p.card_last4
+                                ? `•••• ${p.card_last4}`
+                                : '-'}
+                      </div>
+                      {destLabel && (
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          Destino: {destLabel}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {p.reference ?? '-'}
+                    </TableCell>
+                    <TableCell className="text-right font-mono">${p.amount.toFixed(2)}</TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>

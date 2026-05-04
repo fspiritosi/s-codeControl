@@ -40,6 +40,37 @@ function ActionsCell({ row }: { row: any }) {
     );
   };
 
+  const handleApprove = async () => {
+    const toastId = toast.loading('Aprobando orden...');
+    try {
+      const result = await approvePurchaseOrder(id);
+      if (result.error) {
+        toast.error(result.error, { id: toastId });
+        return;
+      }
+      router.refresh();
+      if (result.emailStatus === 'SENT') {
+        toast.success('OC aprobada y notificada al proveedor', { id: toastId });
+      } else if (result.emailStatus === 'NO_EMAIL') {
+        toast.warning(
+          'OC aprobada. El proveedor no tiene email cargado, no se envió notificación.',
+          { id: toastId }
+        );
+      } else if (result.emailStatus === 'FAILED') {
+        toast.warning(
+          `OC aprobada. No se pudo enviar el mail${
+            result.errorMessage ? ` (motivo: ${result.errorMessage})` : ''
+          }.`,
+          { id: toastId }
+        );
+      } else {
+        toast.success('Orden aprobada', { id: toastId });
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Error al aprobar', { id: toastId });
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -61,7 +92,7 @@ function ActionsCell({ row }: { row: any }) {
         )}
         {status === 'PENDING_APPROVAL' && (
           <>
-            <DropdownMenuItem onClick={() => handleAction(() => approvePurchaseOrder(id), 'Orden aprobada')}>
+            <DropdownMenuItem onClick={handleApprove}>
               <CheckCircle className="size-4 mr-2" /> Aprobar
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleAction(() => rejectPurchaseOrder(id), 'Orden rechazada')}>

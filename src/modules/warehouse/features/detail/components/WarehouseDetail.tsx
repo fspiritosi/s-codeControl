@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
+import { Card } from '@/shared/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/shared/components/ui/dialog';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
@@ -16,15 +15,29 @@ import { ArrowLeftRight, PackagePlus, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import BackButton from '@/shared/components/common/BackButton';
+import { WarehouseStockDataTable } from './_WarehouseStockDataTable';
 
 interface Props {
   warehouse: any;
   stocks: any[];
+  paginatedStocks: any[];
+  totalStocks: number;
+  searchParams: Record<string, string | undefined>;
   products: { id: string; code: string; name: string; unit_of_measure: string }[];
   warehouses: { id: string; code: string; name: string }[];
+  showCompany?: boolean;
 }
 
-export default function WarehouseDetail({ warehouse, stocks, products, warehouses }: Props) {
+export default function WarehouseDetail({
+  warehouse,
+  stocks,
+  paginatedStocks,
+  totalStocks,
+  searchParams,
+  products,
+  warehouses,
+  showCompany = false,
+}: Props) {
   const router = useRouter();
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
@@ -177,74 +190,16 @@ export default function WarehouseDetail({ warehouse, stocks, products, warehouse
         </div>
       </div>
 
-      <StockTable stocks={stocks} />
-    </div>
-  );
-}
-
-function StockTable({ stocks }: { stocks: any[] }) {
-  const [search, setSearch] = useState('');
-
-  const filtered = useMemo(() => {
-    if (!search.trim()) return stocks;
-    const term = search.toLowerCase();
-    return stocks.filter(
-      (s) =>
-        s.product?.name?.toLowerCase().includes(term) ||
-        s.product?.code?.toLowerCase().includes(term)
-    );
-  }, [stocks, search]);
-
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>Stock en este almacén</CardTitle>
-          <CardDescription>
-            {filtered.length === stocks.length
-              ? `${stocks.length} productos`
-              : `${filtered.length} de ${stocks.length} productos`}
-          </CardDescription>
-        </div>
-        <Input
-          placeholder="Buscar por nombre o código..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-xs"
+      <Card className="p-4">
+        <WarehouseStockDataTable
+          warehouseId={warehouse.id}
+          warehouseName={warehouse.name}
+          data={paginatedStocks}
+          totalRows={totalStocks}
+          searchParams={searchParams}
+          showCompany={showCompany}
         />
-      </CardHeader>
-      <CardContent>
-        {filtered.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Producto</TableHead>
-                <TableHead>Código</TableHead>
-                <TableHead className="text-right">Cantidad</TableHead>
-                <TableHead className="text-right">Reservado</TableHead>
-                <TableHead className="text-right">Disponible</TableHead>
-                <TableHead>Unidad</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((stock) => (
-                <TableRow key={stock.id}>
-                  <TableCell className="font-medium">{stock.product?.name}</TableCell>
-                  <TableCell className="font-mono text-sm">{stock.product?.code}</TableCell>
-                  <TableCell className="text-right">{stock.quantity}</TableCell>
-                  <TableCell className="text-right">{stock.reserved_qty}</TableCell>
-                  <TableCell className="text-right font-medium">{stock.available_qty}</TableCell>
-                  <TableCell>{stock.product?.unit_of_measure}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : stocks.length > 0 ? (
-          <p className="text-muted-foreground text-center py-8">No se encontraron productos con "{search}"</p>
-        ) : (
-          <p className="text-muted-foreground text-center py-8">No hay stock registrado en este almacén</p>
-        )}
-      </CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 }

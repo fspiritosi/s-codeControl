@@ -94,7 +94,7 @@ interface DocumentAssignment {
 interface ProcessedDocument {
   assignmentId: string;
   status: string;
-  assignedAt: string;
+  assignedAt: string | null;
   acceptedAt: string | null;
   document: {
     id: string;

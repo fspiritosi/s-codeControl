@@ -1,11 +1,16 @@
 import { prisma } from '@/shared/lib/prisma';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { Separator } from '@/shared/components/ui/separator';
 import { INVOICE_STATUS_LABELS, VOUCHER_TYPE_LABELS } from '@/modules/purchasing/shared/types';
+import { PAYMENT_ORDER_STATUS_LABELS } from '@/modules/treasury/shared/validators';
 import BackButton from '@/shared/components/common/BackButton';
+import InvoiceAttachmentSection from '@/modules/purchasing/features/invoices/list/components/InvoiceAttachmentSection';
+import { ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -22,6 +27,13 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         },
       },
       purchase_order: { select: { id: true, full_number: true } },
+      payment_order_items: {
+        include: {
+          payment_order: {
+            select: { id: true, full_number: true, date: true, status: true },
+          },
+        },
+      },
     },
   });
 
@@ -39,6 +51,18 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
     if (o) linkedOrdersMap.set(o.id, o.full_number);
   }
   const linkedOrders = Array.from(linkedOrdersMap.entries()).map(([id, full_number]) => ({ id, full_number }));
+
+  // Órdenes de pago vinculadas (vía payment_order_items)
+  const linkedPaymentOrders = invoice.payment_order_items
+    .filter((it) => it.payment_order)
+    .map((it) => ({
+      id: it.payment_order!.id,
+      fullNumber: it.payment_order!.full_number,
+      date: it.payment_order!.date,
+      status: it.payment_order!.status as keyof typeof PAYMENT_ORDER_STATUS_LABELS,
+      appliedAmount: Number(it.amount),
+    }))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <div className="space-y-6">
@@ -134,6 +158,66 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           </div>
         </CardContent>
       </Card>
+
+      {linkedPaymentOrders.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Órdenes de Pago</CardTitle>
+            <CardDescription>
+              {linkedPaymentOrders.length} OP{linkedPaymentOrders.length === 1 ? '' : 's'} aplicada
+              {linkedPaymentOrders.length === 1 ? '' : 's'} a esta factura
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>N°</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Importe aplicado</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {linkedPaymentOrders.map((po) => {
+                  const variant =
+                    po.status === 'PAID'
+                      ? 'success'
+                      : po.status === 'CONFIRMED'
+                        ? 'default'
+                        : po.status === 'CANCELLED'
+                          ? 'destructive'
+                          : 'outline';
+                  return (
+                    <TableRow key={po.id}>
+                      <TableCell className="font-mono">{po.fullNumber}</TableCell>
+                      <TableCell>{format(new Date(po.date), 'dd/MM/yyyy')}</TableCell>
+                      <TableCell>
+                        <Badge variant={variant as any}>
+                          {PAYMENT_ORDER_STATUS_LABELS[po.status]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        ${po.appliedAmount.toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/dashboard/treasury/payment-orders/${po.id}`}>
+                            Ver <ExternalLink className="size-3 ml-1" />
+                          </Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      <InvoiceAttachmentSection invoiceId={invoice.id} documentKey={invoice.document_key} />
     </div>
   );
 }

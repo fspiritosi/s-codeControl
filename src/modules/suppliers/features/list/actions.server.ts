@@ -2,6 +2,9 @@
 
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
+import { fetchCurrentUser } from '@/shared/actions/auth';
+import { syncSupplierPaymentMethodsTx } from '@/modules/suppliers/features/payment-methods/sync';
+import { supplierPaymentMethodsArraySchema } from '@/modules/suppliers/shared/validators';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
 import {
   parseSearchParams,
@@ -147,6 +150,19 @@ export async function createSupplier(data: Record<string, unknown>) {
 
   const normalizedTaxId = (data.tax_id as string).replace(/-/g, '');
 
+  // Validate payment_methods if provided.
+  let paymentMethods: ReturnType<typeof supplierPaymentMethodsArraySchema.parse> = [];
+  if (Array.isArray(data.payment_methods) && data.payment_methods.length > 0) {
+    const parsed = supplierPaymentMethodsArraySchema.safeParse(data.payment_methods);
+    if (!parsed.success) {
+      return { data: null, error: parsed.error.issues[0]?.message ?? 'Métodos de pago inválidos' };
+    }
+    paymentMethods = parsed.data;
+  }
+
+  const user = await fetchCurrentUser();
+  const userId = user?.id ?? null;
+
   try {
     const lastSupplier = await prisma.suppliers.findFirst({
       where: { company_id: companyId },
@@ -157,32 +173,41 @@ export async function createSupplier(data: Record<string, unknown>) {
     const lastNum = lastSupplier?.code ? parseInt(lastSupplier.code.replace('PROV-', ''), 10) || 0 : 0;
     const code = `PROV-${String(lastNum + 1).padStart(4, '0')}`;
 
-    const supplier = await prisma.suppliers.create({
-      data: {
-        company_id: companyId,
-        code,
-        business_name: data.business_name as string,
-        trade_name: (data.trade_name as string) || null,
-        tax_id: normalizedTaxId,
-        tax_condition: data.tax_condition as any,
-        email: (data.email as string) || null,
-        phone: (data.phone as string) || null,
-        website: (data.website as string) || null,
-        address: (data.address as string) || null,
-        city: (data.city as string) || null,
-        province: (data.province as string) || null,
-        zip_code: (data.zip_code as string) || null,
-        country: (data.country as string) || 'Argentina',
-        payment_term_days: Number(data.payment_term_days) || 0,
-        credit_limit: data.credit_limit != null ? Number(data.credit_limit) : null,
-        contact_name: (data.contact_name as string) || null,
-        contact_phone: (data.contact_phone as string) || null,
-        contact_email: (data.contact_email as string) || null,
-        notes: (data.notes as string) || null,
-      },
+    const supplier = await prisma.$transaction(async (tx) => {
+      const created = await tx.suppliers.create({
+        data: {
+          company_id: companyId,
+          code,
+          business_name: data.business_name as string,
+          trade_name: (data.trade_name as string) || null,
+          tax_id: normalizedTaxId,
+          tax_condition: data.tax_condition as any,
+          email: (data.email as string) || null,
+          phone: (data.phone as string) || null,
+          website: (data.website as string) || null,
+          address: (data.address as string) || null,
+          city: (data.city as string) || null,
+          province: (data.province as string) || null,
+          zip_code: (data.zip_code as string) || null,
+          country: (data.country as string) || 'Argentina',
+          payment_term_days: Number(data.payment_term_days) || 0,
+          credit_limit: data.credit_limit != null ? Number(data.credit_limit) : null,
+          contact_name: (data.contact_name as string) || null,
+          contact_phone: (data.contact_phone as string) || null,
+          contact_email: (data.contact_email as string) || null,
+          notes: (data.notes as string) || null,
+        },
+      });
+
+      if (paymentMethods.length > 0) {
+        await syncSupplierPaymentMethodsTx(tx, created.id, companyId, userId, paymentMethods);
+      }
+
+      return created;
     });
 
     revalidatePath('/dashboard/purchasing');
+    revalidatePath(`/dashboard/suppliers/${supplier.id}`);
     return { data: supplier, error: null };
   } catch (error: any) {
     if (error?.code === 'P2002') {
@@ -200,30 +225,51 @@ export async function updateSupplier(id: string, data: Record<string, unknown>) 
 
   const normalizedTaxId = (data.tax_id as string)?.replace(/-/g, '');
 
+  // Validate payment_methods if provided. The client always sends the full array.
+  let paymentMethods: ReturnType<typeof supplierPaymentMethodsArraySchema.parse> | null = null;
+  if (Array.isArray(data.payment_methods)) {
+    const parsed = supplierPaymentMethodsArraySchema.safeParse(data.payment_methods);
+    if (!parsed.success) {
+      return { data: null, error: parsed.error.issues[0]?.message ?? 'Métodos de pago inválidos' };
+    }
+    paymentMethods = parsed.data;
+  }
+
+  const user = await fetchCurrentUser();
+  const userId = user?.id ?? null;
+
   try {
-    const supplier = await prisma.suppliers.update({
-      where: { id },
-      data: {
-        business_name: data.business_name as string,
-        trade_name: (data.trade_name as string) || null,
-        tax_id: normalizedTaxId,
-        tax_condition: data.tax_condition as any,
-        email: (data.email as string) || null,
-        phone: (data.phone as string) || null,
-        website: (data.website as string) || null,
-        address: (data.address as string) || null,
-        city: (data.city as string) || null,
-        province: (data.province as string) || null,
-        zip_code: (data.zip_code as string) || null,
-        country: (data.country as string) || 'Argentina',
-        payment_term_days: Number(data.payment_term_days) || 0,
-        credit_limit: data.credit_limit != null ? Number(data.credit_limit) : null,
-        contact_name: (data.contact_name as string) || null,
-        contact_phone: (data.contact_phone as string) || null,
-        contact_email: (data.contact_email as string) || null,
-        notes: (data.notes as string) || null,
-        status: data.status as any,
-      },
+    const supplier = await prisma.$transaction(async (tx) => {
+      const updated = await tx.suppliers.update({
+        where: { id },
+        data: {
+          business_name: data.business_name as string,
+          trade_name: (data.trade_name as string) || null,
+          tax_id: normalizedTaxId,
+          tax_condition: data.tax_condition as any,
+          email: (data.email as string) || null,
+          phone: (data.phone as string) || null,
+          website: (data.website as string) || null,
+          address: (data.address as string) || null,
+          city: (data.city as string) || null,
+          province: (data.province as string) || null,
+          zip_code: (data.zip_code as string) || null,
+          country: (data.country as string) || 'Argentina',
+          payment_term_days: Number(data.payment_term_days) || 0,
+          credit_limit: data.credit_limit != null ? Number(data.credit_limit) : null,
+          contact_name: (data.contact_name as string) || null,
+          contact_phone: (data.contact_phone as string) || null,
+          contact_email: (data.contact_email as string) || null,
+          notes: (data.notes as string) || null,
+          status: data.status as any,
+        },
+      });
+
+      if (paymentMethods !== null) {
+        await syncSupplierPaymentMethodsTx(tx, id, companyId, userId, paymentMethods);
+      }
+
+      return updated;
     });
 
     revalidatePath('/dashboard/purchasing');
@@ -245,6 +291,12 @@ export async function getSupplierById(id: string) {
 
   const supplier = await prisma.suppliers.findFirst({
     where: { id, company_id: companyId },
+    include: {
+      payment_methods: {
+        where: { status: 'ACTIVE' },
+        orderBy: [{ is_default: 'desc' }, { created_at: 'asc' }],
+      },
+    },
   });
 
   if (!supplier) return null;

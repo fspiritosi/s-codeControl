@@ -109,7 +109,7 @@ export default function TrainingDetail({
       // Preparar los datos para la actualización
       const evaluationData = {
         passingScore: passingScore,
-        questions: evaluationQuestions.map((q) => ({
+        questions: evaluationQuestions.map((q: any) => ({
           id: q.id, // ID para preguntas existentes
           question: q.question,
           options: q.options,
@@ -164,7 +164,7 @@ export default function TrainingDetail({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold">{training.title}</h1>
-              {training.tags.map((tag, index) => (
+              {training.tags.map((tag: any, index: any) => (
                 <Badge key={index} variant="outline" className="flex items-center gap-1">
                   <Tag className="h-3 w-3" />
                   {tag}

@@ -14,6 +14,7 @@ import {
   paymentOrderSchema,
   type PaymentOrderFormData,
 } from '../../shared/payment-order-validators';
+import { sendPaymentOrderPaidEmail } from './shared/email/sendPaymentOrderPaidEmail';
 
 const columnMap: Record<string, string> = { status: 'status', supplier_id: 'supplier_id' };
 
@@ -88,6 +89,19 @@ export async function getPaymentOrderById(id: string) {
         include: {
           cash_register: { select: { code: true, name: true } },
           bank_account: { select: { bank_name: true, account_number: true } },
+          supplier_payment_method: {
+            select: {
+              id: true,
+              type: true,
+              bank_name: true,
+              account_holder: true,
+              account_type: true,
+              cbu: true,
+              alias: true,
+              currency: true,
+              is_default: true,
+            },
+          },
         },
       },
     },
@@ -115,6 +129,29 @@ export async function getSuppliersForOrder() {
     select: { id: true, code: true, business_name: true, tax_id: true },
     orderBy: { business_name: 'asc' },
   });
+}
+
+export async function getSupplierPaymentMethodsForPaymentOrder(supplierId: string) {
+  const { companyId } = await getActionContext();
+  if (!companyId || !supplierId) return [];
+
+  const methods = await prisma.supplier_payment_methods.findMany({
+    where: { company_id: companyId, supplier_id: supplierId, status: 'ACTIVE' },
+    select: {
+      id: true,
+      type: true,
+      bank_name: true,
+      account_holder: true,
+      account_type: true,
+      cbu: true,
+      alias: true,
+      currency: true,
+      is_default: true,
+    },
+    orderBy: [{ is_default: 'desc' }, { created_at: 'asc' }],
+  });
+
+  return methods;
 }
 
 export async function getPendingPurchaseInvoices(supplierId: string) {
@@ -175,6 +212,33 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
   try {
     const totalAmount = parsed.data.items.reduce((acc, i) => acc + parseFloat(i.amount), 0);
 
+    // Validar que cada supplier_payment_method_id pertenezca al supplier de la OP
+    const supplierMethodIds = parsed.data.payments
+      .map((p) => p.supplier_payment_method_id)
+      .filter((v): v is string => !!v);
+    if (supplierMethodIds.length > 0) {
+      if (!parsed.data.supplier_id) {
+        return {
+          data: null,
+          error: 'No se puede asignar destino del proveedor sin proveedor',
+        };
+      }
+      const found = await prisma.supplier_payment_methods.findMany({
+        where: {
+          id: { in: supplierMethodIds },
+          company_id: companyId,
+          supplier_id: parsed.data.supplier_id,
+        },
+        select: { id: true },
+      });
+      if (found.length !== new Set(supplierMethodIds).size) {
+        return {
+          data: null,
+          error: 'Un destino del proveedor no pertenece al proveedor seleccionado',
+        };
+      }
+    }
+
     const last = await prisma.payment_orders.findFirst({
       where: { company_id: companyId },
       orderBy: { number: 'desc' },
@@ -206,6 +270,7 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
             amount: parseFloat(p.amount),
             cash_register_id: p.cash_register_id || null,
             bank_account_id: p.bank_account_id || null,
+            supplier_payment_method_id: p.supplier_payment_method_id || null,
             check_number: p.check_number || null,
             card_last4: p.card_last4 || null,
             reference: p.reference || null,
@@ -365,6 +430,107 @@ export async function confirmPaymentOrder(id: string) {
   } catch (error) {
     console.error('Error confirming payment order:', error);
     return { error: String(error) };
+  }
+}
+
+/**
+ * Marca una OP en estado CONFIRMED como PAID, recalcula el estado de las
+ * facturas asociadas y dispara el mail al proveedor con el PDF adjunto.
+ * - Estado terminal: no se puede revertir.
+ * - Si el mail falla, NO se revierte la transición.
+ */
+export async function markPaymentOrderAsPaid(id: string): Promise<{
+  ok: boolean;
+  error?: string;
+  emailStatus?: 'SENT' | 'NO_EMAIL' | 'FAILED';
+  errorMessage?: string;
+}> {
+  const { companyId } = await getActionContext();
+  if (!companyId) return { ok: false, error: 'No company selected' };
+
+  const user = await fetchCurrentUser();
+  if (!user?.id) return { ok: false, error: 'No autenticado' };
+
+  try {
+    const order = await prisma.payment_orders.findFirst({
+      where: { id, company_id: companyId },
+      select: { id: true, status: true, items: { select: { invoice_id: true } } },
+    });
+    if (!order) return { ok: false, error: 'Orden no encontrada' };
+    if (order.status !== 'CONFIRMED') {
+      return {
+        ok: false,
+        error: 'Solo se pueden marcar como pagadas las órdenes confirmadas',
+      };
+    }
+
+    const invoiceIds = Array.from(
+      new Set(order.items.map((i) => i.invoice_id).filter((v): v is string => !!v))
+    );
+
+    await prisma.$transaction(async (tx) => {
+      await tx.payment_orders.update({
+        where: { id },
+        data: {
+          status: 'PAID',
+          paid_at: new Date(),
+          paid_by: user.id!,
+        },
+      });
+
+      for (const invoiceId of invoiceIds) {
+        const invoice = await tx.purchase_invoices.findUnique({
+          where: { id: invoiceId },
+          select: { id: true, total: true, status: true },
+        });
+        if (!invoice) continue;
+        if (invoice.status === 'CANCELLED') continue;
+
+        const aggregate = await tx.payment_order_items.aggregate({
+          where: {
+            invoice_id: invoiceId,
+            payment_order: { status: 'PAID' },
+          },
+          _sum: { amount: true },
+        });
+        const paidSum = Number(aggregate._sum.amount ?? 0);
+        const total = Number(invoice.total);
+
+        let nextStatus: 'PAID' | 'PARTIAL_PAID' | null = null;
+        if (paidSum >= total - 0.005) nextStatus = 'PAID';
+        else if (paidSum > 0) nextStatus = 'PARTIAL_PAID';
+
+        if (nextStatus && invoice.status !== nextStatus) {
+          await tx.purchase_invoices.update({
+            where: { id: invoiceId },
+            data: { status: nextStatus },
+          });
+        }
+      }
+    });
+
+    // Mail al proveedor (fuera de la transacción)
+    let emailStatus: 'SENT' | 'NO_EMAIL' | 'FAILED' = 'FAILED';
+    let errorMessage: string | undefined;
+    try {
+      const result = await sendPaymentOrderPaidEmail(id, companyId);
+      emailStatus = result.status;
+      errorMessage = result.errorMessage;
+    } catch (err) {
+      console.error('Error enviando mail de OP pagada:', err);
+      errorMessage = err instanceof Error ? err.message : 'Error inesperado';
+    }
+
+    revalidatePath('/dashboard/treasury');
+    revalidatePath(`/dashboard/treasury/payment-orders/${id}`);
+    for (const invId of invoiceIds) {
+      revalidatePath(`/dashboard/purchasing/invoices/${invId}`);
+    }
+
+    return { ok: true, emailStatus, errorMessage };
+  } catch (error) {
+    console.error('Error marcando OP como pagada:', error);
+    return { ok: false, error: String(error) };
   }
 }
 

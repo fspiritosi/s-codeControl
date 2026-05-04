@@ -49,3 +49,7 @@ cypress.config.ts
 /src/generated/prisma
 
 /notas_analisis
+
+# Material de referencia local (planillas Excel del cliente con datos sensibles)
+.planes/incorporacion_cotizaciones/referencias/*
+!.planes/incorporacion_cotizaciones/referencias/README.md

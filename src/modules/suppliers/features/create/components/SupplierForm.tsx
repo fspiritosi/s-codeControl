@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/shared/components/ui/textarea';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import SupplierPaymentMethodsField from './SupplierPaymentMethodsField';
 
 type FormValues = z.infer<typeof createSupplierSchema>;
 
@@ -46,6 +47,23 @@ export default function SupplierForm({ supplier }: Props) {
       contact_phone: supplier?.contact_phone || '',
       contact_email: supplier?.contact_email || '',
       notes: supplier?.notes || '',
+      payment_methods: (supplier?.payment_methods ?? []).map((pm: any) => {
+        if (pm.type === 'CHECK') {
+          return { id: pm.id, type: 'CHECK', is_default: !!pm.is_default };
+        }
+        return {
+          id: pm.id,
+          type: 'ACCOUNT',
+          bank_name: pm.bank_name ?? '',
+          account_holder: pm.account_holder ?? '',
+          account_holder_tax_id: pm.account_holder_tax_id ?? '',
+          account_type: pm.account_type ?? 'CHECKING',
+          cbu: pm.cbu ?? '',
+          alias: pm.alias ?? '',
+          currency: (pm.currency as 'ARS' | 'USD') ?? 'ARS',
+          is_default: !!pm.is_default,
+        };
+      }),
     },
   });
 
@@ -240,6 +258,8 @@ export default function SupplierForm({ supplier }: Props) {
             </div>
           </CardContent>
         </Card>
+
+        <SupplierPaymentMethodsField control={form.control} />
 
         <div className="flex justify-end gap-4">
           <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>

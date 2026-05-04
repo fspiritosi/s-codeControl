@@ -11,7 +11,7 @@ import { cookies } from 'next/headers';
  */
 export const createTraining = async (data: { title: string; description: string; passing_score?: number }) => {
   try {
-    const supabase = await supabaseServer();
+    const supabase = (await supabaseServer()) as any;
     const user = await supabase.auth.getUser();
     const cookiesStore = await cookies();
     const company_id = cookiesStore.get('actualComp')?.value;
@@ -89,7 +89,7 @@ export const addTrainingMaterials = async (
   }>
 ) => {
   try {
-    const supabase = await supabaseServer();
+    const supabase = (await supabaseServer()) as any;
 
     // Añadir los materiales
     const { data: materialsData, error: materialsError } = await supabase
@@ -137,7 +137,7 @@ export const addTrainingQuestions = async (
   }>
 ) => {
   try {
-    const supabase = await supabaseServer();
+    const supabase = (await supabaseServer()) as any;
 
     // Añadir las preguntas una por una para poder obtener el ID y asociarlo a las opciones
     for (const question of questions) {
@@ -189,7 +189,7 @@ export const addTrainingQuestions = async (
  */
 export const addTrainingTags = async (trainingId: string, tagIds: string[]) => {
   try {
-    const supabase = await supabaseServer();
+    const supabase = (await supabaseServer()) as any;
 
     // Asociar las etiquetas
     const { error: tagsError } = await supabase.from('training_tag_assignments').insert(
@@ -216,7 +216,7 @@ export const addTrainingTags = async (trainingId: string, tagIds: string[]) => {
  */
 export const fetchTrainingTags = async () => {
   try {
-    const supabase = await supabaseServer();
+    const supabase = (await supabaseServer()) as any;
     const { data, error } = await supabase.from('training_tags').select('*').eq('is_active', true);
 
     if (error) {
@@ -233,7 +233,7 @@ export const fetchTrainingTags = async () => {
 
 export const updateTag = async (dataToUpdate: { id: string; name: string; color: string; is_active: boolean }) => {
   try {
-    const supabase = await supabaseServer();
+    const supabase = (await supabaseServer()) as any;
     const { data, error } = await supabase
       .from('training_tags')
       .update({ name: dataToUpdate.name, color: dataToUpdate.color, is_active: dataToUpdate.is_active })
@@ -253,7 +253,7 @@ export const updateTag = async (dataToUpdate: { id: string; name: string; color:
 
 export const createArea = async (dataToCreate: { name: string; color: string }) => {
   try {
-    const supabase = await supabaseServer();
+    const supabase = (await supabaseServer()) as any;
     const { data, error } = await supabase
       .from('training_tags')
       .insert({ name: dataToCreate.name, color: dataToCreate.color });
@@ -275,7 +275,7 @@ export const createArea = async (dataToCreate: { name: string; color: string }) 
  */
 export const fetchAllTags = async () => {
   try {
-    const supabase = await supabaseServer();
+    const supabase = (await supabaseServer()) as any;
     const { data, error } = await supabase.from('training_tags').select('*');
 
     if (error) {
@@ -291,7 +291,7 @@ export const fetchAllTags = async () => {
 };
 export const fetchTrainings = async () => {
   try {
-    const supabase = await supabaseServer();
+    const supabase = (await supabaseServer()) as any;
     const cookiesStore = await cookies();
     const company_id = cookiesStore.get('actualComp')?.value;
 
@@ -341,7 +341,7 @@ export const fetchTrainings = async () => {
 
 
     // Procesar los datos para el formato que espera el componente TrainingSection
-    const formattedTrainings = data.map((training) => {
+    const formattedTrainings = data.map((training: any) => {
       // Por defecto, todas las capacitaciones se aplican a todos los empleados
       const totalEmployeesCount = totalEmployees || 0;
 
@@ -350,11 +350,11 @@ export const fetchTrainings = async () => {
 
       // Extraer las etiquetas
       const tags =
-        training.training_tag_assignments?.map((tagAssignment) => tagAssignment.training_tags).filter(Boolean) || [];
+        training.training_tag_assignments?.map((tagAssignment: any) => tagAssignment.training_tags).filter(Boolean) || [];
 
       // Extraer los materiales
       const materials =
-        training.training_materials?.map((material) => ({
+        training.training_materials?.map((material: any) => ({
           type: material.type || 'pdf',
           name: material.name,
           url: material.file_url,
@@ -363,14 +363,14 @@ export const fetchTrainings = async () => {
       // Extraer preguntas y opciones y ordenarlas por order_index
       const questions =
         training.training_questions
-          ?.map((question) => ({
+          ?.map((question: any) => ({
             id: question.id,
             question: question.question_text,
-            options: question.training_question_options?.map((option) => option.option_text) || [],
-            correctAnswer: question.training_question_options?.findIndex((option) => option.is_correct) || 0,
+            options: question.training_question_options?.map((option: any) => option.option_text) || [],
+            correctAnswer: question.training_question_options?.findIndex((option: any) => option.is_correct) || 0,
             order_index: question.order_index || 0, // Añadir order_index para ordenar
           }))
-          .sort((a, b) => a.order_index - b.order_index) || []; // Ordenar por order_index
+          .sort((a: any, b: any) => a.order_index - b.order_index) || []; // Ordenar por order_index
 
       return {
         id: training.id,
@@ -405,7 +405,7 @@ export const fetchTrainings = async () => {
  */
 export const getEmployeesCount = async () => {
   try {
-    const supabase = await supabaseServer();
+    const supabase = (await supabaseServer()) as any;
     const cookiesStore = await cookies();
     const company_id = cookiesStore.get('actualComp')?.value;
 
@@ -435,7 +435,7 @@ export const getEmployeesCount = async () => {
 
 export const fetchTrainingById = async (id: string) => {
   try {
-    const supabase = await supabaseServer();
+    const supabase = (await supabaseServer()) as any;
     const cookiesStore = await cookies();
     const company_id = cookiesStore.get('actualComp')?.value;
 
@@ -501,7 +501,7 @@ export const fetchTrainingById = async (id: string) => {
     const attemptsByEmployeeId: (typeof completedAttempts)[number] | {} = {};
 
     if (completedAttempts && completedAttempts.length > 0) {
-      completedAttempts.forEach((attempt) => {
+      completedAttempts.forEach((attempt: any) => {
         if (attempt.employee_id) {
           completedEmployeeIds.add(attempt.employee_id);
           (attemptsByEmployeeId as any)[attempt.employee_id as string] = attempt;
@@ -533,7 +533,7 @@ export const fetchTrainingById = async (id: string) => {
     }[] = [];
 
     if (activeEmployees && activeEmployees.length > 0) {
-      activeEmployees.forEach((employee) => {
+      activeEmployees.forEach((employee: any) => {
         // Si el ID del empleado está en el conjunto de completados
         if (completedEmployeeIds.has(employee.id)) {
           const attempt = (attemptsByEmployeeId as any)[employee.id as string];
@@ -568,13 +568,13 @@ export const fetchTrainingById = async (id: string) => {
     // Extraer las etiquetas
     const tags =
       trainingData.training_tag_assignments
-        ?.map((tagAssignment) => tagAssignment.training_tags?.name || '')
+        ?.map((tagAssignment: any) => tagAssignment.training_tags?.name || '')
         .filter(Boolean) || [];
 
     // Extraer los materiales
     const materials =
       trainingData.training_materials
-        ?.map((material) => ({
+        ?.map((material: any) => ({
           id: material.id,
           type: material.type || 'pdf',
           name: material.name,
@@ -583,23 +583,23 @@ export const fetchTrainingById = async (id: string) => {
           is_required: material.is_required,
           file_size: material.file_size,
         }))
-        .sort((a, b) => a.order - b.order) || [];
+        .sort((a: any, b: any) => a.order - b.order) || [];
 
     // Extraer preguntas y opciones y ordenarlas por order_index
     const questions =
       trainingData.training_questions
-        ?.map((question) => ({
+        ?.map((question: any) => ({
           id: question.id,
           question: question.question_text,
           options:
             question.training_question_options
-              ?.filter((option) => option.is_active)
-              .map((option) => option.option_text) || [],
-          correctAnswer: question.training_question_options?.findIndex((option) => option.is_correct) || 0,
+              ?.filter((option: any) => option.is_active)
+              .map((option: any) => option.option_text) || [],
+          correctAnswer: question.training_question_options?.findIndex((option: any) => option.is_correct) || 0,
           points: question.points || 1,
           order_index: question.order_index || 0, // Añadir order_index para ordenar
         }))
-        .sort((a, b) => a.order_index - b.order_index) || []; // Ordenar por order_index
+        .sort((a: any, b: any) => a.order_index - b.order_index) || []; // Ordenar por order_index
 
     // Formato final para la respuesta
     const formattedTraining = {
@@ -647,7 +647,7 @@ export const updateTrainingBasicInfo = async (
   }
 ) => {
   try {
-    const supabase = await supabaseServer();
+    const supabase = (await supabaseServer()) as any;
     const cookiesStore = await cookies();
     const company_id = cookiesStore.get('actualComp')?.value;
 
@@ -703,7 +703,7 @@ export const updateTrainingMaterials = async (
   }>
 ) => {
   try {
-    const supabase = await supabaseServer();
+    const supabase = (await supabaseServer()) as any;
 
     // Primero obtener todos los materiales existentes para eliminar sus archivos
     const { data: existingMaterials, error: fetchError } = await supabase
@@ -719,12 +719,12 @@ export const updateTrainingMaterials = async (
     // Eliminar los archivos del storage si existen
     if (existingMaterials && existingMaterials.length > 0) {
       const filePathsToDelete = existingMaterials
-        .map((material) => {
+        .map((material: any) => {
           // Extraer la ruta del archivo del final de la URL pública
           const parts = material.file_url.split('training-materials/');
           return parts.length > 1 ? parts[1] : null;
         })
-        .filter((path): path is string => path !== null && path.trim() !== ''); // Filtrar nulos y vacíos
+        .filter((path: any): path is string => path !== null && path.trim() !== ''); // Filtrar nulos y vacíos
 
       if (filePathsToDelete.length > 0) {
         try {
@@ -796,7 +796,7 @@ export const updateTrainingQuestions = async (
     points?: number;
   }>
 ) => {
-  const supabase = await supabaseServer();
+  const supabase = (await supabaseServer()) as any;
 
   try {
     // 1. Obtener todas las preguntas actuales para este training
@@ -842,7 +842,7 @@ export const updateTrainingQuestions = async (
         > = {};
 
         // Agrupar opciones por texto normalizado
-        existingOptions?.forEach((option) => {
+        existingOptions?.forEach((option: any) => {
           const normalizedText = option.option_text.toLowerCase().trim();
           if (!existingOptionsGroups[normalizedText]) {
             existingOptionsGroups[normalizedText] = [];
@@ -929,7 +929,7 @@ export const updateTrainingQuestions = async (
 
         // Procesar opciones que no fueron procesadas (ya no están en la lista nueva)
 
-        existingOptions?.forEach((option) => {
+        existingOptions?.forEach((option: any) => {
           if (!processedOptionIds.has(option.id)) {
             // Esta opción ya no está en la lista nueva
             const hasAnswers = option.training_attempt_answers && option.training_attempt_answers.length > 0;
@@ -1017,7 +1017,7 @@ export const updateTrainingQuestions = async (
     // 3. Identificar preguntas a eliminar (existentes que no están en la lista nueva)
     const questionIdsToKeep = questions.filter((q) => q.id).map((q) => q.id as string);
 
-    const questionsToRemove = existingQuestions?.filter((eq) => !questionIdsToKeep.includes(eq.id)) || [];
+    const questionsToRemove = existingQuestions?.filter((eq: any) => !questionIdsToKeep.includes(eq.id)) || [];
 
     // 4. Procesar eliminaciones
     for (const questionToRemove of questionsToRemove) {
@@ -1077,8 +1077,8 @@ export const updateTrainingQuestions = async (
     // 6. Procesar cada pregunta
     for (const [index, question] of questions.entries()) {
       // Comprobar si la pregunta tiene un ID y existe en la base de datos
-      if (question.id && existingQuestions?.some((eq) => eq.id === question.id)) {
-        const existingQuestion = existingQuestions.find((eq) => eq.id === question.id);
+      if (question.id && existingQuestions?.some((eq: any) => eq.id === question.id)) {
+        const existingQuestion = existingQuestions.find((eq: any) => eq.id === question.id);
 
         if (existingQuestion) {
           // Actualizar solo si hay cambios
@@ -1184,7 +1184,7 @@ export const updateTrainingQuestions = async (
  */
 export const updateTrainingTags = async (trainingId: string, tagIds: string[]) => {
   try {
-    const supabase = await supabaseServer();
+    const supabase = (await supabaseServer()) as any;
     const cookiesStore = await cookies();
     const company_id = cookiesStore.get('actualComp')?.value;
 
@@ -1250,7 +1250,7 @@ export const updateTrainingEvaluation = async (
   }
 ) => {
   try {
-    const supabase = await supabaseServer();
+    const supabase = (await supabaseServer()) as any;
 
     // Primero obtenemos los datos actuales de la capacitación
     const { data: trainingData, error: fetchError } = await supabase
@@ -1382,7 +1382,7 @@ export const updateTraining = async (
 
 export const updateTrainingStatus = async (trainingId: string, status: 'Borrador' | 'Archivado' | 'Publicado') => {
   try {
-    const supabase = await supabaseServer();
+    const supabase = (await supabaseServer()) as any;
 
     const { error: updateError } = await supabase.from('trainings').update({ status }).eq('id', trainingId);
 
@@ -1407,7 +1407,7 @@ export const updateTrainingStatus = async (trainingId: string, status: 'Borrador
  */
 export const deleteTraining = async (trainingId: string) => {
   try {
-    const supabase = await supabaseServer();
+    const supabase = (await supabaseServer()) as any;
 
     // 4. Eliminar materiales
     const { data: materials, error: materialsError } = await supabase
@@ -1420,7 +1420,7 @@ export const deleteTraining = async (trainingId: string) => {
       return { success: false, error: 'Error al eliminar materiales de la capacitación' };
     }
 
-    const documentsUrl = materials.map((material) => material.file_url);
+    const documentsUrl = materials.map((material: any) => material.file_url);
     await storageServer.remove('documents', documentsUrl);
     await supabase.from('training_materials').delete().eq('training_id', trainingId);
 
@@ -1454,7 +1454,7 @@ export const deleteTraining = async (trainingId: string) => {
 //  */
 // export const deleteTraining = async (trainingId: string) => {
 //   try {
-//     const supabase = await supabaseServer();
+//     const supabase = (await supabaseServer()) as any;
 
 //     // 4. Eliminar materiales
 //     const { data: materials, error: materialsError } = await supabase
@@ -1466,7 +1466,7 @@ export const deleteTraining = async (trainingId: string) => {
 //       console.error('Error al eliminar materiales:', materialsError);
 //       return { success: false, error: 'Error al eliminar materiales de la capacitación' };
 //     }
-//     const documentsUrl = materials.map((material) => material.file_url);
+//     const documentsUrl = materials.map((material: any) => material.file_url);
 //     await supabase.storage.from('documents').remove(documentsUrl);
 //     await supabase.from('training_materials').delete().eq('training_id', trainingId);
 

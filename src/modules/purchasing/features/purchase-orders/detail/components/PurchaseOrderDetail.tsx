@@ -37,6 +37,37 @@ export default function PurchaseOrderDetail({ order }: Props) {
     );
   };
 
+  const handleApprove = async () => {
+    const toastId = toast.loading('Aprobando orden...');
+    try {
+      const result = await approvePurchaseOrder(order.id);
+      if (result.error) {
+        toast.error(result.error, { id: toastId });
+        return;
+      }
+      router.refresh();
+      if (result.emailStatus === 'SENT') {
+        toast.success('OC aprobada y notificada al proveedor', { id: toastId });
+      } else if (result.emailStatus === 'NO_EMAIL') {
+        toast.warning(
+          'OC aprobada. El proveedor no tiene email cargado, no se envió notificación.',
+          { id: toastId }
+        );
+      } else if (result.emailStatus === 'FAILED') {
+        toast.warning(
+          `OC aprobada. No se pudo enviar el mail${
+            result.errorMessage ? ` (motivo: ${result.errorMessage})` : ''
+          }.`,
+          { id: toastId }
+        );
+      } else {
+        toast.success('Aprobada', { id: toastId });
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Error al aprobar', { id: toastId });
+    }
+  };
+
   const status = order.status;
 
   return (
@@ -63,7 +94,7 @@ export default function PurchaseOrderDetail({ order }: Props) {
           )}
           {status === 'PENDING_APPROVAL' && (
             <>
-              <Button size="sm" onClick={() => handleAction(() => approvePurchaseOrder(order.id), 'Aprobada')}>
+              <Button size="sm" onClick={handleApprove}>
                 <CheckCircle className="size-4 mr-1" /> Aprobar
               </Button>
               <Button size="sm" variant="outline" onClick={() => handleAction(() => rejectPurchaseOrder(order.id), 'Rechazada')}>

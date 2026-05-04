@@ -51,11 +51,13 @@ export default async function PaymentOrdersList() {
             ) : (
               data.map((po) => {
                 const variant =
-                  po.status === 'CONFIRMED'
-                    ? 'default'
-                    : po.status === 'CANCELLED'
-                      ? 'destructive'
-                      : 'outline';
+                  po.status === 'PAID'
+                    ? 'success'
+                    : po.status === 'CONFIRMED'
+                      ? 'default'
+                      : po.status === 'CANCELLED'
+                        ? 'destructive'
+                        : 'outline';
                 return (
                   <TableRow key={po.id}>
                     <TableCell className="font-mono font-medium">{po.full_number}</TableCell>
@@ -71,7 +73,7 @@ export default async function PaymentOrdersList() {
                       ${po.total_amount.toFixed(2)}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={variant}>{PAYMENT_ORDER_STATUS_LABELS[po.status]}</Badge>
+                      <Badge variant={variant as any}>{PAYMENT_ORDER_STATUS_LABELS[po.status]}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" className="size-8" asChild>
