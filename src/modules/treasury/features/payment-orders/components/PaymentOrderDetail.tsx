@@ -25,11 +25,13 @@ export async function PaymentOrderDetail({ id }: { id: string }) {
   if (!order) notFound();
 
   const variant =
-    order.status === 'CONFIRMED'
-      ? 'default'
-      : order.status === 'CANCELLED'
-        ? 'destructive'
-        : 'outline';
+    order.status === 'PAID'
+      ? 'success'
+      : order.status === 'CONFIRMED'
+        ? 'default'
+        : order.status === 'CANCELLED'
+          ? 'destructive'
+          : 'outline';
 
   return (
     <div className="space-y-6">
@@ -46,7 +48,7 @@ export async function PaymentOrderDetail({ id }: { id: string }) {
             {format(new Date(order.created_at), 'dd/MM/yyyy HH:mm')}
           </p>
         </div>
-        <Badge variant={variant}>{PAYMENT_ORDER_STATUS_LABELS[order.status]}</Badge>
+        <Badge variant={variant as any}>{PAYMENT_ORDER_STATUS_LABELS[order.status]}</Badge>
         <PaymentOrderActions id={order.id} status={order.status} />
       </div>
 

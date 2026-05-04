@@ -2819,6 +2819,8 @@ export type Database = {
           id: string
           notes: string | null
           number: number
+          paid_at: string | null
+          paid_by: string | null
           status: Database["public"]["Enums"]["payment_order_status"]
           supplier_id: string | null
           total_amount: number
@@ -2837,6 +2839,8 @@ export type Database = {
           id?: string
           notes?: string | null
           number: number
+          paid_at?: string | null
+          paid_by?: string | null
           status?: Database["public"]["Enums"]["payment_order_status"]
           supplier_id?: string | null
           total_amount: number
@@ -2855,6 +2859,8 @@ export type Database = {
           id?: string
           notes?: string | null
           number?: number
+          paid_at?: string | null
+          paid_by?: string | null
           status?: Database["public"]["Enums"]["payment_order_status"]
           supplier_id?: string | null
           total_amount?: number
@@ -4053,24 +4059,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "supplier_payment_methods_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profile"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "supplier_payment_methods_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "supplier_payment_methods_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "profile"
             referencedColumns: ["id"]
           },
         ]
@@ -4966,7 +4958,7 @@ export type Database = {
         | "DEBIT_CARD"
         | "CREDIT_CARD"
         | "ACCOUNT"
-      payment_order_status: "DRAFT" | "CONFIRMED" | "CANCELLED"
+      payment_order_status: "DRAFT" | "CONFIRMED" | "PAID" | "CANCELLED"
       product_status: "ACTIVE" | "INACTIVE" | "DISCONTINUED"
       product_type: "PRODUCT" | "SERVICE" | "RAW_MATERIAL" | "CONSUMABLE"
       purchase_invoice_receiving_status:

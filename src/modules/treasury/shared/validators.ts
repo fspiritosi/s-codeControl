@@ -119,6 +119,7 @@ export const PAYMENT_METHOD_LABELS = {
 export const PAYMENT_ORDER_STATUS_LABELS = {
   DRAFT: 'Borrador',
   CONFIRMED: 'Confirmada',
+  PAID: 'Pagada',
   CANCELLED: 'Anulada',
 } as const;
 

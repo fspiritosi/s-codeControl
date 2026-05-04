@@ -1986,6 +1986,7 @@ enum payment_method {
 enum payment_order_status {
   DRAFT
   CONFIRMED
+  PAID
   CANCELLED
 }
 
@@ -2160,6 +2161,8 @@ model payment_orders {
   created_by   String
   confirmed_by String?
   confirmed_at DateTime?            @db.Timestamptz
+  paid_by      String?
+  paid_at      DateTime?            @db.Timestamptz
   created_at   DateTime             @default(now()) @db.Timestamptz
   updated_at   DateTime             @default(now()) @updatedAt @db.Timestamptz
 
