@@ -2,6 +2,12 @@
 
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
+import { storageServer } from '@/shared/lib/storage-server';
+import { supabaseServer } from '@/shared/lib/supabase/server';
+import {
+  PURCHASE_INVOICE_ATTACHMENT_ALLOWED_MIME,
+  PURCHASE_INVOICE_ATTACHMENT_MAX_BYTES,
+} from '@/modules/purchasing/shared/validators';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
 import {
   parseSearchParams,
@@ -97,6 +103,7 @@ export async function createPurchaseInvoice(data: {
   purchase_order_id?: string;
   purchase_order_ids?: string[];
   lines: { product_id?: string; description: string; quantity: number; unit_cost: number; vat_rate: number; purchase_order_line_id?: string }[];
+  attachment?: File | null;
 }) {
   const { companyId } = await getActionContext();
   if (!companyId) throw new Error('No company selected');
@@ -154,6 +161,20 @@ export async function createPurchaseInvoice(data: {
       },
     });
 
+    // Adjunto opcional: subir y actualizar la factura recién creada.
+    if (data.attachment instanceof File && data.attachment.size > 0) {
+      try {
+        const uploadResult = await uploadInvoiceAttachment(invoice.id, companyId, data.attachment);
+        await prisma.purchase_invoices.update({
+          where: { id: invoice.id },
+          data: { document_url: uploadResult.publicUrl, document_key: uploadResult.path },
+        });
+      } catch (uploadErr) {
+        console.error('Error uploading invoice attachment:', uploadErr);
+        // No revertimos la factura; el usuario puede reintentar el adjunto desde el detalle.
+      }
+    }
+
     revalidatePath('/dashboard/purchasing');
     return {
       data: { ...invoice, subtotal: Number(invoice.subtotal), vat_amount: Number(invoice.vat_amount), other_taxes: Number(invoice.other_taxes), total: Number(invoice.total) },
@@ -165,6 +186,141 @@ export async function createPurchaseInvoice(data: {
     }
     console.error('Error creating invoice:', error);
     return { data: null, error: String(error) };
+  }
+}
+
+// ============================================================
+// Attachment helpers (COD-457)
+// ============================================================
+
+const ALLOWED_MIME_SET = new Set<string>(PURCHASE_INVOICE_ATTACHMENT_ALLOWED_MIME as readonly string[]);
+
+function getExtensionFromMime(mime: string): string {
+  if (mime === 'image/jpeg') return 'jpg';
+  if (mime === 'image/png') return 'png';
+  if (mime === 'application/pdf') return 'pdf';
+  return 'bin';
+}
+
+async function uploadInvoiceAttachment(invoiceId: string, companyId: string, file: File) {
+  if (!ALLOWED_MIME_SET.has(file.type)) {
+    throw new Error('Tipo de archivo no permitido. Solo se aceptan JPG, PNG o PDF.');
+  }
+  if (file.size > PURCHASE_INVOICE_ATTACHMENT_MAX_BYTES) {
+    throw new Error('El archivo supera los 10 MB permitidos.');
+  }
+
+  const ext = getExtensionFromMime(file.type);
+  const path = `${companyId}/${invoiceId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+
+  await storageServer.upload('purchase_invoices', path, file, {
+    cacheControl: '3600',
+    upsert: false,
+    contentType: file.type,
+  });
+
+  const publicUrl = await storageServer.getPublicUrl('purchase_invoices', path);
+  return { path, publicUrl };
+}
+
+export async function attachPurchaseInvoiceDocument(formData: FormData) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return { error: 'No company selected' };
+
+  const invoiceId = formData.get('invoiceId');
+  const file = formData.get('file');
+
+  if (typeof invoiceId !== 'string' || !invoiceId) {
+    return { error: 'invoiceId requerido' };
+  }
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: 'Archivo requerido' };
+  }
+
+  try {
+    const invoice = await prisma.purchase_invoices.findFirst({
+      where: { id: invoiceId, company_id: companyId },
+      select: { id: true, document_key: true },
+    });
+    if (!invoice) return { error: 'Factura no encontrada' };
+
+    // Borrar adjunto previo (reemplazo).
+    if (invoice.document_key) {
+      try {
+        await storageServer.remove('purchase_invoices', [invoice.document_key]);
+      } catch (e) {
+        console.warn('Error removing previous attachment:', e);
+      }
+    }
+
+    const uploadResult = await uploadInvoiceAttachment(invoiceId, companyId, file);
+
+    await prisma.purchase_invoices.update({
+      where: { id: invoiceId },
+      data: { document_url: uploadResult.publicUrl, document_key: uploadResult.path },
+    });
+
+    revalidatePath('/dashboard/purchasing');
+    revalidatePath(`/dashboard/purchasing/invoices/${invoiceId}`);
+    return { error: null };
+  } catch (error: any) {
+    console.error('Error attaching invoice document:', error);
+    return { error: error?.message || String(error) };
+  }
+}
+
+export async function removePurchaseInvoiceDocument(invoiceId: string) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return { error: 'No company selected' };
+
+  try {
+    const invoice = await prisma.purchase_invoices.findFirst({
+      where: { id: invoiceId, company_id: companyId },
+      select: { id: true, document_key: true },
+    });
+    if (!invoice) return { error: 'Factura no encontrada' };
+
+    if (invoice.document_key) {
+      try {
+        await storageServer.remove('purchase_invoices', [invoice.document_key]);
+      } catch (e) {
+        console.warn('Error removing attachment from storage:', e);
+      }
+    }
+
+    await prisma.purchase_invoices.update({
+      where: { id: invoiceId },
+      data: { document_url: null, document_key: null },
+    });
+
+    revalidatePath('/dashboard/purchasing');
+    revalidatePath(`/dashboard/purchasing/invoices/${invoiceId}`);
+    return { error: null };
+  } catch (error: any) {
+    console.error('Error removing invoice document:', error);
+    return { error: error?.message || String(error) };
+  }
+}
+
+export async function getPurchaseInvoiceAttachmentSignedUrl(invoiceId: string, expiresInSec = 300) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return { url: null, error: 'No company selected' };
+
+  const invoice = await prisma.purchase_invoices.findFirst({
+    where: { id: invoiceId, company_id: companyId },
+    select: { document_key: true },
+  });
+  if (!invoice?.document_key) return { url: null, error: 'Sin adjunto' };
+
+  try {
+    const supabase = await supabaseServer();
+    const { data, error } = await supabase.storage
+      .from('purchase_invoices')
+      .createSignedUrl(invoice.document_key, expiresInSec);
+    if (error) return { url: null, error: error.message };
+    return { url: data.signedUrl, error: null };
+  } catch (error: any) {
+    return { url: null, error: error?.message || String(error) };
   }
 }
 

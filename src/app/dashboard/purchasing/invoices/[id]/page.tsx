@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Separator } from '@/shared/components/ui/separator';
 import { INVOICE_STATUS_LABELS, VOUCHER_TYPE_LABELS } from '@/modules/purchasing/shared/types';
 import BackButton from '@/shared/components/common/BackButton';
+import InvoiceAttachmentSection from '@/modules/purchasing/features/invoices/list/components/InvoiceAttachmentSection';
 import { format } from 'date-fns';
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -134,6 +135,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           </div>
         </CardContent>
       </Card>
+
+      <InvoiceAttachmentSection invoiceId={invoice.id} documentKey={invoice.document_key} />
     </div>
   );
 }

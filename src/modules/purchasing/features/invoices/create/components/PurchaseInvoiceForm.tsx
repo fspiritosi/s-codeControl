@@ -3,7 +3,11 @@
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { purchaseInvoiceSchema } from '@/modules/purchasing/shared/validators';
+import {
+  purchaseInvoiceSchema,
+  PURCHASE_INVOICE_ATTACHMENT_ALLOWED_MIME,
+  PURCHASE_INVOICE_ATTACHMENT_MAX_BYTES,
+} from '@/modules/purchasing/shared/validators';
 import { VOUCHER_TYPE_LABELS } from '@/modules/purchasing/shared/types';
 import { createPurchaseInvoice } from '@/modules/purchasing/features/invoices/list/actions.server';
 import {
@@ -20,7 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, LinkIcon } from 'lucide-react';
+import { Plus, Trash2, LinkIcon, Paperclip, X } from 'lucide-react';
 import { useMemo, useState, useEffect, useRef } from 'react';
 
 type FormValues = z.infer<typeof purchaseInvoiceSchema>;
@@ -44,6 +48,8 @@ interface Props {
 export default function PurchaseInvoiceForm({ suppliers, products }: Props) {
   const router = useRouter();
   const [availableOrders, setAvailableOrders] = useState<any[]>([]);
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(purchaseInvoiceSchema),
@@ -150,6 +156,26 @@ export default function PurchaseInvoiceForm({ suppliers, products }: Props) {
     }
   };
 
+  const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAttachmentError(null);
+    const file = e.target.files?.[0] || null;
+    if (!file) {
+      setAttachment(null);
+      return;
+    }
+    if (!(PURCHASE_INVOICE_ATTACHMENT_ALLOWED_MIME as readonly string[]).includes(file.type)) {
+      setAttachmentError('Tipo no permitido. Solo JPG, PNG o PDF.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > PURCHASE_INVOICE_ATTACHMENT_MAX_BYTES) {
+      setAttachmentError('El archivo supera los 10 MB.');
+      e.target.value = '';
+      return;
+    }
+    setAttachment(file);
+  };
+
   const onSubmit = async (values: FormValues) => {
     toast.promise(async () => {
       // Sanitizar líneas: descartar order_id/order_full_number (son solo UI)
@@ -172,6 +198,7 @@ export default function PurchaseInvoiceForm({ suppliers, products }: Props) {
         notes: values.notes,
         purchase_order_ids: values.purchase_order_ids || [],
         lines,
+        attachment: attachment || undefined,
       } as any);
       if (result.error) throw new Error(result.error);
       router.push('/dashboard/purchasing?tab=invoices'); router.refresh();
@@ -297,6 +324,43 @@ export default function PurchaseInvoiceForm({ suppliers, products }: Props) {
               <p>IVA: <span className="font-mono font-medium">${totals.vatAmount.toFixed(2)}</span></p>
               <p className="text-lg font-bold">Total: <span className="font-mono">${totals.total.toFixed(2)}</span></p>
             </div></div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Paperclip className="size-4" /> Adjunto (opcional)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Formatos permitidos: JPG, PNG, PDF. Tamaño máximo: 10 MB.
+            </p>
+            <Input
+              type="file"
+              accept={PURCHASE_INVOICE_ATTACHMENT_ALLOWED_MIME.join(',')}
+              onChange={handleAttachmentChange}
+            />
+            {attachment && (
+              <div className="flex items-center justify-between text-sm bg-muted px-3 py-2 rounded-md">
+                <span className="truncate">
+                  {attachment.name} ({(attachment.size / 1024).toFixed(0)} KB)
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-7"
+                  onClick={() => setAttachment(null)}
+                >
+                  <X className="size-3.5" />
+                </Button>
+              </div>
+            )}
+            {attachmentError && (
+              <p className="text-xs text-destructive">{attachmentError}</p>
+            )}
           </CardContent>
         </Card>
 
