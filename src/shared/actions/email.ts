@@ -29,29 +29,36 @@ type EmailInfo = {
   document_number: string;
 };
 
+type EmailAttachment = {
+  filename: string;
+  content: Buffer | string;
+  contentType?: string;
+};
+
 type EmailOptions = {
   to: string;
   subject: string;
-  userEmail: string;
+  userEmail?: string;
   template?: 'document' | 'help';
   body?: EmailInfo;
   html?: string;
   text?: string;
   reason?: string;
+  attachments?: EmailAttachment[];
 };
 
 export async function sendEmail(options: EmailOptions) {
   try {
-    const { to, subject, userEmail, template, body, html, text, reason } = options;
+    const { to, subject, userEmail, template, body, html, text, reason, attachments } = options;
 
     let emailHtml = html;
 
     // Si se especifica un template, usarlo
     if (template && !html) {
       if (template === 'document' && body) {
-        emailHtml = renderDocumentEmailTemplate(userEmail, body as any);
+        emailHtml = renderDocumentEmailTemplate(userEmail ?? '', body as any);
       } else if (template === 'help') {
-        emailHtml = renderHelpEmailTemplate({userEmail, reason, body:body as any});
+        emailHtml = renderHelpEmailTemplate({ userEmail: userEmail ?? '', reason, body: body as any });
       }
     }
 
@@ -61,12 +68,13 @@ export async function sendEmail(options: EmailOptions) {
     }
 
     // Configuracion basica del correo
-    const mailOptions = {
+    const mailOptions: Parameters<typeof transporter.sendMail>[0] = {
       from: `"CodeControl" <${process.env.SMTP_USER}>`,
       to: to || 'diegodac77@gmail.com',
       subject: subject || 'Mensaje de CodeControl',
       html: emailHtml,
       text: text || (emailHtml ? undefined : ''),
+      ...(attachments && attachments.length > 0 ? { attachments } : {}),
     };
 
     // Enviar el correo

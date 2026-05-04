@@ -343,14 +343,51 @@ export async function submitForApproval(id: string) {
   }
 }
 
-export async function approvePurchaseOrder(id: string) {
+type ApprovePurchaseOrderEmailStatus = 'SENT' | 'NO_EMAIL' | 'FAILED';
+
+type ApprovePurchaseOrderResult = {
+  error: string | null;
+  emailStatus?: ApprovePurchaseOrderEmailStatus;
+  errorMessage?: string;
+};
+
+export async function approvePurchaseOrder(id: string): Promise<ApprovePurchaseOrderResult> {
   try {
-    await prisma.purchase_orders.update({
+    const { companyId } = await getActionContext();
+
+    // Solo enviamos mail si la transición efectivamente ocurre (PENDING_APPROVAL -> APPROVED).
+    const updated = await prisma.purchase_orders.updateMany({
       where: { id, status: 'PENDING_APPROVAL' },
       data: { status: 'APPROVED', approved_at: new Date() },
     });
+
+    if (updated.count === 0) {
+      return { error: 'No se pudo aprobar la orden (estado no válido)' };
+    }
+
     revalidatePath('/dashboard/purchasing');
-    return { error: null };
+
+    if (!companyId) {
+      return { error: null, emailStatus: 'FAILED', errorMessage: 'Sin empresa activa' };
+    }
+
+    // Enviar mail al proveedor con PDF adjunto. No bloquear si falla.
+    const { sendPurchaseOrderApprovedEmail } = await import(
+      '../shared/email/sendPurchaseOrderApprovedEmail'
+    );
+
+    try {
+      const result = await sendPurchaseOrderApprovedEmail(id, companyId);
+      return { error: null, emailStatus: result.status, errorMessage: result.errorMessage };
+    } catch (mailError) {
+      console.error('Error enviando mail de aprobación de OC:', mailError);
+      return {
+        error: null,
+        emailStatus: 'FAILED',
+        errorMessage:
+          mailError instanceof Error ? mailError.message : 'Error desconocido enviando mail',
+      };
+    }
   } catch (error) {
     console.error('Error approving PO:', error);
     return { error: String(error) };
