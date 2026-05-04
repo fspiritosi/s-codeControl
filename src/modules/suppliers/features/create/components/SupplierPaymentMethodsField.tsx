@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { Trash2, Plus } from 'lucide-react';
 import { createSupplierSchema } from '@/modules/suppliers/shared/validators';
 import { SUPPLIER_ACCOUNT_TYPE_LABELS } from '@/modules/suppliers/shared/types';
+import { parseCbuInput } from '@/modules/suppliers/shared/utils';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
@@ -203,7 +204,7 @@ export default function SupplierPaymentMethodsField({ control }: Props) {
                           placeholder="22 dígitos"
                           {...field}
                           value={(field.value as string) ?? ''}
-                          onChange={(e) => field.onChange(e.target.value.replace(/\D/g, '').slice(0, 22))}
+                          onChange={(e) => field.onChange(parseCbuInput(e.target.value))}
                         />
                       </FormControl>
                       <p className="text-xs text-muted-foreground">22 dígitos numéricos</p>

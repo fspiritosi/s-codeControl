@@ -1,7 +1,7 @@
 # COD-456 — Métodos de pago en Proveedores
 
 **Fecha de inicio:** 2026-05-04
-**Estado:** Implementación en progreso (Fase 3 de 5 completada)
+**Estado:** Implementación en progreso (Fase 4 de 5 completada)
 
 **Decisiones finales pre-implementación (2026-05-04):**
 - Persistencia: `updateSupplier` recibe el array completo y hace diff en una sola transacción (lo más simple).
@@ -207,14 +207,14 @@ De `CLAUDE.md` y memorias del usuario:
 #### Fase 4: Integración en detalle del proveedor (read-only) + ajustes de UX
 - **Objetivo:** Mostrar los métodos de pago en `SupplierDetail` para consulta, con badges de "Predeterminado" y CBU enmascarado.
 - **Tareas:**
-  - [ ] Modificar `src/modules/suppliers/features/detail/components/SupplierDetail.tsx`:
+  - [x] Modificar `src/modules/suppliers/features/detail/components/SupplierDetail.tsx`:
     - Asegurar que `getSupplierById` ya devuelve `payment_methods`.
     - Agregar `Card` "Métodos de pago" debajo de los datos comerciales:
       - Si hay flag CHECK → `Badge` "Acepta cheques".
       - Para cada `ACCOUNT`: render compacto con `bank_name`, `account_holder`, `account_type`, `cbu` (formato `XXXXXXX-XX-XXXXXXXXXXX-X` o solo agrupado de a 4), `alias`, `currency`. Marcar el default con `Badge` "Predeterminado".
     - Si no hay métodos: estado vacío con CTA a "Editar proveedor".
-  - [ ] Crear util compartido en `src/modules/suppliers/shared/utils.ts` (nuevo si no existe): `formatCbu(cbu: string)` y `parseCbuInput(value: string)` para reutilizar en form y detalle.
-  - [ ] (Opcional) Agregar columna "Métodos" en la lista (`columns.tsx`) con un mini-badge contador — evaluar; por defecto no se hace para no agrandar la grilla.
+  - [x] Crear util compartido en `src/modules/suppliers/shared/utils.ts` (nuevo si no existe): `formatCbu(cbu: string)` y `parseCbuInput(value: string)` para reutilizar en form y detalle.
+  - [ ] (Opcional) Agregar columna "Métodos" en la lista (`columns.tsx`) con un mini-badge contador — evaluar; por defecto no se hace para no agrandar la grilla. (descartado)
 - **Archivos:**
   - `src/modules/suppliers/features/detail/components/SupplierDetail.tsx` (modificar).
   - `src/modules/suppliers/shared/utils.ts` (nuevo).
@@ -314,6 +314,19 @@ _Pendiente - ejecutar `/disenar cod-456-proveedores-metodos-pago`_
 - **Verificaciones:**
   - `npm run check-types`: sin errores en `src/modules/suppliers`. Persisten errores **preexistentes** en `src/modules/hse/features/training/**`.
   - `npm run lint`: bug preexistente del comando — ignorado por instrucción del usuario.
+
+### Fase 4: Detalle read-only + utils
+- **Estado:** Completada (2026-05-04)
+- **Archivos modificados / creados:**
+  - `src/modules/suppliers/shared/utils.ts` — nuevo. `parseCbuInput` (filtra dígitos y trunca a 22) y `formatCbu` (agrupa en bloques de 4; `'—'` si vacío; devuelve crudo si la longitud no es 22).
+  - `src/modules/suppliers/features/create/components/SupplierPaymentMethodsField.tsx` — el `onChange` del CBU ahora delega en `parseCbuInput`.
+  - `src/modules/suppliers/features/detail/components/SupplierDetail.tsx` — nueva `Card` "Métodos de pago" debajo de "Datos comerciales". Estado vacío con CTA "Editar proveedor". Cheque renderizado con `Badge` "Acepta cheques" + "Predeterminado" si aplica. Cuentas con header `bank_name` + `Badge "Predeterminado"` y `Badge` de currency, y `Field`s para titular (con CUIT formateado), tipo de cuenta, CBU formateado, alias.
+- **Notas / decisiones:**
+  - El detalle usa `'use client'` (ya lo era previamente); no se cambió esa designación.
+  - Se omitió la columna opcional en la lista, según indicación del plan.
+  - `Button` queda importado pero no usado en `SupplierDetail`; ya estaba así antes y no se tocó para no expandir el diff.
+- **Verificaciones:**
+  - `npm run check-types`: sin errores nuevos en `src/modules/suppliers`. Persisten errores **preexistentes** en `src/modules/hse/features/training/**`.
 
 ## 5. Verificación
 _Pendiente - ejecutar `/verificar cod-456-proveedores-metodos-pago`_

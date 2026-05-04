@@ -10,8 +10,11 @@ import { Pencil } from 'lucide-react';
 import {
   TAX_CONDITION_LABELS,
   SUPPLIER_STATUS_LABELS,
+  SUPPLIER_ACCOUNT_TYPE_LABELS,
   type Supplier,
+  type SupplierPaymentMethod,
 } from '@/modules/suppliers/shared/types';
+import { formatCbu } from '@/modules/suppliers/shared/utils';
 
 function formatCuit(cuit: string) {
   const clean = cuit.replace(/-/g, '');
@@ -157,6 +160,94 @@ export default function SupplierDetail({ supplier }: Props) {
           </div>
         </CardContent>
       </Card>
+
+      <PaymentMethodsCard
+        methods={supplier.payment_methods ?? []}
+        supplierId={supplier.id}
+      />
     </div>
+  );
+}
+
+function PaymentMethodsCard({
+  methods,
+  supplierId,
+}: {
+  methods: SupplierPaymentMethod[];
+  supplierId: string;
+}) {
+  const checkMethod = methods.find((m) => m.type === 'CHECK');
+  const accounts = methods.filter((m) => m.type === 'ACCOUNT');
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Métodos de pago</CardTitle>
+        <CardDescription>Cómo cobra el proveedor</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {methods.length === 0 ? (
+          <div className="flex flex-col items-start gap-2 rounded-md border border-dashed p-4">
+            <p className="text-sm text-muted-foreground">
+              Este proveedor no tiene métodos de pago cargados.
+            </p>
+            <Link
+              href={`/dashboard/suppliers/${supplierId}/edit`}
+              className={buttonVariants({ variant: 'outline', size: 'sm' })}
+            >
+              <Pencil className="size-4 mr-1" /> Editar proveedor
+            </Link>
+          </div>
+        ) : (
+          <>
+            {checkMethod && (
+              <div className="flex flex-wrap items-center gap-2 rounded-md border p-3">
+                <Badge variant="secondary">Acepta cheques</Badge>
+                {checkMethod.is_default && <Badge variant="default">Predeterminado</Badge>}
+              </div>
+            )}
+
+            {accounts.map((acc) => (
+              <div key={acc.id} className="rounded-md border p-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h4 className="font-medium">{acc.bank_name || 'Cuenta bancaria'}</h4>
+                    {acc.is_default && <Badge variant="default">Predeterminado</Badge>}
+                  </div>
+                  {acc.currency && (
+                    <Badge variant="outline">{acc.currency}</Badge>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <Field
+                    label="Titular"
+                    value={
+                      acc.account_holder
+                        ? acc.account_holder_tax_id
+                          ? `${acc.account_holder} (${formatCuit(acc.account_holder_tax_id)})`
+                          : acc.account_holder
+                        : null
+                    }
+                  />
+                  <Field
+                    label="Tipo de cuenta"
+                    value={
+                      acc.account_type
+                        ? SUPPLIER_ACCOUNT_TYPE_LABELS[acc.account_type]
+                        : null
+                    }
+                  />
+                  <Field
+                    label="CBU"
+                    value={<span className="font-mono">{formatCbu(acc.cbu)}</span>}
+                  />
+                  {acc.alias && <Field label="Alias" value={acc.alias} />}
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
