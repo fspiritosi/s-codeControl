@@ -12,7 +12,11 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "create-migration": "supabase migration new",
+    "gentypes": "supabase gen types typescript --project-id zktcbhhlcksopklpnubj > database.types.ts",
+    "genlocaltypes": "supabase gen types typescript --local > database.types.ts",
+    "push-migrations": "supabase db push"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",

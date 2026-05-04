@@ -286,6 +286,7 @@ model company {
   // Almacenes y Compras
   products                    products[]
   suppliers                   suppliers[]
+  supplier_payment_methods    supplier_payment_methods[]
   warehouses                  warehouses[]
   stock_movements             stock_movements[]
   purchase_orders             purchase_orders[]
@@ -1437,6 +1438,11 @@ enum supplier_status {
   BLOCKED
 }
 
+enum supplier_account_type {
+  CHECKING
+  SAVINGS
+}
+
 enum warehouse_type {
   MAIN
   BRANCH
@@ -1589,9 +1595,36 @@ model suppliers {
   receiving_notes   receiving_notes[]
   payment_orders    payment_orders[]
   checks            checks[]
+  payment_methods   supplier_payment_methods[]
 
   @@unique([company_id, code])
   @@unique([company_id, tax_id])
+}
+
+model supplier_payment_methods {
+  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  supplier_id           String                 @db.Uuid
+  company_id            String                 @db.Uuid
+  type                  payment_method
+  bank_name             String?
+  account_holder        String?
+  account_holder_tax_id String?
+  account_type          supplier_account_type?
+  cbu                   String?                @db.VarChar(22)
+  alias                 String?
+  currency              String?
+  is_default            Boolean                @default(false)
+  status                supplier_status        @default(ACTIVE)
+  created_at            DateTime               @default(now()) @db.Timestamptz
+  updated_at            DateTime               @default(now()) @updatedAt @db.Timestamptz
+  created_by            String?                @db.Uuid
+  updated_by            String?                @db.Uuid
+
+  supplier      suppliers @relation(fields: [supplier_id], references: [id], onDelete: Cascade)
+  company       company   @relation(fields: [company_id], references: [id], onDelete: Cascade)
+
+  @@index([supplier_id])
+  @@index([company_id, supplier_id])
 }
 
 // ============================================================
