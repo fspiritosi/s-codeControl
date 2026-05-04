@@ -199,6 +199,175 @@ export async function getWarehouseStocks(warehouseId: string) {
 }
 
 // ============================================================
+// STOCK por almacén — versión paginada + facets + export
+// ============================================================
+
+function buildWarehouseStocksWhere(
+  state: ReturnType<typeof parseSearchParams>,
+  warehouseId: string
+) {
+  const baseWhere: Record<string, unknown> = { warehouse_id: warehouseId };
+
+  // Búsqueda global (nombre / código del producto)
+  if (state.search) {
+    baseWhere.product = {
+      is: {
+        OR: [
+          { name: { contains: state.search, mode: 'insensitive' } },
+          { code: { contains: state.search, mode: 'insensitive' } },
+        ],
+      },
+    };
+  }
+
+  // Filtro de texto por nombre del producto
+  const nameFilter = state.filters.product_name;
+  if (nameFilter?.[0]) {
+    baseWhere.product = {
+      ...((baseWhere.product as any) ?? {}),
+      is: {
+        ...((baseWhere.product as any)?.is ?? {}),
+        name: { contains: nameFilter[0], mode: 'insensitive' },
+      },
+    };
+  }
+
+  // Filtro de texto por código de producto
+  const codeFilter = state.filters.product_code;
+  if (codeFilter?.[0]) {
+    baseWhere.product = {
+      ...((baseWhere.product as any) ?? {}),
+      is: {
+        ...((baseWhere.product as any)?.is ?? {}),
+        code: { contains: codeFilter[0], mode: 'insensitive' },
+      },
+    };
+  }
+
+  // Filtro facetado por unidad de medida
+  const unitFilter = state.filters.unit_of_measure;
+  if (unitFilter?.length) {
+    baseWhere.product = {
+      ...((baseWhere.product as any) ?? {}),
+      is: {
+        ...((baseWhere.product as any)?.is ?? {}),
+        unit_of_measure: unitFilter.length === 1 ? unitFilter[0] : { in: unitFilter },
+      },
+    };
+  }
+
+  return baseWhere;
+}
+
+export async function getWarehouseStocksPaginated(
+  warehouseId: string,
+  searchParams: DataTableSearchParams
+) {
+  try {
+    const state = parseSearchParams(searchParams);
+    const { skip, take } = stateToPrismaParams(state);
+    const where = buildWarehouseStocksWhere(state, warehouseId);
+
+    const [data, total] = await Promise.all([
+      prisma.warehouse_stocks.findMany({
+        where,
+        skip,
+        take,
+        include: {
+          product: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+              unit_of_measure: true,
+              company: { select: { id: true, company_name: true } },
+            },
+          },
+        },
+        orderBy: { product: { name: 'asc' } },
+      }),
+      prisma.warehouse_stocks.count({ where }),
+    ]);
+
+    const formatted = data.map((s) => ({
+      id: s.id,
+      product_id: s.product?.id,
+      product_code: s.product?.code,
+      product_name: s.product?.name,
+      unit_of_measure: s.product?.unit_of_measure,
+      company_name: s.product?.company?.company_name,
+      quantity: Number(s.quantity),
+      reserved_qty: Number(s.reserved_qty),
+      available_qty: Number(s.available_qty),
+      updated_at: s.updated_at?.toISOString() ?? null,
+    }));
+
+    return { data: formatted, total };
+  } catch (error) {
+    console.error('Error fetching paginated warehouse stocks:', error);
+    return { data: [], total: 0 };
+  }
+}
+
+export async function getWarehouseStockFacets(
+  warehouseId: string
+): Promise<Record<string, { value: string; count: number }[]>> {
+  try {
+    const stocks = await prisma.warehouse_stocks.findMany({
+      where: { warehouse_id: warehouseId },
+      select: { product: { select: { unit_of_measure: true } } },
+    });
+
+    const counts = new Map<string, number>();
+    for (const s of stocks) {
+      const u = s.product?.unit_of_measure;
+      if (!u) continue;
+      counts.set(u, (counts.get(u) ?? 0) + 1);
+    }
+
+    return {
+      unit_of_measure: Array.from(counts.entries()).map(([value, count]) => ({ value, count })),
+    };
+  } catch (error) {
+    console.error('Error fetching warehouse stock facets:', error);
+    return {};
+  }
+}
+
+export async function getAllWarehouseStocksForExport(
+  warehouseId: string,
+  searchParams: DataTableSearchParams
+) {
+  try {
+    const state = parseSearchParams(searchParams);
+    const where = buildWarehouseStocksWhere(state, warehouseId);
+
+    const data = await prisma.warehouse_stocks.findMany({
+      where,
+      include: {
+        product: {
+          select: { code: true, name: true, unit_of_measure: true },
+        },
+      },
+      orderBy: { product: { name: 'asc' } },
+    });
+
+    return data.map((s) => ({
+      product_name: s.product?.name ?? '',
+      product_code: s.product?.code ?? '',
+      unit_of_measure: s.product?.unit_of_measure ?? '',
+      quantity: Number(s.quantity),
+      reserved_qty: Number(s.reserved_qty),
+      available_qty: Number(s.available_qty),
+      updated_at: s.updated_at?.toISOString() ?? '',
+    }));
+  } catch (error) {
+    console.error('Error exporting warehouse stocks:', error);
+    return [];
+  }
+}
+
+// ============================================================
 // STOCK ADJUSTMENT
 // ============================================================
 
