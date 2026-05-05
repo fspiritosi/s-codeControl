@@ -18,12 +18,24 @@ type TreasuryTab = (typeof VALID_TABS)[number];
 export default async function TreasuryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{
+    tab?: string;
+    status?: string;
+    supplier?: string;
+    from?: string;
+    to?: string;
+  }>;
 }) {
   const resolved = await searchParams;
   const tab: TreasuryTab = VALID_TABS.includes(resolved.tab as TreasuryTab)
     ? (resolved.tab as TreasuryTab)
     : 'cash-registers';
+  const poFilters = {
+    status: resolved.status,
+    supplier_id: resolved.supplier,
+    scheduled_from: resolved.from,
+    scheduled_to: resolved.to,
+  };
 
   return (
     <div className="p-6">
@@ -93,7 +105,7 @@ export default async function TreasuryPage({
             </CardHeader>
             <CardContent>
               <Suspense fallback={<PageTableSkeleton />}>
-                <PaymentOrdersList />
+                <PaymentOrdersList filters={poFilters} />
               </Suspense>
             </CardContent>
           </Card>

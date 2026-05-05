@@ -2831,6 +2831,7 @@ export type Database = {
           number: number
           paid_at: string | null
           paid_by: string | null
+          scheduled_payment_date: string | null
           status: Database["public"]["Enums"]["payment_order_status"]
           supplier_id: string | null
           total_amount: number
@@ -2851,6 +2852,7 @@ export type Database = {
           number: number
           paid_at?: string | null
           paid_by?: string | null
+          scheduled_payment_date?: string | null
           status?: Database["public"]["Enums"]["payment_order_status"]
           supplier_id?: string | null
           total_amount: number
@@ -2871,6 +2873,7 @@ export type Database = {
           number?: number
           paid_at?: string | null
           paid_by?: string | null
+          scheduled_payment_date?: string | null
           status?: Database["public"]["Enums"]["payment_order_status"]
           supplier_id?: string | null
           total_amount?: number
@@ -2947,6 +2950,8 @@ export type Database = {
           max_stock: number | null
           min_stock: number | null
           name: string
+          profit_margin_percent: number | null
+          purchase_sale_type: Database["public"]["Enums"]["product_purchase_sale_type"]
           sale_price: number
           status: Database["public"]["Enums"]["product_status"]
           track_stock: boolean
@@ -2967,6 +2972,8 @@ export type Database = {
           max_stock?: number | null
           min_stock?: number | null
           name: string
+          profit_margin_percent?: number | null
+          purchase_sale_type?: Database["public"]["Enums"]["product_purchase_sale_type"]
           sale_price?: number
           status?: Database["public"]["Enums"]["product_status"]
           track_stock?: boolean
@@ -2987,6 +2994,8 @@ export type Database = {
           max_stock?: number | null
           min_stock?: number | null
           name?: string
+          profit_margin_percent?: number | null
+          purchase_sale_type?: Database["public"]["Enums"]["product_purchase_sale_type"]
           sale_price?: number
           status?: Database["public"]["Enums"]["product_status"]
           track_stock?: boolean
@@ -4969,6 +4978,7 @@ export type Database = {
         | "CREDIT_CARD"
         | "ACCOUNT"
       payment_order_status: "DRAFT" | "CONFIRMED" | "PAID" | "CANCELLED"
+      product_purchase_sale_type: "PURCHASE" | "PURCHASE_SALE"
       product_status: "ACTIVE" | "INACTIVE" | "DISCONTINUED"
       product_type: "PRODUCT" | "SERVICE" | "RAW_MATERIAL" | "CONSUMABLE"
       purchase_invoice_receiving_status:

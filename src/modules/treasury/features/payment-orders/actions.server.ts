@@ -18,7 +18,17 @@ import { sendPaymentOrderPaidEmail } from './shared/email/sendPaymentOrderPaidEm
 
 const columnMap: Record<string, string> = { status: 'status', supplier_id: 'supplier_id' };
 
-export async function getPaymentOrdersPaginated(searchParams: DataTableSearchParams) {
+export interface PaymentOrdersListFilters {
+  status?: string | null;
+  supplier_id?: string | null;
+  scheduled_from?: string | null;
+  scheduled_to?: string | null;
+}
+
+export async function getPaymentOrdersPaginated(
+  searchParams: DataTableSearchParams,
+  filters?: PaymentOrdersListFilters
+) {
   const { companyId } = await getActionContext();
   if (!companyId) return { data: [], total: 0 };
 
@@ -35,6 +45,19 @@ export async function getPaymentOrdersPaginated(searchParams: DataTableSearchPar
       ];
     }
     Object.assign(where, buildFiltersWhere(state.filters, columnMap));
+
+    if (filters?.status) where.status = filters.status;
+    if (filters?.supplier_id) where.supplier_id = filters.supplier_id;
+    if (filters?.scheduled_from || filters?.scheduled_to) {
+      const dateFilter: Record<string, Date> = {};
+      if (filters.scheduled_from) dateFilter.gte = new Date(filters.scheduled_from);
+      if (filters.scheduled_to) {
+        const end = new Date(filters.scheduled_to);
+        end.setHours(23, 59, 59, 999);
+        dateFilter.lte = end;
+      }
+      where.date = dateFilter;
+    }
 
     const [data, total] = await Promise.all([
       prisma.payment_orders.findMany({
@@ -254,6 +277,9 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
         number: nextNumber,
         full_number: fullNumber,
         date: new Date(parsed.data.date),
+        scheduled_payment_date: parsed.data.scheduled_payment_date
+          ? new Date(parsed.data.scheduled_payment_date)
+          : null,
         total_amount: Math.round(totalAmount * 100) / 100,
         notes: parsed.data.notes || null,
         status: 'DRAFT',
@@ -283,6 +309,102 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
     return { data: order, error: null };
   } catch (error) {
     console.error('Error creating payment order:', error);
+    return { data: null, error: String(error) };
+  }
+}
+
+export async function updatePaymentOrder(id: string, data: PaymentOrderFormData) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return { data: null, error: 'No company selected' };
+
+  const user = await fetchCurrentUser();
+  if (!user?.id) return { data: null, error: 'No autenticado' };
+
+  const existing = await prisma.payment_orders.findFirst({
+    where: { id, company_id: companyId },
+    select: { id: true, status: true },
+  });
+  if (!existing) return { data: null, error: 'Orden no encontrada' };
+  if (existing.status !== 'DRAFT') {
+    return { data: null, error: 'Solo se pueden editar OPs en borrador' };
+  }
+
+  const parsed = paymentOrderSchema.safeParse(data);
+  if (!parsed.success) {
+    const firstIssue = parsed.error.issues[0];
+    return { data: null, error: firstIssue?.message ?? 'Datos inválidos' };
+  }
+
+  try {
+    const totalAmount = parsed.data.items.reduce((acc, i) => acc + parseFloat(i.amount), 0);
+
+    const supplierMethodIds = parsed.data.payments
+      .map((p) => p.supplier_payment_method_id)
+      .filter((v): v is string => !!v);
+    if (supplierMethodIds.length > 0) {
+      if (!parsed.data.supplier_id) {
+        return {
+          data: null,
+          error: 'No se puede asignar destino del proveedor sin proveedor',
+        };
+      }
+      const found = await prisma.supplier_payment_methods.findMany({
+        where: {
+          id: { in: supplierMethodIds },
+          company_id: companyId,
+          supplier_id: parsed.data.supplier_id,
+        },
+        select: { id: true },
+      });
+      if (found.length !== new Set(supplierMethodIds).size) {
+        return {
+          data: null,
+          error: 'Un destino del proveedor no pertenece al proveedor seleccionado',
+        };
+      }
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.payment_order_items.deleteMany({ where: { payment_order_id: id } });
+      await tx.payment_order_payments.deleteMany({ where: { payment_order_id: id } });
+
+      await tx.payment_orders.update({
+        where: { id },
+        data: {
+          supplier_id: parsed.data.supplier_id || null,
+          date: new Date(parsed.data.date),
+          scheduled_payment_date: parsed.data.scheduled_payment_date
+            ? new Date(parsed.data.scheduled_payment_date)
+            : null,
+          total_amount: Math.round(totalAmount * 100) / 100,
+          notes: parsed.data.notes || null,
+          items: {
+            create: parsed.data.items.map((i) => ({
+              invoice_id: i.invoice_id || null,
+              amount: parseFloat(i.amount),
+            })),
+          },
+          payments: {
+            create: parsed.data.payments.map((p) => ({
+              payment_method: p.payment_method,
+              amount: parseFloat(p.amount),
+              cash_register_id: p.cash_register_id || null,
+              bank_account_id: p.bank_account_id || null,
+              supplier_payment_method_id: p.supplier_payment_method_id || null,
+              check_number: p.check_number || null,
+              card_last4: p.card_last4 || null,
+              reference: p.reference || null,
+            })),
+          },
+        },
+      });
+    });
+
+    revalidatePath('/dashboard/treasury');
+    revalidatePath(`/dashboard/treasury/payment-orders/${id}`);
+    return { data: { id }, error: null };
+  } catch (error) {
+    console.error('Error updating payment order:', error);
     return { data: null, error: String(error) };
   }
 }

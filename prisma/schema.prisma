@@ -2171,6 +2171,7 @@ model payment_orders {
   confirmed_at DateTime?            @db.Timestamptz
   paid_by      String?
   paid_at      DateTime?            @db.Timestamptz
+  scheduled_payment_date DateTime?  @db.Date
   created_at   DateTime             @default(now()) @db.Timestamptz
   updated_at   DateTime             @default(now()) @updatedAt @db.Timestamptz
 

@@ -35,6 +35,7 @@ import {
 } from '@/shared/components/ui/table';
 import {
   createPaymentOrder,
+  updatePaymentOrder,
   getPendingPurchaseInvoices,
   getSupplierPaymentMethodsForPaymentOrder,
 } from '../actions.server';
@@ -135,10 +136,35 @@ function filterMethodsByPaymentMethod(
   return [];
 }
 
+export interface PaymentOrderEditData {
+  id: string;
+  supplier_id: string | null;
+  date: string;
+  scheduled_payment_date: string | null;
+  notes: string | null;
+  full_number: string;
+  items: Array<{
+    invoice_id: string | null;
+    invoice_label: string | null;
+    amount: string;
+  }>;
+  payments: Array<{
+    payment_method: PaymentMethod;
+    amount: string;
+    cash_register_id: string | null;
+    bank_account_id: string | null;
+    supplier_payment_method_id: string | null;
+    check_number: string;
+    card_last4: string;
+    reference: string;
+  }>;
+}
+
 interface Props {
   suppliers: Supplier[];
   cashRegisters: CashRegisterOpt[];
   bankAccounts: BankAccountOpt[];
+  initialData?: PaymentOrderEditData;
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -156,21 +182,32 @@ function emptyPayment(): PaymentDraft {
   };
 }
 
-export function NewPaymentOrderForm({ suppliers, cashRegisters, bankAccounts }: Props) {
+export function NewPaymentOrderForm({
+  suppliers,
+  cashRegisters,
+  bankAccounts,
+  initialData,
+}: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const isEdit = !!initialData;
 
-  const [supplierId, setSupplierId] = useState<string>('');
-  const [date, setDate] = useState(today());
-  const [notes, setNotes] = useState('');
+  const [supplierId, setSupplierId] = useState<string>(initialData?.supplier_id ?? '');
+  const [date, setDate] = useState(initialData?.date ?? today());
+  const [scheduledDate, setScheduledDate] = useState<string>(
+    initialData?.scheduled_payment_date ?? ''
+  );
+  const [notes, setNotes] = useState(initialData?.notes ?? '');
   const [pendingInvoices, setPendingInvoices] = useState<InvoiceOption[] | null>(null);
   const [supplierPaymentMethods, setSupplierPaymentMethods] = useState<
     SupplierPaymentMethodOpt[]
   >([]);
   const isLoadingInvoices = !!supplierId && pendingInvoices === null;
 
-  const [items, setItems] = useState<ItemDraft[]>([]);
-  const [payments, setPayments] = useState<PaymentDraft[]>([emptyPayment()]);
+  const [items, setItems] = useState<ItemDraft[]>(initialData?.items ?? []);
+  const [payments, setPayments] = useState<PaymentDraft[]>(
+    initialData?.payments ?? [emptyPayment()]
+  );
 
   useEffect(() => {
     if (!supplierId) {
@@ -187,14 +224,13 @@ export function NewPaymentOrderForm({ suppliers, cashRegisters, bankAccounts }: 
         setPendingInvoices(invoices);
         const opts = methods as SupplierPaymentMethodOpt[];
         setSupplierPaymentMethods(opts);
-        // Auto-asignar default por línea según método
+        // Auto-asignar default por línea según método (sin pisar selección existente)
         setPayments((prev) =>
           prev.map((p) => ({
             ...p,
-            supplier_payment_method_id: pickDefaultMethodForPaymentMethod(
-              opts,
-              p.payment_method
-            ),
+            supplier_payment_method_id:
+              p.supplier_payment_method_id ??
+              pickDefaultMethodForPaymentMethod(opts, p.payment_method),
           }))
         );
       })
@@ -252,6 +288,31 @@ export function NewPaymentOrderForm({ suppliers, cashRegisters, bankAccounts }: 
     setItems((prev) => prev.map((item, i) => (i === index ? { ...item, amount } : item)));
   };
 
+  const selectedRemainingTotal = useMemo(() => {
+    if (!pendingInvoices) return 0;
+    const map = new Map(pendingInvoices.map((inv) => [inv.id, inv.remaining]));
+    return items.reduce((acc, it) => {
+      if (!it.invoice_id) return acc;
+      const remaining = map.get(it.invoice_id);
+      return remaining && remaining > 0 ? acc + remaining : acc;
+    }, 0);
+  }, [items, pendingInvoices]);
+
+  const canLoadPendingBalance = selectedRemainingTotal > 0;
+
+  const handleLoadPendingBalance = () => {
+    const total = Math.round(selectedRemainingTotal * 100) / 100;
+    if (total <= 0) return;
+    const totalStr = total.toFixed(2);
+    setPayments((prev) => {
+      if (prev.length === 0) {
+        return [{ ...emptyPayment(), amount: totalStr }];
+      }
+      return prev.map((p, i) => (i === 0 ? { ...p, amount: totalStr } : { ...p, amount: '' }));
+    });
+    toast.success(`Cargado $${totalStr} como monto a pagar.`);
+  };
+
   const addPayment = () => setPayments((prev) => [...prev, emptyPayment()]);
   const removePayment = (index: number) =>
     setPayments((prev) => prev.filter((_, i) => i !== index));
@@ -275,9 +336,10 @@ export function NewPaymentOrderForm({ suppliers, cashRegisters, bankAccounts }: 
     }
 
     startTransition(async () => {
-      const result = await createPaymentOrder({
+      const payload = {
         supplier_id: supplierId || null,
         date,
+        scheduled_payment_date: scheduledDate || null,
         notes: notes.trim() || null,
         items: items.map((i) => ({
           invoice_id: i.invoice_id,
@@ -293,13 +355,19 @@ export function NewPaymentOrderForm({ suppliers, cashRegisters, bankAccounts }: 
           card_last4: p.card_last4.trim() || null,
           reference: p.reference.trim() || null,
         })),
-      });
+      };
+
+      const result = isEdit && initialData
+        ? await updatePaymentOrder(initialData.id, payload)
+        : await createPaymentOrder(payload);
+
       if (result.error) {
         toast.error(result.error);
         return;
       }
-      toast.success('Orden de pago creada');
-      router.push(`/dashboard/treasury/payment-orders/${result.data?.id ?? ''}`);
+      toast.success(isEdit ? 'Orden de pago actualizada' : 'Orden de pago creada');
+      const targetId = isEdit ? initialData!.id : result.data?.id ?? '';
+      router.push(`/dashboard/treasury/payment-orders/${targetId}`);
     });
   };
 
@@ -311,7 +379,9 @@ export function NewPaymentOrderForm({ suppliers, cashRegisters, bankAccounts }: 
             <ArrowLeft className="size-4" />
           </Link>
         </Button>
-        <h1 className="text-2xl font-bold">Nueva orden de pago</h1>
+        <h1 className="text-2xl font-bold">
+          {isEdit ? `Editar orden ${initialData?.full_number ?? ''}` : 'Nueva orden de pago'}
+        </h1>
       </div>
 
       <Card>
@@ -337,6 +407,14 @@ export function NewPaymentOrderForm({ suppliers, cashRegisters, bankAccounts }: 
           <div className="space-y-1.5">
             <Label>Fecha</Label>
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Fecha de pago programada (opcional)</Label>
+            <Input
+              type="date"
+              value={scheduledDate}
+              onChange={(e) => setScheduledDate(e.target.value)}
+            />
           </div>
           <div className="md:col-span-3 space-y-1.5">
             <Label>Notas (opcional)</Label>
@@ -480,10 +558,17 @@ export function NewPaymentOrderForm({ suppliers, cashRegisters, bankAccounts }: 
             <CardTitle>Pagos ({payments.length})</CardTitle>
             <CardDescription>Métodos de pago — total: ${paymentsTotal.toFixed(2)}</CardDescription>
           </div>
-          <Button size="sm" variant="outline" onClick={addPayment}>
-            <Plus className="size-4 mr-1" />
-            Agregar pago
-          </Button>
+          <div className="flex items-center gap-2">
+            {canLoadPendingBalance && (
+              <Button size="sm" variant="outline" onClick={handleLoadPendingBalance}>
+                Cargar saldo pendiente (${selectedRemainingTotal.toFixed(2)})
+              </Button>
+            )}
+            <Button size="sm" variant="outline" onClick={addPayment}>
+              <Plus className="size-4 mr-1" />
+              Agregar pago
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-3">
           {payments.map((p, idx) => (
@@ -683,7 +768,13 @@ export function NewPaymentOrderForm({ suppliers, cashRegisters, bankAccounts }: 
             </div>
           </div>
           <Button onClick={handleSubmit} disabled={isPending || Math.abs(diff) >= 0.01}>
-            {isPending ? 'Creando...' : 'Crear orden'}
+            {isPending
+              ? isEdit
+                ? 'Guardando...'
+                : 'Creando...'
+              : isEdit
+                ? 'Guardar cambios'
+                : 'Crear orden'}
           </Button>
         </CardContent>
       </Card>

@@ -14,7 +14,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/shared/components/ui/alert-dialog';
-import { BadgeCheck, CheckCircle, Download, XCircle } from 'lucide-react';
+import Link from 'next/link';
+import { BadgeCheck, CheckCircle, Download, Pencil, XCircle } from 'lucide-react';
 import {
   cancelPaymentOrder,
   confirmPaymentOrder,
@@ -89,10 +90,18 @@ export function PaymentOrderActions({ id, status }: Props) {
         </a>
       </Button>
       {status === 'DRAFT' && (
-        <Button size="sm" onClick={handleConfirm} disabled={isPending}>
-          <CheckCircle className="size-4 mr-1" />
-          Confirmar
-        </Button>
+        <>
+          <Button size="sm" variant="outline" asChild>
+            <Link href={`/dashboard/treasury/payment-orders/${id}/edit`}>
+              <Pencil className="size-4 mr-1" />
+              Editar
+            </Link>
+          </Button>
+          <Button size="sm" onClick={handleConfirm} disabled={isPending}>
+            <CheckCircle className="size-4 mr-1" />
+            Confirmar
+          </Button>
+        </>
       )}
       {status === 'CONFIRMED' && (
         <Button
