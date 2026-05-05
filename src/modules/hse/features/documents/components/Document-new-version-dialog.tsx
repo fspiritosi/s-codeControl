@@ -16,7 +16,8 @@ import { Input } from "@/shared/components/ui/input"
 import { Label } from "@/shared/components/ui/label"
 import { Textarea } from "@/shared/components/ui/textarea"
 import { Upload, FileText } from "lucide-react"
-import {createDocumentVersion} from '../actions.server'
+import { prepareHseDocumentVersion, confirmHseDocumentVersion } from '../actions.server'
+import { storage } from '@/shared/lib/storage'
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 
@@ -71,17 +72,43 @@ export function DocumentNewVersionDialog({
     }
   
     try {
-      // Create FormData to handle file upload
-      const formDataToSend = new FormData();
-      
-      formDataToSend.append('file', formData.file);
-      formDataToSend.append('version', formData.version);
-      formDataToSend.append('expiryDate', formData.expiryDate);
-      formDataToSend.append('description', formData.description || '');
-  
-      await createDocumentVersion(document.id, formDataToSend as any, companyId);
-  
-      // Show success message
+      const file = formData.file;
+
+      const prep = await prepareHseDocumentVersion({
+        documentId: document.id,
+        companyId,
+        fileName: file.name,
+        version: formData.version,
+      });
+      if (!prep.ok) throw new Error(prep.error);
+
+      try {
+        await storage.upload(prep.bucket, prep.path, file, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: file.type,
+        });
+      } catch (e: any) {
+        throw new Error('No se pudo subir el archivo: ' + (e?.message || ''));
+      }
+
+      try {
+        await confirmHseDocumentVersion({
+          documentId: document.id,
+          companyId,
+          path: prep.path,
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          version: formData.version,
+          expiryDate: formData.expiryDate || null,
+          description: formData.description || null,
+        });
+      } catch (confirmErr) {
+        try { await storage.remove(prep.bucket, [prep.path]); } catch {}
+        throw confirmErr;
+      }
+
       toast.success('Nueva versión creada exitosamente');
       
       // Call the onVersionCreated callback with the new version data

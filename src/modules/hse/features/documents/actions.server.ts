@@ -306,111 +306,83 @@ export async function getDocumentById(id: string): Promise<(Document & {
   }
 }
 
-export async function createDocumentWithAssignments(formData: FormData, company_id: string) {
-  
-  const supabase = await supabaseServer()
-  let filePath: string | null = null
-  
+/**
+ * Paso 1: valida user/company/título y devuelve el path donde el cliente debe
+ * subir el archivo directamente a Supabase (evita el límite de 4.5MB de Vercel).
+ */
+export async function prepareHseDocumentCreate(input: {
+  companyId: string;
+  title: string;
+  fileName: string;
+}) {
+  const supabase = await supabaseServer();
+  if (!input.companyId) return { ok: false as const, error: 'Se requiere el ID de la compañía' };
+  if (!input.title || !input.fileName) return { ok: false as const, error: 'Título y archivo son obligatorios' };
+
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) return { ok: false as const, error: 'No se pudo autenticar al usuario' };
+
+  const { data: existingDoc } = await supabase
+    .from('hse_documents' as any)
+    .select('id')
+    .eq('title', input.title)
+    .eq('company_id', input.companyId)
+    .maybeSingle();
+  if (existingDoc) return { ok: false as const, error: 'El documento ya existe' };
+
+  const fileExt = input.fileName.split('.').pop() || 'bin';
+  const path = `${input.companyId}/${Date.now()}.${fileExt}`;
+  return { ok: true as const, path, bucket: 'documents-hse' as const };
+}
+
+/**
+ * Paso 2: confirma la creación. Inserta el documento + asignaciones + tags.
+ * El archivo ya fue subido por el cliente al path devuelto por prepareHseDocumentCreate.
+ */
+export async function confirmHseDocumentCreate(input: {
+  companyId: string;
+  path: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  docs_types: string;
+  title: string;
+  version: string;
+  description?: string | null;
+  expiry_date?: string | null;
+  typeOfEmployee: string[];
+  tags: string[];
+}) {
+  const supabase = await supabaseServer();
+  const { companyId: company_id, path: filePath } = input;
+
   try {
-    // 1. Validar company_id
-    if (!company_id) {
-      throw new Error("Se requiere el ID de la compañía")
-    }
+    if (!company_id) throw new Error('Se requiere el ID de la compañía');
 
-    // 2. Validar que el usuario esté autenticado
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
-    if (userError || !user) {
-      throw new Error("No se pudo autenticar al usuario")
-    }
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) throw new Error('No se pudo autenticar al usuario');
 
-    // 3. Validar campos obligatorios
-    const docs_types = formData.get("docs_types") as string
-    const title = formData.get("title") as string
-    const version = formData.get("version") as string
-    const file = formData.get("file") as File
-    const typeOfEmployee = formData.get("typeOfEmployee") as string // JSON string de array
-    const tagsJson = formData.get("tags") as string // JSON string de array de IDs de etiquetas
+    const selectedPositions = Array.isArray(input.typeOfEmployee) ? input.typeOfEmployee : [];
+    const assignToAll = selectedPositions.length === 0;
+    const tagIds = Array.isArray(input.tags) ? input.tags : [];
 
-    if (!title || !file) {
-      throw new Error("El título y el archivo son obligatorios")
-    }
+    const publicUrl = await storageServer.getPublicUrl('documents-hse', filePath);
 
-    // Parse typeOfEmployee si existe
-    let selectedPositions: string[] = []
-    let assignToAll = false
-
-    if (typeOfEmployee) {
-      try {
-        const parsed = JSON.parse(typeOfEmployee)
-        if (Array.isArray(parsed)) {
-          selectedPositions = parsed
-          assignToAll = parsed.length === 0 // Si array vacío, asignar a todos
-        }
-      } catch (e) {
-        console.warn("Error parsing typeOfEmployee:", e)
-      }
-    }
-
-    // 4. Verificar si ya existe un documento con el mismo título
-    const { data: existingDoc, error: fetchError } = await supabase
-      .from("hse_documents" as any)
-      .select("*")
-      .eq("title", title)
-      .eq("company_id", company_id)
-      .maybeSingle()
-
-    if (existingDoc) {
-      throw new Error("El documento ya existe")
-    }
-
-    // 5. Subir el archivo a Supabase Storage
-    const fileExt = file.name.split(".").pop()
-    const fileName = `${Date.now()}.${fileExt}`
-    filePath = `${company_id}/${fileName}`
-
-    
-
-    try {
-      await storageServer.upload("documents-hse", filePath, file)
-    } catch (uploadError) {
-      console.error("Error al subir el archivo:", uploadError)
-      throw new Error("No se pudo subir el archivo")
-    }
-
-    // 6. Obtener URL pública del archivo
-    const publicUrl = await storageServer.getPublicUrl("documents-hse", filePath)
-
-    let documentId: string
-
-    // 7. Parse tag assignments
-    
-    let tagIds: string[] = [];
-    if (tagsJson) {
-      try {
-        const parsedTags = JSON.parse(tagsJson);
-        tagIds = Array.isArray(parsedTags) ? parsedTags : [];
-        
-      } catch (e) {
-        console.warn("Error parsing tags:", e);
-      }
-    }
+    let documentId: string;
 
     // 8. Crear el documento
     const newDoc = {
-      docs_types: docs_types,
-      title,
-      description: (formData.get("description") as string) || null,
-      version: String(version || "1.0"),
+      docs_types: input.docs_types,
+      title: input.title,
+      description: input.description || null,
+      version: String(input.version || '1.0'),
       file_path: filePath,
-      file_name: file.name,
-      file_size: file.size,
-      file_type: file.type,
+      file_name: input.fileName,
+      file_size: input.fileSize,
+      file_type: input.fileType,
       upload_date: new Date().toISOString(),
-      expiry_date: (formData.get("expiry_date") as string) || null,
-      status: "borrador",
+      expiry_date: input.expiry_date || null,
+      status: 'borrador',
       created_by: user.id,
       company_id,
     }
@@ -662,28 +634,70 @@ async function createDocumentAssignments(
   }
 }
 
-export async function createDocumentVersion(
-  documentId: string,
-  formData: FormData,
-  company_id: string,
-) {
- 
+/**
+ * Paso 1: valida documento + nueva versión y devuelve el path para upload directo.
+ */
+export async function prepareHseDocumentVersion(input: {
+  documentId: string;
+  companyId: string;
+  fileName: string;
+  version: string;
+}) {
   const supabase = await supabaseServer();
-  let filePath: string | null = null;
+  if (!input.companyId) return { ok: false as const, error: 'Se requiere el ID de la compañía' };
+  if (!input.fileName) return { ok: false as const, error: 'El archivo es obligatorio' };
+
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) return { ok: false as const, error: 'No se pudo autenticar al usuario' };
+
+  const { data: existingDoc, error: fetchError } = await supabase
+    .from('hse_documents' as any)
+    .select('version')
+    .eq('id', input.documentId)
+    .single() as unknown as { data: any; error: any };
+  if (fetchError || !existingDoc) return { ok: false as const, error: 'Documento no encontrado' };
+
+  const currentVersion = parseFloat(existingDoc.version);
+  const newVersion = input.version ? parseFloat(input.version) : currentVersion + 1;
+  if (newVersion <= currentVersion) {
+    return {
+      ok: false as const,
+      error: `No se puede crear una versión (${newVersion}) menor o igual a la actual (${currentVersion})`,
+    };
+  }
+
+  const fileExt = input.fileName.split('.').pop() || 'bin';
+  const path = `${input.companyId}/${Date.now()}.${fileExt}`;
+  return { ok: true as const, path, bucket: 'documents-hse' as const };
+}
+
+/**
+ * Paso 2: confirma la nueva versión. El cliente ya subió el archivo.
+ */
+export async function confirmHseDocumentVersion(input: {
+  documentId: string;
+  companyId: string;
+  path: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  version: string;
+  expiryDate?: string | null;
+  description?: string | null;
+}) {
+  const supabase = await supabaseServer();
+  const { documentId, companyId: company_id, path } = input;
+  let filePath: string | null = path;
 
   try {
     if (!company_id) throw new Error('Se requiere el ID de la compañía');
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-
     if (userError || !user) throw new Error('No se pudo autenticar al usuario');
 
-    const version = formData.get('version') as string;
-    const file = formData.get('file') as File;
-    const expiryDate = formData.get('expiryDate') as string;
-    const description = formData.get('description') as string;
-
-    if (!file) throw new Error('El archivo es obligatorio');
+    const version = input.version;
+    const expiryDate = input.expiryDate || '';
+    const description = input.description || '';
 
     // TODO: fix HSE query types
     const { data: existingDoc, error: fetchError } = await supabase
@@ -701,20 +715,7 @@ export async function createDocumentVersion(
       throw new Error(`No se puede crear una versión (${newVersion}) menor o igual a la versión actual (${currentVersion})`);
     }
 
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}.${fileExt}`;
-    filePath = `${company_id}/${fileName}`;
-
-
-    const { error: uploadError } = await supabase.storage
-      .from('documents-hse')
-      .upload(fileName, file, { cacheControl: "3600", upsert: true });
-
-    if (uploadError) throw new Error('No se pudo subir el archivo');
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('documents-hse')
-      .getPublicUrl(filePath);
+    const publicUrl = await storageServer.getPublicUrl('documents-hse', path);
 
     // === Guardar la versión anterior en hse_document_versions ===
     const versionData = {
@@ -799,9 +800,9 @@ export async function createDocumentVersion(
     const updateData = {
       version: version || String(newVersion),
       file_path: filePath,
-      file_name: file.name,
-      file_size: file.size,
-      file_type: file.type,
+      file_name: input.fileName,
+      file_size: input.fileSize,
+      file_type: input.fileType,
       updated_at: new Date().toISOString(),
       expiry_date: expiryDate || null,
       description: description || null,
@@ -1431,65 +1432,71 @@ export async function deleteDocument(documentId: string) {
 //     throw error;
 //   }
 // }
-export async function updateDocument(formData: FormData, companyId: string) {
+/**
+ * Paso 1 (opcional): si hay archivo nuevo, devuelve el path para upload directo.
+ * Si no hay archivo nuevo, el cliente puede saltarse este paso.
+ */
+export async function prepareHseDocumentUpdateUpload(input: {
+  companyId: string;
+  fileName: string;
+}) {
+  if (!input.companyId) return { ok: false as const, error: 'Se requiere el ID de la compañía' };
+  if (!input.fileName) return { ok: false as const, error: 'Nombre de archivo requerido' };
+
+  const ext = input.fileName.split('.').pop() || 'bin';
+  const path = `documents/${Date.now()}.${ext}`;
+  return { ok: true as const, path, bucket: 'documents-hse' as const };
+}
+
+/**
+ * Paso 2: confirma el update del documento HSE.
+ * Si se subió archivo nuevo, viene `newFilePath` (con metadata del file).
+ */
+export async function confirmHseDocumentUpdate(input: {
+  companyId: string;
+  documentId: string;
+  newFilePath?: string | null;
+  fileName?: string | null;
+  fileSize?: number | null;
+  fileType?: string | null;
+  docs_types: string;
+  title: string;
+  version: string;
+  description?: string | null;
+  expiry_date?: string | null;
+  typeOfEmployee: string[];
+  tags: string[];
+}) {
   const supabase = await supabaseServer();
-  
+  const companyId = input.companyId;
+
   try {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) throw new Error('No se pudo autenticar al usuario');
 
-    if (userError || !user) {
-      throw new Error("No se pudo autenticar al usuario");
-    }
-
-    const documentId = formData.get("documentId") as string;
-    const typeOfEmployee = JSON.parse(
-      formData.get("typeOfEmployee") as string || "[]"
-    ) as string[];
+    const documentId = input.documentId;
+    const typeOfEmployee = Array.isArray(input.typeOfEmployee) ? input.typeOfEmployee : [];
     const assignToAll = typeOfEmployee.length === 0;
-    
-    // Parse tag assignments
-    const tagsJson = formData.get("tags") as string || "[]";
-    let tagIds: string[] = [];
-    try {
-      const parsedTags = JSON.parse(tagsJson);
-      tagIds = Array.isArray(parsedTags) ? parsedTags : [];
-    } catch (e) {
-      console.warn("Error parsing tags:", e);
-    }
+    const tagIds = Array.isArray(input.tags) ? input.tags : [];
 
-    if (!documentId) {
-      throw new Error("ID de documento no proporcionado");
-    }
+    if (!documentId) throw new Error('ID de documento no proporcionado');
 
-    // 1. Actualizar archivo si hay uno nuevo
-    const file = formData.get("file") as File | null;
-    let filePath: string | undefined;
-
-    if (file && file.size > 0) {
-      const fileName = `documents/${Date.now()}_${file.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from("documents-hse")
-        .upload(fileName, file, { cacheControl: "3600", upsert: true });
-
-      if (uploadError) {
-        throw new Error("Error al subir el archivo: " + uploadError.message);
-      }
-
-      filePath = fileName;
-    }
+    const filePath: string | undefined = input.newFilePath || undefined;
 
     // 2. Actualizar metadatos
     const updates = {
-      docs_types: formData.get("docs_types") as string,
-      title: formData.get("title") as string,
-      version: formData.get("version") as string,
-      description: (formData.get("description") as string) || null,
-      expiry_date: (formData.get("expiry_date") as string) || null,
+      docs_types: input.docs_types,
+      title: input.title,
+      version: input.version,
+      description: input.description || null,
+      expiry_date: input.expiry_date || null,
       updated_at: new Date().toISOString(),
-      ...(filePath && { file_path: filePath }),
+      ...(filePath && {
+        file_path: filePath,
+        ...(input.fileName ? { file_name: input.fileName } : {}),
+        ...(input.fileSize != null ? { file_size: input.fileSize } : {}),
+        ...(input.fileType ? { file_type: input.fileType } : {}),
+      }),
     };
 
     const { data: document, error: updateError } = await supabase
