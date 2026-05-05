@@ -17,7 +17,7 @@ interface Props {
 export function AccountStatementAccordion({ invoices, purchaseOrders, receivingNotes, paymentOrders }: Props) {
   return (
     <Accordion type="multiple" defaultValue={['invoices']} className="space-y-2">
-      <AccordionItem value="invoices" className="border rounded-md px-4">
+      <AccordionItem value="invoices" className="border rounded-md px-4 bg-card shadow-sm">
         <AccordionTrigger className="hover:no-underline">
           <div className="flex items-center gap-3">
             <span className="font-medium">Facturas de compra</span>
@@ -29,7 +29,7 @@ export function AccountStatementAccordion({ invoices, purchaseOrders, receivingN
         </AccordionContent>
       </AccordionItem>
 
-      <AccordionItem value="purchase-orders" className="border rounded-md px-4">
+      <AccordionItem value="purchase-orders" className="border rounded-md px-4 bg-card shadow-sm">
         <AccordionTrigger className="hover:no-underline">
           <div className="flex items-center gap-3">
             <span className="font-medium">Órdenes de compra</span>
@@ -41,7 +41,7 @@ export function AccountStatementAccordion({ invoices, purchaseOrders, receivingN
         </AccordionContent>
       </AccordionItem>
 
-      <AccordionItem value="receiving-notes" className="border rounded-md px-4">
+      <AccordionItem value="receiving-notes" className="border rounded-md px-4 bg-card shadow-sm">
         <AccordionTrigger className="hover:no-underline">
           <div className="flex items-center gap-3">
             <span className="font-medium">Remitos de recepción</span>
@@ -53,7 +53,7 @@ export function AccountStatementAccordion({ invoices, purchaseOrders, receivingN
         </AccordionContent>
       </AccordionItem>
 
-      <AccordionItem value="payment-orders" className="border rounded-md px-4">
+      <AccordionItem value="payment-orders" className="border rounded-md px-4 bg-card shadow-sm">
         <AccordionTrigger className="hover:no-underline">
           <div className="flex items-center gap-3">
             <span className="font-medium">Órdenes de pago</span>
