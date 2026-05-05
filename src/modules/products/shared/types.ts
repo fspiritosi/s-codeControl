@@ -9,6 +9,8 @@ export interface Product {
   cost_price: number;
   sale_price: number;
   vat_rate: number;
+  purchase_sale_type: string;
+  profit_margin_percent: number | null;
   track_stock: boolean;
   min_stock: number | null;
   max_stock: number | null;
@@ -23,6 +25,11 @@ export const PRODUCT_TYPE_LABELS: Record<string, string> = {
   SERVICE: 'Servicio',
   RAW_MATERIAL: 'Materia Prima',
   CONSUMABLE: 'Consumible',
+};
+
+export const PRODUCT_PURCHASE_SALE_TYPE_LABELS: Record<string, string> = {
+  PURCHASE: 'Solo compra',
+  PURCHASE_SALE: 'Compra y venta',
 };
 
 export const PRODUCT_STATUS_LABELS: Record<string, string> = {

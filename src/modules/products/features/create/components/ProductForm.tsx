@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -12,6 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/shared/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Switch } from '@/shared/components/ui/switch';
+import { Tabs, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -25,6 +27,7 @@ interface Props {
 export default function ProductForm({ product }: Props) {
   const router = useRouter();
   const isEditing = !!product;
+  const [priceMode, setPriceMode] = useState<'NETO' | 'BRUTO'>('NETO');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(createProductSchema),
@@ -32,22 +35,46 @@ export default function ProductForm({ product }: Props) {
       name: product?.name || '',
       description: product?.description || '',
       type: product?.type || 'PRODUCT',
+      purchase_sale_type: product?.purchase_sale_type || 'PURCHASE_SALE',
       unit_of_measure: product?.unit_of_measure || 'UN',
-      cost_price: product?.cost_price || 0,
-      sale_price: product?.sale_price || 0,
-      vat_rate: product?.vat_rate || 21,
+      cost_price: product?.cost_price ?? 0,
+      sale_price: product?.sale_price ?? 0,
+      vat_rate: product?.vat_rate ?? 21,
+      profit_margin_percent: product?.profit_margin_percent ?? null,
       track_stock: product?.track_stock ?? true,
-      min_stock: product?.min_stock || 0,
-      max_stock: product?.max_stock || undefined,
+      min_stock: product?.min_stock ?? 0,
+      max_stock: product?.max_stock ?? undefined,
       barcode: product?.barcode || '',
       brand: product?.brand || '',
     },
   });
 
   const trackStock = form.watch('track_stock');
-  const salePrice = form.watch('sale_price');
-  const vatRate = form.watch('vat_rate');
-  const finalPrice = salePrice * (1 + vatRate / 100);
+  const purchaseSaleType = form.watch('purchase_sale_type');
+  const costPrice = Number(form.watch('cost_price')) || 0;
+  const vatRate = Number(form.watch('vat_rate')) || 0;
+  const profitMargin = Number(form.watch('profit_margin_percent')) || 0;
+
+  const costPriceWithVat = costPrice * (1 + vatRate / 100);
+  const salePriceNeto = purchaseSaleType === 'PURCHASE_SALE' ? costPrice * (1 + profitMargin / 100) : 0;
+  const salePriceWithVat = salePriceNeto * (1 + vatRate / 100);
+
+  const onCostPriceChange = (raw: string) => {
+    const value = Number(raw);
+    if (Number.isNaN(value)) return;
+    if (priceMode === 'NETO') {
+      form.setValue('cost_price', value, { shouldValidate: true });
+    } else {
+      const neto = vatRate >= 0 ? value / (1 + vatRate / 100) : value;
+      form.setValue('cost_price', Number(neto.toFixed(4)), { shouldValidate: true });
+    }
+  };
+
+  const displayedCostPrice = priceMode === 'NETO' ? costPrice : costPriceWithVat;
+  const equivalentLabel =
+    priceMode === 'NETO'
+      ? `Equivalente con IVA: $${costPriceWithVat.toFixed(2)}`
+      : `Equivalente sin IVA: $${costPrice.toFixed(2)}`;
 
   const onSubmit = async (values: FormValues) => {
     toast.promise(
@@ -91,10 +118,31 @@ export default function ProductForm({ product }: Props) {
             />
             <FormField
               control={form.control}
+              name="purchase_sale_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo de operación *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="PURCHASE">Solo compra</SelectItem>
+                      <SelectItem value="PURCHASE_SALE">Compra y venta</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tipo *</FormLabel>
+                  <FormLabel>Categoría *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -184,33 +232,7 @@ export default function ProductForm({ product }: Props) {
           <CardHeader>
             <CardTitle>Precios e IVA</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <FormField
-              control={form.control}
-              name="cost_price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Precio de costo *</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" min="0" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="sale_price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Precio de venta *</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" min="0" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <FormField
               control={form.control}
               name="vat_rate"
@@ -235,11 +257,63 @@ export default function ProductForm({ product }: Props) {
                 </FormItem>
               )}
             />
-            <div className="flex items-end">
-              <div className="text-sm text-muted-foreground">
-                Precio final con IVA: <span className="font-semibold text-foreground">${finalPrice.toFixed(2)}</span>
-              </div>
+
+            <div className="md:col-span-2 lg:col-span-2 space-y-2">
+              <FormLabel>Precio de compra *</FormLabel>
+              <Tabs value={priceMode} onValueChange={(v) => setPriceMode(v as 'NETO' | 'BRUTO')}>
+                <TabsList>
+                  <TabsTrigger value="NETO">Sin IVA</TabsTrigger>
+                  <TabsTrigger value="BRUTO">Con IVA</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={Number.isFinite(displayedCostPrice) ? Number(displayedCostPrice.toFixed(4)) : 0}
+                onChange={(e) => onCostPriceChange(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">{equivalentLabel}</p>
+              <p className="text-xs text-muted-foreground">
+                Se persiste el valor sin IVA: ${costPrice.toFixed(2)}
+              </p>
+              {form.formState.errors.cost_price && (
+                <p className="text-sm text-destructive">{form.formState.errors.cost_price.message as string}</p>
+              )}
             </div>
+
+            {purchaseSaleType === 'PURCHASE_SALE' && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="profit_margin_percent"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>% de ganancia *</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={field.value ?? ''}
+                          onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="md:col-span-2 flex flex-col justify-center gap-1 rounded-md border bg-muted/40 p-3 text-sm">
+                  <span className="text-xs text-muted-foreground">Precio de venta calculado</span>
+                  <span>
+                    Sin IVA: <span className="font-semibold text-foreground">${salePriceNeto.toFixed(2)}</span>
+                  </span>
+                  <span>
+                    Con IVA: <span className="font-semibold text-foreground">${salePriceWithVat.toFixed(2)}</span>
+                  </span>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 

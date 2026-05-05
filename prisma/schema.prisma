@@ -1424,6 +1424,11 @@ enum product_type {
   CONSUMABLE
 }
 
+enum product_purchase_sale_type {
+  PURCHASE
+  PURCHASE_SALE
+}
+
 enum supplier_tax_condition {
   RESPONSABLE_INSCRIPTO
   MONOTRIBUTISTA
@@ -1539,6 +1544,8 @@ model products {
   cost_price      Decimal        @default(0) @db.Decimal(12, 2)
   sale_price      Decimal        @default(0) @db.Decimal(12, 2)
   vat_rate        Decimal        @default(21) @db.Decimal(5, 2)
+  purchase_sale_type    product_purchase_sale_type @default(PURCHASE_SALE)
+  profit_margin_percent Decimal?                   @db.Decimal(7, 2)
   track_stock     Boolean        @default(true)
   min_stock       Decimal?       @default(0) @db.Decimal(12, 3)
   max_stock       Decimal?       @db.Decimal(12, 3)

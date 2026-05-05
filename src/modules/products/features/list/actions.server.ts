@@ -64,6 +64,7 @@ export async function getProductsPaginated(searchParams: DataTableSearchParams) 
       cost_price: Number(p.cost_price),
       sale_price: Number(p.sale_price),
       vat_rate: Number(p.vat_rate),
+      profit_margin_percent: p.profit_margin_percent != null ? Number(p.profit_margin_percent) : null,
       min_stock: p.min_stock ? Number(p.min_stock) : null,
       max_stock: p.max_stock ? Number(p.max_stock) : null,
     }));
@@ -117,6 +118,7 @@ export async function getAllProductsForExport() {
     cost_price: Number(p.cost_price),
     sale_price: Number(p.sale_price),
     vat_rate: Number(p.vat_rate),
+    profit_margin_percent: p.profit_margin_percent != null ? Number(p.profit_margin_percent) : null,
     min_stock: p.min_stock ? Number(p.min_stock) : null,
     max_stock: p.max_stock ? Number(p.max_stock) : null,
   }));
@@ -137,6 +139,18 @@ export async function createProduct(data: Record<string, unknown>) {
     const lastNum = lastProduct?.code ? parseInt(lastProduct.code.replace('PROD-', ''), 10) || 0 : 0;
     const code = `PROD-${String(lastNum + 1).padStart(4, '0')}`;
 
+    const purchaseSaleType = (data.purchase_sale_type as 'PURCHASE' | 'PURCHASE_SALE') || 'PURCHASE_SALE';
+    const costPrice = Number(data.cost_price) || 0;
+    const profitMarginRaw = data.profit_margin_percent;
+    const profitMargin = profitMarginRaw != null && profitMarginRaw !== '' ? Number(profitMarginRaw) : null;
+
+    let salePrice = 0;
+    let profitMarginToSave: number | null = null;
+    if (purchaseSaleType === 'PURCHASE_SALE') {
+      profitMarginToSave = profitMargin ?? 0;
+      salePrice = costPrice * (1 + profitMarginToSave / 100);
+    }
+
     const product = await prisma.products.create({
       data: {
         company_id: scope.activeCompanyId,
@@ -144,10 +158,12 @@ export async function createProduct(data: Record<string, unknown>) {
         name: data.name as string,
         description: (data.description as string) || null,
         type: data.type as any,
+        purchase_sale_type: purchaseSaleType as any,
         unit_of_measure: (data.unit_of_measure as string) || 'UN',
-        cost_price: Number(data.cost_price) || 0,
-        sale_price: Number(data.sale_price) || 0,
+        cost_price: costPrice,
+        sale_price: salePrice,
         vat_rate: Number(data.vat_rate) ?? 21,
+        profit_margin_percent: profitMarginToSave,
         track_stock: data.track_stock as boolean ?? true,
         min_stock: data.min_stock != null ? Number(data.min_stock) : 0,
         max_stock: data.max_stock != null ? Number(data.max_stock) : null,
@@ -169,16 +185,50 @@ export async function updateProduct(id: string, data: Record<string, unknown>) {
   if (!companyId) throw new Error('No company selected');
 
   try {
+    const existing = await prisma.products.findUnique({ where: { id } });
+    if (!existing) throw new Error('Producto no encontrado');
+
+    const purchaseSaleType = (data.purchase_sale_type as 'PURCHASE' | 'PURCHASE_SALE') || (existing.purchase_sale_type as any);
+    const costPrice = data.cost_price != null ? Number(data.cost_price) : Number(existing.cost_price);
+
+    // Detectamos si la llamada incluye datos de "edicion completa" (formulario) vs
+    // operaciones puntuales (toggle de estado en la lista). Si vienen los campos de
+    // negocio, recalculamos el sale_price; si no, preservamos los valores actuales.
+    const hasMarginInput =
+      Object.prototype.hasOwnProperty.call(data, 'profit_margin_percent') ||
+      Object.prototype.hasOwnProperty.call(data, 'purchase_sale_type');
+
+    let salePrice: number;
+    let profitMarginToSave: number | null;
+    if (hasMarginInput) {
+      const profitMarginRaw = data.profit_margin_percent;
+      const profitMargin =
+        profitMarginRaw != null && profitMarginRaw !== '' ? Number(profitMarginRaw) : null;
+      if (purchaseSaleType === 'PURCHASE_SALE') {
+        profitMarginToSave = profitMargin ?? 0;
+        salePrice = costPrice * (1 + profitMarginToSave / 100);
+      } else {
+        profitMarginToSave = null;
+        salePrice = 0;
+      }
+    } else {
+      salePrice = data.sale_price != null ? Number(data.sale_price) : Number(existing.sale_price);
+      profitMarginToSave =
+        existing.profit_margin_percent != null ? Number(existing.profit_margin_percent) : null;
+    }
+
     const product = await prisma.products.update({
       where: { id },
       data: {
         name: data.name as string,
         description: (data.description as string) || null,
         type: data.type as any,
+        purchase_sale_type: purchaseSaleType as any,
         unit_of_measure: (data.unit_of_measure as string) || 'UN',
-        cost_price: Number(data.cost_price) || 0,
-        sale_price: Number(data.sale_price) || 0,
+        cost_price: costPrice,
+        sale_price: salePrice,
         vat_rate: Number(data.vat_rate) ?? 21,
+        profit_margin_percent: profitMarginToSave,
         track_stock: data.track_stock as boolean ?? true,
         min_stock: data.min_stock != null ? Number(data.min_stock) : 0,
         max_stock: data.max_stock != null ? Number(data.max_stock) : null,
@@ -229,6 +279,7 @@ export async function getProductById(id: string) {
     cost_price: Number(product.cost_price),
     sale_price: Number(product.sale_price),
     vat_rate: Number(product.vat_rate),
+    profit_margin_percent: product.profit_margin_percent != null ? Number(product.profit_margin_percent) : null,
     min_stock: product.min_stock != null ? Number(product.min_stock) : null,
     max_stock: product.max_stock != null ? Number(product.max_stock) : null,
   };
