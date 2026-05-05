@@ -3004,6 +3004,41 @@ export type Database = {
           },
         ]
       }
+      pdf_email_settings: {
+        Row: {
+          company_id: string
+          created_at: string
+          from_email: string
+          from_name: string | null
+          pdf_key: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          from_email: string
+          from_name?: string | null
+          pdf_key: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          from_email?: string
+          from_name?: string | null
+          pdf_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdf_email_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pdf_settings: {
         Row: {
           company_id: string
@@ -5116,6 +5151,18 @@ export type Database = {
         }[]
       }
       pruebaemail: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      schedule_notifications_cron: {
+        Args: {
+          app_url: string
+          cron_secret: string
+          schedule?: string
+        }
+        Returns: number
+      }
+      unschedule_notifications_cron: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }

@@ -21,10 +21,13 @@ import {
   updateTypeOfContractParameter,
   updateWorkDiagramParameter,
 } from '../actions.server';
-import { getPdfSettings } from '@/modules/settings/features/pdf/actions.server';
+import { getPdfEmailSettings, getPdfSettings } from '@/modules/settings/features/pdf/actions.server';
 import { PdfSettingsForm } from '@/modules/settings/features/pdf/components/PdfSettingsForm';
+import { PdfEmailSettingsForm } from '@/modules/settings/features/pdf/components/PdfEmailSettingsForm';
 import RolesAndPermissionsSection from '@/modules/settings/features/roles/components/RolesAndPermissionsSection';
 import { can } from '@/shared/lib/permissions';
+import { prisma } from '@/shared/lib/prisma';
+import { getActionContext } from '@/shared/lib/server-action-context';
 
 const VALID_SECTIONS = ['employees', 'pdf', 'roles'] as const;
 type Section = (typeof VALID_SECTIONS)[number];
@@ -181,5 +184,25 @@ async function PdfSection() {
       </Card>
     );
   }
-  return <PdfSettingsForm initial={settings} />;
+
+  const [emailSettings, ctx] = await Promise.all([
+    getPdfEmailSettings(),
+    getActionContext(),
+  ]);
+
+  let companyContactEmail: string | null = null;
+  if (ctx.companyId) {
+    const c = await prisma.company.findUnique({
+      where: { id: ctx.companyId },
+      select: { contact_email: true },
+    });
+    companyContactEmail = c?.contact_email ?? null;
+  }
+
+  return (
+    <div className="space-y-4">
+      <PdfSettingsForm initial={settings} />
+      <PdfEmailSettingsForm initial={emailSettings} companyContactEmail={companyContactEmail} />
+    </div>
+  );
 }

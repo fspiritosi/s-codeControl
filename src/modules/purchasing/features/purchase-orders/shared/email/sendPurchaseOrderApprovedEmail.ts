@@ -2,6 +2,7 @@
 
 import { prisma } from '@/shared/lib/prisma';
 import { sendEmail } from '@/shared/actions/email';
+import { resolveEmailSender } from '@/modules/settings/features/pdf/email-resolver';
 import { purchaseOrderApprovedEmail } from '@/shared/lib/email-templates/purchase-order-approved';
 import {
   generatePurchaseOrderPDF,
@@ -112,10 +113,14 @@ export async function sendPurchaseOrderApprovedEmail(
       companyName,
     });
 
+    const sender = await resolveEmailSender(companyId, 'purchase-order');
+
     const result = await sendEmail({
       to: supplierEmail,
       subject,
       html,
+      fromName: sender.fromName,
+      replyTo: sender.replyTo ?? undefined,
       attachments: [
         {
           filename: fileName,

@@ -388,7 +388,8 @@ model company {
   payment_orders         payment_orders[]
 
   // Configuración
-  pdf_settings pdf_settings?
+  pdf_settings       pdf_settings?
+  pdf_email_settings pdf_email_settings[]
 
   // Roles y permisos
   roles      roles[]
@@ -406,6 +407,20 @@ model pdf_settings {
   updated_at          DateTime @default(now()) @updatedAt @db.Timestamptz
 
   company company @relation(fields: [company_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model pdf_email_settings {
+  company_id String   @db.Uuid
+  pdf_key    String
+  from_email String
+  from_name  String?
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  company company @relation(fields: [company_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  @@id([company_id, pdf_key])
+  @@index([company_id])
 }
 
 model company_groups {

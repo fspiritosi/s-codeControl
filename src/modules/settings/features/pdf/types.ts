@@ -16,3 +16,22 @@ export interface PdfSettingsData {
   signature_image_url: string | null;
   signed_pdf_keys: string[];
 }
+
+/**
+ * Claves de PDFs que se pueden enviar por mail. Para cada una se puede
+ * configurar un from_email + from_name; si no, fallback al contact_email
+ * de la empresa.
+ */
+export const EMAILABLE_PDF_KEYS = [
+  { key: 'purchase-order', label: 'Órdenes de compra' },
+  { key: 'payment-order', label: 'Órdenes de pago' },
+  { key: 'withdrawal-order', label: 'Retiros de mercadería' },
+] as const;
+
+export type EmailablePdfKey = (typeof EMAILABLE_PDF_KEYS)[number]['key'];
+
+export interface PdfEmailSetting {
+  pdf_key: string;
+  from_email: string;
+  from_name: string | null;
+}
