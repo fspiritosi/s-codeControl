@@ -45,11 +45,21 @@ type EmailOptions = {
   text?: string;
   reason?: string;
   attachments?: EmailAttachment[];
+  /**
+   * Display name visible en el header `From:`. El email técnico siempre es
+   * SMTP_USER (no se cambia para preservar SPF/DKIM). Default: "CodeControl".
+   */
+  fromName?: string;
+  /**
+   * Header `Reply-To:` — al responder, el mail del destinatario va a esta
+   * dirección en lugar de al SMTP_USER.
+   */
+  replyTo?: string;
 };
 
 export async function sendEmail(options: EmailOptions) {
   try {
-    const { to, subject, userEmail, template, body, html, text, reason, attachments } = options;
+    const { to, subject, userEmail, template, body, html, text, reason, attachments, fromName, replyTo } = options;
 
     let emailHtml = html;
 
@@ -68,12 +78,14 @@ export async function sendEmail(options: EmailOptions) {
     }
 
     // Configuracion basica del correo
+    const fromDisplay = fromName?.trim() || 'CodeControl';
     const mailOptions: Parameters<typeof transporter.sendMail>[0] = {
-      from: `"CodeControl" <${process.env.SMTP_USER}>`,
+      from: `"${fromDisplay}" <${process.env.SMTP_USER}>`,
       to: to || 'diegodac77@gmail.com',
       subject: subject || 'Mensaje de CodeControl',
       html: emailHtml,
       text: text || (emailHtml ? undefined : ''),
+      ...(replyTo ? { replyTo } : {}),
       ...(attachments && attachments.length > 0 ? { attachments } : {}),
     };
 

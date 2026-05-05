@@ -18,11 +18,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/shared/components/ui/textarea';
 import { toast } from '@/shared/components/ui/use-toast';
 import {
-  createDocumentWithAssignments,
+  prepareHseDocumentCreate,
+  confirmHseDocumentCreate,
+  prepareHseDocumentUpdateUpload,
+  confirmHseDocumentUpdate,
   fetchHseDocTypesOnlyName,
   getAllHierarchicalPositions,
-  updateDocument,
 } from '../actions.server';
+import { storage } from '@/shared/lib/storage';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Cookies from 'js-cookie';
 import { Plus, Upload } from 'lucide-react';
@@ -266,35 +269,56 @@ export function DocumentUploadDialog({
 
   const onSubmit = async (data: DocumentFormValues) => {
     try {
-      const formData = new FormData();
-      formData.append('docs_types', data.docs_types || '');
-      formData.append('title', data.title);
-      formData.append('version', data.version);
-
       const selectedPositions: string[] =
         Array.isArray(data.typeOfEmployee) && data.typeOfEmployee.length > 0
           ? data.typeOfEmployee
           : positions.map((p) => p.value);
 
-      formData.append('typeOfEmployee', JSON.stringify(selectedPositions));
-
-      // Add tags to form data - ensure we always send an array, even if empty
       const tagsToSend = Array.isArray(data.tags) ? data.tags : [];
-      formData.append('tags', JSON.stringify(tagsToSend));
-
-      if (data.expiry_date) formData.append('expiry_date', data.expiry_date);
-      if (data.description) formData.append('description', data.description);
+      const isNewFile = data.file instanceof File && data.file.size > 0;
 
       if (mode === 'edit' && documentId) {
-        formData.append('documentId', documentId);
+        let newFilePath: string | undefined;
+        let uploadedBucket: 'documents-hse' | undefined;
 
-        if (data.file instanceof File) {
-          formData.append('file', data.file);
+        if (isNewFile) {
+          const file = data.file as File;
+          const prep = await prepareHseDocumentUpdateUpload({ companyId, fileName: file.name });
+          if (!prep.ok) throw new Error(prep.error);
+
+          try {
+            await storage.upload(prep.bucket, prep.path, file, {
+              cacheControl: '3600',
+              upsert: true,
+              contentType: file.type,
+            });
+          } catch (e: any) {
+            throw new Error('No se pudo subir el archivo: ' + (e?.message || ''));
+          }
+          newFilePath = prep.path;
+          uploadedBucket = prep.bucket;
         }
 
-        const result = await updateDocument(formData, companyId); // ✅ companyId solo como argumento
+        const result = await confirmHseDocumentUpdate({
+          companyId,
+          documentId,
+          newFilePath: newFilePath || null,
+          fileName: isNewFile ? (data.file as File).name : null,
+          fileSize: isNewFile ? (data.file as File).size : null,
+          fileType: isNewFile ? (data.file as File).type : null,
+          docs_types: data.docs_types || '',
+          title: data.title,
+          version: data.version,
+          description: data.description || null,
+          expiry_date: data.expiry_date || null,
+          typeOfEmployee: selectedPositions,
+          tags: tagsToSend,
+        });
 
         if (!result?.success) {
+          if (newFilePath && uploadedBucket) {
+            try { await storage.remove(uploadedBucket, [newFilePath]); } catch {}
+          }
           throw new Error('No se pudo actualizar el documento');
         }
 
@@ -308,12 +332,48 @@ export function DocumentUploadDialog({
         if (!data.file || !(data.file instanceof File)) {
           throw new Error('Por favor, selecciona un archivo válido');
         }
+        const file = data.file as File;
 
-        formData.append('file', data.file);
-       
-        const result = await createDocumentWithAssignments(formData, companyId);
+        const prep = await prepareHseDocumentCreate({
+          companyId,
+          title: data.title,
+          fileName: file.name,
+        });
+        if (!prep.ok) throw new Error(prep.error);
+
+        try {
+          await storage.upload(prep.bucket, prep.path, file, {
+            cacheControl: '3600',
+            upsert: true,
+            contentType: file.type,
+          });
+        } catch (e: any) {
+          throw new Error('No se pudo subir el archivo: ' + (e?.message || ''));
+        }
+
+        let result;
+        try {
+          result = await confirmHseDocumentCreate({
+            companyId,
+            path: prep.path,
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type,
+            docs_types: data.docs_types || '',
+            title: data.title,
+            version: data.version,
+            description: data.description || null,
+            expiry_date: data.expiry_date || null,
+            typeOfEmployee: selectedPositions,
+            tags: tagsToSend,
+          });
+        } catch (confirmErr) {
+          try { await storage.remove(prep.bucket, [prep.path]); } catch {}
+          throw confirmErr;
+        }
 
         if (!result?.success) {
+          try { await storage.remove(prep.bucket, [prep.path]); } catch {}
           throw new Error('No se pudo crear el documento');
         }
 

@@ -12,6 +12,7 @@ import {
   mapWithdrawalOrderDataForPDF,
 } from '@/modules/warehouse/features/withdrawals/shared/pdf';
 import type { CompanyPDFData } from '@/shared/actions/export';
+import { resolveEmailSender } from '@/modules/settings/features/pdf/email-resolver';
 
 export async function GET(
   request: NextRequest,
@@ -81,13 +82,14 @@ export async function GET(
       );
     }
 
+    const sender = await resolveEmailSender(companyId, 'withdrawal-order');
     const companyData: CompanyPDFData = {
       name: company.company_name,
       logo: company.company_logo ?? null,
       cuit: company.company_cuit ?? '',
       address: company.address ?? '',
       phone: company.contact_phone ?? '',
-      email: company.contact_email ?? '',
+      email: sender.replyTo ?? company.contact_email ?? '',
     };
 
     // Configuración de PDF de la empresa (header/footer/firma)

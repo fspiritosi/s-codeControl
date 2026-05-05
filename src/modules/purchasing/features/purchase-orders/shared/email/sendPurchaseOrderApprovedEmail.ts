@@ -2,6 +2,7 @@
 
 import { prisma } from '@/shared/lib/prisma';
 import { sendEmail } from '@/shared/actions/email';
+import { resolveEmailSender } from '@/modules/settings/features/pdf/email-resolver';
 import { purchaseOrderApprovedEmail } from '@/shared/lib/email-templates/purchase-order-approved';
 import {
   generatePurchaseOrderPDF,
@@ -72,13 +73,14 @@ export async function sendPurchaseOrderApprovedEmail(
 
     const companyName = company?.company_name || 'Su proveedor';
 
+    const sender = await resolveEmailSender(companyId, 'purchase-order');
     const companyData: CompanyPDFData = {
       name: companyName,
       logo: company?.company_logo ?? null,
       cuit: company?.company_cuit ?? '',
       address: company?.address ?? '',
       phone: company?.contact_phone ?? '',
-      email: company?.contact_email ?? '',
+      email: sender.replyTo ?? company?.contact_email ?? '',
     };
 
     const pdfSettingsRow = await prisma.pdf_settings.findUnique({
@@ -116,6 +118,8 @@ export async function sendPurchaseOrderApprovedEmail(
       to: supplierEmail,
       subject,
       html,
+      fromName: sender.fromName,
+      replyTo: sender.replyTo ?? undefined,
       attachments: [
         {
           filename: fileName,
