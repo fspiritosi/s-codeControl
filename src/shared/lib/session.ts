@@ -10,6 +10,7 @@ export interface Session {
   company: { id: string; company_name: string | null; owner_id: string | null } | null;
   role: string | null;
   modules: string[];
+  permissions: string[];
   companies: any[];
   sharedCompanies: any[];
 }
@@ -20,6 +21,7 @@ const EMPTY_SESSION: Session = {
   company: null,
   role: null,
   modules: [],
+  permissions: [],
   companies: [],
   sharedCompanies: [],
 };
@@ -63,17 +65,46 @@ const buildSessionForUser = unstable_cache(
 
     let role: string | null = null;
     let modules: string[] = [];
+    let permissions: string[] = [];
 
     if (activeCompanyId) {
       const isOwner = companies?.some((c: any) => c.id === activeCompanyId);
       if (isOwner) {
         role = 'owner';
+        // Owner virtual: todos los permisos del sistema.
+        const allPerms = await prisma.permissions.findMany({ select: { code: true } });
+        permissions = allPerms.map((p) => p.code);
       } else {
         const shared = sharedEntries?.find(
           (e: any) => e.company_id === activeCompanyId || e.company?.id === activeCompanyId
         );
         role = shared?.role || null;
         modules = (shared?.modules as string[]) || [];
+
+        // Unión de permisos sobre todos los roles asignados en user_roles.
+        const rolePerms = await prisma.role_permissions.findMany({
+          where: {
+            role: {
+              user_roles: {
+                some: { profile_id: userId, company_id: activeCompanyId },
+              },
+            },
+          },
+          select: { permission: { select: { code: true } } },
+          distinct: ['permission_id'],
+        });
+        permissions = rolePerms.map((r) => r.permission.code);
+
+        // Fallback de coexistencia: si todavía no se migró a user_roles,
+        // resolver permisos por el rol legacy en share_company_users.role.
+        if (permissions.length === 0 && role) {
+          const legacyPerms = await prisma.role_permissions.findMany({
+            where: { role: { name: role } },
+            select: { permission: { select: { code: true } } },
+            distinct: ['permission_id'],
+          });
+          permissions = legacyPerms.map((r) => r.permission.code);
+        }
       }
     }
 
@@ -95,6 +126,7 @@ const buildSessionForUser = unstable_cache(
       company: company ? { id: company.id, company_name: company.company_name, owner_id: company.owner_id } : null,
       role,
       modules,
+      permissions,
       companies: safeCompanies,
       sharedCompanies: safeShared,
     };

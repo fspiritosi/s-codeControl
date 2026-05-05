@@ -20,50 +20,44 @@ import SideBar from '@/shared/components/layout/Sidebar';
 
 const sizeIcons = 24;
 
-const ALL_LINKS = [
-  { name: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard size={sizeIcons} />, position: 1 },
-  { name: 'Empresa', href: '/dashboard/company/actualCompany', icon: <Building2 size={sizeIcons} />, position: 2 },
-  { name: 'Empleados', href: '/dashboard/employee', icon: <Users size={sizeIcons} />, position: 3 },
-  { name: 'Equipos', href: '/dashboard/equipment', icon: <Truck size={sizeIcons} />, position: 4 },
-  { name: 'Documentación', href: '/dashboard/document', icon: <FileText size={sizeIcons} />, position: 5 },
-  { name: 'Almacenes', href: '/dashboard/warehouse', icon: <Warehouse size={sizeIcons} />, position: 6 },
-  { name: 'Compras', href: '/dashboard/purchasing', icon: <ShoppingCart size={sizeIcons} />, position: 7 },
-  { name: 'Tesorería', href: '/dashboard/treasury', icon: <Wallet size={sizeIcons} />, position: 8 },
-  { name: 'Mantenimiento', href: '/dashboard/maintenance', icon: <Wrench size={sizeIcons} />, position: 9 },
-  { name: 'Formularios', href: '/dashboard/forms', icon: <ClipboardList size={sizeIcons} />, position: 10 },
-  { name: 'Operaciones', href: '/dashboard/operations', icon: <Calendar size={sizeIcons} />, position: 11 },
-  { name: 'HSE', href: '/dashboard/hse', icon: <GraduationCap size={sizeIcons} />, position: 12 },
-  { name: 'Configuración', href: '/dashboard/settings', icon: <Settings size={sizeIcons} />, position: 13 },
-  { name: 'Ayuda', href: '/dashboard/help', icon: <HelpCircle size={sizeIcons} />, position: 14 },
+interface SideLink {
+  name: string;
+  href: string;
+  icon: React.ReactNode;
+  position: number;
+  /** Permiso requerido para mostrar el link. null = siempre visible. */
+  requiredPermission: string | null;
+}
+
+const ALL_LINKS: SideLink[] = [
+  { name: 'Dashboard',     href: '/dashboard',                          icon: <LayoutDashboard size={sizeIcons} />, position: 1,  requiredPermission: null },
+  { name: 'Empresa',       href: '/dashboard/company/actualCompany',    icon: <Building2 size={sizeIcons} />,       position: 2,  requiredPermission: 'empresa.view' },
+  { name: 'Empleados',     href: '/dashboard/employee',                 icon: <Users size={sizeIcons} />,           position: 3,  requiredPermission: 'empleados.view' },
+  { name: 'Equipos',       href: '/dashboard/equipment',                icon: <Truck size={sizeIcons} />,           position: 4,  requiredPermission: 'equipos.view' },
+  { name: 'Documentación', href: '/dashboard/document',                 icon: <FileText size={sizeIcons} />,        position: 5,  requiredPermission: 'documentacion.view' },
+  { name: 'Almacenes',     href: '/dashboard/warehouse',                icon: <Warehouse size={sizeIcons} />,       position: 6,  requiredPermission: 'almacenes.view' },
+  { name: 'Compras',       href: '/dashboard/purchasing',               icon: <ShoppingCart size={sizeIcons} />,    position: 7,  requiredPermission: 'compras.view' },
+  { name: 'Tesorería',     href: '/dashboard/treasury',                 icon: <Wallet size={sizeIcons} />,          position: 8,  requiredPermission: 'tesoreria.view' },
+  { name: 'Mantenimiento', href: '/dashboard/maintenance',              icon: <Wrench size={sizeIcons} />,          position: 9,  requiredPermission: 'mantenimiento.view' },
+  { name: 'Formularios',   href: '/dashboard/forms',                    icon: <ClipboardList size={sizeIcons} />,   position: 10, requiredPermission: 'formularios.view' },
+  { name: 'Operaciones',   href: '/dashboard/operations',               icon: <Calendar size={sizeIcons} />,        position: 11, requiredPermission: 'operaciones.view' },
+  { name: 'HSE',           href: '/dashboard/hse',                      icon: <GraduationCap size={sizeIcons} />,   position: 12, requiredPermission: null },
+  { name: 'Configuración', href: '/dashboard/settings',                 icon: <Settings size={sizeIcons} />,        position: 13, requiredPermission: null },
+  { name: 'Ayuda',         href: '/dashboard/help',                     icon: <HelpCircle size={sizeIcons} />,      position: 14, requiredPermission: 'ayuda.view' },
 ];
 
-const GUEST_HIDDEN = new Set(['empresa', 'operaciones', 'mantenimiento', 'documentacion', 'configuracion', 'tesoreria']);
-
-// M\u00f3dulos siempre visibles para no-Invitados (no dependen de los m\u00f3dulos contratados)
-const ALWAYS_VISIBLE = new Set(['configuracion']);
-
-const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-
-function filterLinksByRole(role: string | null, modules: string[]) {
+function filterLinks(role: string | null, permissions: string[]): SideLink[] {
+  // owner: shortcut (también podríamos verificar permissions, pero el set ya es completo).
   if (role === 'owner') return ALL_LINKS;
 
-  if (role === 'Invitado') {
-    return ALL_LINKS.filter((link) => !GUEST_HIDDEN.has(normalize(link.name)));
-  }
-
-  if (modules.length === 0) return ALL_LINKS;
-
-  const modulesNorm = new Set(modules.map(normalize));
-  return ALL_LINKS.filter(
-    (link) => modulesNorm.has(normalize(link.name)) || ALWAYS_VISIBLE.has(normalize(link.name))
-  );
+  const granted = new Set(permissions);
+  return ALL_LINKS.filter((link) => link.requiredPermission === null || granted.has(link.requiredPermission));
 }
 
 async function SideBarContainer() {
   const session = await getSession();
 
-  const links = filterLinksByRole(session.role, session.modules)
-    .sort((a, b) => a.position - b.position);
+  const links = filterLinks(session.role, session.permissions).sort((a, b) => a.position - b.position);
 
   return (
     <>
@@ -73,6 +67,7 @@ async function SideBarContainer() {
         share_company_users={session.sharedCompanies}
         credentialUser={session.profile ? [session.profile] : []}
         role={session.role || ''}
+        permissions={session.permissions}
       />
       <SideBar key={session.role} role={session.role || ''} Allinks={links} />
     </>
