@@ -12,10 +12,12 @@ import {
   PURCHASE_INVOICE_ATTACHMENT_MAX_BYTES,
 } from '@/modules/purchasing/shared/validators';
 import {
-  attachPurchaseInvoiceDocument,
+  preparePurchaseInvoiceAttachmentUpload,
+  confirmPurchaseInvoiceAttachmentUpload,
   getPurchaseInvoiceAttachmentSignedUrl,
   removePurchaseInvoiceDocument,
 } from '@/modules/purchasing/features/invoices/list/actions.server';
+import { storage } from '@/shared/lib/storage';
 
 interface Props {
   invoiceId: string;
@@ -62,18 +64,47 @@ export default function InvoiceAttachmentSection({ invoiceId, documentKey }: Pro
       return;
     }
     setBusy(true);
-    const formData = new FormData();
-    formData.append('invoiceId', invoiceId);
-    formData.append('file', file);
-    const res = await attachPurchaseInvoiceDocument(formData);
-    setBusy(false);
-    if (res.error) {
-      toast.error(res.error);
-    } else {
+    try {
+      const prep = await preparePurchaseInvoiceAttachmentUpload({
+        invoiceId,
+        fileName: file.name,
+        mime: file.type,
+        size: file.size,
+      });
+      if (!prep.ok) {
+        toast.error(prep.error);
+        return;
+      }
+
+      try {
+        await storage.upload(prep.bucket, prep.path, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: file.type,
+        });
+      } catch (uploadErr: any) {
+        toast.error(uploadErr?.message || 'Error al subir el archivo');
+        return;
+      }
+
+      const confirmRes = await confirmPurchaseInvoiceAttachmentUpload({
+        invoiceId,
+        path: prep.path,
+      });
+      if (confirmRes.error) {
+        try {
+          await storage.remove(prep.bucket, [prep.path]);
+        } catch {}
+        toast.error(confirmRes.error);
+        return;
+      }
+
       toast.success(documentKey ? 'Adjunto reemplazado' : 'Adjunto cargado');
       router.refresh();
+    } finally {
+      setBusy(false);
+      e.target.value = '';
     }
-    e.target.value = '';
   };
 
   const handleRemove = async () => {

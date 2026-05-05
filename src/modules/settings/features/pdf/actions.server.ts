@@ -68,27 +68,27 @@ export async function upsertPdfSettings(input: {
 }
 
 /**
- * Sube la imagen de firma a storage y devuelve la URL pública.
+ * Paso 1: calcula el path de la firma. El cliente sube directo a Supabase.
  * Reusa el bucket `logo` con prefijo `pdf-signatures/{company_id}.{ext}`.
  */
-export async function uploadSignatureImage(formData: FormData) {
+export async function prepareSignatureUpload(input: { fileName: string }) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return { ok: false as const, error: 'No company selected' };
+
+  const ext = input.fileName.split('.').pop()?.toLowerCase() || 'png';
+  const path = `pdf-signatures/${companyId}.${ext}`;
+  return { ok: true as const, path, bucket: 'logo' as const };
+}
+
+/**
+ * Paso 2: confirma el upload — actualiza pdf_settings con la URL pública.
+ */
+export async function confirmSignatureUpload(input: { path: string }) {
   const { companyId } = await getActionContext();
   if (!companyId) return { error: 'No company selected', url: null };
 
-  const file = formData.get('file') as File | null;
-  if (!file) return { error: 'Falta el archivo', url: null };
-
   try {
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
-    const path = `pdf-signatures/${companyId}.${ext}`;
-
-    await storageServer.upload('logo', path, file, {
-      cacheControl: '3600',
-      upsert: true,
-      contentType: file.type || `image/${ext}`,
-    });
-
-    const url = await storageServer.getPublicUrl('logo', path);
+    const url = await storageServer.getPublicUrl('logo', input.path);
 
     await prisma.pdf_settings.upsert({
       where: { company_id: companyId },
@@ -102,7 +102,7 @@ export async function uploadSignatureImage(formData: FormData) {
     revalidatePath('/dashboard/settings');
     return { error: null, url };
   } catch (error) {
-    console.error('Error uploading signature:', error);
+    console.error('Error confirming signature:', error);
     return { error: error instanceof Error ? error.message : String(error), url: null };
   }
 }
