@@ -2,6 +2,9 @@
 
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
+import { requirePermission } from '@/shared/lib/permissions';
+import { createNotification } from '@/shared/services/notifications';
+import { fetchCurrentUser } from '@/shared/actions/auth';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
 import {
   parseSearchParams,
@@ -273,6 +276,7 @@ export async function createPurchaseOrder(data: {
   if (!companyId) throw new Error('No company selected');
 
   try {
+    await requirePermission('compras.create');
     // Auto-generate number
     const lastOrder = await prisma.purchase_orders.findFirst({
       where: { company_id: companyId },
@@ -331,11 +335,27 @@ export async function createPurchaseOrder(data: {
 
 export async function submitForApproval(id: string) {
   try {
-    await prisma.purchase_orders.update({
+    await requirePermission('compras.update');
+    const order = await prisma.purchase_orders.update({
       where: { id, status: 'DRAFT' },
       data: { status: 'PENDING_APPROVAL' },
+      include: { supplier: { select: { business_name: true } } },
     });
     revalidatePath('/dashboard/purchasing');
+
+    // Notificar a usuarios con compras.approve (excepto al que envió).
+    const user = await fetchCurrentUser();
+    await createNotification({
+      typeCode: 'purchase_orders.pending_approval',
+      companyId: order.company_id,
+      metadata: {
+        number: order.full_number,
+        supplier: order.supplier?.business_name ?? '',
+        purchaseOrderId: order.id,
+      },
+      excludeProfileIds: user?.id ? [user.id] : [],
+    });
+
     return { error: null };
   } catch (error) {
     console.error('Error submitting for approval:', error);
@@ -353,6 +373,7 @@ type ApprovePurchaseOrderResult = {
 
 export async function approvePurchaseOrder(id: string): Promise<ApprovePurchaseOrderResult> {
   try {
+    await requirePermission('compras.approve');
     const { companyId } = await getActionContext();
 
     // Solo enviamos mail si la transición efectivamente ocurre (PENDING_APPROVAL -> APPROVED).
@@ -396,6 +417,7 @@ export async function approvePurchaseOrder(id: string): Promise<ApprovePurchaseO
 
 export async function rejectPurchaseOrder(id: string) {
   try {
+    await requirePermission('compras.approve');
     await prisma.purchase_orders.update({
       where: { id, status: 'PENDING_APPROVAL' },
       data: { status: 'DRAFT', approved_by: null, approved_at: null },
@@ -410,6 +432,7 @@ export async function rejectPurchaseOrder(id: string) {
 
 export async function cancelPurchaseOrder(id: string) {
   try {
+    await requirePermission('compras.update');
     await prisma.purchase_orders.update({
       where: { id },
       data: { status: 'CANCELLED' },
@@ -424,6 +447,7 @@ export async function cancelPurchaseOrder(id: string) {
 
 export async function deletePurchaseOrder(id: string) {
   try {
+    await requirePermission('compras.delete');
     await prisma.purchase_orders.delete({ where: { id } });
     revalidatePath('/dashboard/purchasing');
     return { error: null };

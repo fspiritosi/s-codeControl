@@ -2664,6 +2664,95 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_recipients: {
+        Row: {
+          created_at: string
+          dismissed_at: string | null
+          notification_id: string
+          profile_id: string
+          read_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          dismissed_at?: string | null
+          notification_id: string
+          profile_id: string
+          read_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          dismissed_at?: string | null
+          notification_id?: string
+          profile_id?: string
+          read_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_recipients_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_recipients_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_types: {
+        Row: {
+          category:
+            | Database["public"]["Enums"]["notification_categories"]
+            | null
+          code: string
+          created_at: string
+          description_template: string | null
+          is_active: boolean
+          is_system: boolean
+          link_template: string | null
+          required_permission_code: string | null
+          title_template: string
+        }
+        Insert: {
+          category?:
+            | Database["public"]["Enums"]["notification_categories"]
+            | null
+          code: string
+          created_at?: string
+          description_template?: string | null
+          is_active?: boolean
+          is_system?: boolean
+          link_template?: string | null
+          required_permission_code?: string | null
+          title_template: string
+        }
+        Update: {
+          category?:
+            | Database["public"]["Enums"]["notification_categories"]
+            | null
+          code?: string
+          created_at?: string
+          description_template?: string | null
+          is_active?: boolean
+          is_system?: boolean
+          link_template?: string | null
+          required_permission_code?: string | null
+          title_template?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_types_required_permission_code_fkey"
+            columns: ["required_permission_code"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           category:
@@ -2671,9 +2760,13 @@ export type Database = {
             | null
           company_id: string | null
           created_at: string | null
+          dedupe_key: string | null
           description: string | null
           document_id: string | null
           id: string
+          link: string | null
+          metadata: Json
+          notification_type_code: string | null
           reference: string | null
           title: string | null
         }
@@ -2683,9 +2776,13 @@ export type Database = {
             | null
           company_id?: string | null
           created_at?: string | null
+          dedupe_key?: string | null
           description?: string | null
           document_id?: string | null
           id?: string
+          link?: string | null
+          metadata?: Json
+          notification_type_code?: string | null
           reference?: string | null
           title?: string | null
         }
@@ -2695,13 +2792,24 @@ export type Database = {
             | null
           company_id?: string | null
           created_at?: string | null
+          dedupe_key?: string | null
           description?: string | null
           document_id?: string | null
           id?: string
+          link?: string | null
+          metadata?: Json
+          notification_type_code?: string | null
           reference?: string | null
           title?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "notifications_notification_type_code_fkey"
+            columns: ["notification_type_code"]
+            isOneToOne: false
+            referencedRelation: "notification_types"
+            referencedColumns: ["code"]
+          },
           {
             foreignKeyName: "public_notifications_company_id_fkey"
             columns: ["company_id"]
@@ -2936,6 +3044,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      permissions: {
+        Row: {
+          action: string
+          code: string
+          created_at: string
+          description: string | null
+          id: number
+          is_system: boolean
+          module: string | null
+        }
+        Insert: {
+          action: string
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: number
+          is_system?: boolean
+          module?: string | null
+        }
+        Update: {
+          action?: string
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: number
+          is_system?: boolean
+          module?: string | null
+        }
+        Relationships: []
       }
       products: {
         Row: {
@@ -3764,29 +3902,82 @@ export type Database = {
           },
         ]
       }
-      roles: {
+      role_permissions: {
         Row: {
           created_at: string
-          id: number
-          intern: boolean | null
-          is_active: boolean | null
-          name: string
+          permission_id: number
+          role_id: number
         }
         Insert: {
           created_at?: string
-          id?: number
-          intern?: boolean | null
-          is_active?: boolean | null
-          name: string
+          permission_id: number
+          role_id: number
         }
         Update: {
           created_at?: string
+          permission_id?: number
+          role_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "role_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          description: string | null
+          id: number
+          intern: boolean | null
+          is_active: boolean | null
+          is_system: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
           id?: number
           intern?: boolean | null
           is_active?: boolean | null
-          name?: string
+          is_system?: boolean
+          name: string
+          updated_at?: string
         }
-        Relationships: []
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: number
+          intern?: boolean | null
+          is_active?: boolean | null
+          is_system?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       service_items: {
         Row: {
@@ -4359,6 +4550,59 @@ export type Database = {
           name?: string | null
         }
         Relationships: []
+      }
+      user_roles: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          profile_id: string
+          role_id: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          profile_id: string
+          role_id: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          profile_id?: string
+          role_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_roles_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_roles_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_table_preferences: {
         Row: {

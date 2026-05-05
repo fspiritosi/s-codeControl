@@ -23,8 +23,10 @@ import {
 } from '../actions.server';
 import { getPdfSettings } from '@/modules/settings/features/pdf/actions.server';
 import { PdfSettingsForm } from '@/modules/settings/features/pdf/components/PdfSettingsForm';
+import RolesAndPermissionsSection from '@/modules/settings/features/roles/components/RolesAndPermissionsSection';
+import { can } from '@/shared/lib/permissions';
 
-const VALID_SECTIONS = ['employees', 'pdf'] as const;
+const VALID_SECTIONS = ['employees', 'pdf', 'roles'] as const;
 type Section = (typeof VALID_SECTIONS)[number];
 
 interface Props {
@@ -35,6 +37,8 @@ export default async function SettingsView({ currentSection }: Props) {
   const section: Section = (VALID_SECTIONS as readonly string[]).includes(currentSection ?? '')
     ? (currentSection as Section)
     : 'employees';
+
+  const canViewRoles = await can('roles.view');
 
   return (
     <section className="space-y-4">
@@ -47,6 +51,7 @@ export default async function SettingsView({ currentSection }: Props) {
         <UrlTabsList>
           <UrlTabsTrigger value="employees">Empleados</UrlTabsTrigger>
           <UrlTabsTrigger value="pdf">PDF</UrlTabsTrigger>
+          {canViewRoles && <UrlTabsTrigger value="roles">Roles y permisos</UrlTabsTrigger>}
         </UrlTabsList>
 
         <UrlTabsContent value="employees">
@@ -56,6 +61,12 @@ export default async function SettingsView({ currentSection }: Props) {
         <UrlTabsContent value="pdf">
           {section === 'pdf' && <PdfSection />}
         </UrlTabsContent>
+
+        {canViewRoles && (
+          <UrlTabsContent value="roles">
+            {section === 'roles' && <RolesAndPermissionsSection />}
+          </UrlTabsContent>
+        )}
       </UrlTabs>
     </section>
   );

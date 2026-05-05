@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import { useAuthStore } from './authStore';
 import { useCompanyStore } from './companyStore';
+import { usePermissionsStore } from './permissionsStore';
 import Cookies from 'js-cookie';
 
 type AuthUser = { id: string; email?: string; role?: string; [key: string]: any } | null;
@@ -14,12 +15,14 @@ export default function InitState({
   share_company_users,
   credentialUser,
   role,
+  permissions = [],
 }: {
   user: AuthUser;
   companies: any;
   share_company_users: any;
   credentialUser: any;
   role: string;
+  permissions?: string[];
 }) {
   const initState = useRef(false);
   const prevRole = useRef<string | undefined>(undefined);
@@ -31,6 +34,12 @@ export default function InitState({
     }
     prevRole.current = role;
   }, [role]);
+
+  // Mantener permissions sincronizado en cada render del layout
+  // (cambian al cambiar de empresa activa).
+  useEffect(() => {
+    usePermissionsStore.getState().setPermissions(permissions);
+  }, [permissions]);
 
   useEffect(() => {
     if (!initState.current) {

@@ -23,11 +23,16 @@ import { MoreHorizontal, Eye, Send, CheckCircle, XCircle, Ban, Trash2 } from 'lu
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { usePermissions } from '@/shared/hooks/usePermissions';
 
 function ActionsCell({ row }: { row: any }) {
   const router = useRouter();
   const status = row.original.status;
   const id = row.original.id;
+  const { can } = usePermissions();
+  const canUpdate  = can('compras.update');
+  const canDelete  = can('compras.delete');
+  const canApprove = can('compras.approve');
 
   const handleAction = (action: () => Promise<{ error: string | null }>, successMsg: string) => {
     toast.promise(
@@ -85,12 +90,12 @@ function ActionsCell({ row }: { row: any }) {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        {status === 'DRAFT' && (
+        {status === 'DRAFT' && canUpdate && (
           <DropdownMenuItem onClick={() => handleAction(() => submitForApproval(id), 'Enviada a aprobación')}>
             <Send className="size-4 mr-2" /> Enviar a aprobación
           </DropdownMenuItem>
         )}
-        {status === 'PENDING_APPROVAL' && (
+        {status === 'PENDING_APPROVAL' && canApprove && (
           <>
             <DropdownMenuItem onClick={handleApprove}>
               <CheckCircle className="size-4 mr-2" /> Aprobar
@@ -100,12 +105,12 @@ function ActionsCell({ row }: { row: any }) {
             </DropdownMenuItem>
           </>
         )}
-        {['DRAFT', 'PENDING_APPROVAL', 'APPROVED'].includes(status) && (
+        {['DRAFT', 'PENDING_APPROVAL', 'APPROVED'].includes(status) && canUpdate && (
           <DropdownMenuItem onClick={() => handleAction(() => cancelPurchaseOrder(id), 'Orden cancelada')} className="text-destructive">
             <Ban className="size-4 mr-2" /> Cancelar
           </DropdownMenuItem>
         )}
-        {status === 'DRAFT' && (
+        {status === 'DRAFT' && canDelete && (
           <DropdownMenuItem onClick={() => handleAction(() => deletePurchaseOrder(id), 'Orden eliminada')} className="text-destructive">
             <Trash2 className="size-4 mr-2" /> Eliminar
           </DropdownMenuItem>
