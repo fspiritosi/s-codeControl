@@ -73,13 +73,14 @@ export async function sendPurchaseOrderApprovedEmail(
 
     const companyName = company?.company_name || 'Su proveedor';
 
+    const sender = await resolveEmailSender(companyId, 'purchase-order');
     const companyData: CompanyPDFData = {
       name: companyName,
       logo: company?.company_logo ?? null,
       cuit: company?.company_cuit ?? '',
       address: company?.address ?? '',
       phone: company?.contact_phone ?? '',
-      email: company?.contact_email ?? '',
+      email: sender.replyTo ?? company?.contact_email ?? '',
     };
 
     const pdfSettingsRow = await prisma.pdf_settings.findUnique({
@@ -112,8 +113,6 @@ export async function sendPurchaseOrderApprovedEmail(
       orderDate: purchaseOrder.issue_date,
       companyName,
     });
-
-    const sender = await resolveEmailSender(companyId, 'purchase-order');
 
     const result = await sendEmail({
       to: supplierEmail,

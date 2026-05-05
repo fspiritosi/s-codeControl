@@ -85,11 +85,12 @@ export function PdfEmailSettingsForm({ initial, companyContactEmail }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Emails de respuesta por PDF</CardTitle>
+        <CardTitle>Email por tipo de PDF</CardTitle>
         <CardDescription>
-          Para cada tipo de PDF podés configurar un email de respuesta y un nombre visible.
-          Cuando el destinatario responda, el correo va a este email. Si no configurás uno,
-          se usa el email de contacto de la empresa.
+          Para cada tipo de PDF podés configurar un email distinto. Aparece en el
+          encabezado del PDF (datos del emisor) y se usa como Reply-To cuando el
+          documento se envía por mail. Si no configurás uno, se usa el email de
+          contacto de la empresa.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -100,8 +101,8 @@ export function PdfEmailSettingsForm({ initial, companyContactEmail }: Props) {
                 <h4 className="font-medium">{row.label}</h4>
                 <p className="text-xs text-muted-foreground">
                   {row.hasOverride
-                    ? `Reply-To: ${row.from_email}`
-                    : `Reply-To por defecto: ${companyContactEmail ?? 'sin email de empresa'}`}
+                    ? `Email: ${row.from_email}`
+                    : `Por defecto: ${companyContactEmail ?? 'sin email de empresa'}`}
                 </p>
               </div>
               {row.hasOverride && (

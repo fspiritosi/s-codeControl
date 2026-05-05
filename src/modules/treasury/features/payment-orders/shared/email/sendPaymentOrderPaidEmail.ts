@@ -88,13 +88,14 @@ export async function sendPaymentOrderPaidEmail(
     });
     const companyName = company?.company_name || 'Su cliente';
 
+    const sender = await resolveEmailSender(companyId, 'payment-order');
     const companyData: CompanyPDFData = {
       name: companyName,
       logo: company?.company_logo ?? null,
       cuit: company?.company_cuit ?? '',
       address: company?.address ?? '',
       phone: company?.contact_phone ?? '',
-      email: company?.contact_email ?? '',
+      email: sender.replyTo ?? company?.contact_email ?? '',
     };
 
     const pdfSettingsRow = await prisma.pdf_settings.findUnique({
@@ -175,8 +176,6 @@ export async function sendPaymentOrderPaidEmail(
       })),
       companyName,
     });
-
-    const sender = await resolveEmailSender(companyId, 'payment-order');
 
     const result = await sendEmail({
       to: supplierEmail,

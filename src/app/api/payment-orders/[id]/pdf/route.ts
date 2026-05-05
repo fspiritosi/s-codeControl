@@ -14,6 +14,7 @@ import {
 } from '@/modules/treasury/features/payment-orders/shared/pdf';
 import type { PaymentOrderPDFData } from '@/modules/treasury/features/payment-orders/shared/pdf';
 import type { CompanyPDFData } from '@/shared/actions/export';
+import { resolveEmailSender } from '@/modules/settings/features/pdf/email-resolver';
 
 export async function GET(
   _request: NextRequest,
@@ -88,13 +89,14 @@ export async function GET(
         contact_email: true,
       },
     });
+    const sender = await resolveEmailSender(companyId, 'payment-order');
     const companyData: CompanyPDFData = {
       name: company?.company_name ?? '',
       logo: company?.company_logo ?? null,
       cuit: company?.company_cuit ?? '',
       address: company?.address ?? '',
       phone: company?.contact_phone ?? '',
-      email: company?.contact_email ?? '',
+      email: sender.replyTo ?? company?.contact_email ?? '',
     };
 
     const pdfSettingsRow = await prisma.pdf_settings.findUnique({

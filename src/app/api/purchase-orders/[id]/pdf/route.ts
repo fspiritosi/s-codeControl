@@ -17,6 +17,7 @@ import type {
   LinkedDocumentSection,
 } from '@/shared/components/pdf/linked-documents-types';
 import type { CompanyPDFData } from '@/shared/actions/export';
+import { resolveEmailSender } from '@/modules/settings/features/pdf/email-resolver';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -160,13 +161,15 @@ export async function GET(
       );
     }
 
+    // Email del header del PDF: override por pdf_key con fallback a company.contact_email.
+    const sender = await resolveEmailSender(companyId, 'purchase-order');
     const companyData: CompanyPDFData = {
       name: company.company_name,
       logo: company.company_logo ?? null,
       cuit: company.company_cuit ?? '',
       address: company.address ?? '',
       phone: company.contact_phone ?? '',
-      email: company.contact_email ?? '',
+      email: sender.replyTo ?? company.contact_email ?? '',
     };
 
     // Construir documentos vinculados si se solicitaron
