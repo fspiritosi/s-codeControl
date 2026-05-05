@@ -31,6 +31,7 @@ export function PaymentOrderActions({ id, status }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [confirmPaidOpen, setConfirmPaidOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   const handleConfirm = () => {
     startTransition(async () => {
@@ -45,6 +46,7 @@ export function PaymentOrderActions({ id, status }: Props) {
   };
 
   const handleCancel = () => {
+    setCancelOpen(false);
     startTransition(async () => {
       const result = await cancelPaymentOrder(id);
       if (result.error) {
@@ -114,11 +116,33 @@ export function PaymentOrderActions({ id, status }: Props) {
         </Button>
       )}
       {!isTerminal && (
-        <Button size="sm" variant="destructive" onClick={handleCancel} disabled={isPending}>
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={() => setCancelOpen(true)}
+          disabled={isPending}
+        >
           <XCircle className="size-4 mr-1" />
           Anular
         </Button>
       )}
+
+      <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Anular orden de pago</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vas a anular la OP. Las facturas asociadas quedarán liberadas para nuevas
+              OPs. Si la OP estaba confirmada, los movimientos de tesorería generados
+              serán revertidos. Esta acción no se puede revertir.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancel}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={confirmPaidOpen} onOpenChange={setConfirmPaidOpen}>
         <AlertDialogContent>

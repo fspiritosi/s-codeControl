@@ -2078,6 +2078,7 @@ model cash_movements {
   description         String
   reference           String?
   purchase_invoice_id String?            @db.Uuid
+  payment_order_id    String?            @db.Uuid
   created_by          String
   created_at          DateTime           @default(now()) @db.Timestamptz
   updated_at          DateTime           @default(now()) @updatedAt @db.Timestamptz
@@ -2086,10 +2087,12 @@ model cash_movements {
   cash_register    cash_registers         @relation(fields: [cash_register_id], references: [id], onDelete: Cascade)
   company          company                @relation(fields: [company_id], references: [id], onDelete: Cascade)
   purchase_invoice purchase_invoices?     @relation(fields: [purchase_invoice_id], references: [id])
+  payment_order    payment_orders?        @relation(fields: [payment_order_id], references: [id], onDelete: SetNull)
 
   @@index([company_id, date])
   @@index([session_id, type])
   @@index([cash_register_id, date])
+  @@index([payment_order_id])
 }
 
 // ============================================================
@@ -2180,6 +2183,7 @@ model payment_orders {
   items          payment_order_items[]
   payments       payment_order_payments[]
   bank_movements bank_movements[]
+  cash_movements cash_movements[]
 
   @@unique([company_id, number])
   @@index([company_id, status])

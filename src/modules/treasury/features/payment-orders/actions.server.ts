@@ -494,6 +494,7 @@ export async function confirmPaymentOrder(id: string) {
               amount,
               description: `Orden de pago ${order.full_number}`,
               reference: p.reference || order.full_number,
+              payment_order_id: order.id,
               created_by: user.id!,
             },
           });
@@ -656,28 +657,114 @@ export async function markPaymentOrderAsPaid(id: string): Promise<{
   }
 }
 
+/**
+ * Anula una OP. Si estaba en CONFIRMED, genera asientos de reverso (no borra
+ * los originales) para preservar audit trail:
+ *  - bank_movements: TRANSFER_OUT → TRANSFER_IN, DEBIT → DEPOSIT, repone balance.
+ *  - cash_movements: EXPENSE → INCOME en la sesión OPEN actual de la caja
+ *    (si no hay sesión abierta, falla con mensaje claro).
+ * Las OP en estado PAID son terminales y no se pueden anular.
+ */
 export async function cancelPaymentOrder(id: string) {
   const { companyId } = await getActionContext();
   if (!companyId) return { error: 'No company selected' };
 
+  const user = await fetchCurrentUser();
+  if (!user?.id) return { error: 'No autenticado' };
+
   try {
     const order = await prisma.payment_orders.findFirst({
       where: { id, company_id: companyId },
-      select: { id: true, status: true },
+      select: { id: true, status: true, full_number: true },
     });
     if (!order) return { error: 'Orden no encontrada' };
     if (order.status === 'CANCELLED') return { error: 'Ya está anulada' };
+    if (order.status === 'PAID') return { error: 'No se puede anular una OP pagada' };
 
-    await prisma.payment_orders.update({
-      where: { id },
-      data: { status: 'CANCELLED' },
+    const wasConfirmed = order.status === 'CONFIRMED';
+
+    await prisma.$transaction(async (tx) => {
+      if (wasConfirmed) {
+        // Reverso de bank_movements asociados a la OP
+        const bankMovements = await tx.bank_movements.findMany({
+          where: { payment_order_id: order.id },
+        });
+        for (const bm of bankMovements) {
+          const reverseType: 'TRANSFER_IN' | 'DEPOSIT' =
+            bm.type === 'TRANSFER_OUT' ? 'TRANSFER_IN' : 'DEPOSIT';
+
+          await tx.bank_movements.create({
+            data: {
+              bank_account_id: bm.bank_account_id,
+              company_id: companyId,
+              type: reverseType,
+              amount: bm.amount,
+              date: new Date(),
+              description: `Anulación OP ${order.full_number}`,
+              reference: `REV-${bm.reference || order.full_number}`,
+              payment_order_id: order.id,
+              created_by: user.id!,
+            },
+          });
+
+          const account = await tx.bank_accounts.findUnique({
+            where: { id: bm.bank_account_id },
+            select: { balance: true },
+          });
+          if (account) {
+            await tx.bank_accounts.update({
+              where: { id: bm.bank_account_id },
+              data: { balance: Number(account.balance) + Number(bm.amount) },
+            });
+          }
+        }
+
+        // Reverso de cash_movements asociados a la OP
+        const cashMovements = await tx.cash_movements.findMany({
+          where: { payment_order_id: order.id, type: 'EXPENSE' },
+        });
+        for (const cm of cashMovements) {
+          const openSession = await tx.cash_register_sessions.findFirst({
+            where: { cash_register_id: cm.cash_register_id, status: 'OPEN' },
+            select: { id: true },
+          });
+          if (!openSession) {
+            const register = await tx.cash_registers.findUnique({
+              where: { id: cm.cash_register_id },
+              select: { code: true },
+            });
+            throw new Error(
+              `No hay sesión de caja abierta${register?.code ? ` en ${register.code}` : ''} para revertir el movimiento de efectivo. Abrí la caja antes de anular esta OP.`
+            );
+          }
+          await tx.cash_movements.create({
+            data: {
+              session_id: openSession.id,
+              cash_register_id: cm.cash_register_id,
+              company_id: companyId,
+              type: 'INCOME',
+              amount: cm.amount,
+              description: `Anulación OP ${order.full_number}`,
+              reference: `REV-${cm.reference || order.full_number}`,
+              payment_order_id: order.id,
+              created_by: user.id!,
+            },
+          });
+        }
+      }
+
+      await tx.payment_orders.update({
+        where: { id },
+        data: { status: 'CANCELLED' },
+      });
     });
 
     revalidatePath('/dashboard/treasury');
     revalidatePath(`/dashboard/treasury/payment-orders/${id}`);
+    revalidatePath('/dashboard/treasury/pending-balances');
     return { error: null };
   } catch (error) {
     console.error('Error cancelling payment order:', error);
-    return { error: String(error) };
+    return { error: error instanceof Error ? error.message : String(error) };
   }
 }
