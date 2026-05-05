@@ -11,6 +11,8 @@ import CashRegistersList from '@/modules/treasury/features/cash-registers/compon
 import BankAccountsList from '@/modules/treasury/features/bank-accounts/components/BankAccountsList';
 import ChecksList from '@/modules/treasury/features/checks/components/ChecksList';
 import PaymentOrdersList from '@/modules/treasury/features/payment-orders/components/PaymentOrdersList';
+import Link from 'next/link';
+import { Button } from '@/shared/components/ui/button';
 
 const VALID_TABS = ['cash-registers', 'bank-accounts', 'checks', 'payment-orders'] as const;
 type TreasuryTab = (typeof VALID_TABS)[number];
@@ -40,12 +42,17 @@ export default async function TreasuryPage({
   return (
     <div className="p-6">
       <UrlTabs value={tab} paramName="tab" baseUrl="/dashboard/treasury">
-        <UrlTabsList>
-          <UrlTabsTrigger value="cash-registers">Cajas</UrlTabsTrigger>
-          <UrlTabsTrigger value="bank-accounts">Cuentas bancarias</UrlTabsTrigger>
-          <UrlTabsTrigger value="checks">Cheques</UrlTabsTrigger>
-          <UrlTabsTrigger value="payment-orders">Órdenes de pago</UrlTabsTrigger>
-        </UrlTabsList>
+        <div className="flex items-center justify-between">
+          <UrlTabsList>
+            <UrlTabsTrigger value="cash-registers">Cajas</UrlTabsTrigger>
+            <UrlTabsTrigger value="bank-accounts">Cuentas bancarias</UrlTabsTrigger>
+            <UrlTabsTrigger value="checks">Cheques</UrlTabsTrigger>
+            <UrlTabsTrigger value="payment-orders">Órdenes de pago</UrlTabsTrigger>
+          </UrlTabsList>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/dashboard/treasury/pending-balances">Saldos Pendientes</Link>
+          </Button>
+        </div>
 
         <UrlTabsContent value="cash-registers">
           <Card>

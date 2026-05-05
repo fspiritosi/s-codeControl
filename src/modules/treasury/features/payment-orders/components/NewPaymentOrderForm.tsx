@@ -192,7 +192,35 @@ export function NewPaymentOrderForm({
   const [isPending, startTransition] = useTransition();
   const isEdit = !!initialData;
 
-  const [supplierId, setSupplierId] = useState<string>(initialData?.supplier_id ?? '');
+  const [pendingDraft, setPendingDraft] = useState<{
+    supplierId: string;
+    items: Array<{ invoiceId: string; amount: number }>;
+  } | null>(() => {
+    if (typeof window === 'undefined' || initialData) return null;
+    try {
+      const raw = window.sessionStorage.getItem('pending-balances-draft');
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as {
+        supplierId?: string;
+        items?: Array<{ invoiceId?: string; amount?: number }>;
+      };
+      if (!parsed.supplierId || !Array.isArray(parsed.items) || parsed.items.length === 0) {
+        return null;
+      }
+      const items = parsed.items
+        .filter((it) => typeof it.invoiceId === 'string' && typeof it.amount === 'number')
+        .map((it) => ({ invoiceId: it.invoiceId as string, amount: it.amount as number }));
+      if (items.length === 0) return null;
+      return { supplierId: parsed.supplierId, items };
+    } catch {
+      return null;
+    }
+  });
+  const [draftApplied, setDraftApplied] = useState(false);
+
+  const [supplierId, setSupplierId] = useState<string>(
+    initialData?.supplier_id ?? pendingDraft?.supplierId ?? ''
+  );
   const [date, setDate] = useState(initialData?.date ?? today());
   const [scheduledDate, setScheduledDate] = useState<string>(
     initialData?.scheduled_payment_date ?? ''
@@ -239,6 +267,49 @@ export function NewPaymentOrderForm({
       cancelled = true;
     };
   }, [supplierId]);
+
+  useEffect(() => {
+    if (isEdit) return;
+    if (!pendingDraft || draftApplied) return;
+    if (!pendingInvoices) return;
+    if (supplierId !== pendingDraft.supplierId) return;
+
+    const draftItems: ItemDraft[] = [];
+    let totalAmount = 0;
+    let appliedCount = 0;
+
+    for (const draftIt of pendingDraft.items) {
+      const inv = pendingInvoices.find((i) => i.id === draftIt.invoiceId);
+      if (!inv) continue;
+      const amount = Math.min(draftIt.amount, inv.remaining);
+      if (amount <= 0) continue;
+      draftItems.push({
+        invoice_id: inv.id,
+        invoice_label: inv.full_number,
+        amount: amount.toFixed(2),
+      });
+      totalAmount += amount;
+      appliedCount += 1;
+    }
+
+    if (draftItems.length > 0) {
+      setItems(draftItems);
+      const totalStr = (Math.round(totalAmount * 100) / 100).toFixed(2);
+      setPayments((prev) => {
+        if (prev.length === 0) return [{ ...emptyPayment(), amount: totalStr }];
+        return prev.map((p, i) => (i === 0 ? { ...p, amount: totalStr } : { ...p, amount: '' }));
+      });
+      toast.success(`Cargados ${appliedCount} items desde Saldos Pendientes.`);
+    }
+
+    try {
+      window.sessionStorage.removeItem('pending-balances-draft');
+    } catch {
+      // ignore
+    }
+    setPendingDraft(null);
+    setDraftApplied(true);
+  }, [pendingInvoices, pendingDraft, draftApplied, supplierId, isEdit]);
 
   const handleSupplierChange = (newId: string) => {
     if (newId !== supplierId) {
