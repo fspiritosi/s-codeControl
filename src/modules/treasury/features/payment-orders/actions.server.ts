@@ -4,6 +4,7 @@ import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
 import { fetchCurrentUser } from '@/shared/actions/auth';
 import { requirePermission } from '@/shared/lib/permissions';
+import { createNotification } from '@/shared/services/notifications';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
 import {
   parseSearchParams,
@@ -308,6 +309,18 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
     });
 
     revalidatePath('/dashboard/treasury');
+
+    // Notificar a usuarios con tesoreria.confirm (excepto al creador).
+    await createNotification({
+      typeCode: 'payment_orders.pending_confirmation',
+      companyId,
+      metadata: {
+        number: fullNumber,
+        paymentOrderId: order.id,
+      },
+      excludeProfileIds: [user.id],
+    });
+
     return { data: order, error: null };
   } catch (error) {
     console.error('Error creating payment order:', error);

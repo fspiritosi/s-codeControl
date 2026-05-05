@@ -1,9 +1,11 @@
 import NavBar from '@/shared/components/layout/NavBar';
+import NotificationsAlert from '@/shared/components/layout/NotificationsAlert';
 import SideBarContainer from '@/shared/components/layout/SideBarContainer';
 import { getSession } from '@/shared/lib/session';
 import { getRouteRule } from '@/shared/lib/route-permissions';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
 import '../globals.css';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -33,7 +35,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <NavBar />
       </div>
       <div className="overflow-y-auto">
-        <div className="animate-fade-in px-6  pb-6">{children}</div>
+        <div className="animate-fade-in px-6 pb-6 space-y-4">
+          <Suspense fallback={null}>
+            <NotificationsAlert />
+          </Suspense>
+          {children}
+        </div>
       </div>
     </div>
   );

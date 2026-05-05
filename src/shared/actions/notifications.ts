@@ -1,5 +1,45 @@
 'use server';
 import { prisma } from '@/shared/lib/prisma';
+import {
+  dismissAllNotifications,
+  dismissNotification,
+  listNotificationsForCurrentUser,
+  markAllNotificationsAsRead,
+  markNotificationAsRead,
+  unreadNotificationsCountForCurrentUser,
+} from '@/shared/services/notifications';
+
+// ============================================================
+// Sistema nuevo (Fase 6) — recipientes por usuario
+// ============================================================
+
+export async function getMyNotifications(companyId?: string, onlyUnread = false) {
+  return listNotificationsForCurrentUser({ companyId, onlyUnread });
+}
+
+export async function getMyUnreadCount(companyId?: string) {
+  return unreadNotificationsCountForCurrentUser(companyId);
+}
+
+export async function markAsRead(notificationId: string) {
+  return markNotificationAsRead(notificationId);
+}
+
+export async function markAllAsRead(companyId?: string) {
+  return markAllNotificationsAsRead(companyId);
+}
+
+export async function dismiss(notificationId: string) {
+  return dismissNotification(notificationId);
+}
+
+export async function dismissAll(companyId?: string) {
+  return dismissAllNotifications(companyId);
+}
+
+// ============================================================
+// Compatibilidad con UI legacy (uiStore)
+// ============================================================
 
 export const fetchNotificationsByCompany = async (companyId: string) => {
   if (!companyId) return [];
