@@ -16,7 +16,8 @@ import {
 } from '@/shared/components/ui/dialog';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
-import { uploadPendingDocument } from '../actions.server';
+import { preparePendingDocumentUpload, confirmPendingDocumentUpload } from '../actions.server';
+import { storage } from '@/shared/lib/storage';
 
 interface Props {
   rowId: string;
@@ -57,18 +58,47 @@ export function UploadPendingDocumentDialog({
     }
 
     startTransition(async () => {
-      const fd = new FormData();
-      fd.set('rowId', rowId);
-      fd.set('kind', kind);
-      fd.set('file', file);
-      if (validity) fd.set('validity', new Date(validity).toISOString());
-      if (period) fd.set('period', period);
+      const validityISO = validity ? new Date(validity).toISOString() : null;
+      const periodValue = period || null;
 
-      const result = await uploadPendingDocument(fd);
-      if (!result.ok) {
-        toast.error(result.error || 'Error al cargar el documento');
+      const prep = await preparePendingDocumentUpload({
+        rowId,
+        kind,
+        fileName: file.name,
+        validityISO,
+        period: periodValue,
+      });
+      if (!prep.ok) {
+        toast.error(prep.error || 'Error al preparar la carga');
         return;
       }
+
+      try {
+        await storage.upload(prep.bucket, prep.path, file, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: file.type,
+        });
+      } catch (e: any) {
+        toast.error(e?.message || 'Error al subir el archivo');
+        return;
+      }
+
+      const confirmRes = await confirmPendingDocumentUpload({
+        rowId,
+        kind,
+        path: prep.path,
+        validityISO,
+        period: periodValue,
+      });
+      if (!confirmRes.ok) {
+        try {
+          await storage.remove(prep.bucket, [prep.path]);
+        } catch {}
+        toast.error(confirmRes.error || 'Error al confirmar la carga');
+        return;
+      }
+
       toast.success('Documento cargado correctamente');
       setOpen(false);
       setFile(null);

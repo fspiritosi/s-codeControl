@@ -9,7 +9,12 @@ import {
   PURCHASE_INVOICE_ATTACHMENT_MAX_BYTES,
 } from '@/modules/purchasing/shared/validators';
 import { VOUCHER_TYPE_LABELS } from '@/modules/purchasing/shared/types';
-import { createPurchaseInvoice } from '@/modules/purchasing/features/invoices/list/actions.server';
+import {
+  createPurchaseInvoice,
+  preparePurchaseInvoiceAttachmentUpload,
+  confirmPurchaseInvoiceAttachmentUpload,
+} from '@/modules/purchasing/features/invoices/list/actions.server';
+import { storage } from '@/shared/lib/storage';
 import {
   getOrdersForInvoicing,
   getPurchaseOrderLinesForInvoicingBulk,
@@ -198,9 +203,37 @@ export default function PurchaseInvoiceForm({ suppliers, products }: Props) {
         notes: values.notes,
         purchase_order_ids: values.purchase_order_ids || [],
         lines,
-        attachment: attachment || undefined,
       } as any);
       if (result.error) throw new Error(result.error);
+
+      if (attachment && result.data?.id) {
+        const invoiceId = result.data.id;
+        const prep = await preparePurchaseInvoiceAttachmentUpload({
+          invoiceId,
+          fileName: attachment.name,
+          mime: attachment.type,
+          size: attachment.size,
+        });
+        if (prep.ok) {
+          try {
+            await storage.upload(prep.bucket, prep.path, attachment, {
+              cacheControl: '3600',
+              upsert: false,
+              contentType: attachment.type,
+            });
+            const conf = await confirmPurchaseInvoiceAttachmentUpload({ invoiceId, path: prep.path });
+            if (conf.error) {
+              try { await storage.remove(prep.bucket, [prep.path]); } catch {}
+              toast.warning('Factura creada, pero falló la carga del adjunto. Reintentá desde el detalle.');
+            }
+          } catch {
+            toast.warning('Factura creada, pero falló la carga del adjunto. Reintentá desde el detalle.');
+          }
+        } else {
+          toast.warning(`Factura creada, pero el adjunto fue rechazado: ${prep.error}`);
+        }
+      }
+
       router.push('/dashboard/purchasing?tab=invoices'); router.refresh();
     }, { loading: 'Creando factura...', success: 'Factura creada', error: (e) => e?.message || 'Error' });
   };

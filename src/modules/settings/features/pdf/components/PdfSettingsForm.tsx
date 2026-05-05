@@ -25,9 +25,11 @@ import {
 
 import {
   upsertPdfSettings,
-  uploadSignatureImage,
+  prepareSignatureUpload,
+  confirmSignatureUpload,
   removeSignatureImage,
 } from '../actions.server';
+import { storage } from '@/shared/lib/storage';
 import { SIGNABLE_PDF_KEYS, type PdfSettingsData } from '../types';
 
 interface Props {
@@ -71,11 +73,29 @@ export function PdfSettingsForm({ initial }: Props) {
       return;
     }
     startUpload(async () => {
-      const fd = new FormData();
-      fd.set('file', file);
-      const result = await uploadSignatureImage(fd);
+      const prep = await prepareSignatureUpload({ fileName: file.name });
+      if (!prep.ok) {
+        toast.error('Error al preparar la carga', { description: prep.error });
+        return;
+      }
+
+      try {
+        await storage.upload(prep.bucket, prep.path, file, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: file.type || 'image/png',
+        });
+      } catch (e: any) {
+        toast.error('Error al subir la firma', { description: e?.message });
+        return;
+      }
+
+      const result = await confirmSignatureUpload({ path: prep.path });
       if (result.error) {
-        toast.error('Error al subir la firma', { description: result.error });
+        try {
+          await storage.remove(prep.bucket, [prep.path]);
+        } catch {}
+        toast.error('Error al confirmar la firma', { description: result.error });
         return;
       }
       toast.success('Firma cargada');
