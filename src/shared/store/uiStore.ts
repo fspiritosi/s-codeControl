@@ -26,7 +26,7 @@ export const useUiStore = create<UiState>((set, get) => ({
     const companyId = useCompanyStore.getState().actualCompany?.id;
     if (!companyId) return;
 
-    const notifications = (await fetchNotificationsByCompany(companyId)) as Notifications[];
+    const notifications = (await fetchNotificationsByCompany(companyId)) as unknown as Notifications[];
     set({ notifications: notifications ?? [] });
   },
 
