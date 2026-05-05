@@ -3,6 +3,7 @@
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
 import { fetchCurrentUser } from '@/shared/actions/auth';
+import { requirePermission } from '@/shared/lib/permissions';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
 import {
   parseSearchParams,
@@ -233,6 +234,7 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
   }
 
   try {
+    await requirePermission('tesoreria.create');
     const totalAmount = parsed.data.items.reduce((acc, i) => acc + parseFloat(i.amount), 0);
 
     // Validar que cada supplier_payment_method_id pertenezca al supplier de la OP
@@ -336,6 +338,7 @@ export async function updatePaymentOrder(id: string, data: PaymentOrderFormData)
   }
 
   try {
+    await requirePermission('tesoreria.update');
     const totalAmount = parsed.data.items.reduce((acc, i) => acc + parseFloat(i.amount), 0);
 
     const supplierMethodIds = parsed.data.payments
@@ -427,6 +430,7 @@ export async function confirmPaymentOrder(id: string) {
   if (!user?.id) return { error: 'No autenticado' };
 
   try {
+    await requirePermission('tesoreria.confirm');
     const order = await prisma.payment_orders.findFirst({
       where: { id, company_id: companyId },
       include: { payments: true },
@@ -575,6 +579,7 @@ export async function markPaymentOrderAsPaid(id: string): Promise<{
   if (!user?.id) return { ok: false, error: 'No autenticado' };
 
   try {
+    await requirePermission('tesoreria.pay');
     const order = await prisma.payment_orders.findFirst({
       where: { id, company_id: companyId },
       select: { id: true, status: true, items: { select: { invoice_id: true } } },
@@ -673,6 +678,7 @@ export async function cancelPaymentOrder(id: string) {
   if (!user?.id) return { error: 'No autenticado' };
 
   try {
+    await requirePermission('tesoreria.update');
     const order = await prisma.payment_orders.findFirst({
       where: { id, company_id: companyId },
       select: { id: true, status: true, full_number: true },

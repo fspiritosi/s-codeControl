@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import BackButton from '@/shared/components/common/BackButton';
 import { PurchaseOrderPDFButton } from './PurchaseOrderPDFButton';
 import { PriceReviewButton } from '@/modules/purchasing/shared/price-review/components/PriceReviewButton';
+import { usePermissions } from '@/shared/hooks/usePermissions';
 
 interface Props {
   order: any;
@@ -26,6 +27,9 @@ interface Props {
 
 export default function PurchaseOrderDetail({ order }: Props) {
   const router = useRouter();
+  const { can } = usePermissions();
+  const canUpdate  = can('compras.update');
+  const canApprove = can('compras.approve');
 
   const handleAction = (action: () => Promise<{ error: string | null }>, successMsg: string) => {
     toast.promise(
@@ -91,12 +95,12 @@ export default function PurchaseOrderDetail({ order }: Props) {
           {(status === 'DRAFT' || status === 'PENDING_APPROVAL') && (
             <PriceReviewButton documentId={order.id} type="order" />
           )}
-          {status === 'DRAFT' && (
+          {status === 'DRAFT' && canUpdate && (
             <Button size="sm" onClick={() => handleAction(() => submitForApproval(order.id), 'Enviada a aprobación')}>
               <Send className="size-4 mr-1" /> Enviar a aprobación
             </Button>
           )}
-          {status === 'PENDING_APPROVAL' && (
+          {status === 'PENDING_APPROVAL' && canApprove && (
             <>
               <Button size="sm" onClick={handleApprove}>
                 <CheckCircle className="size-4 mr-1" /> Aprobar
@@ -106,7 +110,7 @@ export default function PurchaseOrderDetail({ order }: Props) {
               </Button>
             </>
           )}
-          {['DRAFT', 'PENDING_APPROVAL', 'APPROVED'].includes(status) && (
+          {['DRAFT', 'PENDING_APPROVAL', 'APPROVED'].includes(status) && canUpdate && (
             <Button size="sm" variant="destructive" onClick={() => handleAction(() => cancelPurchaseOrder(order.id), 'Cancelada')}>
               <Ban className="size-4 mr-1" /> Cancelar
             </Button>

@@ -21,6 +21,7 @@ import {
   confirmPaymentOrder,
   markPaymentOrderAsPaid,
 } from '../actions.server';
+import { usePermissions } from '@/shared/hooks/usePermissions';
 
 interface Props {
   id: string;
@@ -32,6 +33,10 @@ export function PaymentOrderActions({ id, status }: Props) {
   const [isPending, startTransition] = useTransition();
   const [confirmPaidOpen, setConfirmPaidOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const { can } = usePermissions();
+  const canEdit    = can('tesoreria.update');
+  const canConfirm = can('tesoreria.confirm');
+  const canPay     = can('tesoreria.pay');
 
   const handleConfirm = () => {
     startTransition(async () => {
@@ -93,19 +98,23 @@ export function PaymentOrderActions({ id, status }: Props) {
       </Button>
       {status === 'DRAFT' && (
         <>
-          <Button size="sm" variant="outline" asChild>
-            <Link href={`/dashboard/treasury/payment-orders/${id}/edit`}>
-              <Pencil className="size-4 mr-1" />
-              Editar
-            </Link>
-          </Button>
-          <Button size="sm" onClick={handleConfirm} disabled={isPending}>
-            <CheckCircle className="size-4 mr-1" />
-            Confirmar
-          </Button>
+          {canEdit && (
+            <Button size="sm" variant="outline" asChild>
+              <Link href={`/dashboard/treasury/payment-orders/${id}/edit`}>
+                <Pencil className="size-4 mr-1" />
+                Editar
+              </Link>
+            </Button>
+          )}
+          {canConfirm && (
+            <Button size="sm" onClick={handleConfirm} disabled={isPending}>
+              <CheckCircle className="size-4 mr-1" />
+              Confirmar
+            </Button>
+          )}
         </>
       )}
-      {status === 'CONFIRMED' && (
+      {status === 'CONFIRMED' && canPay && (
         <Button
           size="sm"
           onClick={() => setConfirmPaidOpen(true)}
@@ -115,7 +124,7 @@ export function PaymentOrderActions({ id, status }: Props) {
           Marcar como Pagada
         </Button>
       )}
-      {!isTerminal && (
+      {!isTerminal && canEdit && (
         <Button
           size="sm"
           variant="destructive"
