@@ -1,9 +1,13 @@
 import { getSuppliersForOrder } from '../actions.server';
 import { getAllCashRegisters } from '../../cash-registers/actions.server';
 import { getAllBankAccounts } from '../../bank-accounts/actions.server';
-import { NewPaymentOrderForm } from './NewPaymentOrderForm';
+import { NewPaymentOrderForm, type PaymentOrderEditData } from './NewPaymentOrderForm';
 
-export async function NewPaymentOrderShell() {
+interface ShellProps {
+  initialData?: PaymentOrderEditData;
+}
+
+export async function NewPaymentOrderShell({ initialData }: ShellProps = {}) {
   const [suppliers, cashRegisters, bankAccounts] = await Promise.all([
     getSuppliersForOrder(),
     getAllCashRegisters(),
@@ -28,6 +32,7 @@ export async function NewPaymentOrderShell() {
         bank_name: a.bank_name,
         account_number: a.account_number,
       }))}
+      initialData={initialData}
     />
   );
 }

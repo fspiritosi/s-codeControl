@@ -123,6 +123,13 @@ export const PAYMENT_ORDER_STATUS_LABELS = {
   CANCELLED: 'Anulada',
 } as const;
 
+export const PAYMENT_ORDER_STATUSES = [
+  'DRAFT',
+  'CONFIRMED',
+  'PAID',
+  'CANCELLED',
+] as const satisfies ReadonlyArray<keyof typeof PAYMENT_ORDER_STATUS_LABELS>;
+
 export const CHECK_TYPE_LABELS = {
   OWN: 'Propio',
   THIRD_PARTY: 'Tercero',

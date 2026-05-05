@@ -14,7 +14,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/shared/components/ui/alert-dialog';
-import { BadgeCheck, CheckCircle, Download, XCircle } from 'lucide-react';
+import Link from 'next/link';
+import { BadgeCheck, CheckCircle, Download, Pencil, XCircle } from 'lucide-react';
 import {
   cancelPaymentOrder,
   confirmPaymentOrder,
@@ -30,6 +31,7 @@ export function PaymentOrderActions({ id, status }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [confirmPaidOpen, setConfirmPaidOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   const handleConfirm = () => {
     startTransition(async () => {
@@ -44,6 +46,7 @@ export function PaymentOrderActions({ id, status }: Props) {
   };
 
   const handleCancel = () => {
+    setCancelOpen(false);
     startTransition(async () => {
       const result = await cancelPaymentOrder(id);
       if (result.error) {
@@ -89,10 +92,18 @@ export function PaymentOrderActions({ id, status }: Props) {
         </a>
       </Button>
       {status === 'DRAFT' && (
-        <Button size="sm" onClick={handleConfirm} disabled={isPending}>
-          <CheckCircle className="size-4 mr-1" />
-          Confirmar
-        </Button>
+        <>
+          <Button size="sm" variant="outline" asChild>
+            <Link href={`/dashboard/treasury/payment-orders/${id}/edit`}>
+              <Pencil className="size-4 mr-1" />
+              Editar
+            </Link>
+          </Button>
+          <Button size="sm" onClick={handleConfirm} disabled={isPending}>
+            <CheckCircle className="size-4 mr-1" />
+            Confirmar
+          </Button>
+        </>
       )}
       {status === 'CONFIRMED' && (
         <Button
@@ -105,11 +116,33 @@ export function PaymentOrderActions({ id, status }: Props) {
         </Button>
       )}
       {!isTerminal && (
-        <Button size="sm" variant="destructive" onClick={handleCancel} disabled={isPending}>
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={() => setCancelOpen(true)}
+          disabled={isPending}
+        >
           <XCircle className="size-4 mr-1" />
           Anular
         </Button>
       )}
+
+      <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Anular orden de pago</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vas a anular la OP. Las facturas asociadas quedarán liberadas para nuevas
+              OPs. Si la OP estaba confirmada, los movimientos de tesorería generados
+              serán revertidos. Esta acción no se puede revertir.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancel}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={confirmPaidOpen} onOpenChange={setConfirmPaidOpen}>
         <AlertDialogContent>

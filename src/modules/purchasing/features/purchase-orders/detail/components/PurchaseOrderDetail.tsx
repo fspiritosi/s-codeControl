@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import BackButton from '@/shared/components/common/BackButton';
 import { PurchaseOrderPDFButton } from './PurchaseOrderPDFButton';
+import { PriceReviewButton } from '@/modules/purchasing/shared/price-review/components/PriceReviewButton';
 
 interface Props {
   order: any;
@@ -87,6 +88,9 @@ export default function PurchaseOrderDetail({ order }: Props) {
         </div>
         <div className="flex gap-2">
           <PurchaseOrderPDFButton order={order} />
+          {(status === 'DRAFT' || status === 'PENDING_APPROVAL') && (
+            <PriceReviewButton documentId={order.id} type="order" />
+          )}
           {status === 'DRAFT' && (
             <Button size="sm" onClick={() => handleAction(() => submitForApproval(order.id), 'Enviada a aprobación')}>
               <Send className="size-4 mr-1" /> Enviar a aprobación

@@ -16,6 +16,7 @@ import {
 import {
   PRODUCT_TYPE_LABELS,
   PRODUCT_STATUS_LABELS,
+  PRODUCT_PURCHASE_SALE_TYPE_LABELS,
   type Product,
 } from '@/modules/products/shared/types';
 import { STOCK_MOVEMENT_TYPE_LABELS, WAREHOUSE_TYPE_LABELS } from '@/modules/warehouse/shared/types';
@@ -90,13 +91,37 @@ export default function ProductDetail({ product, stocks, movements, showCompany 
           <CardTitle>Información</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <Field label="Tipo" value={PRODUCT_TYPE_LABELS[product.type] || product.type} />
+          <Field label="Categoría" value={PRODUCT_TYPE_LABELS[product.type] || product.type} />
+          <Field
+            label="Tipo de operación"
+            value={
+              <Badge variant="outline">
+                {PRODUCT_PURCHASE_SALE_TYPE_LABELS[product.purchase_sale_type] || product.purchase_sale_type}
+              </Badge>
+            }
+          />
           <Field label="Unidad" value={product.unit_of_measure} />
           <Field label="Marca" value={product.brand || '-'} />
           <Field label="Código de barras" value={product.barcode || '-'} />
-          <Field label="Costo" value={`$${product.cost_price.toFixed(2)}`} />
-          <Field label="Precio de venta" value={`$${product.sale_price.toFixed(2)}`} />
+          <Field label="Costo (sin IVA)" value={`$${product.cost_price.toFixed(2)}`} />
+          <Field
+            label="Costo (con IVA)"
+            value={`$${(product.cost_price * (1 + product.vat_rate / 100)).toFixed(2)}`}
+          />
           <Field label="IVA" value={`${product.vat_rate}%`} />
+          {product.purchase_sale_type === 'PURCHASE_SALE' && (
+            <>
+              <Field
+                label="% Ganancia"
+                value={product.profit_margin_percent != null ? `${product.profit_margin_percent}%` : '-'}
+              />
+              <Field label="Precio de venta (sin IVA)" value={`$${product.sale_price.toFixed(2)}`} />
+              <Field
+                label="Precio de venta (con IVA)"
+                value={`$${(product.sale_price * (1 + product.vat_rate / 100)).toFixed(2)}`}
+              />
+            </>
+          )}
           <Field
             label="Estado"
             value={

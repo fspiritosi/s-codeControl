@@ -58,6 +58,11 @@ export const paymentOrderSchema = z
   .object({
     supplier_id: z.string().uuid().optional().nullable(),
     date: z.string().min(1, 'Fecha requerida'),
+    scheduled_payment_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha programada inválida')
+      .optional()
+      .nullable(),
     notes: z.string().max(1000).optional().nullable(),
     items: z.array(paymentOrderItemSchema).min(1, 'Al menos un ítem'),
     payments: z.array(paymentOrderPaymentSchema).min(1, 'Al menos un pago'),
