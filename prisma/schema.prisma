@@ -394,6 +394,10 @@ model company {
   // Roles y permisos
   roles      roles[]
   user_roles user_roles[]
+
+  // Retenciones y percepciones
+  tax_types                       tax_types[]
+  retention_certificate_sequences retention_certificate_sequences[]
 }
 
 model pdf_settings {
@@ -1914,16 +1918,17 @@ model purchase_invoices {
   created_at          DateTime                          @default(now()) @db.Timestamptz
   updated_at          DateTime                          @default(now()) @updatedAt @db.Timestamptz
 
-  company             company                       @relation(fields: [company_id], references: [id])
-  supplier            suppliers                     @relation(fields: [supplier_id], references: [id])
-  purchase_order      purchase_orders?              @relation(fields: [purchase_order_id], references: [id])
-  original_invoice    purchase_invoices?            @relation("purchase_invoice_credit_notes", fields: [original_invoice_id], references: [id])
-  credit_notes        purchase_invoices[]           @relation("purchase_invoice_credit_notes")
+  company             company                        @relation(fields: [company_id], references: [id])
+  supplier            suppliers                      @relation(fields: [supplier_id], references: [id])
+  purchase_order      purchase_orders?               @relation(fields: [purchase_order_id], references: [id])
+  original_invoice    purchase_invoices?             @relation("purchase_invoice_credit_notes", fields: [original_invoice_id], references: [id])
+  credit_notes        purchase_invoices[]            @relation("purchase_invoice_credit_notes")
   lines               purchase_invoice_lines[]
   installments        purchase_order_installments[]
   receiving_notes     receiving_notes[]
   payment_order_items payment_order_items[]
   cash_movements      cash_movements[]
+  perceptions         purchase_invoice_perceptions[]
 
   @@unique([company_id, supplier_id, full_number])
   @@index([purchase_order_id])
@@ -2275,6 +2280,8 @@ model payment_orders {
   full_number            String
   date                   DateTime             @db.Timestamptz
   total_amount           Decimal              @db.Decimal(15, 2)
+  retentions_total       Decimal              @default(0) @db.Decimal(15, 2)
+  net_to_pay             Decimal?             @db.Decimal(15, 2)
   notes                  String?
   status                 payment_order_status @default(DRAFT)
   document_url           String?
@@ -2288,16 +2295,110 @@ model payment_orders {
   created_at             DateTime             @default(now()) @db.Timestamptz
   updated_at             DateTime             @default(now()) @updatedAt @db.Timestamptz
 
-  company        company                  @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  supplier       suppliers?               @relation(fields: [supplier_id], references: [id])
+  company        company                    @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  supplier       suppliers?                 @relation(fields: [supplier_id], references: [id])
   items          payment_order_items[]
   payments       payment_order_payments[]
   bank_movements bank_movements[]
   cash_movements cash_movements[]
+  retentions     payment_order_retentions[]
 
   @@unique([company_id, number])
   @@index([company_id, status])
   @@index([supplier_id, status])
+}
+
+// ============================================================
+// RETENCIONES Y PERCEPCIONES (Fase 1)
+// ============================================================
+
+enum tax_kind {
+  RETENTION
+  PERCEPTION
+}
+
+enum tax_scope {
+  NATIONAL
+  PROVINCIAL
+  MUNICIPAL
+}
+
+enum tax_calculation_base {
+  NET
+  TOTAL
+  VAT
+}
+
+model tax_types {
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id         String               @db.Uuid
+  code               String
+  name               String
+  kind               tax_kind
+  scope              tax_scope            @default(NATIONAL)
+  jurisdiction       String?
+  calculation_base   tax_calculation_base @default(NET)
+  default_rate       Decimal              @default(0) @db.Decimal(8, 4)
+  min_taxable_amount Decimal?             @db.Decimal(15, 2)
+  is_active          Boolean              @default(true)
+  notes              String?
+  created_at         DateTime             @default(now()) @db.Timestamptz
+  updated_at         DateTime             @default(now()) @updatedAt @db.Timestamptz
+
+  company             company                          @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  invoice_perceptions purchase_invoice_perceptions[]
+  order_retentions    payment_order_retentions[]
+  certificate_seq     retention_certificate_sequences[]
+
+  @@unique([company_id, code], map: "tax_types_company_code_unique")
+}
+
+model purchase_invoice_perceptions {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoice_id  String   @db.Uuid
+  tax_type_id String   @db.Uuid
+  base_amount Decimal  @db.Decimal(15, 2)
+  rate        Decimal  @db.Decimal(8, 4)
+  amount      Decimal  @db.Decimal(15, 2)
+  notes       String?
+  created_at  DateTime @default(now()) @db.Timestamptz
+
+  invoice  purchase_invoices @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  tax_type tax_types         @relation(fields: [tax_type_id], references: [id])
+
+  @@index([invoice_id])
+  @@index([tax_type_id])
+}
+
+model payment_order_retentions {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payment_order_id   String   @db.Uuid
+  tax_type_id        String   @db.Uuid
+  base_amount        Decimal  @db.Decimal(15, 2)
+  rate               Decimal  @db.Decimal(8, 4)
+  amount             Decimal  @db.Decimal(15, 2)
+  certificate_number String?
+  certificate_url    String?
+  notes              String?
+  created_at         DateTime @default(now()) @db.Timestamptz
+
+  payment_order payment_orders @relation(fields: [payment_order_id], references: [id], onDelete: Cascade)
+  tax_type      tax_types      @relation(fields: [tax_type_id], references: [id])
+
+  @@index([payment_order_id])
+  @@index([tax_type_id])
+}
+
+model retention_certificate_sequences {
+  company_id  String   @db.Uuid
+  tax_type_id String   @db.Uuid
+  last_number Int      @default(0)
+  updated_at  DateTime @default(now()) @db.Timestamptz
+
+  company  company   @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  tax_type tax_types @relation(fields: [tax_type_id], references: [id], onDelete: Cascade)
+
+  @@id([company_id, tax_type_id])
 }
 
 model payment_order_items {

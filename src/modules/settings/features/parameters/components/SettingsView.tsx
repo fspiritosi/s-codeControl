@@ -25,11 +25,12 @@ import { getPdfEmailSettings, getPdfSettings } from '@/modules/settings/features
 import { PdfSettingsForm } from '@/modules/settings/features/pdf/components/PdfSettingsForm';
 import { PdfEmailSettingsForm } from '@/modules/settings/features/pdf/components/PdfEmailSettingsForm';
 import RolesAndPermissionsSection from '@/modules/settings/features/roles/components/RolesAndPermissionsSection';
+import TaxesSection from '@/modules/settings/features/taxes/components/TaxesSection';
 import { can } from '@/shared/lib/permissions';
 import { getSession } from '@/shared/lib/session';
 import { prisma } from '@/shared/lib/prisma';
 
-const VALID_SECTIONS = ['employees', 'pdf', 'roles'] as const;
+const VALID_SECTIONS = ['employees', 'pdf', 'roles', 'taxes'] as const;
 type Section = (typeof VALID_SECTIONS)[number];
 
 interface Props {
@@ -41,7 +42,10 @@ export default async function SettingsView({ currentSection }: Props) {
     ? (currentSection as Section)
     : 'employees';
 
-  const canViewRoles = await can('roles.view');
+  const [canViewRoles, canManageTaxes] = await Promise.all([
+    can('roles.view'),
+    can('empresa.update'),
+  ]);
 
   return (
     <section className="space-y-4">
@@ -54,6 +58,7 @@ export default async function SettingsView({ currentSection }: Props) {
         <UrlTabsList>
           <UrlTabsTrigger value="employees">Empleados</UrlTabsTrigger>
           <UrlTabsTrigger value="pdf">PDF</UrlTabsTrigger>
+          {canManageTaxes && <UrlTabsTrigger value="taxes">Impuestos</UrlTabsTrigger>}
           {canViewRoles && <UrlTabsTrigger value="roles">Roles y permisos</UrlTabsTrigger>}
         </UrlTabsList>
 
@@ -64,6 +69,12 @@ export default async function SettingsView({ currentSection }: Props) {
         <UrlTabsContent value="pdf">
           {section === 'pdf' && <PdfSection />}
         </UrlTabsContent>
+
+        {canManageTaxes && (
+          <UrlTabsContent value="taxes">
+            {section === 'taxes' && <TaxesSection />}
+          </UrlTabsContent>
+        )}
 
         {canViewRoles && (
           <UrlTabsContent value="roles">

@@ -44,7 +44,10 @@ export function PaymentOrderTemplate({ data }: { data: PaymentOrderPDFData }) {
     supplier,
     invoices,
     payments,
+    retentions = [],
     totalAmount,
+    retentionsTotal = 0,
+    netToPay,
     amountInWords,
     pdfSettings,
   } = data;
@@ -201,10 +204,47 @@ export function PaymentOrderTemplate({ data }: { data: PaymentOrderPDFData }) {
           </View>
         ) : null}
 
+        {retentions.length > 0 ? (
+          <View>
+            <Text style={styles.sectionTitle}>Retenciones</Text>
+            <View style={[styles.tableHeader, { paddingVertical: 4 }]}>
+              <Text style={{ flex: 3, fontSize: 9, fontWeight: 'bold' }}>Concepto</Text>
+              <Text style={{ flex: 1, fontSize: 9, fontWeight: 'bold', textAlign: 'right' }}>Base</Text>
+              <Text style={{ flex: 1, fontSize: 9, fontWeight: 'bold', textAlign: 'right' }}>Alícuota</Text>
+              <Text style={{ flex: 1, fontSize: 9, fontWeight: 'bold', textAlign: 'right' }}>Monto</Text>
+            </View>
+            {retentions.map((r, idx) => (
+              <View key={idx} style={[styles.tableRow, { paddingVertical: 3 }]}>
+                <Text style={{ flex: 3, fontSize: 9 }}>
+                  {r.name}
+                  {r.jurisdiction ? ` (${r.jurisdiction})` : ''}
+                  {r.certificateNumber ? ` · Cert. ${r.certificateNumber}` : ''}
+                </Text>
+                <Text style={{ flex: 1, fontSize: 9, textAlign: 'right' }}>{fmtAmount(r.baseAmount)}</Text>
+                <Text style={{ flex: 1, fontSize: 9, textAlign: 'right' }}>{r.rate}%</Text>
+                <Text style={{ flex: 1, fontSize: 9, textAlign: 'right' }}>{fmtAmount(r.amount)}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
         <View style={styles.grandTotal}>
-          <Text>TOTAL ORDEN DE PAGO</Text>
+          <Text>TOTAL FACTURAS</Text>
           <Text>{fmtAmount(totalAmount)}</Text>
         </View>
+
+        {retentionsTotal > 0 && netToPay !== undefined ? (
+          <>
+            <View style={[styles.grandTotal, { backgroundColor: undefined }]}>
+              <Text style={{ fontSize: 10 }}>Retenciones</Text>
+              <Text style={{ fontSize: 10 }}>−{fmtAmount(retentionsTotal)}</Text>
+            </View>
+            <View style={styles.grandTotal}>
+              <Text>NETO A PAGAR</Text>
+              <Text>{fmtAmount(netToPay)}</Text>
+            </View>
+          </>
+        ) : null}
 
         <View style={styles.amountWords}>
           <Text>Son: {amountInWords}</Text>

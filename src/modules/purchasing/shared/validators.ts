@@ -38,6 +38,14 @@ export const purchaseInvoiceLineSchema = z.object({
   order_full_number: z.string().optional().or(z.literal('')),
 });
 
+export const purchaseInvoicePerceptionSchema = z.object({
+  tax_type_id: z.string().uuid('Seleccione un tipo de percepción'),
+  base_amount: z.coerce.number().min(0, 'Base no puede ser negativa'),
+  rate: z.coerce.number().min(0).max(100, 'Alícuota fuera de rango'),
+  amount: z.coerce.number().min(0, 'Monto no puede ser negativo'),
+  notes: z.string().optional().or(z.literal('')),
+});
+
 export const purchaseInvoiceSchema = z.object({
   supplier_id: z.string().uuid('Seleccione un proveedor'),
   voucher_type: z.enum(['FACTURA_A', 'FACTURA_B', 'FACTURA_C', 'NOTA_CREDITO_A', 'NOTA_CREDITO_B', 'NOTA_CREDITO_C', 'NOTA_DEBITO_A', 'NOTA_DEBITO_B', 'NOTA_DEBITO_C', 'RECIBO']),
@@ -50,6 +58,7 @@ export const purchaseInvoiceSchema = z.object({
   purchase_order_id: z.string().uuid().optional().or(z.literal('')),
   purchase_order_ids: z.array(z.string().uuid()).optional().default([]),
   lines: z.array(purchaseInvoiceLineSchema).min(1, 'Debe agregar al menos una línea'),
+  perceptions: z.array(purchaseInvoicePerceptionSchema).optional().default([]),
   attachment: z.any().optional(),
 });
 

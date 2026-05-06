@@ -2,6 +2,8 @@ import { Suspense } from 'react';
 import PageTableSkeleton from '@/shared/components/common/Skeletons/PageTableSkeleton';
 import { PaymentOrderDetail } from '@/modules/treasury/features/payment-orders/components/PaymentOrderDetail';
 
+export const dynamic = 'force-dynamic';
+
 export default async function PaymentOrderDetailPage({
   params,
 }: {

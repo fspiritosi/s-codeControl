@@ -68,10 +68,24 @@ export async function PaymentOrderDetail({ id }: { id: string }) {
         </Card>
         <Card>
           <CardHeader>
-            <CardDescription>Total</CardDescription>
+            <CardDescription>Total facturas</CardDescription>
             <CardTitle className="text-2xl font-mono">
               ${order.total_amount.toFixed(2)}
             </CardTitle>
+            {order.retentions_total > 0 && order.net_to_pay !== null && (
+              <div className="text-xs text-muted-foreground space-y-0.5 mt-1">
+                <div>
+                  Retenciones:{' '}
+                  <span className="font-mono text-amber-600">
+                    −${order.retentions_total.toFixed(2)}
+                  </span>
+                </div>
+                <div>
+                  Neto pagado:{' '}
+                  <span className="font-mono font-semibold">${order.net_to_pay.toFixed(2)}</span>
+                </div>
+              </div>
+            )}
           </CardHeader>
         </Card>
       </div>
@@ -182,6 +196,64 @@ export async function PaymentOrderDetail({ id }: { id: string }) {
           </Table>
         </CardContent>
       </Card>
+
+      {order.retentions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Retenciones</CardTitle>
+            <CardDescription>
+              Montos retenidos al proveedor. Reducen el neto pagado pero cancelan la
+              cuenta corriente por el total de las facturas.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Concepto</TableHead>
+                  <TableHead className="text-right">Base</TableHead>
+                  <TableHead className="text-right">Alícuota</TableHead>
+                  <TableHead className="text-right">Monto</TableHead>
+                  <TableHead>Certificado</TableHead>
+                  <TableHead>Notas</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {order.retentions.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell>
+                      <div className="font-medium">{r.tax_type.name}</div>
+                      {r.tax_type.jurisdiction && (
+                        <div className="text-xs text-muted-foreground">{r.tax_type.jurisdiction}</div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right font-mono">${r.base_amount.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-mono">{r.rate}%</TableCell>
+                    <TableCell className="text-right font-mono font-medium text-amber-600">
+                      ${r.amount.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {r.certificate_number ? (
+                        <a
+                          href={`/api/retention-certificates/${r.id}/pdf`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          {r.certificate_number}
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{r.notes ?? '—'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
       {order.notes && (
         <Card>

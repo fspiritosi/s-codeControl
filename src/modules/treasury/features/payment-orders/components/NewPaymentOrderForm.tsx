@@ -137,6 +137,22 @@ function filterMethodsByPaymentMethod(
   return [];
 }
 
+export interface RetentionDraft {
+  tax_type_id: string;
+  base_amount: string;
+  rate: string;
+  amount: string;
+  notes: string;
+}
+
+interface RetentionTypeOpt {
+  id: string;
+  code: string;
+  name: string;
+  default_rate: number;
+  calculation_base: 'NET' | 'TOTAL' | 'VAT';
+}
+
 export interface PaymentOrderEditData {
   id: string;
   supplier_id: string | null;
@@ -159,12 +175,14 @@ export interface PaymentOrderEditData {
     card_last4: string;
     reference: string;
   }>;
+  retentions?: RetentionDraft[];
 }
 
 interface Props {
   suppliers: Supplier[];
   cashRegisters: CashRegisterOpt[];
   bankAccounts: BankAccountOpt[];
+  retentionTypes: RetentionTypeOpt[];
   initialData?: PaymentOrderEditData;
 }
 
@@ -187,6 +205,7 @@ export function NewPaymentOrderForm({
   suppliers,
   cashRegisters,
   bankAccounts,
+  retentionTypes,
   initialData,
 }: Props) {
   const router = useRouter();
@@ -237,6 +256,7 @@ export function NewPaymentOrderForm({
   const [payments, setPayments] = useState<PaymentDraft[]>(
     initialData?.payments ?? [emptyPayment()]
   );
+  const [retentions, setRetentions] = useState<RetentionDraft[]>(initialData?.retentions ?? []);
 
   useEffect(() => {
     if (!supplierId) {
@@ -331,7 +351,51 @@ export function NewPaymentOrderForm({
     () => payments.reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0),
     [payments]
   );
-  const diff = Math.round((itemsTotal - paymentsTotal) * 100) / 100;
+  const retentionsTotal = useMemo(
+    () => retentions.reduce((acc, r) => acc + (parseFloat(r.amount) || 0), 0),
+    [retentions]
+  );
+  const netToPay = Math.round((itemsTotal - retentionsTotal) * 100) / 100;
+  const diff = Math.round((netToPay - paymentsTotal) * 100) / 100;
+
+  const addRetention = () =>
+    setRetentions((prev) => [
+      ...prev,
+      { tax_type_id: '', base_amount: '', rate: '', amount: '', notes: '' },
+    ]);
+  const removeRetention = (index: number) =>
+    setRetentions((prev) => prev.filter((_, i) => i !== index));
+  const updateRetention = (index: number, patch: Partial<RetentionDraft>) =>
+    setRetentions((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+
+  const handleRetentionTypeChange = (index: number, taxTypeId: string) => {
+    const t = retentionTypes.find((r) => r.id === taxTypeId);
+    if (!t) {
+      updateRetention(index, { tax_type_id: taxTypeId });
+      return;
+    }
+    // Base sugerida: el total de items (deuda al proveedor). El usuario puede editar.
+    const base = Math.round(itemsTotal * 100) / 100;
+    const amount = Math.round(base * (t.default_rate / 100) * 100) / 100;
+    updateRetention(index, {
+      tax_type_id: taxTypeId,
+      base_amount: base.toFixed(2),
+      rate: String(t.default_rate),
+      amount: amount.toFixed(2),
+    });
+  };
+
+  const recalcRetention = (index: number) => {
+    setRetentions((prev) =>
+      prev.map((r, i) => {
+        if (i !== index) return r;
+        const base = parseFloat(r.base_amount) || 0;
+        const rate = parseFloat(r.rate) || 0;
+        const amount = Math.round(base * (rate / 100) * 100) / 100;
+        return { ...r, amount: amount.toFixed(2) };
+      })
+    );
+  };
 
   const addInvoiceItem = (invoice: InvoiceOption) => {
     if (items.some((i) => i.invoice_id === invoice.id)) {
@@ -403,7 +467,11 @@ export function NewPaymentOrderForm({
       return;
     }
     if (Math.abs(diff) >= 0.01) {
-      toast.error('El total de ítems no coincide con el total de pagos');
+      toast.error('El neto a pagar (ítems − retenciones) no coincide con el total de pagos');
+      return;
+    }
+    if (retentions.some((r) => !r.tax_type_id)) {
+      toast.error('Hay una retención sin tipo seleccionado');
       return;
     }
 
@@ -426,6 +494,13 @@ export function NewPaymentOrderForm({
           check_number: p.check_number.trim() || null,
           card_last4: p.card_last4.trim() || null,
           reference: p.reference.trim() || null,
+        })),
+        retentions: retentions.map((r) => ({
+          tax_type_id: r.tax_type_id,
+          base_amount: parseFloat(r.base_amount) || 0,
+          rate: parseFloat(r.rate) || 0,
+          amount: parseFloat(r.amount) || 0,
+          notes: r.notes.trim() || null,
         })),
       };
 
@@ -827,12 +902,137 @@ export function NewPaymentOrderForm({
       </Card>
 
       <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Retenciones</CardTitle>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={addRetention}
+              disabled={retentionTypes.length === 0 || itemsTotal <= 0}
+            >
+              <Plus className="size-4 mr-1" /> Agregar retención
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {retentionTypes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No hay tipos de retención configurados. Andá a Configuración → Impuestos para
+              crear los que necesites.
+            </p>
+          ) : retentions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Si corresponde aplicar retenciones (Ganancias, IIBB, IVA, SUSS, etc.), agregalas.
+              Reducen el neto a pagar al proveedor.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[260px]">Tipo</TableHead>
+                  <TableHead className="w-[140px]">Base</TableHead>
+                  <TableHead className="w-[100px]">Alícuota %</TableHead>
+                  <TableHead className="w-[140px] text-right">Monto</TableHead>
+                  <TableHead>Notas</TableHead>
+                  <TableHead className="w-[40px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {retentions.map((r, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell>
+                      <Select
+                        value={r.tax_type_id}
+                        onValueChange={(v) => handleRetentionTypeChange(idx, v)}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="Seleccionar" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {retentionTypes.map((t) => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        className="h-8 text-sm"
+                        type="number"
+                        step="0.01"
+                        value={r.base_amount}
+                        onChange={(e) => updateRetention(idx, { base_amount: e.target.value })}
+                        onBlur={() => recalcRetention(idx)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        className="h-8 text-sm"
+                        type="number"
+                        step="0.0001"
+                        value={r.rate}
+                        onChange={(e) => updateRetention(idx, { rate: e.target.value })}
+                        onBlur={() => recalcRetention(idx)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        className="h-8 text-sm text-right font-mono"
+                        type="number"
+                        step="0.01"
+                        value={r.amount}
+                        onChange={(e) => updateRetention(idx, { amount: e.target.value })}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        className="h-8 text-sm"
+                        value={r.notes}
+                        onChange={(e) => updateRetention(idx, { notes: e.target.value })}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-7"
+                        onClick={() => removeRetention(idx)}
+                      >
+                        <Trash2 className="size-3.5 text-destructive" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardContent className="p-4 flex items-center justify-between">
           <div className="text-sm">
-            <div className="flex gap-6">
+            <div className="flex flex-wrap gap-x-6 gap-y-1">
               <div>
-                <span className="text-muted-foreground">Total ítems:</span>{' '}
+                <span className="text-muted-foreground">Total facturas:</span>{' '}
                 <span className="font-mono font-semibold">${itemsTotal.toFixed(2)}</span>
+              </div>
+              {retentionsTotal > 0 && (
+                <div>
+                  <span className="text-muted-foreground">Retenciones:</span>{' '}
+                  <span className="font-mono font-semibold text-amber-600">
+                    −${retentionsTotal.toFixed(2)}
+                  </span>
+                </div>
+              )}
+              <div>
+                <span className="text-muted-foreground">Neto a pagar:</span>{' '}
+                <span className="font-mono font-semibold">${netToPay.toFixed(2)}</span>
               </div>
               <div>
                 <span className="text-muted-foreground">Total pagos:</span>{' '}

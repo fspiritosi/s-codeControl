@@ -5,6 +5,7 @@ import { getActionContext } from '@/shared/lib/server-action-context';
 import { fetchCurrentUser } from '@/shared/actions/auth';
 import { requirePermission } from '@/shared/lib/permissions';
 import { createNotification } from '@/shared/services/notifications';
+import { nextCertificateNumber } from './shared/retention-certificate/sequence';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
 import {
   parseSearchParams,
@@ -129,6 +130,14 @@ export async function getPaymentOrderById(id: string) {
           },
         },
       },
+      retentions: {
+        include: {
+          tax_type: {
+            select: { id: true, code: true, name: true, jurisdiction: true, calculation_base: true },
+          },
+        },
+        orderBy: { created_at: 'asc' },
+      },
     },
   });
 
@@ -136,12 +145,20 @@ export async function getPaymentOrderById(id: string) {
   return {
     ...order,
     total_amount: Number(order.total_amount),
+    retentions_total: Number(order.retentions_total),
+    net_to_pay: order.net_to_pay !== null ? Number(order.net_to_pay) : null,
     items: order.items.map((i) => ({
       ...i,
       amount: Number(i.amount),
       invoice: i.invoice ? { ...i.invoice, total: Number(i.invoice.total) } : null,
     })),
     payments: order.payments.map((p) => ({ ...p, amount: Number(p.amount) })),
+    retentions: order.retentions.map((r) => ({
+      ...r,
+      base_amount: Number(r.base_amount),
+      rate: Number(r.rate),
+      amount: Number(r.amount),
+    })),
   };
 }
 
@@ -237,6 +254,26 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
   try {
     await requirePermission('tesoreria.create');
     const totalAmount = parsed.data.items.reduce((acc, i) => acc + parseFloat(i.amount), 0);
+    const retentions = (parsed.data.retentions ?? []).map((r) => ({
+      tax_type_id: r.tax_type_id,
+      base_amount: Math.round(Number(r.base_amount) * 100) / 100,
+      rate: Number(r.rate),
+      amount: Math.round(Number(r.amount) * 100) / 100,
+      notes: r.notes?.trim() || null,
+    }));
+    const retentionsTotal = retentions.reduce((s, r) => s + r.amount, 0);
+    const netToPay = Math.round((totalAmount - retentionsTotal) * 100) / 100;
+
+    if (retentions.length > 0) {
+      const taxIds = Array.from(new Set(retentions.map((r) => r.tax_type_id)));
+      const valid = await prisma.tax_types.findMany({
+        where: { id: { in: taxIds }, company_id: companyId, kind: 'RETENTION' },
+        select: { id: true },
+      });
+      if (valid.length !== taxIds.length) {
+        return { data: null, error: 'Alguna retención tiene un tipo inválido' };
+      }
+    }
 
     // Validar que cada supplier_payment_method_id pertenezca al supplier de la OP
     const supplierMethodIds = parsed.data.payments
@@ -284,6 +321,8 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
           ? new Date(parsed.data.scheduled_payment_date)
           : null,
         total_amount: Math.round(totalAmount * 100) / 100,
+        retentions_total: retentionsTotal,
+        net_to_pay: netToPay,
         notes: parsed.data.notes || null,
         status: 'DRAFT',
         created_by: user.id,
@@ -305,6 +344,7 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
             reference: p.reference || null,
           })),
         },
+        ...(retentions.length > 0 ? { retentions: { create: retentions } } : {}),
       },
     });
 
@@ -353,6 +393,26 @@ export async function updatePaymentOrder(id: string, data: PaymentOrderFormData)
   try {
     await requirePermission('tesoreria.update');
     const totalAmount = parsed.data.items.reduce((acc, i) => acc + parseFloat(i.amount), 0);
+    const retentions = (parsed.data.retentions ?? []).map((r) => ({
+      tax_type_id: r.tax_type_id,
+      base_amount: Math.round(Number(r.base_amount) * 100) / 100,
+      rate: Number(r.rate),
+      amount: Math.round(Number(r.amount) * 100) / 100,
+      notes: r.notes?.trim() || null,
+    }));
+    const retentionsTotal = retentions.reduce((s, r) => s + r.amount, 0);
+    const netToPay = Math.round((totalAmount - retentionsTotal) * 100) / 100;
+
+    if (retentions.length > 0) {
+      const taxIds = Array.from(new Set(retentions.map((r) => r.tax_type_id)));
+      const valid = await prisma.tax_types.findMany({
+        where: { id: { in: taxIds }, company_id: companyId, kind: 'RETENTION' },
+        select: { id: true },
+      });
+      if (valid.length !== taxIds.length) {
+        return { data: null, error: 'Alguna retención tiene un tipo inválido' };
+      }
+    }
 
     const supplierMethodIds = parsed.data.payments
       .map((p) => p.supplier_payment_method_id)
@@ -383,6 +443,7 @@ export async function updatePaymentOrder(id: string, data: PaymentOrderFormData)
     await prisma.$transaction(async (tx) => {
       await tx.payment_order_items.deleteMany({ where: { payment_order_id: id } });
       await tx.payment_order_payments.deleteMany({ where: { payment_order_id: id } });
+      await tx.payment_order_retentions.deleteMany({ where: { payment_order_id: id } });
 
       await tx.payment_orders.update({
         where: { id },
@@ -393,6 +454,8 @@ export async function updatePaymentOrder(id: string, data: PaymentOrderFormData)
             ? new Date(parsed.data.scheduled_payment_date)
             : null,
           total_amount: Math.round(totalAmount * 100) / 100,
+          retentions_total: retentionsTotal,
+          net_to_pay: netToPay,
           notes: parsed.data.notes || null,
           items: {
             create: parsed.data.items.map((i) => ({
@@ -412,6 +475,7 @@ export async function updatePaymentOrder(id: string, data: PaymentOrderFormData)
               reference: p.reference || null,
             })),
           },
+          ...(retentions.length > 0 ? { retentions: { create: retentions } } : {}),
         },
       });
     });
@@ -446,7 +510,7 @@ export async function confirmPaymentOrder(id: string) {
     await requirePermission('tesoreria.confirm');
     const order = await prisma.payment_orders.findFirst({
       where: { id, company_id: companyId },
-      include: { payments: true },
+      include: { payments: true, retentions: true },
     });
     if (!order) return { error: 'Orden no encontrada' };
     if (order.status !== 'DRAFT') return { error: 'Solo se pueden confirmar órdenes en borrador' };
@@ -568,6 +632,17 @@ export async function confirmPaymentOrder(id: string) {
         // manualmente desde el módulo de cheques y el bank_movement se emite
         // cuando el banco lo debita (status CASHED).
         // ACCOUNT: no impacta tesorería.
+      }
+
+      // Asignar certificate_number a las retenciones que aún no lo tengan.
+      // Numeración secuencial por (company, tax_type) atómica vía upsert.
+      for (const r of order.retentions) {
+        if (r.certificate_number) continue;
+        const number = await nextCertificateNumber(tx, companyId, r.tax_type_id);
+        await tx.payment_order_retentions.update({
+          where: { id: r.id },
+          data: { certificate_number: number },
+        });
       }
 
       await tx.payment_orders.update({
