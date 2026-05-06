@@ -108,6 +108,8 @@ export async function openSession(data: OpenSessionFormData) {
     });
 
     revalidatePath(`/dashboard/treasury/cash-registers/${parsed.data.cash_register_id}`);
+    // También invalida la lista de cajas y el form de OP (que filtran por has_open_session).
+    revalidatePath('/dashboard/treasury', 'layout');
     return { data: session, error: null };
   } catch (error) {
     console.error('Error opening session:', error);
@@ -178,6 +180,7 @@ export async function closeSession(data: CloseSessionFormData) {
     });
 
     revalidatePath(`/dashboard/treasury/cash-registers/${session.cash_register_id}`);
+    revalidatePath('/dashboard/treasury', 'layout');
     return { data: updated, error: null };
   } catch (error) {
     console.error('Error closing session:', error);

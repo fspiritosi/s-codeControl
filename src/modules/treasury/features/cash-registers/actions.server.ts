@@ -71,10 +71,26 @@ export async function getCashRegisterFacets(): Promise<
 export async function getAllCashRegisters() {
   const { companyId } = await getActionContext();
   if (!companyId) return [];
-  return prisma.cash_registers.findMany({
+
+  const registers = await prisma.cash_registers.findMany({
     where: { company_id: companyId, status: 'ACTIVE' },
     orderBy: { code: 'asc' },
   });
+
+  if (registers.length === 0) return [];
+
+  // Cajas con sesión abierta (para que la UI pueda deshabilitar las que no).
+  const openSessions = await prisma.cash_register_sessions.findMany({
+    where: {
+      company_id: companyId,
+      cash_register_id: { in: registers.map((r) => r.id) },
+      status: 'OPEN',
+    },
+    select: { cash_register_id: true },
+  });
+  const openSet = new Set(openSessions.map((s) => s.cash_register_id));
+
+  return registers.map((r) => ({ ...r, has_open_session: openSet.has(r.id) }));
 }
 
 export async function getCashRegisterById(id: string) {

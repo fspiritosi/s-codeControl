@@ -52,6 +52,7 @@ interface CashRegisterOpt {
   id: string;
   code: string;
   name: string;
+  has_open_session: boolean;
 }
 
 interface BankAccountOpt {
@@ -716,12 +717,23 @@ export function NewPaymentOrderForm({
                       </SelectTrigger>
                       <SelectContent>
                         {cashRegisters.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
+                          <SelectItem
+                            key={c.id}
+                            value={c.id}
+                            disabled={!c.has_open_session}
+                          >
                             {c.code} — {c.name}
+                            {!c.has_open_session && ' (sin sesión abierta)'}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    {cashRegisters.every((c) => !c.has_open_session) && (
+                      <p className="text-xs text-amber-600">
+                        Ninguna caja tiene sesión abierta. Abrí una desde Tesorería → Cajas
+                        antes de confirmar el pago en efectivo.
+                      </p>
+                    )}
                   </div>
                 )}
 

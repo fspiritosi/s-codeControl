@@ -26,6 +26,7 @@ export async function NewPaymentOrderShell({ initialData }: ShellProps = {}) {
         id: c.id,
         code: c.code,
         name: c.name,
+        has_open_session: c.has_open_session,
       }))}
       bankAccounts={bankAccounts.map((a) => ({
         id: a.id,

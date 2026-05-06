@@ -458,14 +458,26 @@ export async function confirmPaymentOrder(id: string) {
           return { error: 'Hay un pago en efectivo sin caja asignada' };
         }
         const openSession = await prisma.cash_register_sessions.findFirst({
-          where: { cash_register_id: p.cash_register_id, status: 'OPEN' },
+          where: {
+            cash_register_id: p.cash_register_id,
+            company_id: companyId,
+            status: 'OPEN',
+          },
           select: { id: true },
         });
         if (!openSession) {
           const register = await prisma.cash_registers.findUnique({
             where: { id: p.cash_register_id },
-            select: { code: true },
+            select: { code: true, company_id: true },
           });
+          // Diagnóstico: si la caja existe pero pertenece a otra empresa, el
+          // cash_register_id que llegó del payment es inconsistente con la
+          // sesión activa. Tirar mensaje específico.
+          if (register && register.company_id !== companyId) {
+            return {
+              error: `La caja ${register.code} pertenece a otra empresa. Recargá la página y volvé a seleccionar la caja.`,
+            };
+          }
           return {
             error: `La caja ${register?.code ?? ''} no tiene sesión abierta. Abrila antes de confirmar.`,
           };
