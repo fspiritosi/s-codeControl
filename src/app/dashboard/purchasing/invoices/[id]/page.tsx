@@ -35,6 +35,12 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           },
         },
       },
+      perceptions: {
+        include: {
+          tax_type: { select: { code: true, name: true, jurisdiction: true } },
+        },
+        orderBy: { created_at: 'asc' },
+      },
     },
   });
 
@@ -160,10 +166,53 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           <div className="flex justify-end text-sm space-x-8">
             <div>Subtotal: <span className="font-mono font-medium">${Number(invoice.subtotal).toFixed(2)}</span></div>
             <div>IVA: <span className="font-mono font-medium">${Number(invoice.vat_amount).toFixed(2)}</span></div>
+            {Number(invoice.other_taxes) > 0 && (
+              <div>Percepciones: <span className="font-mono font-medium">${Number(invoice.other_taxes).toFixed(2)}</span></div>
+            )}
             <div className="text-lg font-bold">Total: <span className="font-mono">${Number(invoice.total).toFixed(2)}</span></div>
           </div>
         </CardContent>
       </Card>
+
+      {invoice.perceptions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Percepciones</CardTitle>
+            <CardDescription>
+              Cargos adicionales informados por el proveedor (suman al total).
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Concepto</TableHead>
+                  <TableHead className="text-right">Base</TableHead>
+                  <TableHead className="text-right">Alícuota</TableHead>
+                  <TableHead className="text-right">Monto</TableHead>
+                  <TableHead>Notas</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {invoice.perceptions.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell>
+                      <div className="font-medium">{p.tax_type.name}</div>
+                      {p.tax_type.jurisdiction && (
+                        <div className="text-xs text-muted-foreground">{p.tax_type.jurisdiction}</div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right font-mono">${Number(p.base_amount).toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-mono">{Number(p.rate)}%</TableCell>
+                    <TableCell className="text-right font-mono font-medium">${Number(p.amount).toFixed(2)}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{p.notes ?? '—'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
       {linkedPaymentOrders.length > 0 && (
         <Card>

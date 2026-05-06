@@ -72,6 +72,12 @@ export async function GET(
             },
           },
         },
+        retentions: {
+          include: {
+            tax_type: { select: { name: true, jurisdiction: true } },
+          },
+          orderBy: { created_at: 'asc' },
+        },
       },
     });
     if (!order) {
@@ -151,8 +157,21 @@ export async function GET(
         amount: Number(p.amount),
         destination: mapPaymentDestinationForPDF(p.supplier_payment_method),
       })),
+      retentions: order.retentions.map((r) => ({
+        name: r.tax_type.name,
+        jurisdiction: r.tax_type.jurisdiction,
+        baseAmount: Number(r.base_amount),
+        rate: Number(r.rate),
+        amount: Number(r.amount),
+        certificateNumber: r.certificate_number,
+      })),
       totalAmount,
-      amountInWords: amountToSpanishWords(totalAmount),
+      retentionsTotal: Number(order.retentions_total),
+      netToPay:
+        order.net_to_pay !== null ? Number(order.net_to_pay) : totalAmount,
+      amountInWords: amountToSpanishWords(
+        order.net_to_pay !== null ? Number(order.net_to_pay) : totalAmount
+      ),
       pdfSettings,
     };
 

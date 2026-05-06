@@ -34,6 +34,15 @@ export interface PaymentOrderPDFPayment {
   destination?: PaymentOrderPDFDestination;
 }
 
+export interface PaymentOrderPDFRetention {
+  name: string;
+  jurisdiction?: string | null;
+  baseAmount: number;
+  rate: number;
+  amount: number;
+  certificateNumber?: string | null;
+}
+
 export interface PaymentOrderPDFData {
   company: CompanyPDFData;
   paymentOrder: {
@@ -53,7 +62,10 @@ export interface PaymentOrderPDFData {
   };
   invoices: PaymentOrderPDFInvoice[];
   payments: PaymentOrderPDFPayment[];
+  retentions?: PaymentOrderPDFRetention[];
   totalAmount: number;
+  retentionsTotal?: number;
+  netToPay?: number;
   amountInWords: string;
   pdfSettings?: {
     headerText?: string | null;

@@ -5,6 +5,11 @@ import { sendEmail } from '@/shared/actions/email';
 import { resolveEmailSender } from '@/modules/settings/features/pdf/email-resolver';
 import { paymentOrderPaidEmail } from '@/shared/lib/email-templates/payment-order-paid';
 import {
+  buildRetentionCertificateData,
+  generateRetentionCertificatePDF,
+  getRetentionCertificateFileName,
+} from '../retention-certificate';
+import {
   generatePaymentOrderPDF,
   getPaymentOrderFileName,
   amountToSpanishWords,
@@ -65,6 +70,12 @@ export async function sendPaymentOrderPaidEmail(
               },
             },
           },
+        },
+        retentions: {
+          include: {
+            tax_type: { select: { name: true, jurisdiction: true } },
+          },
+          orderBy: { created_at: 'asc' },
         },
       },
     });
@@ -151,13 +162,45 @@ export async function sendPaymentOrderPaidEmail(
         amount: Number(p.amount),
         destination: mapPaymentDestinationForPDF(p.supplier_payment_method),
       })),
+      retentions: order.retentions.map((r) => ({
+        name: r.tax_type.name,
+        jurisdiction: r.tax_type.jurisdiction,
+        baseAmount: Number(r.base_amount),
+        rate: Number(r.rate),
+        amount: Number(r.amount),
+        certificateNumber: r.certificate_number,
+      })),
       totalAmount,
-      amountInWords: amountToSpanishWords(totalAmount),
+      retentionsTotal: Number(order.retentions_total),
+      netToPay:
+        order.net_to_pay !== null ? Number(order.net_to_pay) : totalAmount,
+      amountInWords: amountToSpanishWords(
+        order.net_to_pay !== null ? Number(order.net_to_pay) : totalAmount
+      ),
       pdfSettings,
     };
 
     const pdfBuffer = await generatePaymentOrderPDF(pdfData);
     const fileName = getPaymentOrderFileName(pdfData);
+
+    // Generar comprobantes de retención (uno por línea numerada).
+    const retentionAttachments: { filename: string; content: Buffer; contentType: string }[] = [];
+    for (const r of order.retentions) {
+      if (!r.certificate_number) continue;
+      try {
+        const certData = await buildRetentionCertificateData(r.id, companyId);
+        if (!certData) continue;
+        const certBuffer = await generateRetentionCertificatePDF(certData);
+        retentionAttachments.push({
+          filename: getRetentionCertificateFileName(certData),
+          content: certBuffer,
+          contentType: 'application/pdf',
+        });
+      } catch (err) {
+        console.error('Error generando comprobante de retención:', err);
+        // No bloqueamos el envío del mail si un certificado falla.
+      }
+    }
 
     if (!supplierEmail) {
       return { status: 'NO_EMAIL' };
@@ -189,6 +232,7 @@ export async function sendPaymentOrderPaidEmail(
           content: pdfBuffer,
           contentType: 'application/pdf',
         },
+        ...retentionAttachments,
       ],
     });
 

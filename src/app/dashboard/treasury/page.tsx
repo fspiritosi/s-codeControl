@@ -11,10 +11,21 @@ import CashRegistersList from '@/modules/treasury/features/cash-registers/compon
 import BankAccountsList from '@/modules/treasury/features/bank-accounts/components/BankAccountsList';
 import ChecksList from '@/modules/treasury/features/checks/components/ChecksList';
 import PaymentOrdersList from '@/modules/treasury/features/payment-orders/components/PaymentOrdersList';
-import Link from 'next/link';
-import { Button } from '@/shared/components/ui/button';
+import RetentionsView from '@/modules/treasury/features/retentions/components/RetentionsView';
+import {
+  listPendingInvoices,
+  getSuppliersWithPendingInvoices,
+  PendingBalancesView,
+} from '@/modules/treasury/features/pending-balances';
 
-const VALID_TABS = ['cash-registers', 'bank-accounts', 'checks', 'payment-orders'] as const;
+const VALID_TABS = [
+  'cash-registers',
+  'bank-accounts',
+  'checks',
+  'payment-orders',
+  'retentions',
+  'pending-balances',
+] as const;
 type TreasuryTab = (typeof VALID_TABS)[number];
 
 export default async function TreasuryPage({
@@ -26,6 +37,10 @@ export default async function TreasuryPage({
     supplier?: string;
     from?: string;
     to?: string;
+    op_status?: string;
+    search?: string;
+    page?: string;
+    [key: string]: string | string[] | undefined;
   }>;
 }) {
   const resolved = await searchParams;
@@ -42,17 +57,14 @@ export default async function TreasuryPage({
   return (
     <div className="p-6">
       <UrlTabs value={tab} paramName="tab" baseUrl="/dashboard/treasury">
-        <div className="flex items-center justify-between">
-          <UrlTabsList>
-            <UrlTabsTrigger value="cash-registers">Cajas</UrlTabsTrigger>
-            <UrlTabsTrigger value="bank-accounts">Cuentas bancarias</UrlTabsTrigger>
-            <UrlTabsTrigger value="checks">Cheques</UrlTabsTrigger>
-            <UrlTabsTrigger value="payment-orders">Órdenes de pago</UrlTabsTrigger>
-          </UrlTabsList>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/dashboard/treasury/pending-balances">Saldos Pendientes</Link>
-          </Button>
-        </div>
+        <UrlTabsList>
+          <UrlTabsTrigger value="cash-registers">Cajas</UrlTabsTrigger>
+          <UrlTabsTrigger value="bank-accounts">Cuentas bancarias</UrlTabsTrigger>
+          <UrlTabsTrigger value="checks">Cheques</UrlTabsTrigger>
+          <UrlTabsTrigger value="payment-orders">Órdenes de pago</UrlTabsTrigger>
+          <UrlTabsTrigger value="retentions">Retenciones</UrlTabsTrigger>
+          <UrlTabsTrigger value="pending-balances">Saldos pendientes</UrlTabsTrigger>
+        </UrlTabsList>
 
         <UrlTabsContent value="cash-registers">
           <Card>
@@ -117,7 +129,72 @@ export default async function TreasuryPage({
             </CardContent>
           </Card>
         </UrlTabsContent>
+
+        <UrlTabsContent value="retentions">
+          {tab === 'retentions' && (
+            <Suspense fallback={<PageTableSkeleton />}>
+              <RetentionsView searchParams={resolved as any} />
+            </Suspense>
+          )}
+        </UrlTabsContent>
+
+        <UrlTabsContent value="pending-balances">
+          {tab === 'pending-balances' && (
+            <Suspense fallback={<PageTableSkeleton />}>
+              <PendingBalancesTabContent
+                supplier={resolved.supplier}
+                opStatus={resolved.op_status}
+                search={resolved.search}
+                page={resolved.page}
+              />
+            </Suspense>
+          )}
+        </UrlTabsContent>
       </UrlTabs>
     </div>
+  );
+}
+
+async function PendingBalancesTabContent({
+  supplier,
+  opStatus,
+  search,
+  page: pageParam,
+}: {
+  supplier?: string;
+  opStatus?: string;
+  search?: string;
+  page?: string;
+}) {
+  const page = pageParam ? Math.max(1, parseInt(pageParam, 10) || 1) : 1;
+  const pageSize = 25;
+  const validOpStatus =
+    opStatus === 'NONE' || opStatus === 'SCHEDULED' ? opStatus : null;
+
+  const [result, suppliers] = await Promise.all([
+    listPendingInvoices({
+      supplier_id: supplier ?? null,
+      op_status: validOpStatus,
+      search: search ?? null,
+      page,
+      pageSize,
+    }),
+    getSuppliersWithPendingInvoices(),
+  ]);
+
+  return (
+    <PendingBalancesView
+      rows={result.rows}
+      total={result.total}
+      summary={result.summary}
+      suppliers={suppliers}
+      page={page}
+      pageSize={pageSize}
+      initialFilters={{
+        supplier_id: supplier,
+        op_status: opStatus,
+        search,
+      }}
+    />
   );
 }

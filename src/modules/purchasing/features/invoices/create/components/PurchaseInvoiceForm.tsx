@@ -45,12 +45,21 @@ type LineField = {
   order_full_number?: string;
 };
 
+interface PerceptionTypeOpt {
+  id: string;
+  code: string;
+  name: string;
+  default_rate: number;
+  calculation_base: 'NET' | 'TOTAL' | 'VAT';
+}
+
 interface Props {
   suppliers: { id: string; code: string; business_name: string }[];
   products: { id: string; code: string; name: string; cost_price: number; vat_rate: number }[];
+  perceptionTypes: PerceptionTypeOpt[];
 }
 
-export default function PurchaseInvoiceForm({ suppliers, products }: Props) {
+export default function PurchaseInvoiceForm({ suppliers, products, perceptionTypes }: Props) {
   const router = useRouter();
   const [availableOrders, setAvailableOrders] = useState<any[]>([]);
   const [attachment, setAttachment] = useState<File | null>(null);
@@ -64,11 +73,18 @@ export default function PurchaseInvoiceForm({ suppliers, products }: Props) {
       purchase_order_id: '',
       purchase_order_ids: [],
       lines: [{ product_id: '', description: '', quantity: 1, unit_cost: 0, vat_rate: 21 }],
+      perceptions: [],
     },
   });
 
   const { fields, append, remove, replace } = useFieldArray({ control: form.control, name: 'lines' });
+  const {
+    fields: perceptionFields,
+    append: appendPerception,
+    remove: removePerception,
+  } = useFieldArray({ control: form.control, name: 'perceptions' });
   const watchedLines = useWatch({ control: form.control, name: 'lines' });
+  const watchedPerceptions = useWatch({ control: form.control, name: 'perceptions' });
   const watchedSupplier = useWatch({ control: form.control, name: 'supplier_id' });
   const watchedOrderIds = (useWatch({ control: form.control, name: 'purchase_order_ids' }) as string[]) || [];
 
@@ -149,8 +165,42 @@ export default function PurchaseInvoiceForm({ suppliers, products }: Props) {
       const s = (l.quantity || 0) * (l.unit_cost || 0);
       subtotal += s; vatAmount += s * ((l.vat_rate || 0) / 100);
     });
-    return { subtotal, vatAmount, total: subtotal + vatAmount };
-  }, [watchedLines]);
+    const otherTaxes = (watchedPerceptions || []).reduce(
+      (acc: number, p: any) => acc + (Number(p?.amount) || 0),
+      0
+    );
+    return {
+      subtotal,
+      vatAmount,
+      otherTaxes,
+      total: subtotal + vatAmount + otherTaxes,
+    };
+  }, [watchedLines, watchedPerceptions]);
+
+  const handlePerceptionTypeChange = (index: number, taxTypeId: string) => {
+    const t = perceptionTypes.find((p) => p.id === taxTypeId);
+    if (!t) return;
+    // Sugerir base según calculation_base del tipo y alícuota default.
+    const base =
+      t.calculation_base === 'NET'
+        ? totals.subtotal
+        : t.calculation_base === 'VAT'
+          ? totals.vatAmount
+          : totals.subtotal + totals.vatAmount;
+    const amount = Math.round(base * (t.default_rate / 100) * 100) / 100;
+    form.setValue(`perceptions.${index}.tax_type_id`, taxTypeId);
+    form.setValue(`perceptions.${index}.base_amount`, Math.round(base * 100) / 100);
+    form.setValue(`perceptions.${index}.rate`, t.default_rate);
+    form.setValue(`perceptions.${index}.amount`, amount);
+  };
+
+  const recalcPerceptionAmount = (index: number) => {
+    const p = form.getValues(`perceptions.${index}`);
+    const base = Number(p?.base_amount) || 0;
+    const rate = Number(p?.rate) || 0;
+    const amount = Math.round(base * (rate / 100) * 100) / 100;
+    form.setValue(`perceptions.${index}.amount`, amount);
+  };
 
   const handleProductSelect = (index: number, productId: string) => {
     const product = products.find((p) => p.id === productId);
@@ -203,6 +253,13 @@ export default function PurchaseInvoiceForm({ suppliers, products }: Props) {
         notes: values.notes,
         purchase_order_ids: values.purchase_order_ids || [],
         lines,
+        perceptions: (values.perceptions || []).map((p) => ({
+          tax_type_id: p.tax_type_id,
+          base_amount: Number(p.base_amount) || 0,
+          rate: Number(p.rate) || 0,
+          amount: Number(p.amount) || 0,
+          notes: p.notes,
+        })),
       } as any);
       if (result.error) throw new Error(result.error);
 
@@ -355,8 +412,122 @@ export default function PurchaseInvoiceForm({ suppliers, products }: Props) {
             <div className="flex justify-end mt-4 text-sm"><div className="text-right space-y-1">
               <p>Subtotal: <span className="font-mono font-medium">${totals.subtotal.toFixed(2)}</span></p>
               <p>IVA: <span className="font-mono font-medium">${totals.vatAmount.toFixed(2)}</span></p>
+              {totals.otherTaxes > 0 && (
+                <p>Percepciones: <span className="font-mono font-medium">${totals.otherTaxes.toFixed(2)}</span></p>
+              )}
               <p className="text-lg font-bold">Total: <span className="font-mono">${totals.total.toFixed(2)}</span></p>
             </div></div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Percepciones</CardTitle>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  appendPerception({ tax_type_id: '', base_amount: 0, rate: 0, amount: 0, notes: '' })
+                }
+                disabled={perceptionTypes.length === 0}
+              >
+                <Plus className="size-4 mr-1" /> Agregar percepción
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {perceptionTypes.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No hay tipos de percepción configurados. Andá a Configuración → Impuestos
+                para crear los que necesites.
+              </p>
+            ) : perceptionFields.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Si la factura del proveedor incluye percepciones (ej. IIBB Neuquén),
+                agregalas para que el total cuadre.
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[280px]">Tipo</TableHead>
+                    <TableHead className="w-[140px]">Base</TableHead>
+                    <TableHead className="w-[100px]">Alícuota %</TableHead>
+                    <TableHead className="w-[140px] text-right">Monto</TableHead>
+                    <TableHead>Notas</TableHead>
+                    <TableHead className="w-[40px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {perceptionFields.map((field, index) => (
+                    <TableRow key={field.id}>
+                      <TableCell>
+                        <Select
+                          value={form.watch(`perceptions.${index}.tax_type_id`) || ''}
+                          onValueChange={(v) => handlePerceptionTypeChange(index, v)}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue placeholder="Seleccionar" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {perceptionTypes.map((t) => (
+                              <SelectItem key={t.id} value={t.id}>
+                                {t.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          className="h-8 text-sm"
+                          type="number"
+                          step="0.01"
+                          {...form.register(`perceptions.${index}.base_amount`, { valueAsNumber: true })}
+                          onBlur={() => recalcPerceptionAmount(index)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          className="h-8 text-sm"
+                          type="number"
+                          step="0.0001"
+                          {...form.register(`perceptions.${index}.rate`, { valueAsNumber: true })}
+                          onBlur={() => recalcPerceptionAmount(index)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          className="h-8 text-sm text-right font-mono"
+                          type="number"
+                          step="0.01"
+                          {...form.register(`perceptions.${index}.amount`, { valueAsNumber: true })}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          className="h-8 text-sm"
+                          {...form.register(`perceptions.${index}.notes`)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-7"
+                          onClick={() => removePerception(index)}
+                        >
+                          <Trash2 className="size-3.5 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 

@@ -103,6 +103,7 @@ export async function createPurchaseInvoice(data: {
   purchase_order_id?: string;
   purchase_order_ids?: string[];
   lines: { product_id?: string; description: string; quantity: number; unit_cost: number; vat_rate: number; purchase_order_line_id?: string }[];
+  perceptions?: { tax_type_id: string; base_amount: number; rate: number; amount: number; notes?: string }[];
 }) {
   const { companyId } = await getActionContext();
   if (!companyId) throw new Error('No company selected');
@@ -128,7 +129,30 @@ export async function createPurchaseInvoice(data: {
 
     const subtotal = lines.reduce((s, l) => s + l.subtotal, 0);
     const vatAmount = lines.reduce((s, l) => s + l.vat_amount, 0);
-    const total = lines.reduce((s, l) => s + l.total, 0);
+    const linesTotal = lines.reduce((s, l) => s + l.total, 0);
+
+    // Percepciones cargadas por el usuario (vienen del proveedor en la factura).
+    const perceptions = (data.perceptions ?? []).map((p) => ({
+      tax_type_id: p.tax_type_id,
+      base_amount: Math.round(p.base_amount * 100) / 100,
+      rate: p.rate,
+      amount: Math.round(p.amount * 100) / 100,
+      notes: p.notes?.trim() || null,
+    }));
+    const otherTaxes = perceptions.reduce((s, p) => s + p.amount, 0);
+    const total = Math.round((linesTotal + otherTaxes) * 100) / 100;
+
+    // Validar que los tax_types pertenezcan a la empresa y sean de tipo PERCEPTION.
+    if (perceptions.length > 0) {
+      const taxTypeIds = Array.from(new Set(perceptions.map((p) => p.tax_type_id)));
+      const validTaxes = await prisma.tax_types.findMany({
+        where: { id: { in: taxTypeIds }, company_id: companyId, kind: 'PERCEPTION' },
+        select: { id: true },
+      });
+      if (validTaxes.length !== taxTypeIds.length) {
+        return { data: null, error: 'Alguna percepción tiene un tipo inválido' };
+      }
+    }
 
     // Derivar la OC primaria:
     // - Si viene purchase_order_ids: usarlo (null si hay 0 o >1)
@@ -155,8 +179,10 @@ export async function createPurchaseInvoice(data: {
         purchase_order_id: primaryOrderId,
         subtotal,
         vat_amount: vatAmount,
+        other_taxes: otherTaxes,
         total,
         lines: { create: lines },
+        ...(perceptions.length > 0 ? { perceptions: { create: perceptions } } : {}),
       },
     });
 

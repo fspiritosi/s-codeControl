@@ -256,6 +256,7 @@ export type Database = {
           date: string
           description: string
           id: string
+          payment_order_id: string | null
           purchase_invoice_id: string | null
           reference: string | null
           session_id: string
@@ -271,6 +272,7 @@ export type Database = {
           date?: string
           description: string
           id?: string
+          payment_order_id?: string | null
           purchase_invoice_id?: string | null
           reference?: string | null
           session_id: string
@@ -286,6 +288,7 @@ export type Database = {
           date?: string
           description?: string
           id?: string
+          payment_order_id?: string | null
           purchase_invoice_id?: string | null
           reference?: string | null
           session_id?: string
@@ -305,6 +308,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_movements_payment_order_id_fkey"
+            columns: ["payment_order_id"]
+            isOneToOne: false
+            referencedRelation: "payment_orders"
             referencedColumns: ["id"]
           },
           {
@@ -2923,6 +2933,60 @@ export type Database = {
           },
         ]
       }
+      payment_order_retentions: {
+        Row: {
+          amount: number
+          base_amount: number
+          certificate_number: string | null
+          certificate_url: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          payment_order_id: string
+          rate: number
+          tax_type_id: string
+        }
+        Insert: {
+          amount: number
+          base_amount: number
+          certificate_number?: string | null
+          certificate_url?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_order_id: string
+          rate: number
+          tax_type_id: string
+        }
+        Update: {
+          amount?: number
+          base_amount?: number
+          certificate_number?: string | null
+          certificate_url?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_order_id?: string
+          rate?: number
+          tax_type_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_order_retentions_payment_order_id_fkey"
+            columns: ["payment_order_id"]
+            isOneToOne: false
+            referencedRelation: "payment_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_order_retentions_tax_type_id_fkey"
+            columns: ["tax_type_id"]
+            isOneToOne: false
+            referencedRelation: "tax_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_orders: {
         Row: {
           company_id: string
@@ -2935,10 +2999,12 @@ export type Database = {
           document_url: string | null
           full_number: string
           id: string
+          net_to_pay: number | null
           notes: string | null
           number: number
           paid_at: string | null
           paid_by: string | null
+          retentions_total: number
           scheduled_payment_date: string | null
           status: Database["public"]["Enums"]["payment_order_status"]
           supplier_id: string | null
@@ -2956,10 +3022,12 @@ export type Database = {
           document_url?: string | null
           full_number: string
           id?: string
+          net_to_pay?: number | null
           notes?: string | null
           number: number
           paid_at?: string | null
           paid_by?: string | null
+          retentions_total?: number
           scheduled_payment_date?: string | null
           status?: Database["public"]["Enums"]["payment_order_status"]
           supplier_id?: string | null
@@ -2977,10 +3045,12 @@ export type Database = {
           document_url?: string | null
           full_number?: string
           id?: string
+          net_to_pay?: number | null
           notes?: string | null
           number?: number
           paid_at?: string | null
           paid_by?: string | null
+          retentions_total?: number
           scheduled_payment_date?: string | null
           status?: Database["public"]["Enums"]["payment_order_status"]
           supplier_id?: string | null
@@ -3318,6 +3388,54 @@ export type Database = {
             columns: ["purchase_order_line_id"]
             isOneToOne: false
             referencedRelation: "purchase_order_lines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_invoice_perceptions: {
+        Row: {
+          amount: number
+          base_amount: number
+          created_at: string
+          id: string
+          invoice_id: string
+          notes: string | null
+          rate: number
+          tax_type_id: string
+        }
+        Insert: {
+          amount: number
+          base_amount: number
+          created_at?: string
+          id?: string
+          invoice_id: string
+          notes?: string | null
+          rate: number
+          tax_type_id: string
+        }
+        Update: {
+          amount?: number
+          base_amount?: number
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          notes?: string | null
+          rate?: number
+          tax_type_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_invoice_perceptions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_invoice_perceptions_tax_type_id_fkey"
+            columns: ["tax_type_id"]
+            isOneToOne: false
+            referencedRelation: "tax_types"
             referencedColumns: ["id"]
           },
         ]
@@ -3937,6 +4055,42 @@ export type Database = {
           },
         ]
       }
+      retention_certificate_sequences: {
+        Row: {
+          company_id: string
+          last_number: number
+          tax_type_id: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          last_number?: number
+          tax_type_id: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          last_number?: number
+          tax_type_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retention_certificate_sequences_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "retention_certificate_sequences_tax_type_id_fkey"
+            columns: ["tax_type_id"]
+            isOneToOne: false
+            referencedRelation: "tax_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_permissions: {
         Row: {
           created_at: string
@@ -4394,6 +4548,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "suppliers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_types: {
+        Row: {
+          calculation_base: Database["public"]["Enums"]["tax_calculation_base"]
+          code: string
+          company_id: string
+          created_at: string
+          default_rate: number
+          id: string
+          is_active: boolean
+          jurisdiction: string | null
+          kind: Database["public"]["Enums"]["tax_kind"]
+          min_taxable_amount: number | null
+          name: string
+          notes: string | null
+          scope: Database["public"]["Enums"]["tax_scope"]
+          updated_at: string
+        }
+        Insert: {
+          calculation_base?: Database["public"]["Enums"]["tax_calculation_base"]
+          code: string
+          company_id: string
+          created_at?: string
+          default_rate?: number
+          id?: string
+          is_active?: boolean
+          jurisdiction?: string | null
+          kind: Database["public"]["Enums"]["tax_kind"]
+          min_taxable_amount?: number | null
+          name: string
+          notes?: string | null
+          scope?: Database["public"]["Enums"]["tax_scope"]
+          updated_at?: string
+        }
+        Update: {
+          calculation_base?: Database["public"]["Enums"]["tax_calculation_base"]
+          code?: string
+          company_id?: string
+          created_at?: string
+          default_rate?: number
+          id?: string
+          is_active?: boolean
+          jurisdiction?: string | null
+          kind?: Database["public"]["Enums"]["tax_kind"]
+          min_taxable_amount?: number | null
+          name?: string
+          notes?: string | null
+          scope?: Database["public"]["Enums"]["tax_scope"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_types_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "company"
@@ -5337,6 +5550,9 @@ export type Database = {
         | "EXENTO"
         | "NO_RESPONSABLE"
         | "CONSUMIDOR_FINAL"
+      tax_calculation_base: "NET" | "TOTAL" | "VAT"
+      tax_kind: "RETENTION" | "PERCEPTION"
+      tax_scope: "NATIONAL" | "PROVINCIAL" | "MUNICIPAL"
       type_of_maintenance_ENUM: "Correctivo" | "Preventivo"
       voucher_type:
         | "FACTURA_A"

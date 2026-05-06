@@ -41,6 +41,13 @@ export default async function EditPaymentOrderPage({
       card_last4: p.card_last4 ?? '',
       reference: p.reference ?? '',
     })),
+    retentions: order.retentions.map((r) => ({
+      tax_type_id: r.tax_type_id,
+      base_amount: r.base_amount.toFixed(2),
+      rate: String(r.rate),
+      amount: r.amount.toFixed(2),
+      notes: r.notes ?? '',
+    })),
   };
 
   return (

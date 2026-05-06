@@ -54,6 +54,15 @@ export const paymentOrderPaymentSchema = z
   });
 export type PaymentOrderPaymentFormData = z.infer<typeof paymentOrderPaymentSchema>;
 
+export const paymentOrderRetentionSchema = z.object({
+  tax_type_id: z.string().uuid('Seleccione un tipo de retención'),
+  base_amount: z.coerce.number().min(0, 'Base no puede ser negativa'),
+  rate: z.coerce.number().min(0).max(100, 'Alícuota fuera de rango'),
+  amount: z.coerce.number().min(0, 'Monto no puede ser negativo'),
+  notes: z.string().optional().nullable(),
+});
+export type PaymentOrderRetentionFormData = z.infer<typeof paymentOrderRetentionSchema>;
+
 export const paymentOrderSchema = z
   .object({
     supplier_id: z.string().uuid().optional().nullable(),
@@ -66,13 +75,22 @@ export const paymentOrderSchema = z
     notes: z.string().max(1000).optional().nullable(),
     items: z.array(paymentOrderItemSchema).min(1, 'Al menos un ítem'),
     payments: z.array(paymentOrderPaymentSchema).min(1, 'Al menos un pago'),
+    retentions: z.array(paymentOrderRetentionSchema).optional().default([]),
   })
   .refine(
     (data) => {
       const itemsTotal = data.items.reduce((acc, i) => acc + parseFloat(i.amount), 0);
       const paymentsTotal = data.payments.reduce((acc, p) => acc + parseFloat(p.amount), 0);
-      return Math.abs(itemsTotal - paymentsTotal) < 0.01;
+      const retentionsTotal = (data.retentions ?? []).reduce(
+        (acc, r) => acc + (Number(r.amount) || 0),
+        0
+      );
+      // items_total - retentions_total === payments_total (neto a pagar).
+      return Math.abs(itemsTotal - retentionsTotal - paymentsTotal) < 0.01;
     },
-    { message: 'El total de ítems debe coincidir con el total de pagos' }
+    {
+      message:
+        'El total de ítems menos las retenciones debe coincidir con el total de pagos',
+    }
   );
 export type PaymentOrderFormData = z.infer<typeof paymentOrderSchema>;
