@@ -5,9 +5,13 @@ import Link from 'next/link';
 import { getDashboardCounts } from '@/modules/dashboard/features/overview/actions.server';
 import { format, addMonths } from 'date-fns';
 import { Skeleton } from '@/shared/components/ui/skeleton';
+import { getSessionPermissions } from '@/shared/lib/permissions';
 
 async function CardsGrid() {
-  const counts = await getDashboardCounts();
+  const [counts, perms] = await Promise.all([getDashboardCounts(), getSessionPermissions()]);
+  const canEmployees = perms.has('empleados.view');
+  const canEquipment = perms.has('equipos.view');
+  const canDocuments = perms.has('documentacion.view');
 
   const today = format(new Date(), 'yyyy-MM-dd');
   const in30Days = format(addMonths(new Date(), 1), 'yyyy-MM-dd');
@@ -16,7 +20,7 @@ async function CardsGrid() {
   // Ordenado: Fila 1 = Empleados (Total, Por vencer, Vencidos)
   //           Fila 2 = Equipos   (Total, Por vencer, Vencidos)
   const cards = [
-    {
+    canEmployees && {
       title: 'Empleados totales',
       value: counts.totalEmployees,
       icon: Users,
@@ -25,7 +29,7 @@ async function CardsGrid() {
       badge: 'default' as const,
       href: '/dashboard/employee',
     },
-    {
+    canDocuments && {
       title: 'Docs Empleados por vencer',
       subtitle: 'Próximos 30 días',
       value: counts.employeesExpiring,
@@ -35,7 +39,7 @@ async function CardsGrid() {
       badge: 'yellow' as const,
       href: `/dashboard/document?tab=employees&validity_from=${today}&validity_to=${in30Days}`,
     },
-    {
+    canDocuments && {
       title: 'Docs Empleados vencidos',
       value: counts.employeesExpired,
       icon: AlertTriangle,
@@ -44,7 +48,7 @@ async function CardsGrid() {
       badge: 'destructive' as const,
       href: `/dashboard/document?tab=employees&validity_to=${yesterday}`,
     },
-    {
+    canEquipment && {
       title: 'Equipos Totales',
       value: counts.totalEquipment,
       icon: Truck,
@@ -53,7 +57,7 @@ async function CardsGrid() {
       badge: 'default' as const,
       href: '/dashboard/equipment',
     },
-    {
+    canDocuments && {
       title: 'Docs Equipos por vencer',
       subtitle: 'Próximos 30 días',
       value: counts.equipmentExpiring,
@@ -63,7 +67,7 @@ async function CardsGrid() {
       badge: 'yellow' as const,
       href: `/dashboard/document?tab=equipment&validity_from=${today}&validity_to=${in30Days}`,
     },
-    {
+    canDocuments && {
       title: 'Docs Equipos vencidos',
       value: counts.equipmentExpired,
       icon: AlertTriangle,
@@ -72,7 +76,18 @@ async function CardsGrid() {
       badge: 'destructive' as const,
       href: `/dashboard/document?tab=equipment&validity_to=${yesterday}`,
     },
-  ];
+  ].filter(Boolean) as Array<{
+    title: string;
+    subtitle?: string;
+    value: number;
+    icon: typeof Users;
+    borderColor: string;
+    iconColor: string;
+    badge: 'default' | 'yellow' | 'destructive';
+    href: string;
+  }>;
+
+  if (cards.length === 0) return null;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
