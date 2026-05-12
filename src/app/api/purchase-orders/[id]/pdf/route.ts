@@ -244,6 +244,8 @@ export async function GET(
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${fileName}"`,
         'Content-Length': pdfBuffer.length.toString(),
+        'X-Content-Type-Options': 'nosniff',
+        'Cache-Control': 'no-store',
       },
     });
   } catch (error) {
