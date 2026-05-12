@@ -69,7 +69,7 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
   const form = useForm<FormValues>({
     resolver: zodResolver(purchaseInvoiceSchema),
     defaultValues: {
-      supplier_id: '', voucher_type: 'FACTURA_A', point_of_sale: '0001', number: '',
+      supplier_id: '', voucher_type: 'FACTURA_A', point_of_sale: '00001', number: '',
       issue_date: new Date().toISOString().split('T')[0], due_date: '', cae: '', notes: '',
       purchase_order_id: '',
       purchase_order_ids: [],
@@ -321,7 +321,7 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
                 </Select><FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="point_of_sale" render={({ field }) => (
-              <FormItem><FormLabel>Pto. venta *</FormLabel><FormControl><Input placeholder="0001" maxLength={5} {...field} /></FormControl><FormMessage /></FormItem>
+              <FormItem><FormLabel>Pto. venta *</FormLabel><FormControl><Input placeholder="00001" maxLength={5} {...field} onBlur={(e) => { field.onBlur(); field.onChange(e.target.value.padStart(5, '0')); }} /></FormControl><FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="number" render={({ field }) => (
               <FormItem><FormLabel>Número *</FormLabel><FormControl><Input placeholder="00000001" {...field} /></FormControl><FormMessage /></FormItem>

@@ -605,7 +605,7 @@ export function NewPaymentOrderForm({
                       <SelectItem value="_all">Todos</SelectItem>
                       {pointsOfSale.map((pos) => (
                         <SelectItem key={pos} value={pos}>
-                          {pos.padStart(4, '0')}
+                          {pos.padStart(5, '0')}
                         </SelectItem>
                       ))}
                     </SelectContent>
