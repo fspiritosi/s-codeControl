@@ -208,6 +208,7 @@ export async function getPendingPurchaseInvoices(supplierId: string) {
     },
     select: {
       id: true,
+      point_of_sale: true,
       full_number: true,
       issue_date: true,
       due_date: true,
@@ -227,6 +228,7 @@ export async function getPendingPurchaseInvoices(supplierId: string) {
       const remaining = Math.round((total - alreadyPaid) * 100) / 100;
       return {
         id: inv.id,
+        point_of_sale: inv.point_of_sale,
         full_number: inv.full_number,
         issue_date: inv.issue_date,
         due_date: inv.due_date,
