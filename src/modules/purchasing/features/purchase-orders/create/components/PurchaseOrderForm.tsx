@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { toast } from 'sonner';
@@ -89,14 +90,13 @@ export default function PurchaseOrderForm({ suppliers, products }: Props) {
             <FormField control={form.control} name="supplier_id" render={({ field }) => (
               <FormItem>
                 <FormLabel>Proveedor *</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar proveedor" /></SelectTrigger></FormControl>
-                  <SelectContent>
-                    {suppliers.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.business_name} ({s.code})</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  options={suppliers.map((s) => ({ value: s.id, label: `${s.business_name} (${s.code})` }))}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  placeholder="Seleccionar proveedor"
+                  searchPlaceholder="Buscar proveedor..."
+                />
                 <FormMessage />
               </FormItem>
             )} />
@@ -172,22 +172,17 @@ export default function PurchaseOrderForm({ suppliers, products }: Props) {
                   return (
                     <TableRow key={field.id}>
                       <TableCell>
-                        <Select
+                        <SearchableSelect
+                          options={products.map((p) => ({ value: p.id, label: `${p.name} (${p.code})` }))}
+                          value={form.watch(`lines.${index}.product_id`) || ''}
                           onValueChange={(v) => {
                             form.setValue(`lines.${index}.product_id`, v);
                             handleProductSelect(index, v);
                           }}
-                          value={form.watch(`lines.${index}.product_id`) || ''}
-                        >
-                          <SelectTrigger className="h-8 text-xs">
-                            <SelectValue placeholder="Seleccionar" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {products.map((p) => (
-                              <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          placeholder="Seleccionar"
+                          searchPlaceholder="Buscar producto..."
+                          className="h-8 text-xs"
+                        />
                       </TableCell>
                       <TableCell>
                         <Input className="h-8 text-sm" {...form.register(`lines.${index}.description`)} />

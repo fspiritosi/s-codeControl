@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { toast } from 'sonner';
@@ -79,31 +80,39 @@ export default function WithdrawalOrderForm({ warehouses, employees, vehicles }:
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <FormField control={form.control} name="warehouse_id" render={({ field }) => (
               <FormItem><FormLabel>Almacén origen *</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar almacén" /></SelectTrigger></FormControl>
-                  <SelectContent>{warehouses.map((w) => <SelectItem key={w.id} value={w.id}>{w.name} ({w.code})</SelectItem>)}</SelectContent>
-                </Select><FormMessage /></FormItem>
+                <SearchableSelect
+                  options={warehouses.map((w) => ({ value: w.id, label: `${w.name} (${w.code})` }))}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  placeholder="Seleccionar almacén"
+                  searchPlaceholder="Buscar almacén..."
+                />
+                <FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="request_date" render={({ field }) => (
               <FormItem><FormLabel>Fecha *</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="employee_id" render={({ field }) => (
               <FormItem><FormLabel>Empleado que retira</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl><SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger></FormControl>
-                  <SelectContent>
-                    {employees.map((e) => <SelectItem key={e.id} value={e.id}>{e.lastname} {e.firstname}</SelectItem>)}
-                  </SelectContent>
-                </Select><FormMessage /></FormItem>
+                <SearchableSelect
+                  options={employees.map((e) => ({ value: e.id, label: `${e.lastname} ${e.firstname}` }))}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  placeholder="Opcional"
+                  searchPlaceholder="Buscar empleado..."
+                />
+                <FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="vehicle_id" render={({ field }) => (
               <FormItem><FormLabel>Para equipo</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl><SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger></FormControl>
-                  <SelectContent>
-                    {vehicles.map((v) => <SelectItem key={v.id} value={v.id}>{v.domain || v.intern_number}</SelectItem>)}
-                  </SelectContent>
-                </Select><FormMessage /></FormItem>
+                <SearchableSelect
+                  options={vehicles.map((v) => ({ value: v.id, label: v.domain || v.intern_number }))}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  placeholder="Opcional"
+                  searchPlaceholder="Buscar equipo..."
+                />
+                <FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="notes" render={({ field }) => (
               <FormItem className="lg:col-span-3"><FormLabel>Notas</FormLabel><FormControl><Textarea placeholder="Motivo del retiro" rows={2} {...field} /></FormControl><FormMessage /></FormItem>
@@ -137,17 +146,14 @@ export default function WithdrawalOrderForm({ warehouses, employees, vehicles }:
                   {fields.map((field, index) => (
                     <TableRow key={field.id}>
                       <TableCell>
-                        <Select onValueChange={(v) => { form.setValue(`lines.${index}.product_id`, v); handleProductSelect(index, v); }}
-                          value={form.watch(`lines.${index}.product_id`) || ''}>
-                          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                          <SelectContent>
-                            {availableProducts.map((s) => (
-                              <SelectItem key={s.product?.id} value={s.product?.id}>
-                                {s.product?.name} ({s.available_qty} {s.product?.unit_of_measure})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <SearchableSelect
+                          options={availableProducts.map((s) => ({ value: s.product?.id, label: `${s.product?.name} (${s.available_qty} ${s.product?.unit_of_measure})` }))}
+                          value={form.watch(`lines.${index}.product_id`) || ''}
+                          onValueChange={(v) => { form.setValue(`lines.${index}.product_id`, v); handleProductSelect(index, v); }}
+                          placeholder="Seleccionar"
+                          searchPlaceholder="Buscar producto..."
+                          className="h-8 text-xs"
+                        />
                       </TableCell>
                       <TableCell><Input className="h-8 text-sm" {...form.register(`lines.${index}.description`)} /></TableCell>
                       <TableCell><Input className="h-8 text-sm" type="number" step="1" min="1" {...form.register(`lines.${index}.quantity`, { valueAsNumber: true })} /></TableCell>

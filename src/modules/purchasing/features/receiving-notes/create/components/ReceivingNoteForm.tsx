@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { toast } from 'sonner';
@@ -133,10 +134,14 @@ export default function ReceivingNoteForm({ suppliers, products, warehouses }: P
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <FormField control={form.control} name="supplier_id" render={({ field }) => (
               <FormItem><FormLabel>Proveedor *</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
-                  <SelectContent>{suppliers.map((s) => <SelectItem key={s.id} value={s.id}>{s.business_name}</SelectItem>)}</SelectContent>
-                </Select><FormMessage /></FormItem>
+                <SearchableSelect
+                  options={suppliers.map((s) => ({ value: s.id, label: s.business_name }))}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  placeholder="Seleccionar proveedor"
+                  searchPlaceholder="Buscar proveedor..."
+                />
+                <FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="warehouse_id" render={({ field }) => (
               <FormItem><FormLabel>Almacén destino *</FormLabel>

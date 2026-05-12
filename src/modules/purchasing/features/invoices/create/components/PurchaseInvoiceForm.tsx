@@ -26,6 +26,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/shared/components/ui/input';
 import { MultiSelectCombobox } from '@/shared/components/ui/multi-select-combobox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -303,10 +304,14 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <FormField control={form.control} name="supplier_id" render={({ field }) => (
               <FormItem className="lg:col-span-2"><FormLabel>Proveedor *</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl><SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger></FormControl>
-                  <SelectContent>{suppliers.map((s) => <SelectItem key={s.id} value={s.id}>{s.business_name}</SelectItem>)}</SelectContent>
-                </Select><FormMessage /></FormItem>
+                <SearchableSelect
+                  options={suppliers.map((s) => ({ value: s.id, label: s.business_name }))}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  placeholder="Seleccionar proveedor"
+                  searchPlaceholder="Buscar proveedor..."
+                />
+                <FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="voucher_type" render={({ field }) => (
               <FormItem><FormLabel>Tipo *</FormLabel>
@@ -386,10 +391,14 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
                   return (
                     <TableRow key={field.id}>
                       <TableCell>
-                        <Select onValueChange={(v) => { form.setValue(`lines.${index}.product_id`, v); handleProductSelect(index, v); }} value={form.watch(`lines.${index}.product_id`) || ''}>
-                          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                          <SelectContent>{products.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
-                        </Select>
+                        <SearchableSelect
+                          options={products.map((p) => ({ value: p.id, label: `${p.name} (${p.code})` }))}
+                          value={form.watch(`lines.${index}.product_id`) || ''}
+                          onValueChange={(v) => { form.setValue(`lines.${index}.product_id`, v); handleProductSelect(index, v); }}
+                          placeholder="Seleccionar"
+                          searchPlaceholder="Buscar producto..."
+                          className="h-8 text-xs"
+                        />
                       </TableCell>
                       <TableCell>
                         {orderLabel ? (

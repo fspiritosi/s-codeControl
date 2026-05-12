@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select';
+import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import {
   Card,
   CardContent,
@@ -553,18 +554,14 @@ export function NewPaymentOrderForm({
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="space-y-1.5">
             <Label>Proveedor</Label>
-            <Select value={supplierId} onValueChange={handleSupplierChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar proveedor" />
-              </SelectTrigger>
-              <SelectContent>
-                {suppliers.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.code} — {s.business_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              options={suppliers.map((s) => ({ value: s.id, label: `${s.code} — ${s.business_name}` }))}
+              value={supplierId}
+              onValueChange={handleSupplierChange}
+              placeholder="Seleccionar proveedor"
+              searchPlaceholder="Buscar proveedor..."
+              emptyMessage="No se encontró el proveedor."
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Fecha</Label>
