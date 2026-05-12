@@ -251,7 +251,6 @@ export async function getInvoicesByOrderId(orderId: string) {
       ],
     },
     select: { id: true, full_number: true, status: true, total: true },
-    distinct: ['id'],
     orderBy: { created_at: 'desc' },
   });
 
