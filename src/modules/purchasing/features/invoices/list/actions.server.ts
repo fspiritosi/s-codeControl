@@ -411,21 +411,52 @@ export async function confirmPurchaseInvoice(id: string) {
     await prisma.$transaction(ops);
 
     // Recalcular invoicing_status de todas las OCs afectadas
-    // Primero leemos los valores actualizados (queries read-only en paralelo),
-    // luego construimos las updates como PrismaPromise[] para la transacción.
+    // Verifica cantidades por línea Y montos totales facturados vs OC.
     if (affectedOrderIds.size > 0) {
       const orderIds = Array.from(affectedOrderIds);
-      const linesByOrder = await Promise.all(
-        orderIds.map((orderId) =>
-          prisma.purchase_order_lines.findMany({ where: { order_id: orderId } })
-        )
-      );
+      const [linesByOrder, orders, invoicedTotalsByOrder] = await Promise.all([
+        Promise.all(
+          orderIds.map((orderId) =>
+            prisma.purchase_order_lines.findMany({ where: { order_id: orderId } })
+          )
+        ),
+        Promise.all(
+          orderIds.map((orderId) =>
+            prisma.purchase_orders.findUnique({ where: { id: orderId }, select: { total: true } })
+          )
+        ),
+        Promise.all(
+          orderIds.map((orderId) =>
+            prisma.purchase_invoices.aggregate({
+              where: {
+                status: 'CONFIRMED',
+                OR: [
+                  { purchase_order_id: orderId },
+                  { lines: { some: { purchase_order_line: { order_id: orderId } } } },
+                ],
+              },
+              _sum: { total: true },
+            })
+          )
+        ),
+      ]);
 
       const statusOps = orderIds.map((orderId, idx) => {
         const updatedLines = linesByOrder[idx];
-        const allInvoiced = updatedLines.every((l) => Number(l.invoiced_qty) >= Number(l.quantity));
+        const orderTotal = Number(orders[idx]?.total ?? 0);
+        const invoicedTotal = Number(invoicedTotalsByOrder[idx]._sum.total ?? 0);
+
+        const allQtyInvoiced = updatedLines.every((l) => Number(l.invoiced_qty) >= Number(l.quantity));
         const someInvoiced = updatedLines.some((l) => Number(l.invoiced_qty) > 0);
-        const newStatus = allInvoiced ? 'FULLY_INVOICED' : someInvoiced ? 'PARTIALLY_INVOICED' : 'NOT_INVOICED';
+        const amountFullyCovered = invoicedTotal >= orderTotal;
+
+        const newStatus =
+          allQtyInvoiced && amountFullyCovered
+            ? 'FULLY_INVOICED'
+            : someInvoiced || invoicedTotal > 0
+              ? 'PARTIALLY_INVOICED'
+              : 'NOT_INVOICED';
+
         return prisma.purchase_orders.update({
           where: { id: orderId },
           data: { invoicing_status: newStatus },
