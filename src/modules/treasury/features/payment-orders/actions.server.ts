@@ -11,6 +11,8 @@ import {
   parseSearchParams,
   stateToPrismaParams,
   buildFiltersWhere,
+  buildTextFiltersWhere,
+  buildDateRangeFiltersWhere,
 } from '@/shared/components/common/DataTable/helpers';
 import { revalidatePath } from 'next/cache';
 import {
@@ -19,48 +21,66 @@ import {
 } from '../../shared/payment-order-validators';
 import { sendPaymentOrderPaidEmail } from './shared/email/sendPaymentOrderPaidEmail';
 
-const columnMap: Record<string, string> = { status: 'status', supplier_id: 'supplier_id' };
+const columnMap: Record<string, string> = { status: 'status' };
+const textFilterColumns = ['full_number'];
+const dateRangeColumns = ['date', 'scheduled_payment_date'];
 
-export interface PaymentOrdersListFilters {
-  status?: string | null;
-  supplier_id?: string | null;
-  scheduled_from?: string | null;
-  scheduled_to?: string | null;
+const sortMap: Record<string, Record<string, unknown>> = {
+  supplier: { supplier: { business_name: 'placeholder' } },
+};
+
+function buildPaymentOrderSortOrderBy(
+  orderBy: Record<string, 'asc' | 'desc'> | undefined
+): Record<string, unknown> | undefined {
+  if (!orderBy) return undefined;
+  const [col, dir] = Object.entries(orderBy)[0];
+  const mapped = sortMap[col];
+  if (!mapped) return orderBy;
+  const replace = (obj: Record<string, unknown>): Record<string, unknown> => {
+    const result: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      result[k] = v === 'placeholder' ? dir : replace(v as Record<string, unknown>);
+    }
+    return result;
+  };
+  return replace(mapped);
 }
 
-export async function getPaymentOrdersPaginated(
-  searchParams: DataTableSearchParams,
-  filters?: PaymentOrdersListFilters
+function buildPaymentOrderWhere(
+  state: ReturnType<typeof parseSearchParams>,
+  companyId: string
 ) {
+  const where: Record<string, unknown> = { company_id: companyId };
+
+  if (state.search) {
+    where.OR = [
+      { full_number: { contains: state.search, mode: 'insensitive' } },
+      { notes: { contains: state.search, mode: 'insensitive' } },
+      { supplier: { business_name: { contains: state.search, mode: 'insensitive' } } },
+    ];
+  }
+
+  Object.assign(where, buildFiltersWhere(state.filters, columnMap, { exclude: textFilterColumns }));
+  Object.assign(where, buildTextFiltersWhere(state.filters, textFilterColumns));
+  Object.assign(where, buildDateRangeFiltersWhere(state.filters, dateRangeColumns));
+
+  // Filtro de proveedor por texto (busca en business_name)
+  const supplierText = state.filters.supplier;
+  if (supplierText?.length && supplierText[0]) {
+    where.supplier = { business_name: { contains: supplierText[0], mode: 'insensitive' } };
+  }
+
+  return where;
+}
+
+export async function getPaymentOrdersPaginated(searchParams: DataTableSearchParams) {
   const { companyId } = await getActionContext();
   if (!companyId) return { data: [], total: 0 };
 
   try {
     const state = parseSearchParams(searchParams);
-    const { skip, take } = stateToPrismaParams(state);
-
-    const where: Record<string, unknown> = { company_id: companyId };
-    if (state.search) {
-      where.OR = [
-        { full_number: { contains: state.search, mode: 'insensitive' } },
-        { notes: { contains: state.search, mode: 'insensitive' } },
-        { supplier: { business_name: { contains: state.search, mode: 'insensitive' } } },
-      ];
-    }
-    Object.assign(where, buildFiltersWhere(state.filters, columnMap));
-
-    if (filters?.status) where.status = filters.status;
-    if (filters?.supplier_id) where.supplier_id = filters.supplier_id;
-    if (filters?.scheduled_from || filters?.scheduled_to) {
-      const dateFilter: Record<string, Date> = {};
-      if (filters.scheduled_from) dateFilter.gte = new Date(filters.scheduled_from);
-      if (filters.scheduled_to) {
-        const end = new Date(filters.scheduled_to);
-        end.setHours(23, 59, 59, 999);
-        dateFilter.lte = end;
-      }
-      where.date = dateFilter;
-    }
+    const { skip, take, orderBy } = stateToPrismaParams(state);
+    const where = buildPaymentOrderWhere(state, companyId);
 
     const [data, total] = await Promise.all([
       prisma.payment_orders.findMany({
@@ -68,7 +88,7 @@ export async function getPaymentOrdersPaginated(
         include: { supplier: { select: { business_name: true, tax_id: true } } },
         skip,
         take,
-        orderBy: { created_at: 'desc' },
+        orderBy: buildPaymentOrderSortOrderBy(orderBy) ?? { created_at: 'desc' },
       }),
       prisma.payment_orders.count({ where: where as any }),
     ]);
@@ -96,6 +116,23 @@ export async function getPaymentOrderFacets() {
     console.error('Error fetching payment order facets:', error);
     return {};
   }
+}
+
+export async function getAllPaymentOrdersForExport() {
+  const { companyId } = await getActionContext();
+  if (!companyId) return [];
+
+  const data = await prisma.payment_orders.findMany({
+    where: { company_id: companyId },
+    include: { supplier: { select: { business_name: true, tax_id: true } } },
+    orderBy: { created_at: 'desc' },
+  });
+
+  return data.map((po) => ({
+    ...po,
+    total_amount: Number(po.total_amount),
+    supplier_name: po.supplier?.business_name ?? '',
+  }));
 }
 
 export async function getPaymentOrderById(id: string) {
@@ -208,6 +245,7 @@ export async function getPendingPurchaseInvoices(supplierId: string) {
     },
     select: {
       id: true,
+      point_of_sale: true,
       full_number: true,
       issue_date: true,
       due_date: true,
@@ -227,6 +265,7 @@ export async function getPendingPurchaseInvoices(supplierId: string) {
       const remaining = Math.round((total - alreadyPaid) * 100) / 100;
       return {
         id: inv.id,
+        point_of_sale: inv.point_of_sale,
         full_number: inv.full_number,
         issue_date: inv.issue_date,
         due_date: inv.due_date,

@@ -47,12 +47,7 @@ export default async function TreasuryPage({
   const tab: TreasuryTab = VALID_TABS.includes(resolved.tab as TreasuryTab)
     ? (resolved.tab as TreasuryTab)
     : 'cash-registers';
-  const poFilters = {
-    status: resolved.status,
-    supplier_id: resolved.supplier,
-    scheduled_from: resolved.from,
-    scheduled_to: resolved.to,
-  };
+  const poSearchParams = resolved as Record<string, string | undefined>;
 
   return (
     <div className="p-6">
@@ -124,7 +119,7 @@ export default async function TreasuryPage({
             </CardHeader>
             <CardContent>
               <Suspense fallback={<PageTableSkeleton />}>
-                <PaymentOrdersList filters={poFilters} />
+                <PaymentOrdersList searchParams={poSearchParams} />
               </Suspense>
             </CardContent>
           </Card>

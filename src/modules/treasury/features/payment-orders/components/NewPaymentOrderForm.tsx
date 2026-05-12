@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select';
+import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import {
   Card,
   CardContent,
@@ -63,6 +64,7 @@ interface BankAccountOpt {
 
 interface InvoiceOption {
   id: string;
+  point_of_sale: string;
   full_number: string;
   issue_date: Date | string;
   due_date: Date | string | null;
@@ -247,10 +249,22 @@ export function NewPaymentOrderForm({
   );
   const [notes, setNotes] = useState(initialData?.notes ?? '');
   const [pendingInvoices, setPendingInvoices] = useState<InvoiceOption[] | null>(null);
+  const [posFilter, setPosFilter] = useState('');
   const [supplierPaymentMethods, setSupplierPaymentMethods] = useState<
     SupplierPaymentMethodOpt[]
   >([]);
   const isLoadingInvoices = !!supplierId && pendingInvoices === null;
+
+  const pointsOfSale = useMemo(() => {
+    if (!pendingInvoices) return [];
+    return Array.from(new Set(pendingInvoices.map((i) => i.point_of_sale))).sort();
+  }, [pendingInvoices]);
+
+  const filteredInvoices = useMemo(() => {
+    if (!pendingInvoices) return null;
+    if (!posFilter) return pendingInvoices;
+    return pendingInvoices.filter((i) => i.point_of_sale === posFilter);
+  }, [pendingInvoices, posFilter]);
 
   const [items, setItems] = useState<ItemDraft[]>(initialData?.items ?? []);
   const [payments, setPayments] = useState<PaymentDraft[]>(
@@ -261,8 +275,10 @@ export function NewPaymentOrderForm({
   useEffect(() => {
     if (!supplierId) {
       setSupplierPaymentMethods([]);
+      setPosFilter('');
       return;
     }
+    setPosFilter('');
     let cancelled = false;
     Promise.all([
       getPendingPurchaseInvoices(supplierId),
@@ -538,18 +554,14 @@ export function NewPaymentOrderForm({
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="space-y-1.5">
             <Label>Proveedor</Label>
-            <Select value={supplierId} onValueChange={handleSupplierChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar proveedor" />
-              </SelectTrigger>
-              <SelectContent>
-                {suppliers.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.code} — {s.business_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              options={suppliers.map((s) => ({ value: s.id, label: `${s.code} — ${s.business_name}` }))}
+              value={supplierId}
+              onValueChange={handleSupplierChange}
+              placeholder="Seleccionar proveedor"
+              searchPlaceholder="Buscar proveedor..."
+              emptyMessage="No se encontró el proveedor."
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Fecha</Label>
@@ -581,7 +593,25 @@ export function NewPaymentOrderForm({
               <p className="text-sm text-muted-foreground">Cargando...</p>
             ) : !pendingInvoices || pendingInvoices.length === 0 ? (
               <p className="text-sm text-muted-foreground">Sin facturas pendientes.</p>
-            ) : (
+            ) : (<>
+              {pointsOfSale.length > 1 && (
+                <div className="mb-4 flex items-center gap-2">
+                  <Label className="text-xs whitespace-nowrap">Punto de venta</Label>
+                  <Select value={posFilter || '_all'} onValueChange={(v) => setPosFilter(v === '_all' ? '' : v)}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_all">Todos</SelectItem>
+                      {pointsOfSale.map((pos) => (
+                        <SelectItem key={pos} value={pos}>
+                          {pos.padStart(5, '0')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
@@ -596,7 +626,7 @@ export function NewPaymentOrderForm({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pendingInvoices.map((inv) => {
+                    {(filteredInvoices ?? []).map((inv) => {
                       const added = items.some((i) => i.invoice_id === inv.id);
                       return (
                         <TableRow key={inv.id}>
@@ -632,7 +662,7 @@ export function NewPaymentOrderForm({
                   </TableBody>
                 </Table>
               </div>
-            )}
+            </>)}
           </CardContent>
         </Card>
       )}

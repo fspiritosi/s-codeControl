@@ -26,10 +26,9 @@ function fmtAmount(n: number): string {
 // Inlined desde @/modules/suppliers para evitar cross-module imports.
 function formatCbu(cbu: string | null | undefined): string {
   if (!cbu) return '—';
-  const clean = cbu.trim();
+  const clean = cbu.replace(/\s/g, '');
   if (clean.length === 0) return '—';
-  if (clean.length !== 22) return clean;
-  return clean.match(/.{1,4}/g)?.join(' ') ?? clean;
+  return clean;
 }
 
 const ACCOUNT_TYPE_LABELS: Record<'CHECKING' | 'SAVINGS', string> = {

@@ -109,7 +109,7 @@ export async function createPurchaseInvoice(data: {
   if (!companyId) throw new Error('No company selected');
 
   try {
-    const fullNumber = `${data.point_of_sale.padStart(4, '0')}-${data.number.padStart(8, '0')}`;
+    const fullNumber = `${data.point_of_sale.padStart(5, '0')}-${data.number.padStart(8, '0')}`;
 
     const lines = data.lines.map((line) => {
       const subtotal = line.quantity * line.unit_cost;
