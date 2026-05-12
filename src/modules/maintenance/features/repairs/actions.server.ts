@@ -183,6 +183,30 @@ const repairSolicitudesColumnMap: Record<string, string> = {
   state: 'state',
 };
 
+const repairSolicitudesSortMap: Record<string, Record<string, unknown>> = {
+  title: { reparation_type_rel: { name: 'placeholder' } },
+  priority: { reparation_type_rel: { criticity: 'placeholder' } },
+  domain: { equipment: { domain: 'placeholder' } },
+  intern_number: { equipment: { intern_number: 'placeholder' } },
+};
+
+function buildRepairSortOrderBy(
+  orderBy: Record<string, 'asc' | 'desc'> | undefined
+): Record<string, unknown> | undefined {
+  if (!orderBy) return undefined;
+  const [col, dir] = Object.entries(orderBy)[0];
+  const mapped = repairSolicitudesSortMap[col];
+  if (!mapped) return orderBy;
+  const replace = (obj: Record<string, unknown>): Record<string, unknown> => {
+    const result: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      result[k] = v === 'placeholder' ? dir : replace(v as Record<string, unknown>);
+    }
+    return result;
+  };
+  return replace(mapped);
+}
+
 const repairSolicitudesTextColumns = ['user_description'];
 
 type GetRepairSolicitudesOptions = {
@@ -359,7 +383,7 @@ export async function getRepairSolicitudesPaginated(
 
   try {
     const state = parseSearchParams(searchParams);
-    const { skip, take } = stateToPrismaParams(state);
+    const { skip, take, orderBy } = stateToPrismaParams(state);
     const where = buildRepairSolicitudesWhere(state, companyId, options);
 
     const [dataRaw, total] = await Promise.all([
@@ -367,7 +391,7 @@ export async function getRepairSolicitudesPaginated(
         where,
         skip,
         take,
-        orderBy: { created_at: 'desc' },
+        orderBy: buildRepairSortOrderBy(orderBy) ?? { created_at: 'desc' },
         select: REPAIR_SOLICITUD_LIST_SELECT,
       }),
       prisma.repair_solicitudes.count({ where }),
