@@ -188,9 +188,9 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
         : t.calculation_base === 'VAT'
           ? totals.vatAmount
           : totals.subtotal + totals.vatAmount;
-    const amount = Math.round(base * (t.default_rate / 100) * 100) / 100;
+    const amount = Math.round(base * (t.default_rate / 100) * 1000) / 1000;
     form.setValue(`perceptions.${index}.tax_type_id`, taxTypeId);
-    form.setValue(`perceptions.${index}.base_amount`, Math.round(base * 100) / 100);
+    form.setValue(`perceptions.${index}.base_amount`, Math.round(base * 1000) / 1000);
     form.setValue(`perceptions.${index}.rate`, t.default_rate);
     form.setValue(`perceptions.${index}.amount`, amount);
   };
@@ -199,7 +199,7 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
     const p = form.getValues(`perceptions.${index}`);
     const base = Number(p?.base_amount) || 0;
     const rate = Number(p?.rate) || 0;
-    const amount = Math.round(base * (rate / 100) * 100) / 100;
+    const amount = Math.round(base * (rate / 100) * 1000) / 1000;
     form.setValue(`perceptions.${index}.amount`, amount);
   };
 
@@ -409,7 +409,7 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
                       </TableCell>
                       <TableCell><Input className="h-8 text-sm" {...form.register(`lines.${index}.description`)} /></TableCell>
                       <TableCell><Input className="h-8 text-sm" type="number" step="1" min="1" {...form.register(`lines.${index}.quantity`, { valueAsNumber: true })} /></TableCell>
-                      <TableCell><Input className="h-8 text-sm" type="number" step="0.01" {...form.register(`lines.${index}.unit_cost`, { valueAsNumber: true })} /></TableCell>
+                      <TableCell><Input className="h-8 text-sm" type="number" step="0.001" {...form.register(`lines.${index}.unit_cost`, { valueAsNumber: true })} /></TableCell>
                       <TableCell><Input className="h-8 text-sm" type="number" step="0.5" {...form.register(`lines.${index}.vat_rate`, { valueAsNumber: true })} /></TableCell>
                       <TableCell className="text-right font-mono text-sm">${lineSubtotal.toFixed(2)}</TableCell>
                       <TableCell>{fields.length > 1 && <Button type="button" variant="ghost" size="icon" className="size-7" onClick={() => remove(index)}><Trash2 className="size-3.5 text-destructive" /></Button>}</TableCell>
@@ -493,7 +493,7 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
                         <Input
                           className="h-8 text-sm"
                           type="number"
-                          step="0.01"
+                          step="0.001"
                           {...form.register(`perceptions.${index}.base_amount`, { valueAsNumber: true })}
                           onBlur={() => recalcPerceptionAmount(index)}
                         />
@@ -511,7 +511,7 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
                         <Input
                           className="h-8 text-sm text-right font-mono"
                           type="number"
-                          step="0.01"
+                          step="0.001"
                           {...form.register(`perceptions.${index}.amount`, { valueAsNumber: true })}
                         />
                       </TableCell>

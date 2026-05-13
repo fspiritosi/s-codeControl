@@ -18,14 +18,14 @@ export interface PriceDifference {
 
 const PRICE_TOLERANCE = 0.01;
 
-function round2(n: number): number {
-  return Math.round(n * 100) / 100;
+function round3(n: number): number {
+  return Math.round(n * 1000) / 1000;
 }
 
 function computeLineTotals(quantity: number, unitCost: number, vatRate: number) {
-  const subtotal = round2(quantity * unitCost);
-  const vatAmount = round2(subtotal * (vatRate / 100));
-  const total = round2(subtotal + vatAmount);
+  const subtotal = round3(quantity * unitCost);
+  const vatAmount = round3(subtotal * (vatRate / 100));
+  const total = round3(subtotal + vatAmount);
   return { subtotal, vatAmount, total };
 }
 
@@ -59,9 +59,9 @@ export async function reviewPurchaseOrderPrices(
       if (!line.product || !line.product_id) continue;
       const currentPrice = Number(line.unit_cost);
       const newPrice = Number(line.product.cost_price);
-      const diff = round2(newPrice - currentPrice);
+      const diff = round3(newPrice - currentPrice);
       if (Math.abs(diff) < PRICE_TOLERANCE) continue;
-      const diffPercent = currentPrice === 0 ? 100 : round2((diff / currentPrice) * 100);
+      const diffPercent = currentPrice === 0 ? 100 : round3((diff / currentPrice) * 100);
       differences.push({
         lineId: line.id,
         productId: line.product.id,
@@ -112,9 +112,9 @@ export async function reviewPurchaseInvoicePrices(
       if (!line.product || !line.product_id) continue;
       const currentPrice = Number(line.unit_cost);
       const newPrice = Number(line.product.cost_price);
-      const diff = round2(newPrice - currentPrice);
+      const diff = round3(newPrice - currentPrice);
       if (Math.abs(diff) < PRICE_TOLERANCE) continue;
-      const diffPercent = currentPrice === 0 ? 100 : round2((diff / currentPrice) * 100);
+      const diffPercent = currentPrice === 0 ? 100 : round3((diff / currentPrice) * 100);
       differences.push({
         lineId: line.id,
         productId: line.product.id,
@@ -202,9 +202,9 @@ export async function applyPurchaseOrderPriceUpdates(
       await tx.purchase_orders.update({
         where: { id: orderId },
         data: {
-          subtotal: round2(subtotalAcc),
-          vat_amount: round2(vatAcc),
-          total: round2(totalAcc),
+          subtotal: round3(subtotalAcc),
+          vat_amount: round3(vatAcc),
+          total: round3(totalAcc),
         },
       });
     });
@@ -286,9 +286,9 @@ export async function applyPurchaseInvoicePriceUpdates(
       await tx.purchase_invoices.update({
         where: { id: invoiceId },
         data: {
-          subtotal: round2(subtotalAcc),
-          vat_amount: round2(vatAcc),
-          total: round2(totalAcc + otherTaxes),
+          subtotal: round3(subtotalAcc),
+          vat_amount: round3(vatAcc),
+          total: round3(totalAcc + otherTaxes),
         },
       });
     });

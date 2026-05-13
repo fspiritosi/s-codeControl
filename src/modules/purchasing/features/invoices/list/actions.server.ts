@@ -120,9 +120,9 @@ export async function createPurchaseInvoice(data: {
         quantity: line.quantity,
         unit_cost: line.unit_cost,
         vat_rate: line.vat_rate,
-        vat_amount: Math.round(vatAmount * 100) / 100,
-        subtotal: Math.round(subtotal * 100) / 100,
-        total: Math.round((subtotal + vatAmount) * 100) / 100,
+        vat_amount: Math.round(vatAmount * 1000) / 1000,
+        subtotal: Math.round(subtotal * 1000) / 1000,
+        total: Math.round((subtotal + vatAmount) * 1000) / 1000,
         purchase_order_line_id: line.purchase_order_line_id || null,
       };
     });
@@ -134,13 +134,13 @@ export async function createPurchaseInvoice(data: {
     // Percepciones cargadas por el usuario (vienen del proveedor en la factura).
     const perceptions = (data.perceptions ?? []).map((p) => ({
       tax_type_id: p.tax_type_id,
-      base_amount: Math.round(p.base_amount * 100) / 100,
+      base_amount: Math.round(p.base_amount * 1000) / 1000,
       rate: p.rate,
-      amount: Math.round(p.amount * 100) / 100,
+      amount: Math.round(p.amount * 1000) / 1000,
       notes: p.notes?.trim() || null,
     }));
     const otherTaxes = perceptions.reduce((s, p) => s + p.amount, 0);
-    const total = Math.round((linesTotal + otherTaxes) * 100) / 100;
+    const total = Math.round((linesTotal + otherTaxes) * 1000) / 1000;
 
     // Validar que los tax_types pertenezcan a la empresa y sean de tipo PERCEPTION.
     if (perceptions.length > 0) {

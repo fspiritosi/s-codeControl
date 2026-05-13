@@ -295,9 +295,9 @@ export async function createPurchaseOrder(data: {
         quantity: line.quantity,
         unit_cost: line.unit_cost,
         vat_rate: line.vat_rate,
-        vat_amount: Math.round(vatAmount * 100) / 100,
-        subtotal: Math.round(subtotal * 100) / 100,
-        total: Math.round((subtotal + vatAmount) * 100) / 100,
+        vat_amount: Math.round(vatAmount * 1000) / 1000,
+        subtotal: Math.round(subtotal * 1000) / 1000,
+        total: Math.round((subtotal + vatAmount) * 1000) / 1000,
       };
     });
 
