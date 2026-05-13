@@ -68,6 +68,8 @@ interface InvoiceOption {
   full_number: string;
   issue_date: Date | string;
   due_date: Date | string | null;
+  subtotal: number;
+  vat_amount: number;
   total: number;
   already_paid: number;
   remaining: number;
@@ -390,8 +392,22 @@ export function NewPaymentOrderForm({
       updateRetention(index, { tax_type_id: taxTypeId });
       return;
     }
-    // Base sugerida: el total de items (deuda al proveedor). El usuario puede editar.
-    const base = Math.round(itemsTotal * 100) / 100;
+
+    // Calcular base según calculation_base del tipo de retención
+    // usando los datos de las facturas vinculadas a los items de la OP
+    const linkedInvoiceIds = new Set(items.map((i) => i.invoice_id).filter(Boolean));
+    const linkedInvoices = (pendingInvoices ?? []).filter((inv) => linkedInvoiceIds.has(inv.id));
+
+    let base: number;
+    if (t.calculation_base === 'NET') {
+      base = linkedInvoices.reduce((sum, inv) => sum + inv.subtotal, 0);
+    } else if (t.calculation_base === 'VAT') {
+      base = linkedInvoices.reduce((sum, inv) => sum + inv.vat_amount, 0);
+    } else {
+      base = itemsTotal;
+    }
+
+    base = Math.round(base * 100) / 100;
     const amount = Math.round(base * (t.default_rate / 100) * 100) / 100;
     updateRetention(index, {
       tax_type_id: taxTypeId,
