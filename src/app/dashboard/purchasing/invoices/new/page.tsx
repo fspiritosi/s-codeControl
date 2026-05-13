@@ -11,7 +11,7 @@ export default async function NewInvoicePage() {
   ]);
 
   return (
-    <div className="max-w-5xl">
+    <div className="w-full">
       <h1 className="text-2xl font-bold mb-6">Nueva factura de compra</h1>
       <PurchaseInvoiceForm
         suppliers={suppliers as any}
