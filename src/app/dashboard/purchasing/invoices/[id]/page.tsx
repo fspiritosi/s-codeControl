@@ -11,7 +11,7 @@ import { PAYMENT_ORDER_STATUS_LABELS } from '@/modules/treasury/shared/validator
 import BackButton from '@/shared/components/common/BackButton';
 import InvoiceAttachmentSection from '@/modules/purchasing/features/invoices/list/components/InvoiceAttachmentSection';
 import { PriceReviewButton } from '@/modules/purchasing/shared/price-review/components/PriceReviewButton';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -87,7 +87,14 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         </div>
         <div className="flex gap-2">
           {invoice.status === 'DRAFT' && (
-            <PriceReviewButton documentId={invoice.id} type="invoice" />
+            <>
+              <Button asChild variant="outline">
+                <Link href={`/dashboard/purchasing/invoices/${invoice.id}/edit`}>
+                  <Pencil className="size-4 mr-2" /> Editar
+                </Link>
+              </Button>
+              <PriceReviewButton documentId={invoice.id} type="invoice" />
+            </>
           )}
           <BackButton />
         </div>
