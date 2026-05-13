@@ -11,6 +11,7 @@ import {
 import { VOUCHER_TYPE_LABELS } from '@/modules/purchasing/shared/types';
 import {
   createPurchaseInvoice,
+  updatePurchaseInvoice,
   preparePurchaseInvoiceAttachmentUpload,
   confirmPurchaseInvoiceAttachmentUpload,
 } from '@/modules/purchasing/features/invoices/list/actions.server';
@@ -41,6 +42,8 @@ type LineField = {
   quantity: number;
   unit_cost: number;
   vat_rate: number;
+  discount_type?: 'PERCENTAGE' | 'FIXED' | null;
+  discount_value?: number | null;
   purchase_order_line_id?: string;
   order_id?: string;
   order_full_number?: string;
@@ -54,28 +57,66 @@ interface PerceptionTypeOpt {
   calculation_base: 'NET' | 'TOTAL' | 'VAT';
 }
 
+export type InvoiceInitialData = {
+  id: string;
+  supplier_id: string;
+  voucher_type: string;
+  point_of_sale: string;
+  number: string;
+  issue_date: string;
+  due_date: string;
+  cae: string;
+  notes: string;
+  purchase_order_ids: string[];
+  global_discount_type: 'PERCENTAGE' | 'FIXED' | null;
+  global_discount_value: number | null;
+  lines: LineField[];
+  perceptions: { tax_type_id: string; base_amount: number; rate: number; amount: number; notes: string }[];
+};
+
 interface Props {
   suppliers: { id: string; code: string; business_name: string }[];
   products: { id: string; code: string; name: string; cost_price: number; vat_rate: number }[];
   perceptionTypes: PerceptionTypeOpt[];
+  initialData?: InvoiceInitialData;
 }
 
-export default function PurchaseInvoiceForm({ suppliers, products, perceptionTypes }: Props) {
+export default function PurchaseInvoiceForm({ suppliers, products, perceptionTypes, initialData }: Props) {
   const router = useRouter();
+  const isEditMode = !!initialData;
   const [availableOrders, setAvailableOrders] = useState<any[]>([]);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(purchaseInvoiceSchema),
-    defaultValues: {
-      supplier_id: '', voucher_type: 'FACTURA_A', point_of_sale: '00001', number: '',
-      issue_date: new Date().toISOString().split('T')[0], due_date: '', cae: '', notes: '',
-      purchase_order_id: '',
-      purchase_order_ids: [],
-      lines: [{ product_id: '', description: '', quantity: 1, unit_cost: 0, vat_rate: 21 }],
-      perceptions: [],
-    },
+    defaultValues: initialData
+      ? {
+          supplier_id: initialData.supplier_id,
+          voucher_type: initialData.voucher_type as any,
+          point_of_sale: initialData.point_of_sale,
+          number: initialData.number,
+          issue_date: initialData.issue_date,
+          due_date: initialData.due_date,
+          cae: initialData.cae,
+          notes: initialData.notes,
+          purchase_order_id: '',
+          purchase_order_ids: initialData.purchase_order_ids,
+          global_discount_type: initialData.global_discount_type,
+          global_discount_value: initialData.global_discount_value,
+          lines: initialData.lines.length > 0 ? initialData.lines : [{ product_id: '', description: '', quantity: 1, unit_cost: 0, vat_rate: 21, discount_type: null, discount_value: null }],
+          perceptions: initialData.perceptions,
+        }
+      : {
+          supplier_id: '', voucher_type: 'FACTURA_A', point_of_sale: '00001', number: '',
+          issue_date: new Date().toISOString().split('T')[0], due_date: '', cae: '', notes: '',
+          purchase_order_id: '',
+          purchase_order_ids: [],
+          global_discount_type: null,
+          global_discount_value: null,
+          lines: [{ product_id: '', description: '', quantity: 1, unit_cost: 0, vat_rate: 21, discount_type: null, discount_value: null }],
+          perceptions: [],
+        },
   });
 
   const { fields, append, remove, replace } = useFieldArray({ control: form.control, name: 'lines' });
@@ -88,11 +129,38 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
   const watchedPerceptions = useWatch({ control: form.control, name: 'perceptions' });
   const watchedSupplier = useWatch({ control: form.control, name: 'supplier_id' });
   const watchedOrderIds = (useWatch({ control: form.control, name: 'purchase_order_ids' }) as string[]) || [];
+  const globalDiscountType = useWatch({ control: form.control, name: 'global_discount_type' });
+  const globalDiscountValue = useWatch({ control: form.control, name: 'global_discount_value' });
 
   // Índice line_id → order_id para poder filtrar al deseleccionar OCs
   const poLineToOrderRef = useRef<Map<string, string>>(new Map());
+  const initialSupplierRef = useRef(initialData?.supplier_id || '');
+  const didMountRef = useRef(false);
+
+  // En modo edición, indexar las líneas iniciales vinculadas a OCs
+  useEffect(() => {
+    if (initialData) {
+      for (const l of initialData.lines) {
+        if (l.purchase_order_line_id && l.order_id) {
+          poLineToOrderRef.current.set(l.purchase_order_line_id, l.order_id);
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
+    // En modo edición, no resetear al montar si el supplier es el inicial
+    if (isEditMode && !didMountRef.current) {
+      didMountRef.current = true;
+      if (watchedSupplier) {
+        getOrdersForInvoicing(watchedSupplier)
+          .then((orders) => setAvailableOrders(orders.map((o: any) => ({ ...o, total: Number(o.total) }))));
+      }
+      return;
+    }
+    didMountRef.current = true;
+
     if (watchedSupplier) {
       getOrdersForInvoicing(watchedSupplier)
         .then((orders) => setAvailableOrders(orders.map((o: any) => ({ ...o, total: Number(o.total) }))));
@@ -105,7 +173,7 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
     const currentLines = form.getValues('lines') as LineField[];
     const manualOnly = currentLines.filter((l) => !l.purchase_order_line_id);
     replace(manualOnly.length > 0 ? manualOnly : [
-      { product_id: '', description: '', quantity: 1, unit_cost: 0, vat_rate: 21 },
+      { product_id: '', description: '', quantity: 1, unit_cost: 0, vat_rate: 21, discount_type: null, discount_value: null },
     ]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchedSupplier]);
@@ -124,7 +192,7 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
         return ord ? !removedIds.includes(ord) : true;
       });
       replace(keep.length > 0 ? keep : [
-        { product_id: '', description: '', quantity: 1, unit_cost: 0, vat_rate: 21 },
+        { product_id: '', description: '', quantity: 1, unit_cost: 0, vat_rate: 21, discount_type: null, discount_value: null },
       ]);
       for (const [lineId, ord] of Array.from(poLineToOrderRef.current.entries())) {
         if (removedIds.includes(ord)) poLineToOrderRef.current.delete(lineId);
@@ -150,6 +218,8 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
           quantity: l.pending_qty,
           unit_cost: l.unit_cost,
           vat_rate: l.vat_rate,
+          discount_type: null,
+          discount_value: null,
           purchase_order_line_id: l.id,
           order_id: l.order_id,
           order_full_number: l.order_full_number,
@@ -161,22 +231,60 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
   };
 
   const totals = useMemo(() => {
-    let subtotal = 0, vatAmount = 0;
-    (watchedLines || []).forEach((l) => {
-      const s = (l.quantity || 0) * (l.unit_cost || 0);
-      subtotal += s; vatAmount += s * ((l.vat_rate || 0) / 100);
-    });
+    const gType = globalDiscountType;
+    const gValue = Number(globalDiscountValue) || 0;
+
+    let subtotalBruto = 0;
+    let lineDiscounts = 0;
+    let vatAmount = 0;
+
+    for (const l of watchedLines || []) {
+      const bruto = (l.quantity || 0) * (l.unit_cost || 0);
+      const dType = l.discount_type;
+      const dValue = Number(l.discount_value) || 0;
+      const disc = dType === 'PERCENTAGE' ? bruto * dValue / 100 : dType === 'FIXED' ? dValue : 0;
+      const neto = bruto - disc;
+      subtotalBruto += bruto;
+      lineDiscounts += disc;
+      vatAmount += neto * ((l.vat_rate || 0) / 100);
+    }
+
+    const subtotalAfterLines = subtotalBruto - lineDiscounts;
+    const globalDiscount = gType === 'PERCENTAGE'
+      ? subtotalAfterLines * gValue / 100
+      : gType === 'FIXED' ? gValue : 0;
+
+    // Recalcular IVA con prorrateo del descuento global
+    if (globalDiscount > 0 && subtotalAfterLines > 0) {
+      vatAmount = 0;
+      for (const l of watchedLines || []) {
+        const bruto = (l.quantity || 0) * (l.unit_cost || 0);
+        const dType = l.discount_type;
+        const dValue = Number(l.discount_value) || 0;
+        const disc = dType === 'PERCENTAGE' ? bruto * dValue / 100 : dType === 'FIXED' ? dValue : 0;
+        const neto = bruto - disc;
+        const proportion = neto / subtotalAfterLines;
+        const netAfterGlobal = neto - globalDiscount * proportion;
+        vatAmount += netAfterGlobal * ((l.vat_rate || 0) / 100);
+      }
+    }
+
+    const subtotal = subtotalAfterLines - globalDiscount;
     const otherTaxes = (watchedPerceptions || []).reduce(
       (acc: number, p: any) => acc + (Number(p?.amount) || 0),
       0
     );
+
     return {
+      subtotalBruto,
+      lineDiscounts,
+      globalDiscount,
       subtotal,
       vatAmount,
       otherTaxes,
       total: subtotal + vatAmount + otherTaxes,
     };
-  }, [watchedLines, watchedPerceptions]);
+  }, [watchedLines, watchedPerceptions, globalDiscountType, globalDiscountValue]);
 
   const handlePerceptionTypeChange = (index: number, taxTypeId: string) => {
     const t = perceptionTypes.find((p) => p.id === taxTypeId);
@@ -188,9 +296,9 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
         : t.calculation_base === 'VAT'
           ? totals.vatAmount
           : totals.subtotal + totals.vatAmount;
-    const amount = Math.round(base * (t.default_rate / 100) * 100) / 100;
+    const amount = Math.round(base * (t.default_rate / 100) * 1000) / 1000;
     form.setValue(`perceptions.${index}.tax_type_id`, taxTypeId);
-    form.setValue(`perceptions.${index}.base_amount`, Math.round(base * 100) / 100);
+    form.setValue(`perceptions.${index}.base_amount`, Math.round(base * 1000) / 1000);
     form.setValue(`perceptions.${index}.rate`, t.default_rate);
     form.setValue(`perceptions.${index}.amount`, amount);
   };
@@ -199,7 +307,7 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
     const p = form.getValues(`perceptions.${index}`);
     const base = Number(p?.base_amount) || 0;
     const rate = Number(p?.rate) || 0;
-    const amount = Math.round(base * (rate / 100) * 100) / 100;
+    const amount = Math.round(base * (rate / 100) * 1000) / 1000;
     form.setValue(`perceptions.${index}.amount`, amount);
   };
 
@@ -233,67 +341,87 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
   };
 
   const onSubmit = async (values: FormValues) => {
-    toast.promise(async () => {
-      // Sanitizar líneas: descartar order_id/order_full_number (son solo UI)
-      const lines = (values.lines as LineField[]).map((l) => ({
-        product_id: l.product_id,
-        description: l.description,
-        quantity: l.quantity,
-        unit_cost: l.unit_cost,
-        vat_rate: l.vat_rate,
-        purchase_order_line_id: l.purchase_order_line_id || undefined,
-      }));
-      const result = await createPurchaseInvoice({
-        supplier_id: values.supplier_id,
-        voucher_type: values.voucher_type,
-        point_of_sale: values.point_of_sale,
-        number: values.number,
-        issue_date: values.issue_date,
-        due_date: values.due_date,
-        cae: values.cae,
-        notes: values.notes,
-        purchase_order_ids: values.purchase_order_ids || [],
-        lines,
-        perceptions: (values.perceptions || []).map((p) => ({
-          tax_type_id: p.tax_type_id,
-          base_amount: Number(p.base_amount) || 0,
-          rate: Number(p.rate) || 0,
-          amount: Number(p.amount) || 0,
-          notes: p.notes,
-        })),
-      } as any);
-      if (result.error) throw new Error(result.error);
+    const sanitizedLines = (values.lines as LineField[]).map((l) => ({
+      product_id: l.product_id,
+      description: l.description,
+      quantity: l.quantity,
+      unit_cost: l.unit_cost,
+      vat_rate: l.vat_rate,
+      discount_type: l.discount_type || undefined,
+      discount_value: l.discount_value != null ? l.discount_value : undefined,
+      purchase_order_line_id: l.purchase_order_line_id || undefined,
+    }));
+    const sanitizedPerceptions = (values.perceptions || []).map((p) => ({
+      tax_type_id: p.tax_type_id,
+      base_amount: Number(p.base_amount) || 0,
+      rate: Number(p.rate) || 0,
+      amount: Number(p.amount) || 0,
+      notes: p.notes,
+    }));
+    const payload = {
+      voucher_type: values.voucher_type,
+      point_of_sale: values.point_of_sale,
+      number: values.number,
+      issue_date: values.issue_date,
+      due_date: values.due_date,
+      cae: values.cae,
+      notes: values.notes,
+      purchase_order_ids: values.purchase_order_ids || [],
+      global_discount_type: values.global_discount_type || undefined,
+      global_discount_value: values.global_discount_value != null ? values.global_discount_value : undefined,
+      lines: sanitizedLines,
+      perceptions: sanitizedPerceptions,
+    };
 
-      if (attachment && result.data?.id) {
-        const invoiceId = result.data.id;
-        const prep = await preparePurchaseInvoiceAttachmentUpload({
-          invoiceId,
-          fileName: attachment.name,
-          mime: attachment.type,
-          size: attachment.size,
-        });
-        if (prep.ok) {
-          try {
-            await storage.upload(prep.bucket, prep.path, attachment, {
-              cacheControl: '3600',
-              upsert: false,
-              contentType: attachment.type,
-            });
-            const conf = await confirmPurchaseInvoiceAttachmentUpload({ invoiceId, path: prep.path });
-            if (conf.error) {
-              try { await storage.remove(prep.bucket, [prep.path]); } catch {}
+    toast.promise(async () => {
+      if (isEditMode) {
+        const result = await updatePurchaseInvoice(initialData!.id, payload as any);
+        if (result.error) throw new Error(result.error);
+        router.push(`/dashboard/purchasing/invoices/${initialData!.id}`);
+        router.refresh();
+      } else {
+        const result = await createPurchaseInvoice({
+          supplier_id: values.supplier_id,
+          ...payload,
+        } as any);
+        if (result.error) throw new Error(result.error);
+
+        if (attachment && result.data?.id) {
+          const invoiceId = result.data.id;
+          const prep = await preparePurchaseInvoiceAttachmentUpload({
+            invoiceId,
+            fileName: attachment.name,
+            mime: attachment.type,
+            size: attachment.size,
+          });
+          if (prep.ok) {
+            try {
+              await storage.upload(prep.bucket, prep.path, attachment, {
+                cacheControl: '3600',
+                upsert: false,
+                contentType: attachment.type,
+              });
+              const conf = await confirmPurchaseInvoiceAttachmentUpload({ invoiceId, path: prep.path });
+              if (conf.error) {
+                try { await storage.remove(prep.bucket, [prep.path]); } catch {}
+                toast.warning('Factura creada, pero falló la carga del adjunto. Reintentá desde el detalle.');
+              }
+            } catch {
               toast.warning('Factura creada, pero falló la carga del adjunto. Reintentá desde el detalle.');
             }
-          } catch {
-            toast.warning('Factura creada, pero falló la carga del adjunto. Reintentá desde el detalle.');
+          } else {
+            toast.warning(`Factura creada, pero el adjunto fue rechazado: ${prep.error}`);
           }
-        } else {
-          toast.warning(`Factura creada, pero el adjunto fue rechazado: ${prep.error}`);
         }
-      }
 
-      router.push('/dashboard/purchasing?tab=invoices'); router.refresh();
-    }, { loading: 'Creando factura...', success: 'Factura creada', error: (e) => e?.message || 'Error' });
+        router.push('/dashboard/purchasing?tab=invoices');
+        router.refresh();
+      }
+    }, {
+      loading: isEditMode ? 'Guardando cambios...' : 'Creando factura...',
+      success: isEditMode ? 'Factura actualizada' : 'Factura creada',
+      error: (e) => e?.message || 'Error',
+    });
   };
 
   return (
@@ -304,13 +432,21 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <FormField control={form.control} name="supplier_id" render={({ field }) => (
               <FormItem className="lg:col-span-2"><FormLabel>Proveedor *</FormLabel>
-                <SearchableSelect
-                  options={suppliers.map((s) => ({ value: s.id, label: s.business_name }))}
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  placeholder="Seleccionar proveedor"
-                  searchPlaceholder="Buscar proveedor..."
-                />
+                {isEditMode ? (
+                  <Input
+                    value={suppliers.find((s) => s.id === field.value)?.business_name || ''}
+                    disabled
+                    className="bg-muted"
+                  />
+                ) : (
+                  <SearchableSelect
+                    options={suppliers.map((s) => ({ value: s.id, label: s.business_name }))}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    placeholder="Seleccionar proveedor"
+                    searchPlaceholder="Buscar proveedor..."
+                  />
+                )}
                 <FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="voucher_type" render={({ field }) => (
@@ -370,7 +506,7 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Líneas</CardTitle>
-            <Button type="button" variant="outline" size="sm" onClick={() => append({ product_id: '', description: '', quantity: 1, unit_cost: 0, vat_rate: 21 })}>
+            <Button type="button" variant="outline" size="sm" onClick={() => append({ product_id: '', description: '', quantity: 1, unit_cost: 0, vat_rate: 21, discount_type: null, discount_value: null })}>
               <Plus className="size-4 mr-1" /> Agregar línea
             </Button>
           </CardHeader>
@@ -381,12 +517,19 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
                 <TableHead className="w-[110px]">OC</TableHead>
                 <TableHead>Descripción</TableHead>
                 <TableHead className="w-[90px]">Cant.</TableHead><TableHead className="w-[110px]">Costo</TableHead>
-                <TableHead className="w-[70px]">IVA%</TableHead><TableHead className="w-[110px] text-right">Subtotal</TableHead>
+                <TableHead className="w-[70px]">IVA%</TableHead>
+                <TableHead className="w-[70px]">Dto.</TableHead>
+                <TableHead className="w-[90px]">Valor dto.</TableHead>
+                <TableHead className="w-[110px] text-right">Neto</TableHead>
                 <TableHead className="w-[40px]"></TableHead>
               </TableRow></TableHeader>
               <TableBody>
                 {fields.map((field, index) => {
-                  const lineSubtotal = (watchedLines?.[index]?.quantity || 0) * (watchedLines?.[index]?.unit_cost || 0);
+                  const bruto = (watchedLines?.[index]?.quantity || 0) * (watchedLines?.[index]?.unit_cost || 0);
+                  const dType = form.watch(`lines.${index}.discount_type`);
+                  const dValue = Number(form.watch(`lines.${index}.discount_value`)) || 0;
+                  const descuento = dType === 'PERCENTAGE' ? bruto * dValue / 100 : dType === 'FIXED' ? dValue : 0;
+                  const lineNeto = bruto - descuento;
                   const orderLabel = (field as unknown as LineField).order_full_number;
                   return (
                     <TableRow key={field.id}>
@@ -409,17 +552,74 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
                       </TableCell>
                       <TableCell><Input className="h-8 text-sm" {...form.register(`lines.${index}.description`)} /></TableCell>
                       <TableCell><Input className="h-8 text-sm" type="number" step="1" min="1" {...form.register(`lines.${index}.quantity`, { valueAsNumber: true })} /></TableCell>
-                      <TableCell><Input className="h-8 text-sm" type="number" step="0.01" {...form.register(`lines.${index}.unit_cost`, { valueAsNumber: true })} /></TableCell>
+                      <TableCell><Input className="h-8 text-sm" type="number" step="0.001" {...form.register(`lines.${index}.unit_cost`, { valueAsNumber: true })} /></TableCell>
                       <TableCell><Input className="h-8 text-sm" type="number" step="0.5" {...form.register(`lines.${index}.vat_rate`, { valueAsNumber: true })} /></TableCell>
-                      <TableCell className="text-right font-mono text-sm">${lineSubtotal.toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Select
+                          value={dType || '_none'}
+                          onValueChange={(v) => {
+                            const val = v === '_none' ? null : v as 'PERCENTAGE' | 'FIXED';
+                            form.setValue(`lines.${index}.discount_type`, val);
+                            if (!val) form.setValue(`lines.${index}.discount_value`, null);
+                          }}
+                        >
+                          <SelectTrigger className="h-8 text-xs w-[70px]"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="_none">-</SelectItem>
+                            <SelectItem value="PERCENTAGE">%</SelectItem>
+                            <SelectItem value="FIXED">$</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          className={`h-8 text-sm w-[90px] ${!dType ? 'hidden' : ''}`}
+                          type="number"
+                          step="0.001"
+                          {...form.register(`lines.${index}.discount_value`, { valueAsNumber: true })}
+                        />
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-sm">${lineNeto.toFixed(2)}</TableCell>
                       <TableCell>{fields.length > 1 && <Button type="button" variant="ghost" size="icon" className="size-7" onClick={() => remove(index)}><Trash2 className="size-3.5 text-destructive" /></Button>}</TableCell>
                     </TableRow>
                   );
                 })}
               </TableBody>
             </Table>
+            <div className="flex items-center gap-3 mt-3">
+              <span className="text-sm font-medium">Descuento global</span>
+              <Select
+                value={globalDiscountType || '_none'}
+                onValueChange={(v) => {
+                  const val = v === '_none' ? null : v as 'PERCENTAGE' | 'FIXED';
+                  form.setValue('global_discount_type', val);
+                  if (!val) form.setValue('global_discount_value', null);
+                }}
+              >
+                <SelectTrigger className="h-8 text-xs w-[70px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">-</SelectItem>
+                  <SelectItem value="PERCENTAGE">%</SelectItem>
+                  <SelectItem value="FIXED">$</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input
+                className={`h-8 text-sm w-[120px] ${!globalDiscountType ? 'hidden' : ''}`}
+                type="number"
+                step="0.01"
+                {...form.register('global_discount_value', { valueAsNumber: true })}
+              />
+              {totals.globalDiscount > 0 && (
+                <span className="text-sm font-mono text-destructive">-${totals.globalDiscount.toFixed(2)}</span>
+              )}
+            </div>
+
             <div className="flex justify-end mt-4 text-sm"><div className="text-right space-y-1">
-              <p>Subtotal: <span className="font-mono font-medium">${totals.subtotal.toFixed(2)}</span></p>
+              <p>Subtotal bruto: <span className="font-mono font-medium">${totals.subtotalBruto.toFixed(2)}</span></p>
+              {(totals.lineDiscounts > 0 || totals.globalDiscount > 0) && (
+                <p>Descuentos: <span className="font-mono font-medium text-destructive">-${(totals.lineDiscounts + totals.globalDiscount).toFixed(2)}</span></p>
+              )}
+              <p>Subtotal neto: <span className="font-mono font-medium">${totals.subtotal.toFixed(2)}</span></p>
               <p>IVA: <span className="font-mono font-medium">${totals.vatAmount.toFixed(2)}</span></p>
               {totals.otherTaxes > 0 && (
                 <p>Percepciones: <span className="font-mono font-medium">${totals.otherTaxes.toFixed(2)}</span></p>
@@ -493,7 +693,7 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
                         <Input
                           className="h-8 text-sm"
                           type="number"
-                          step="0.01"
+                          step="0.001"
                           {...form.register(`perceptions.${index}.base_amount`, { valueAsNumber: true })}
                           onBlur={() => recalcPerceptionAmount(index)}
                         />
@@ -511,7 +711,7 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
                         <Input
                           className="h-8 text-sm text-right font-mono"
                           type="number"
-                          step="0.01"
+                          step="0.001"
                           {...form.register(`perceptions.${index}.amount`, { valueAsNumber: true })}
                         />
                       </TableCell>
@@ -540,46 +740,52 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Paperclip className="size-4" /> Adjunto (opcional)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-xs text-muted-foreground">
-              Formatos permitidos: JPG, PNG, PDF. Tamaño máximo: 10 MB.
-            </p>
-            <Input
-              type="file"
-              accept={PURCHASE_INVOICE_ATTACHMENT_ALLOWED_MIME.join(',')}
-              onChange={handleAttachmentChange}
-            />
-            {attachment && (
-              <div className="flex items-center justify-between text-sm bg-muted px-3 py-2 rounded-md">
-                <span className="truncate">
-                  {attachment.name} ({(attachment.size / 1024).toFixed(0)} KB)
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-7"
-                  onClick={() => setAttachment(null)}
-                >
-                  <X className="size-3.5" />
-                </Button>
-              </div>
-            )}
-            {attachmentError && (
-              <p className="text-xs text-destructive">{attachmentError}</p>
-            )}
-          </CardContent>
-        </Card>
+        {!isEditMode && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Paperclip className="size-4" /> Adjunto (opcional)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Formatos permitidos: JPG, PNG, PDF. Tamaño máximo: 10 MB.
+              </p>
+              <Input
+                type="file"
+                accept={PURCHASE_INVOICE_ATTACHMENT_ALLOWED_MIME.join(',')}
+                onChange={handleAttachmentChange}
+              />
+              {attachment && (
+                <div className="flex items-center justify-between text-sm bg-muted px-3 py-2 rounded-md">
+                  <span className="truncate">
+                    {attachment.name} ({(attachment.size / 1024).toFixed(0)} KB)
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-7"
+                    onClick={() => setAttachment(null)}
+                  >
+                    <X className="size-3.5" />
+                  </Button>
+                </div>
+              )}
+              {attachmentError && (
+                <p className="text-xs text-destructive">{attachmentError}</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <div className="flex justify-end gap-4">
           <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>
-          <Button type="submit" disabled={form.formState.isSubmitting}>{form.formState.isSubmitting ? 'Creando...' : 'Crear factura'}</Button>
+          <Button type="submit" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting
+              ? (isEditMode ? 'Guardando...' : 'Creando...')
+              : (isEditMode ? 'Guardar cambios' : 'Crear factura')}
+          </Button>
         </div>
       </form>
     </Form>

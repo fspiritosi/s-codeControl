@@ -102,47 +102,101 @@ export async function createPurchaseInvoice(data: {
   notes?: string;
   purchase_order_id?: string;
   purchase_order_ids?: string[];
-  lines: { product_id?: string; description: string; quantity: number; unit_cost: number; vat_rate: number; purchase_order_line_id?: string }[];
+  global_discount_type?: 'PERCENTAGE' | 'FIXED' | null;
+  global_discount_value?: number | null;
+  lines: {
+    product_id?: string;
+    description: string;
+    quantity: number;
+    unit_cost: number;
+    vat_rate: number;
+    discount_type?: 'PERCENTAGE' | 'FIXED' | null;
+    discount_value?: number | null;
+    purchase_order_line_id?: string;
+  }[];
   perceptions?: { tax_type_id: string; base_amount: number; rate: number; amount: number; notes?: string }[];
 }) {
   const { companyId } = await getActionContext();
   if (!companyId) throw new Error('No company selected');
 
+  const r3 = (n: number) => Math.round(n * 1000) / 1000;
+  const r2 = (n: number) => Math.round(n * 100) / 100;
+
   try {
     const fullNumber = `${data.point_of_sale.padStart(5, '0')}-${data.number.padStart(8, '0')}`;
 
+    // Paso 1: calcular líneas con descuento por línea
     const lines = data.lines.map((line) => {
-      const subtotal = line.quantity * line.unit_cost;
-      const vatAmount = subtotal * (line.vat_rate / 100);
+      const subtotalBruto = line.quantity * line.unit_cost;
+      const discountType = line.discount_type || null;
+      const discountValue = line.discount_value ?? 0;
+      const lineDiscount =
+        discountType === 'PERCENTAGE'
+          ? subtotalBruto * discountValue / 100
+          : discountType === 'FIXED'
+            ? discountValue
+            : 0;
+      const subtotal = r3(subtotalBruto - lineDiscount);
+      const vatAmount = r3(subtotal * (line.vat_rate / 100));
       return {
         product_id: line.product_id || null,
         description: line.description,
         quantity: line.quantity,
         unit_cost: line.unit_cost,
         vat_rate: line.vat_rate,
-        vat_amount: Math.round(vatAmount * 100) / 100,
-        subtotal: Math.round(subtotal * 100) / 100,
-        total: Math.round((subtotal + vatAmount) * 100) / 100,
+        discount_type: discountType as any,
+        discount_value: discountType ? discountValue : null,
+        discount_amount: r3(lineDiscount),
+        vat_amount: vatAmount,
+        subtotal,
+        total: r3(subtotal + vatAmount),
         purchase_order_line_id: line.purchase_order_line_id || null,
       };
     });
 
-    const subtotal = lines.reduce((s, l) => s + l.subtotal, 0);
-    const vatAmount = lines.reduce((s, l) => s + l.vat_amount, 0);
-    const linesTotal = lines.reduce((s, l) => s + l.total, 0);
+    // Paso 2: totales de líneas (ya con descuento por línea)
+    const subtotalAfterLines = lines.reduce((s, l) => s + l.subtotal, 0);
+    const lineDiscountsTotal = lines.reduce((s, l) => s + l.discount_amount, 0);
 
-    // Percepciones cargadas por el usuario (vienen del proveedor en la factura).
+    // Paso 3: descuento global sobre subtotal neto
+    const globalType = data.global_discount_type || null;
+    const globalValue = data.global_discount_value ?? 0;
+    const globalDiscountAmount =
+      globalType === 'PERCENTAGE'
+        ? r2(subtotalAfterLines * globalValue / 100)
+        : globalType === 'FIXED'
+          ? r2(globalValue)
+          : 0;
+
+    // Paso 4: recalcular IVA proporcional con descuento global
+    let totalVat = 0;
+    if (globalDiscountAmount > 0 && subtotalAfterLines > 0) {
+      for (const l of lines) {
+        const proportion = l.subtotal / subtotalAfterLines;
+        const lineGlobalShare = globalDiscountAmount * proportion;
+        const netAfterGlobal = l.subtotal - lineGlobalShare;
+        totalVat += netAfterGlobal * (l.vat_rate / 100);
+      }
+      totalVat = r2(totalVat);
+    } else {
+      totalVat = r2(lines.reduce((s, l) => s + l.vat_amount, 0));
+    }
+
+    const invoiceSubtotal = r2(subtotalAfterLines - globalDiscountAmount);
+    const totalDiscountAmount = r2(lineDiscountsTotal + globalDiscountAmount);
+
+    // Percepciones
     const perceptions = (data.perceptions ?? []).map((p) => ({
       tax_type_id: p.tax_type_id,
-      base_amount: Math.round(p.base_amount * 100) / 100,
+      base_amount: r3(p.base_amount),
       rate: p.rate,
-      amount: Math.round(p.amount * 100) / 100,
+      amount: r3(p.amount),
       notes: p.notes?.trim() || null,
     }));
     const otherTaxes = perceptions.reduce((s, p) => s + p.amount, 0);
-    const total = Math.round((linesTotal + otherTaxes) * 100) / 100;
+    const total = r2(invoiceSubtotal + totalVat + otherTaxes);
 
-    // Validar que los tax_types pertenezcan a la empresa y sean de tipo PERCEPTION.
+    // Validar percepciones
     if (perceptions.length > 0) {
       const taxTypeIds = Array.from(new Set(perceptions.map((p) => p.tax_type_id)));
       const validTaxes = await prisma.tax_types.findMany({
@@ -154,9 +208,7 @@ export async function createPurchaseInvoice(data: {
       }
     }
 
-    // Derivar la OC primaria:
-    // - Si viene purchase_order_ids: usarlo (null si hay 0 o >1)
-    // - Si no, fallback al legacy purchase_order_id
+    // Derivar OC primaria
     let primaryOrderId: string | null = null;
     if (Array.isArray(data.purchase_order_ids)) {
       primaryOrderId = data.purchase_order_ids.length === 1 ? data.purchase_order_ids[0] : null;
@@ -177,8 +229,11 @@ export async function createPurchaseInvoice(data: {
         cae: data.cae || null,
         notes: data.notes || null,
         purchase_order_id: primaryOrderId,
-        subtotal,
-        vat_amount: vatAmount,
+        global_discount_type: globalType as any,
+        global_discount_value: globalType ? globalValue : null,
+        discount_amount: totalDiscountAmount,
+        subtotal: invoiceSubtotal,
+        vat_amount: totalVat,
         other_taxes: otherTaxes,
         total,
         lines: { create: lines },
@@ -342,6 +397,241 @@ export async function getPurchaseInvoiceAttachmentSignedUrl(invoiceId: string, e
     return { url: data.signedUrl, error: null };
   } catch (error: any) {
     return { url: null, error: error?.message || String(error) };
+  }
+}
+
+export async function getPurchaseInvoiceForEdit(invoiceId: string) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return null;
+
+  const invoice = await prisma.purchase_invoices.findFirst({
+    where: { id: invoiceId, company_id: companyId, status: 'DRAFT' },
+  });
+  if (!invoice) return null;
+
+  const [lines, perceptions] = await Promise.all([
+    prisma.purchase_invoice_lines.findMany({
+      where: { invoice_id: invoiceId },
+      include: {
+        purchase_order_line: {
+          select: { id: true, order_id: true, order: { select: { full_number: true } } },
+        },
+      },
+      orderBy: { id: 'asc' },
+    }),
+    prisma.purchase_invoice_perceptions.findMany({
+      where: { invoice_id: invoiceId },
+      orderBy: { id: 'asc' },
+    }),
+  ]);
+
+  // Derivar OC ids únicos desde las líneas
+  const orderIds = Array.from(
+    new Set(
+      lines
+        .map((l) => l.purchase_order_line?.order_id)
+        .filter(Boolean) as string[]
+    )
+  );
+
+  return {
+    id: invoice.id,
+    supplier_id: invoice.supplier_id,
+    voucher_type: invoice.voucher_type,
+    point_of_sale: invoice.point_of_sale,
+    number: invoice.number,
+    issue_date: invoice.issue_date.toISOString().split('T')[0],
+    due_date: invoice.due_date ? invoice.due_date.toISOString().split('T')[0] : '',
+    cae: invoice.cae || '',
+    notes: invoice.notes || '',
+    purchase_order_ids: orderIds,
+    global_discount_type: invoice.global_discount_type as 'PERCENTAGE' | 'FIXED' | null,
+    global_discount_value: invoice.global_discount_value != null ? Number(invoice.global_discount_value) : null,
+    lines: lines.map((l) => ({
+      product_id: l.product_id || '',
+      description: l.description,
+      quantity: Number(l.quantity),
+      unit_cost: Number(l.unit_cost),
+      vat_rate: Number(l.vat_rate),
+      discount_type: l.discount_type as 'PERCENTAGE' | 'FIXED' | null,
+      discount_value: l.discount_value != null ? Number(l.discount_value) : null,
+      purchase_order_line_id: l.purchase_order_line_id || '',
+      order_id: l.purchase_order_line?.order_id || '',
+      order_full_number: l.purchase_order_line?.order?.full_number || '',
+    })),
+    perceptions: perceptions.map((p) => ({
+      tax_type_id: p.tax_type_id,
+      base_amount: Number(p.base_amount),
+      rate: Number(p.rate),
+      amount: Number(p.amount),
+      notes: p.notes || '',
+    })),
+  };
+}
+
+export async function updatePurchaseInvoice(
+  invoiceId: string,
+  data: {
+    voucher_type: string;
+    point_of_sale: string;
+    number: string;
+    issue_date: string;
+    due_date?: string;
+    cae?: string;
+    notes?: string;
+    purchase_order_ids?: string[];
+    global_discount_type?: 'PERCENTAGE' | 'FIXED' | null;
+    global_discount_value?: number | null;
+    lines: {
+      product_id?: string;
+      description: string;
+      quantity: number;
+      unit_cost: number;
+      vat_rate: number;
+      discount_type?: 'PERCENTAGE' | 'FIXED' | null;
+      discount_value?: number | null;
+      purchase_order_line_id?: string;
+    }[];
+    perceptions?: { tax_type_id: string; base_amount: number; rate: number; amount: number; notes?: string }[];
+  }
+) {
+  const { companyId } = await getActionContext();
+  if (!companyId) throw new Error('No company selected');
+
+  const r3 = (n: number) => Math.round(n * 1000) / 1000;
+  const r2 = (n: number) => Math.round(n * 100) / 100;
+
+  try {
+    // Verificar que la factura existe y está en DRAFT
+    const existing = await prisma.purchase_invoices.findFirst({
+      where: { id: invoiceId, company_id: companyId, status: 'DRAFT' },
+      select: { id: true, supplier_id: true },
+    });
+    if (!existing) return { data: null, error: 'Factura no encontrada o no está en borrador' };
+
+    const fullNumber = `${data.point_of_sale.padStart(5, '0')}-${data.number.padStart(8, '0')}`;
+
+    // Calcular líneas (misma lógica que createPurchaseInvoice)
+    const lines = data.lines.map((line) => {
+      const subtotalBruto = line.quantity * line.unit_cost;
+      const discountType = line.discount_type || null;
+      const discountValue = line.discount_value ?? 0;
+      const lineDiscount =
+        discountType === 'PERCENTAGE'
+          ? subtotalBruto * discountValue / 100
+          : discountType === 'FIXED'
+            ? discountValue
+            : 0;
+      const subtotal = r3(subtotalBruto - lineDiscount);
+      const vatAmount = r3(subtotal * (line.vat_rate / 100));
+      return {
+        product_id: line.product_id || null,
+        description: line.description,
+        quantity: line.quantity,
+        unit_cost: line.unit_cost,
+        vat_rate: line.vat_rate,
+        discount_type: discountType as any,
+        discount_value: discountType ? discountValue : null,
+        discount_amount: r3(lineDiscount),
+        vat_amount: vatAmount,
+        subtotal,
+        total: r3(subtotal + vatAmount),
+        purchase_order_line_id: line.purchase_order_line_id || null,
+      };
+    });
+
+    const subtotalAfterLines = lines.reduce((s, l) => s + l.subtotal, 0);
+    const lineDiscountsTotal = lines.reduce((s, l) => s + l.discount_amount, 0);
+
+    const globalType = data.global_discount_type || null;
+    const globalValue = data.global_discount_value ?? 0;
+    const globalDiscountAmount =
+      globalType === 'PERCENTAGE'
+        ? r2(subtotalAfterLines * globalValue / 100)
+        : globalType === 'FIXED'
+          ? r2(globalValue)
+          : 0;
+
+    let totalVat = 0;
+    if (globalDiscountAmount > 0 && subtotalAfterLines > 0) {
+      for (const l of lines) {
+        const proportion = l.subtotal / subtotalAfterLines;
+        const lineGlobalShare = globalDiscountAmount * proportion;
+        const netAfterGlobal = l.subtotal - lineGlobalShare;
+        totalVat += netAfterGlobal * (l.vat_rate / 100);
+      }
+      totalVat = r2(totalVat);
+    } else {
+      totalVat = r2(lines.reduce((s, l) => s + l.vat_amount, 0));
+    }
+
+    const invoiceSubtotal = r2(subtotalAfterLines - globalDiscountAmount);
+    const totalDiscountAmount = r2(lineDiscountsTotal + globalDiscountAmount);
+
+    const perceptions = (data.perceptions ?? []).map((p) => ({
+      tax_type_id: p.tax_type_id,
+      base_amount: r3(p.base_amount),
+      rate: p.rate,
+      amount: r3(p.amount),
+      notes: p.notes?.trim() || null,
+    }));
+    const otherTaxes = perceptions.reduce((s, p) => s + p.amount, 0);
+    const total = r2(invoiceSubtotal + totalVat + otherTaxes);
+
+    if (perceptions.length > 0) {
+      const taxTypeIds = Array.from(new Set(perceptions.map((p) => p.tax_type_id)));
+      const validTaxes = await prisma.tax_types.findMany({
+        where: { id: { in: taxTypeIds }, company_id: companyId, kind: 'PERCEPTION' },
+        select: { id: true },
+      });
+      if (validTaxes.length !== taxTypeIds.length) {
+        return { data: null, error: 'Alguna percepción tiene un tipo inválido' };
+      }
+    }
+
+    let primaryOrderId: string | null = null;
+    if (Array.isArray(data.purchase_order_ids)) {
+      primaryOrderId = data.purchase_order_ids.length === 1 ? data.purchase_order_ids[0] : null;
+    }
+
+    // Transacción: borrar líneas/percepciones existentes y recrear + actualizar cabecera
+    await prisma.$transaction([
+      prisma.purchase_invoice_lines.deleteMany({ where: { invoice_id: invoiceId } }),
+      prisma.purchase_invoice_perceptions.deleteMany({ where: { invoice_id: invoiceId } }),
+      prisma.purchase_invoices.update({
+        where: { id: invoiceId },
+        data: {
+          voucher_type: data.voucher_type as any,
+          point_of_sale: data.point_of_sale,
+          number: data.number,
+          full_number: fullNumber,
+          issue_date: new Date(data.issue_date),
+          due_date: data.due_date ? new Date(data.due_date) : null,
+          cae: data.cae || null,
+          notes: data.notes || null,
+          purchase_order_id: primaryOrderId,
+          global_discount_type: globalType as any,
+          global_discount_value: globalType ? globalValue : null,
+          discount_amount: totalDiscountAmount,
+          subtotal: invoiceSubtotal,
+          vat_amount: totalVat,
+          other_taxes: otherTaxes,
+          total,
+          lines: { create: lines },
+          ...(perceptions.length > 0 ? { perceptions: { create: perceptions } } : {}),
+        },
+      }),
+    ]);
+
+    revalidatePath('/dashboard/purchasing');
+    revalidatePath(`/dashboard/purchasing/invoices/${invoiceId}`);
+    return { data: { id: invoiceId }, error: null };
+  } catch (error: any) {
+    if (error?.code === 'P2002') {
+      return { data: null, error: 'Ya existe una factura con ese número para este proveedor' };
+    }
+    console.error('Error updating invoice:', error);
+    return { data: null, error: String(error) };
   }
 }
 

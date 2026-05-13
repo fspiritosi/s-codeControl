@@ -11,7 +11,7 @@ import { PAYMENT_ORDER_STATUS_LABELS } from '@/modules/treasury/shared/validator
 import BackButton from '@/shared/components/common/BackButton';
 import InvoiceAttachmentSection from '@/modules/purchasing/features/invoices/list/components/InvoiceAttachmentSection';
 import { PriceReviewButton } from '@/modules/purchasing/shared/price-review/components/PriceReviewButton';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -87,7 +87,14 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         </div>
         <div className="flex gap-2">
           {invoice.status === 'DRAFT' && (
-            <PriceReviewButton documentId={invoice.id} type="invoice" />
+            <>
+              <Button asChild variant="outline">
+                <Link href={`/dashboard/purchasing/invoices/${invoice.id}/edit`}>
+                  <Pencil className="size-4 mr-2" /> Editar
+                </Link>
+              </Button>
+              <PriceReviewButton documentId={invoice.id} type="invoice" />
+            </>
           )}
           <BackButton />
         </div>
@@ -134,8 +141,9 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                 {linkedOrders.length > 1 && <TableHead>OC</TableHead>}
                 <TableHead className="text-right">Cantidad</TableHead>
                 <TableHead className="text-right">Costo unit.</TableHead>
+                <TableHead className="text-right">Descuento</TableHead>
                 <TableHead className="text-right">IVA</TableHead>
-                <TableHead className="text-right">Subtotal</TableHead>
+                <TableHead className="text-right">Neto</TableHead>
                 <TableHead className="text-right">Total</TableHead>
               </TableRow>
             </TableHeader>
@@ -155,6 +163,13 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                   )}
                   <TableCell className="text-right">{Number(line.quantity)}</TableCell>
                   <TableCell className="text-right">${Number(line.unit_cost).toFixed(2)}</TableCell>
+                  <TableCell className="text-right text-muted-foreground">
+                    {Number(line.discount_amount) > 0
+                      ? (line.discount_type === 'PERCENTAGE'
+                        ? `${Number(line.discount_value)}%`
+                        : `-$${Number(line.discount_amount).toFixed(2)}`)
+                      : '-'}
+                  </TableCell>
                   <TableCell className="text-right">{Number(line.vat_rate)}%</TableCell>
                   <TableCell className="text-right">${Number(line.subtotal).toFixed(2)}</TableCell>
                   <TableCell className="text-right">${Number(line.total).toFixed(2)}</TableCell>
@@ -163,8 +178,20 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             </TableBody>
           </Table>
           <Separator className="my-4" />
-          <div className="flex justify-end text-sm space-x-8">
-            <div>Subtotal: <span className="font-mono font-medium">${Number(invoice.subtotal).toFixed(2)}</span></div>
+          <div className="flex flex-col items-end gap-1 text-sm">
+            {Number(invoice.discount_amount) > 0 && (
+              <>
+                <div>Subtotal bruto: <span className="font-mono font-medium">${(Number(invoice.subtotal) + Number(invoice.discount_amount)).toFixed(2)}</span></div>
+                <div className="text-destructive">Descuentos: <span className="font-mono font-medium">-${Number(invoice.discount_amount).toFixed(2)}</span>
+                  {invoice.global_discount_type && (
+                    <span className="text-xs text-muted-foreground ml-1">
+                      (global: {invoice.global_discount_type === 'PERCENTAGE' ? `${Number(invoice.global_discount_value)}%` : `$${Number(invoice.global_discount_value).toFixed(2)}`})
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
+            <div>Subtotal neto: <span className="font-mono font-medium">${Number(invoice.subtotal).toFixed(2)}</span></div>
             <div>IVA: <span className="font-mono font-medium">${Number(invoice.vat_amount).toFixed(2)}</span></div>
             {Number(invoice.other_taxes) > 0 && (
               <div>Percepciones: <span className="font-mono font-medium">${Number(invoice.other_taxes).toFixed(2)}</span></div>

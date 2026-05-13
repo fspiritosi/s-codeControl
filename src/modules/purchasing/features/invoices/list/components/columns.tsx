@@ -13,7 +13,7 @@ import {
 import { INVOICE_STATUS_LABELS, VOUCHER_TYPE_LABELS, INVOICE_RECEIVING_STATUS_LABELS, INVOICE_RECEIVING_STATUS_COLORS } from '@/modules/purchasing/shared/types';
 import { confirmPurchaseInvoice } from '../actions.server';
 import { format } from 'date-fns';
-import { MoreHorizontal, Eye, CheckCircle } from 'lucide-react';
+import { MoreHorizontal, Eye, CheckCircle, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -39,6 +39,11 @@ function ActionsCell({ row }: { row: any }) {
         {status === 'DRAFT' && (
           <>
             <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href={`/dashboard/purchasing/invoices/${id}/edit`}>
+                <Pencil className="size-4 mr-2" /> Editar
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
                 toast.promise(
