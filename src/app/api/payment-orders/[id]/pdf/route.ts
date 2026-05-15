@@ -52,6 +52,15 @@ export async function GET(
                 total: true,
               },
             },
+            expense: {
+              select: {
+                full_number: true,
+                description: true,
+                date: true,
+                due_date: true,
+                amount: true,
+              },
+            },
           },
         },
         payments: {
@@ -143,6 +152,16 @@ export async function GET(
           issueDate: it.invoice!.issue_date,
           dueDate: it.invoice!.due_date,
           total: Number(it.invoice!.total),
+          appliedAmount: Number(it.amount),
+        })),
+      expenses: order.items
+        .filter((it) => it.expense)
+        .map((it) => ({
+          fullNumber: it.expense!.full_number,
+          description: it.expense!.description,
+          date: it.expense!.date,
+          dueDate: it.expense!.due_date,
+          total: Number(it.expense!.amount),
           appliedAmount: Number(it.amount),
         })),
       payments: order.payments.map((p) => ({

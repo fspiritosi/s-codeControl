@@ -42,6 +42,7 @@ export function PaymentOrderTemplate({ data }: { data: PaymentOrderPDFData }) {
     paymentOrder,
     supplier,
     invoices,
+    expenses,
     payments,
     retentions = [],
     totalAmount,
@@ -130,6 +131,32 @@ export function PaymentOrderTemplate({ data }: { data: PaymentOrderPDFData }) {
                   <Text style={styles.invCurrency}>ARS</Text>
                   <Text style={styles.invTotal}>{fmtAmount(inv.total)}</Text>
                   <Text style={styles.invApplied}>{fmtAmount(inv.appliedAmount)}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null}
+
+        {expenses.length > 0 ? (
+          <View>
+            <Text style={styles.sectionTitle}>Gastos a Cancelar</Text>
+            <View style={styles.table}>
+              <View style={styles.tableHeader}>
+                <Text style={styles.invDate}>Fecha</Text>
+                <Text style={styles.invDue}>Vencimiento</Text>
+                <Text style={styles.invVoucher}>Comprobante</Text>
+                <Text style={styles.invCurrency}>Descripción</Text>
+                <Text style={styles.invTotal}>Total</Text>
+                <Text style={styles.invApplied}>Importe aplicado</Text>
+              </View>
+              {expenses.map((exp, i) => (
+                <View key={i} style={styles.tableRow}>
+                  <Text style={styles.invDate}>{fmtDate(exp.date)}</Text>
+                  <Text style={styles.invDue}>{fmtDate(exp.dueDate)}</Text>
+                  <Text style={styles.invVoucher}>{exp.fullNumber}</Text>
+                  <Text style={styles.invCurrency}>{exp.description}</Text>
+                  <Text style={styles.invTotal}>{fmtAmount(exp.total)}</Text>
+                  <Text style={styles.invApplied}>{fmtAmount(exp.appliedAmount)}</Text>
                 </View>
               ))}
             </View>
@@ -228,7 +255,7 @@ export function PaymentOrderTemplate({ data }: { data: PaymentOrderPDFData }) {
         ) : null}
 
         <View style={styles.grandTotal}>
-          <Text>TOTAL FACTURAS</Text>
+          <Text>{expenses.length > 0 && invoices.length === 0 ? 'TOTAL GASTOS' : 'TOTAL FACTURAS'}</Text>
           <Text>{fmtAmount(totalAmount)}</Text>
         </View>
 

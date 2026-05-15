@@ -2,6 +2,7 @@ import PurchaseOrdersList from '@/modules/purchasing/features/purchase-orders/li
 import InvoicesList from '@/modules/purchasing/features/invoices/list/components/InvoicesList';
 import ReceivingNotesList from '@/modules/purchasing/features/receiving-notes/list/components/ReceivingNotesList';
 import SuppliersList from '@/modules/suppliers/features/list/components/SuppliersList';
+import { ExpensesList } from '@/modules/purchasing/features/expenses';
 import PageTableSkeleton from '@/shared/components/common/Skeletons/PageTableSkeleton';
 import { buttonVariants } from '@/shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
@@ -10,7 +11,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
 
-const VALID_TABS = ['orders', 'invoices', 'receiving', 'suppliers'] as const;
+const VALID_TABS = ['orders', 'invoices', 'receiving', 'suppliers', 'expenses'] as const;
 type PurchasingTab = (typeof VALID_TABS)[number];
 
 export default async function PurchasingPage({
@@ -31,6 +32,7 @@ export default async function PurchasingPage({
           <UrlTabsTrigger value="invoices">Facturas</UrlTabsTrigger>
           <UrlTabsTrigger value="receiving">Remitos de recepción</UrlTabsTrigger>
           <UrlTabsTrigger value="suppliers">Proveedores</UrlTabsTrigger>
+          <UrlTabsTrigger value="expenses">Gastos</UrlTabsTrigger>
         </UrlTabsList>
 
         <UrlTabsContent value="orders">
@@ -97,6 +99,20 @@ export default async function PurchasingPage({
             </CardHeader>
             <CardContent>
               <SuppliersList searchParams={resolved} />
+            </CardContent>
+          </Card>
+        </UrlTabsContent>
+
+        <UrlTabsContent value="expenses">
+          <Card>
+            <CardHeader>
+              <CardTitle>Gastos</CardTitle>
+              <CardDescription>Gestión de gastos operativos de la empresa</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Suspense fallback={<PageTableSkeleton />}>
+                <ExpensesList searchParams={resolved} />
+              </Suspense>
             </CardContent>
           </Card>
         </UrlTabsContent>

@@ -109,17 +109,26 @@ export async function PaymentOrderDetail({ id }: { id: string }) {
               {order.items.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-mono">
-                    {item.invoice?.full_number ?? (
-                      <span className="text-muted-foreground">Pago sin factura</span>
+                    {item.invoice?.full_number
+                      ?? item.expense?.full_number
+                      ?? (<span className="text-muted-foreground">Pago sin documento</span>)}
+                    {item.expense && (
+                      <span className="ml-2 inline-flex items-center rounded-md bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">Gasto</span>
                     )}
                   </TableCell>
                   <TableCell className="text-sm">
                     {item.invoice?.issue_date
                       ? format(new Date(item.invoice.issue_date), 'dd/MM/yyyy')
-                      : '-'}
+                      : item.expense?.date
+                        ? format(new Date(item.expense.date), 'dd/MM/yyyy')
+                        : '-'}
                   </TableCell>
                   <TableCell className="text-sm font-mono">
-                    {item.invoice ? `$${item.invoice.total.toFixed(2)}` : '-'}
+                    {item.invoice
+                      ? `$${item.invoice.total.toFixed(2)}`
+                      : item.expense
+                        ? `$${item.expense.amount.toFixed(2)}`
+                        : '-'}
                   </TableCell>
                   <TableCell className="text-right font-mono font-semibold">
                     ${item.amount.toFixed(2)}

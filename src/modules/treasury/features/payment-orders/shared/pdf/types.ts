@@ -8,6 +8,15 @@ export interface PaymentOrderPDFInvoice {
   appliedAmount: number;
 }
 
+export interface PaymentOrderPDFExpense {
+  fullNumber: string;
+  description: string;
+  date: Date | string | null;
+  dueDate: Date | string | null;
+  total: number;
+  appliedAmount: number;
+}
+
 export type PaymentOrderPDFDestination =
   | {
       kind: 'ACCOUNT';
@@ -61,6 +70,7 @@ export interface PaymentOrderPDFData {
     email?: string;
   };
   invoices: PaymentOrderPDFInvoice[];
+  expenses: PaymentOrderPDFExpense[];
   payments: PaymentOrderPDFPayment[];
   retentions?: PaymentOrderPDFRetention[];
   totalAmount: number;

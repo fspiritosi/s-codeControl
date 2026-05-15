@@ -7,6 +7,7 @@ const amountString = z
 
 export const paymentOrderItemSchema = z.object({
   invoice_id: z.string().uuid().optional().nullable(),
+  expense_id: z.string().uuid().optional().nullable(),
   amount: amountString.refine((v) => parseFloat(v) > 0, 'Debe ser mayor a 0'),
 });
 export type PaymentOrderItemFormData = z.infer<typeof paymentOrderItemSchema>;
