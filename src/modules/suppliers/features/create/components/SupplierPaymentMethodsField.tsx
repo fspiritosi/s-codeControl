@@ -196,7 +196,7 @@ export default function SupplierPaymentMethodsField({ control }: Props) {
                   name={`payment_methods.${index}.cbu` as const}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>CBU *</FormLabel>
+                      <FormLabel>CBU</FormLabel>
                       <FormControl>
                         <Input
                           inputMode="numeric"
@@ -207,7 +207,7 @@ export default function SupplierPaymentMethodsField({ control }: Props) {
                           onChange={(e) => field.onChange(parseCbuInput(e.target.value))}
                         />
                       </FormControl>
-                      <p className="text-xs text-muted-foreground">22 dígitos numéricos</p>
+                      <p className="text-xs text-muted-foreground">CBU o alias: al menos uno requerido</p>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -219,8 +219,9 @@ export default function SupplierPaymentMethodsField({ control }: Props) {
                     <FormItem>
                       <FormLabel>Alias</FormLabel>
                       <FormControl>
-                        <Input placeholder="alias.opcional" {...field} value={(field.value as string) ?? ''} />
+                        <Input placeholder="alias.cuenta" {...field} value={(field.value as string) ?? ''} />
                       </FormControl>
+                      <p className="text-xs text-muted-foreground">CBU o alias: al menos uno requerido</p>
                       <FormMessage />
                     </FormItem>
                   )}

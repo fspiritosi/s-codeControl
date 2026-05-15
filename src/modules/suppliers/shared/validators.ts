@@ -15,7 +15,11 @@ const supplierPaymentMethodAccountSchema = z.object({
   account_holder: z.string().min(1, 'El titular es requerido').max(200),
   account_holder_tax_id: z.string().regex(cuitRegex, 'CUIT del titular inválido (formato: XX-XXXXXXXX-X)'),
   account_type: z.enum(['CHECKING', 'SAVINGS']),
-  cbu: z.string().regex(/^\d{22}$/, 'El CBU debe tener exactamente 22 dígitos'),
+  cbu: z
+    .string()
+    .regex(/^\d{22}$/, 'El CBU debe tener exactamente 22 dígitos')
+    .optional()
+    .or(z.literal('')),
   alias: z.string().max(50).optional().or(z.literal('')),
   currency: z.enum(['ARS', 'USD']).default('ARS'),
   is_default: z.boolean().default(false),
@@ -47,6 +51,16 @@ export const supplierPaymentMethodsArraySchema = z
         path: [],
       });
     }
+    // En cuentas, debe haber CBU o alias (al menos uno)
+    items.forEach((item, index) => {
+      if (item.type === 'ACCOUNT' && !item.cbu && !item.alias) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Debe ingresar el CBU o el alias',
+          path: [index, 'cbu'],
+        });
+      }
+    });
   });
 
 export const createSupplierSchema = z.object({
