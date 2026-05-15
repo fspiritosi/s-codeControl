@@ -38,6 +38,8 @@ import {
   createPaymentOrder,
   updatePaymentOrder,
   getPendingPurchaseInvoices,
+  getPendingExpenses,
+  getExpenseCategoriesForOrder,
   getSupplierPaymentMethodsForPaymentOrder,
 } from '../actions.server';
 import { PAYMENT_METHOD_LABELS } from '../../../shared/validators';
@@ -75,10 +77,28 @@ interface InvoiceOption {
   remaining: number;
 }
 
+interface ExpenseOption {
+  id: string;
+  full_number: string;
+  description: string;
+  date: Date | string;
+  due_date: Date | string | null;
+  total: number;
+  already_paid: number;
+  remaining: number;
+  category_id: string;
+  category_name: string;
+  supplier_id: string | null;
+  supplier_name: string;
+}
+
+type PaymentTarget = 'invoice' | 'expense';
+
 type PaymentMethod = keyof typeof PAYMENT_METHOD_LABELS;
 
 interface ItemDraft {
   invoice_id: string | null;
+  expense_id: string | null;
   invoice_label: string | null;
   amount: string;
 }
@@ -166,6 +186,7 @@ export interface PaymentOrderEditData {
   full_number: string;
   items: Array<{
     invoice_id: string | null;
+    expense_id: string | null;
     invoice_label: string | null;
     amount: string;
   }>;
@@ -250,12 +271,18 @@ export function NewPaymentOrderForm({
     initialData?.scheduled_payment_date ?? ''
   );
   const [notes, setNotes] = useState(initialData?.notes ?? '');
+  const [paymentTarget, setPaymentTarget] = useState<PaymentTarget>('invoice');
   const [pendingInvoices, setPendingInvoices] = useState<InvoiceOption[] | null>(null);
+  const [pendingExpenses, setPendingExpenses] = useState<ExpenseOption[] | null>(null);
   const [posFilter, setPosFilter] = useState('');
+  const [expenseCategoryFilter, setExpenseCategoryFilter] = useState('');
+  const [expenseDueDateFilter, setExpenseDueDateFilter] = useState('');
+  const [expenseCategories, setExpenseCategories] = useState<{ id: string; name: string }[]>([]);
   const [supplierPaymentMethods, setSupplierPaymentMethods] = useState<
     SupplierPaymentMethodOpt[]
   >([]);
   const isLoadingInvoices = !!supplierId && pendingInvoices === null;
+  const isLoadingExpenses = pendingExpenses === null;
 
   const pointsOfSale = useMemo(() => {
     if (!pendingInvoices) return [];
@@ -268,6 +295,19 @@ export function NewPaymentOrderForm({
     return pendingInvoices.filter((i) => i.point_of_sale === posFilter);
   }, [pendingInvoices, posFilter]);
 
+  const filteredExpenses = useMemo(() => {
+    if (!pendingExpenses) return null;
+    let result = pendingExpenses;
+    if (expenseCategoryFilter) {
+      result = result.filter((e) => e.category_id === expenseCategoryFilter);
+    }
+    if (expenseDueDateFilter) {
+      const filterDate = new Date(expenseDueDateFilter);
+      result = result.filter((e) => e.due_date && new Date(e.due_date) <= filterDate);
+    }
+    return result;
+  }, [pendingExpenses, expenseCategoryFilter, expenseDueDateFilter]);
+
   const [items, setItems] = useState<ItemDraft[]>(initialData?.items ?? []);
   const [payments, setPayments] = useState<PaymentDraft[]>(
     initialData?.payments ?? [emptyPayment()]
@@ -278,17 +318,26 @@ export function NewPaymentOrderForm({
     if (!supplierId) {
       setSupplierPaymentMethods([]);
       setPosFilter('');
+      setPendingExpenses(null);
+      setExpenseCategoryFilter('');
+      setExpenseDueDateFilter('');
       return;
     }
     setPosFilter('');
+    setExpenseCategoryFilter('');
+    setExpenseDueDateFilter('');
     let cancelled = false;
     Promise.all([
       getPendingPurchaseInvoices(supplierId),
+      getPendingExpenses(supplierId),
+      getExpenseCategoriesForOrder(),
       getSupplierPaymentMethodsForPaymentOrder(supplierId),
     ])
-      .then(([invoices, methods]) => {
+      .then(([invoices, expenses, categories, methods]) => {
         if (cancelled) return;
         setPendingInvoices(invoices);
+        setPendingExpenses(expenses);
+        setExpenseCategories(categories);
         const opts = methods as SupplierPaymentMethodOpt[];
         setSupplierPaymentMethods(opts);
         // Auto-asignar default por línea según método (sin pisar selección existente)
@@ -300,6 +349,22 @@ export function NewPaymentOrderForm({
               pickDefaultMethodForPaymentMethod(opts, p.payment_method),
           }))
         );
+      })
+      .catch(console.error);
+    return () => {
+      cancelled = true;
+    };
+  }, [supplierId]);
+
+  // Cargar gastos y categorías cuando no hay proveedor seleccionado
+  useEffect(() => {
+    if (supplierId) return;
+    let cancelled = false;
+    Promise.all([getPendingExpenses(), getExpenseCategoriesForOrder()])
+      .then(([expenses, categories]) => {
+        if (cancelled) return;
+        setPendingExpenses(expenses);
+        setExpenseCategories(categories);
       })
       .catch(console.error);
     return () => {
@@ -324,6 +389,7 @@ export function NewPaymentOrderForm({
       if (amount <= 0) continue;
       draftItems.push({
         invoice_id: inv.id,
+        expense_id: null,
         invoice_label: inv.full_number,
         amount: amount.toFixed(2),
       });
@@ -353,6 +419,7 @@ export function NewPaymentOrderForm({
   const handleSupplierChange = (newId: string) => {
     if (newId !== supplierId) {
       setPendingInvoices(null);
+      setPendingExpenses(null);
       setSupplierPaymentMethods([]);
       setPayments((prev) =>
         prev.map((p) => ({ ...p, supplier_payment_method_id: null }))
@@ -438,14 +505,31 @@ export function NewPaymentOrderForm({
       ...prev,
       {
         invoice_id: invoice.id,
+        expense_id: null,
         invoice_label: invoice.full_number,
         amount: invoice.remaining.toFixed(2),
       },
     ]);
   };
 
+  const addExpenseItem = (expense: ExpenseOption) => {
+    if (items.some((i) => i.expense_id === expense.id)) {
+      toast.info('Ese gasto ya está agregado');
+      return;
+    }
+    setItems((prev) => [
+      ...prev,
+      {
+        invoice_id: null,
+        expense_id: expense.id,
+        invoice_label: expense.full_number,
+        amount: expense.remaining.toFixed(2),
+      },
+    ]);
+  };
+
   const addFreeItem = () => {
-    setItems((prev) => [...prev, { invoice_id: null, invoice_label: null, amount: '' }]);
+    setItems((prev) => [...prev, { invoice_id: null, expense_id: null, invoice_label: null, amount: '' }]);
   };
 
   const removeItem = (index: number) => {
@@ -457,14 +541,20 @@ export function NewPaymentOrderForm({
   };
 
   const selectedRemainingTotal = useMemo(() => {
-    if (!pendingInvoices) return 0;
-    const map = new Map(pendingInvoices.map((inv) => [inv.id, inv.remaining]));
+    const invoiceMap = new Map((pendingInvoices ?? []).map((inv) => [inv.id, inv.remaining]));
+    const expenseMap = new Map((pendingExpenses ?? []).map((exp) => [exp.id, exp.remaining]));
     return items.reduce((acc, it) => {
-      if (!it.invoice_id) return acc;
-      const remaining = map.get(it.invoice_id);
-      return remaining && remaining > 0 ? acc + remaining : acc;
+      if (it.invoice_id) {
+        const remaining = invoiceMap.get(it.invoice_id);
+        return remaining && remaining > 0 ? acc + remaining : acc;
+      }
+      if (it.expense_id) {
+        const remaining = expenseMap.get(it.expense_id);
+        return remaining && remaining > 0 ? acc + remaining : acc;
+      }
+      return acc;
     }, 0);
-  }, [items, pendingInvoices]);
+  }, [items, pendingInvoices, pendingExpenses]);
 
   const canLoadPendingBalance = selectedRemainingTotal > 0;
 
@@ -515,6 +605,7 @@ export function NewPaymentOrderForm({
         notes: notes.trim() || null,
         items: items.map((i) => ({
           invoice_id: i.invoice_id,
+          expense_id: i.expense_id,
           amount: i.amount.trim(),
         })),
         payments: payments.map((p) => ({
@@ -598,95 +689,192 @@ export function NewPaymentOrderForm({
         </CardContent>
       </Card>
 
-      {supplierId && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Facturas pendientes del proveedor</CardTitle>
-            <CardDescription>Clic en &quot;Agregar&quot; para imputar una factura a esta orden.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoadingInvoices ? (
-              <p className="text-sm text-muted-foreground">Cargando...</p>
-            ) : !pendingInvoices || pendingInvoices.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Sin facturas pendientes.</p>
-            ) : (<>
-              {pointsOfSale.length > 1 && (
-                <div className="mb-4 flex items-center gap-2">
-                  <Label className="text-xs whitespace-nowrap">Punto de venta</Label>
-                  <Select value={posFilter || '_all'} onValueChange={(v) => setPosFilter(v === '_all' ? '' : v)}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Todos" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="_all">Todos</SelectItem>
-                      {pointsOfSale.map((pos) => (
-                        <SelectItem key={pos} value={pos}>
-                          {pos.padStart(5, '0')}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Documentos a pagar</CardTitle>
+              <CardDescription>Seleccioná si vas a pagar una factura o un gasto.</CardDescription>
+            </div>
+            <Select value={paymentTarget} onValueChange={(v) => setPaymentTarget(v as PaymentTarget)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="invoice">Facturas</SelectItem>
+                <SelectItem value="expense">Gastos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {paymentTarget === 'invoice' ? (
+            <>
+              {!supplierId ? (
+                <p className="text-sm text-muted-foreground">Seleccioná un proveedor para ver facturas pendientes.</p>
+              ) : isLoadingInvoices ? (
+                <p className="text-sm text-muted-foreground">Cargando...</p>
+              ) : !pendingInvoices || pendingInvoices.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Sin facturas pendientes.</p>
+              ) : (<>
+                {pointsOfSale.length > 1 && (
+                  <div className="mb-4 flex items-center gap-2">
+                    <Label className="text-xs whitespace-nowrap">Punto de venta</Label>
+                    <Select value={posFilter || '_all'} onValueChange={(v) => setPosFilter(v === '_all' ? '' : v)}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Todos" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_all">Todos</SelectItem>
+                        {pointsOfSale.map((pos) => (
+                          <SelectItem key={pos} value={pos}>
+                            {pos.padStart(5, '0')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Factura</TableHead>
+                        <TableHead>Emisión</TableHead>
+                        <TableHead>Vto</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
+                        <TableHead className="text-right">Ya pagado</TableHead>
+                        <TableHead className="text-right">Saldo</TableHead>
+                        <TableHead className="w-[100px]"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(filteredInvoices ?? []).map((inv) => {
+                        const added = items.some((i) => i.invoice_id === inv.id);
+                        return (
+                          <TableRow key={inv.id}>
+                            <TableCell className="font-mono">{inv.full_number}</TableCell>
+                            <TableCell className="text-sm">
+                              {format(new Date(inv.issue_date), 'dd/MM/yyyy')}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {inv.due_date ? format(new Date(inv.due_date), 'dd/MM/yyyy') : '-'}
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-sm">
+                              ${inv.total.toFixed(2)}
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-sm text-muted-foreground">
+                              ${inv.already_paid.toFixed(2)}
+                            </TableCell>
+                            <TableCell className="text-right font-mono font-semibold">
+                              ${inv.remaining.toFixed(2)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                size="sm"
+                                variant={added ? 'secondary' : 'default'}
+                                onClick={() => addInvoiceItem(inv)}
+                                disabled={added}
+                              >
+                                {added ? 'Agregada' : 'Agregar'}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>)}
+            </>
+          ) : (
+            <>
+              <div className="mb-4 flex flex-wrap items-center gap-3">
+                {expenseCategories.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Label className="text-xs whitespace-nowrap">Categoría</Label>
+                    <Select value={expenseCategoryFilter || '_all'} onValueChange={(v) => setExpenseCategoryFilter(v === '_all' ? '' : v)}>
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Todas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_all">Todas</SelectItem>
+                        {expenseCategories.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs whitespace-nowrap">Vence antes de</Label>
+                  <Input
+                    type="date"
+                    className="w-[160px]"
+                    value={expenseDueDateFilter}
+                    onChange={(e) => setExpenseDueDateFilter(e.target.value)}
+                  />
+                </div>
+              </div>
+              {isLoadingExpenses ? (
+                <p className="text-sm text-muted-foreground">Cargando...</p>
+              ) : !filteredExpenses || filteredExpenses.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Sin gastos pendientes.</p>
+              ) : (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Número</TableHead>
+                        <TableHead>Descripción</TableHead>
+                        <TableHead>Categoría</TableHead>
+                        <TableHead>Proveedor</TableHead>
+                        <TableHead>Vto</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
+                        <TableHead className="text-right">Saldo</TableHead>
+                        <TableHead className="w-[100px]"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredExpenses.map((exp) => {
+                        const added = items.some((i) => i.expense_id === exp.id);
+                        return (
+                          <TableRow key={exp.id}>
+                            <TableCell className="font-mono">{exp.full_number}</TableCell>
+                            <TableCell className="text-sm max-w-[200px] truncate">{exp.description}</TableCell>
+                            <TableCell className="text-sm">{exp.category_name}</TableCell>
+                            <TableCell className="text-sm">{exp.supplier_name || '-'}</TableCell>
+                            <TableCell className="text-sm">
+                              {exp.due_date ? format(new Date(exp.due_date), 'dd/MM/yyyy') : '-'}
+                            </TableCell>
+                            <TableCell className="text-right font-mono text-sm">${exp.total.toFixed(2)}</TableCell>
+                            <TableCell className="text-right font-mono font-semibold">${exp.remaining.toFixed(2)}</TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                size="sm"
+                                variant={added ? 'secondary' : 'default'}
+                                onClick={() => addExpenseItem(exp)}
+                                disabled={added}
+                              >
+                                {added ? 'Agregado' : 'Agregar'}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Factura</TableHead>
-                      <TableHead>Emisión</TableHead>
-                      <TableHead>Vto</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                      <TableHead className="text-right">Ya pagado</TableHead>
-                      <TableHead className="text-right">Saldo</TableHead>
-                      <TableHead className="w-[100px]"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(filteredInvoices ?? []).map((inv) => {
-                      const added = items.some((i) => i.invoice_id === inv.id);
-                      return (
-                        <TableRow key={inv.id}>
-                          <TableCell className="font-mono">{inv.full_number}</TableCell>
-                          <TableCell className="text-sm">
-                            {format(new Date(inv.issue_date), 'dd/MM/yyyy')}
-                          </TableCell>
-                          <TableCell className="text-sm">
-                            {inv.due_date ? format(new Date(inv.due_date), 'dd/MM/yyyy') : '-'}
-                          </TableCell>
-                          <TableCell className="text-right font-mono text-sm">
-                            ${inv.total.toFixed(2)}
-                          </TableCell>
-                          <TableCell className="text-right font-mono text-sm text-muted-foreground">
-                            ${inv.already_paid.toFixed(2)}
-                          </TableCell>
-                          <TableCell className="text-right font-mono font-semibold">
-                            ${inv.remaining.toFixed(2)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              size="sm"
-                              variant={added ? 'secondary' : 'default'}
-                              onClick={() => addInvoiceItem(inv)}
-                              disabled={added}
-                            >
-                              {added ? 'Agregada' : 'Agregar'}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </>)}
-          </CardContent>
-        </Card>
-      )}
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Ítems ({items.length})</CardTitle>
+            <CardTitle>{paymentTarget === 'expense' ? 'Gastos' : 'Facturas'} ({items.length})</CardTitle>
             <CardDescription>Importes a pagar — total: ${itemsTotal.toFixed(2)}</CardDescription>
           </div>
           <Button size="sm" variant="outline" onClick={addFreeItem}>
@@ -697,14 +885,14 @@ export function NewPaymentOrderForm({
         <CardContent>
           {items.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Agregá facturas del listado de arriba o un ítem libre.
+              Agregá facturas o gastos del listado de arriba, o un ítem libre.
             </p>
           ) : (
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Factura</TableHead>
+                    <TableHead>Documento</TableHead>
                     <TableHead className="text-right w-[180px]">Monto</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
@@ -713,8 +901,10 @@ export function NewPaymentOrderForm({
                   {items.map((item, idx) => (
                     <TableRow key={idx}>
                       <TableCell className="font-mono">
-                        {item.invoice_label ?? (
-                          <Badge variant="outline">Sin factura</Badge>
+                        {item.invoice_label ? (
+                          <span>{item.invoice_label}{item.expense_id ? <Badge variant="secondary" className="ml-2 text-xs">Gasto</Badge> : null}</span>
+                        ) : (
+                          <Badge variant="outline">Sin documento</Badge>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -1065,7 +1255,7 @@ export function NewPaymentOrderForm({
           <div className="text-sm">
             <div className="flex flex-wrap gap-x-6 gap-y-1">
               <div>
-                <span className="text-muted-foreground">Total facturas:</span>{' '}
+                <span className="text-muted-foreground">Total {paymentTarget === 'expense' ? 'gastos' : 'facturas'}:</span>{' '}
                 <span className="font-mono font-semibold">${itemsTotal.toFixed(2)}</span>
               </div>
               {retentionsTotal > 0 && (

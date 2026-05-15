@@ -152,6 +152,14 @@ enum training_status {
   Publicado
 }
 
+enum expense_status {
+  DRAFT
+  CONFIRMED
+  PARTIAL_PAID
+  PAID
+  CANCELLED
+}
+
 enum type_of_maintenance_ENUM {
   Correctivo
   Preventivo
@@ -398,6 +406,10 @@ model company {
   // Retenciones y percepciones
   tax_types                       tax_types[]
   retention_certificate_sequences retention_certificate_sequences[]
+
+  // Gastos
+  expense_categories expense_categories[]
+  expenses           expenses[]
 }
 
 model pdf_settings {
@@ -1722,6 +1734,7 @@ model suppliers {
   payment_orders    payment_orders[]
   checks            checks[]
   payment_methods   supplier_payment_methods[]
+  expenses          expenses[]
 
   @@unique([company_id, code])
   @@unique([company_id, tax_id])
@@ -2416,13 +2429,16 @@ model payment_order_items {
   id               String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   payment_order_id String  @db.Uuid
   invoice_id       String? @db.Uuid
+  expense_id       String? @db.Uuid
   amount           Decimal @db.Decimal(15, 2)
 
   payment_order payment_orders     @relation(fields: [payment_order_id], references: [id], onDelete: Cascade)
   invoice       purchase_invoices? @relation(fields: [invoice_id], references: [id])
+  expense       expenses?          @relation(fields: [expense_id], references: [id])
 
   @@index([payment_order_id])
   @@index([invoice_id])
+  @@index([expense_id])
 }
 
 model payment_order_payments {
@@ -2492,4 +2508,68 @@ model checks {
 
   @@index([company_id, type, status])
   @@index([company_id, due_date])
+}
+
+// ============================================================
+// GASTOS
+// ============================================================
+
+model expense_categories {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id  String   @db.Uuid
+  name        String
+  description String?
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now()) @db.Timestamptz
+  updated_at  DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  company  company    @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  expenses expenses[]
+
+  @@unique([company_id, name])
+  @@index([company_id])
+}
+
+model expenses {
+  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id  String         @db.Uuid
+  number      Int
+  full_number String
+  description String
+  amount      Decimal        @db.Decimal(15, 2)
+  date        DateTime       @db.Date
+  due_date    DateTime?      @db.Date
+  status      expense_status @default(DRAFT)
+  notes       String?
+  category_id String         @db.Uuid
+  supplier_id String?        @db.Uuid
+  created_by  String
+  created_at  DateTime       @default(now()) @db.Timestamptz
+  updated_at  DateTime       @default(now()) @updatedAt @db.Timestamptz
+
+  company             company              @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  category            expense_categories   @relation(fields: [category_id], references: [id])
+  supplier            suppliers?           @relation(fields: [supplier_id], references: [id])
+  expense_attachments expense_attachments[]
+  payment_order_items payment_order_items[]
+
+  @@unique([company_id, number])
+  @@index([company_id])
+  @@index([category_id])
+  @@index([supplier_id])
+  @@index([status])
+}
+
+model expense_attachments {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  expense_id String  @db.Uuid
+  file_name  String
+  file_key   String
+  file_size  Int?
+  mime_type  String?
+  created_at DateTime @default(now()) @db.Timestamptz
+
+  expense expenses @relation(fields: [expense_id], references: [id], onDelete: Cascade)
+
+  @@index([expense_id])
 }

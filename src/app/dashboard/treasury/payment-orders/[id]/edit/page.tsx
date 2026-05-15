@@ -28,7 +28,8 @@ export default async function EditPaymentOrderPage({
     notes: order.notes,
     items: order.items.map((i) => ({
       invoice_id: i.invoice_id,
-      invoice_label: i.invoice?.full_number ?? null,
+      expense_id: i.expense_id ?? null,
+      invoice_label: i.invoice?.full_number ?? i.expense?.full_number ?? null,
       amount: i.amount.toFixed(2),
     })),
     payments: order.payments.map((p) => ({

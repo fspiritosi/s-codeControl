@@ -146,6 +146,7 @@ export async function getPaymentOrderById(id: string) {
       items: {
         include: {
           invoice: { select: { id: true, full_number: true, issue_date: true, total: true } },
+          expense: { select: { id: true, full_number: true, date: true, amount: true } },
         },
       },
       payments: {
@@ -188,6 +189,7 @@ export async function getPaymentOrderById(id: string) {
       ...i,
       amount: Number(i.amount),
       invoice: i.invoice ? { ...i.invoice, total: Number(i.invoice.total) } : null,
+      expense: i.expense ? { ...i.expense, amount: Number(i.expense.amount) } : null,
     })),
     payments: order.payments.map((p) => ({ ...p, amount: Number(p.amount) })),
     retentions: order.retentions.map((r) => ({
@@ -281,6 +283,71 @@ export async function getPendingPurchaseInvoices(supplierId: string) {
     .filter((inv) => inv.remaining > 0);
 }
 
+export async function getPendingExpenses(supplierId?: string) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return [];
+
+  const where: Record<string, unknown> = {
+    company_id: companyId,
+    status: { in: ['CONFIRMED', 'PARTIAL_PAID'] },
+  };
+  if (supplierId) {
+    where.supplier_id = supplierId;
+  }
+
+  const expenses = await prisma.expenses.findMany({
+    where: where as any,
+    select: {
+      id: true,
+      full_number: true,
+      description: true,
+      date: true,
+      due_date: true,
+      amount: true,
+      category: { select: { id: true, name: true } },
+      supplier: { select: { id: true, business_name: true } },
+      payment_order_items: { select: { amount: true } },
+    },
+    orderBy: { date: 'asc' },
+  });
+
+  return expenses
+    .map((exp) => {
+      const alreadyPaid = exp.payment_order_items.reduce(
+        (acc, item) => acc + Number(item.amount),
+        0
+      );
+      const total = Number(exp.amount);
+      const remaining = Math.round((total - alreadyPaid) * 100) / 100;
+      return {
+        id: exp.id,
+        full_number: exp.full_number,
+        description: exp.description,
+        date: exp.date,
+        due_date: exp.due_date,
+        total,
+        already_paid: Math.round(alreadyPaid * 100) / 100,
+        remaining,
+        category_id: exp.category?.id ?? '',
+        category_name: exp.category?.name ?? '',
+        supplier_id: exp.supplier?.id ?? null,
+        supplier_name: exp.supplier?.business_name ?? '',
+      };
+    })
+    .filter((exp) => exp.remaining > 0);
+}
+
+export async function getExpenseCategoriesForOrder() {
+  const { companyId } = await getActionContext();
+  if (!companyId) return [];
+
+  return prisma.expense_categories.findMany({
+    where: { company_id: companyId, is_active: true },
+    select: { id: true, name: true },
+    orderBy: { name: 'asc' },
+  });
+}
+
 export async function createPaymentOrder(data: PaymentOrderFormData) {
   const { companyId } = await getActionContext();
   if (!companyId) return { data: null, error: 'No company selected' };
@@ -372,6 +439,7 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
         items: {
           create: parsed.data.items.map((i) => ({
             invoice_id: i.invoice_id || null,
+            expense_id: i.expense_id || null,
             amount: parseFloat(i.amount),
           })),
         },
@@ -503,6 +571,7 @@ export async function updatePaymentOrder(id: string, data: PaymentOrderFormData)
           items: {
             create: parsed.data.items.map((i) => ({
               invoice_id: i.invoice_id || null,
+              expense_id: i.expense_id || null,
               amount: parseFloat(i.amount),
             })),
           },
@@ -725,7 +794,7 @@ export async function markPaymentOrderAsPaid(id: string): Promise<{
     await requirePermission('tesoreria.pay');
     const order = await prisma.payment_orders.findFirst({
       where: { id, company_id: companyId },
-      select: { id: true, status: true, items: { select: { invoice_id: true } } },
+      select: { id: true, status: true, items: { select: { invoice_id: true, expense_id: true } } },
     });
     if (!order) return { ok: false, error: 'Orden no encontrada' };
     if (order.status !== 'CONFIRMED') {
@@ -737,6 +806,9 @@ export async function markPaymentOrderAsPaid(id: string): Promise<{
 
     const invoiceIds = Array.from(
       new Set(order.items.map((i) => i.invoice_id).filter((v): v is string => !!v))
+    );
+    const expenseIds = Array.from(
+      new Set(order.items.map((i) => i.expense_id).filter((v): v is string => !!v))
     );
 
     await prisma.$transaction(async (tx) => {
@@ -778,6 +850,37 @@ export async function markPaymentOrderAsPaid(id: string): Promise<{
           });
         }
       }
+
+      // Actualizar status de gastos vinculados
+      for (const expenseId of expenseIds) {
+        const expense = await tx.expenses.findUnique({
+          where: { id: expenseId },
+          select: { id: true, amount: true, status: true },
+        });
+        if (!expense) continue;
+        if (expense.status === 'CANCELLED') continue;
+
+        const aggregate = await tx.payment_order_items.aggregate({
+          where: {
+            expense_id: expenseId,
+            payment_order: { status: 'PAID' },
+          },
+          _sum: { amount: true },
+        });
+        const paidSum = Number(aggregate._sum.amount ?? 0);
+        const total = Number(expense.amount);
+
+        let nextStatus: 'PAID' | 'PARTIAL_PAID' | null = null;
+        if (paidSum >= total - 0.005) nextStatus = 'PAID';
+        else if (paidSum > 0) nextStatus = 'PARTIAL_PAID';
+
+        if (nextStatus && expense.status !== nextStatus) {
+          await tx.expenses.update({
+            where: { id: expenseId },
+            data: { status: nextStatus },
+          });
+        }
+      }
     });
 
     // Mail al proveedor (fuera de la transacción)
@@ -796,6 +899,9 @@ export async function markPaymentOrderAsPaid(id: string): Promise<{
     revalidatePath(`/dashboard/treasury/payment-orders/${id}`);
     for (const invId of invoiceIds) {
       revalidatePath(`/dashboard/purchasing/invoices/${invId}`);
+    }
+    for (const expId of expenseIds) {
+      revalidatePath(`/dashboard/purchasing/expenses/${expId}`);
     }
 
     return { ok: true, emailStatus, errorMessage };
