@@ -41,6 +41,9 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         },
         orderBy: { created_at: 'asc' },
       },
+      other_charges_items: {
+        orderBy: { created_at: 'asc' },
+      },
     },
   });
 
@@ -196,6 +199,9 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             {Number(invoice.other_taxes) > 0 && (
               <div>Percepciones: <span className="font-mono font-medium">${Number(invoice.other_taxes).toFixed(2)}</span></div>
             )}
+            {Number(invoice.other_charges) > 0 && (
+              <div>Otros gastos: <span className="font-mono font-medium">${Number(invoice.other_charges).toFixed(2)}</span></div>
+            )}
             <div className="text-lg font-bold">Total: <span className="font-mono">${Number(invoice.total).toFixed(2)}</span></div>
           </div>
         </CardContent>
@@ -233,6 +239,35 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                     <TableCell className="text-right font-mono">{Number(p.rate)}%</TableCell>
                     <TableCell className="text-right font-mono font-medium">${Number(p.amount).toFixed(2)}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{p.notes ?? '—'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {invoice.other_charges_items.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Otros gastos</CardTitle>
+            <CardDescription>
+              Gastos adicionales que no afectan IVA (flete, seguro, etc.).
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Descripción</TableHead>
+                  <TableHead className="text-right">Monto</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {invoice.other_charges_items.map((oc) => (
+                  <TableRow key={oc.id}>
+                    <TableCell>{oc.description}</TableCell>
+                    <TableCell className="text-right font-mono font-medium">${Number(oc.amount).toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

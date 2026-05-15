@@ -131,7 +131,7 @@ export async function createProduct(data: Record<string, unknown>) {
   try {
     // Auto-generate code (scoped to the visible group to avoid duplicates across the group)
     const lastProduct = await prisma.products.findFirst({
-      where: { company_id: { in: scope.visibleCompanyIds } },
+      where: { company_id: { in: scope.visibleCompanyIds }, code: { startsWith: 'PROD-' } },
       orderBy: { code: 'desc' },
       select: { code: true },
     });
