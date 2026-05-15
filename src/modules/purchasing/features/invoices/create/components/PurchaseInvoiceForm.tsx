@@ -890,6 +890,25 @@ export default function PurchaseInvoiceForm({ suppliers, products: initialProduc
         onOpenChange={setQuickProductOpen}
         onProductCreated={(product) => {
           setLocalProducts((prev) => [...prev, product]);
+          // Buscar última línea vacía (sin producto) para asignar el nuevo producto
+          const lines = form.getValues('lines');
+          const emptyIdx = lines.findLastIndex((l) => !l.product_id);
+          if (emptyIdx >= 0) {
+            form.setValue(`lines.${emptyIdx}.product_id`, product.id);
+            form.setValue(`lines.${emptyIdx}.description`, product.name);
+            form.setValue(`lines.${emptyIdx}.unit_cost`, product.cost_price);
+            form.setValue(`lines.${emptyIdx}.vat_rate`, product.vat_rate);
+          } else {
+            append({
+              product_id: product.id,
+              description: product.name,
+              quantity: 1,
+              unit_cost: product.cost_price,
+              vat_rate: product.vat_rate,
+              discount_type: null,
+              discount_value: null,
+            } as any);
+          }
         }}
       />
     </Form>
