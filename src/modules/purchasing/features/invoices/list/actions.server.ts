@@ -61,7 +61,7 @@ export async function getPurchaseInvoicesPaginated(searchParams: DataTableSearch
     ]);
 
     return {
-      data: data.map((inv) => ({ ...inv, subtotal: Number(inv.subtotal), vat_amount: Number(inv.vat_amount), other_taxes: Number(inv.other_taxes), total: Number(inv.total) })),
+      data: data.map((inv) => ({ ...inv, subtotal: Number(inv.subtotal), vat_amount: Number(inv.vat_amount), other_taxes: Number(inv.other_taxes), other_charges: Number(inv.other_charges), total: Number(inv.total) })),
       total,
     };
   } catch (error) {
@@ -115,6 +115,7 @@ export async function createPurchaseInvoice(data: {
     purchase_order_line_id?: string;
   }[];
   perceptions?: { tax_type_id: string; base_amount: number; rate: number; amount: number; notes?: string }[];
+  other_charges?: { description: string; amount: number }[];
 }) {
   const { companyId } = await getActionContext();
   if (!companyId) throw new Error('No company selected');
@@ -194,7 +195,15 @@ export async function createPurchaseInvoice(data: {
       notes: p.notes?.trim() || null,
     }));
     const otherTaxes = perceptions.reduce((s, p) => s + p.amount, 0);
-    const total = r2(invoiceSubtotal + totalVat + otherTaxes);
+
+    // Otros gastos (flete, seguro, etc.) — suman al total pero NO afectan IVA
+    const otherChargesItems = (data.other_charges ?? []).map((oc) => ({
+      description: oc.description,
+      amount: r3(oc.amount),
+    }));
+    const otherChargesTotal = r2(otherChargesItems.reduce((s, oc) => s + oc.amount, 0));
+
+    const total = r2(invoiceSubtotal + totalVat + otherTaxes + otherChargesTotal);
 
     // Validar percepciones
     if (perceptions.length > 0) {
@@ -236,14 +245,16 @@ export async function createPurchaseInvoice(data: {
         vat_amount: totalVat,
         other_taxes: otherTaxes,
         total,
+        other_charges: otherChargesTotal,
         lines: { create: lines },
         ...(perceptions.length > 0 ? { perceptions: { create: perceptions } } : {}),
+        ...(otherChargesItems.length > 0 ? { other_charges_items: { create: otherChargesItems } } : {}),
       },
     });
 
     revalidatePath('/dashboard/purchasing');
     return {
-      data: { ...invoice, subtotal: Number(invoice.subtotal), vat_amount: Number(invoice.vat_amount), other_taxes: Number(invoice.other_taxes), total: Number(invoice.total) },
+      data: { ...invoice, subtotal: Number(invoice.subtotal), vat_amount: Number(invoice.vat_amount), other_taxes: Number(invoice.other_taxes), other_charges: Number(invoice.other_charges), total: Number(invoice.total) },
       error: null,
     };
   } catch (error: any) {
@@ -409,7 +420,7 @@ export async function getPurchaseInvoiceForEdit(invoiceId: string) {
   });
   if (!invoice) return null;
 
-  const [lines, perceptions] = await Promise.all([
+  const [lines, perceptions, otherChargesItems] = await Promise.all([
     prisma.purchase_invoice_lines.findMany({
       where: { invoice_id: invoiceId },
       include: {
@@ -422,6 +433,10 @@ export async function getPurchaseInvoiceForEdit(invoiceId: string) {
     prisma.purchase_invoice_perceptions.findMany({
       where: { invoice_id: invoiceId },
       orderBy: { id: 'asc' },
+    }),
+    prisma.purchase_invoice_other_charges.findMany({
+      where: { invoice_id: invoiceId },
+      orderBy: { created_at: 'asc' },
     }),
   ]);
 
@@ -466,6 +481,10 @@ export async function getPurchaseInvoiceForEdit(invoiceId: string) {
       amount: Number(p.amount),
       notes: p.notes || '',
     })),
+    other_charges: otherChargesItems.map((oc) => ({
+      description: oc.description,
+      amount: Number(oc.amount),
+    })),
   };
 }
 
@@ -493,6 +512,7 @@ export async function updatePurchaseInvoice(
       purchase_order_line_id?: string;
     }[];
     perceptions?: { tax_type_id: string; base_amount: number; rate: number; amount: number; notes?: string }[];
+    other_charges?: { description: string; amount: number }[];
   }
 ) {
   const { companyId } = await getActionContext();
@@ -576,7 +596,15 @@ export async function updatePurchaseInvoice(
       notes: p.notes?.trim() || null,
     }));
     const otherTaxes = perceptions.reduce((s, p) => s + p.amount, 0);
-    const total = r2(invoiceSubtotal + totalVat + otherTaxes);
+
+    // Otros gastos (flete, seguro, etc.) — suman al total pero NO afectan IVA
+    const otherChargesItems = (data.other_charges ?? []).map((oc) => ({
+      description: oc.description,
+      amount: r3(oc.amount),
+    }));
+    const otherChargesTotal = r2(otherChargesItems.reduce((s, oc) => s + oc.amount, 0));
+
+    const total = r2(invoiceSubtotal + totalVat + otherTaxes + otherChargesTotal);
 
     if (perceptions.length > 0) {
       const taxTypeIds = Array.from(new Set(perceptions.map((p) => p.tax_type_id)));
@@ -594,10 +622,11 @@ export async function updatePurchaseInvoice(
       primaryOrderId = data.purchase_order_ids.length === 1 ? data.purchase_order_ids[0] : null;
     }
 
-    // Transacción: borrar líneas/percepciones existentes y recrear + actualizar cabecera
+    // Transacción: borrar líneas/percepciones/other_charges existentes y recrear + actualizar cabecera
     await prisma.$transaction([
       prisma.purchase_invoice_lines.deleteMany({ where: { invoice_id: invoiceId } }),
       prisma.purchase_invoice_perceptions.deleteMany({ where: { invoice_id: invoiceId } }),
+      prisma.purchase_invoice_other_charges.deleteMany({ where: { invoice_id: invoiceId } }),
       prisma.purchase_invoices.update({
         where: { id: invoiceId },
         data: {
@@ -616,9 +645,11 @@ export async function updatePurchaseInvoice(
           subtotal: invoiceSubtotal,
           vat_amount: totalVat,
           other_taxes: otherTaxes,
+          other_charges: otherChargesTotal,
           total,
           lines: { create: lines },
           ...(perceptions.length > 0 ? { perceptions: { create: perceptions } } : {}),
+          ...(otherChargesItems.length > 0 ? { other_charges_items: { create: otherChargesItems } } : {}),
         },
       }),
     ]);

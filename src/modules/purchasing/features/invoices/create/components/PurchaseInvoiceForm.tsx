@@ -31,8 +31,9 @@ import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, LinkIcon, Paperclip, X } from 'lucide-react';
+import { Plus, Trash2, LinkIcon, Paperclip, X, PackagePlus } from 'lucide-react';
 import { useMemo, useState, useEffect, useRef } from 'react';
+import QuickCreateProductModal from './_QuickCreateProductModal';
 
 type FormValues = z.infer<typeof purchaseInvoiceSchema>;
 
@@ -72,6 +73,7 @@ export type InvoiceInitialData = {
   global_discount_value: number | null;
   lines: LineField[];
   perceptions: { tax_type_id: string; base_amount: number; rate: number; amount: number; notes: string }[];
+  other_charges: { description: string; amount: number }[];
 };
 
 interface Props {
@@ -81,12 +83,14 @@ interface Props {
   initialData?: InvoiceInitialData;
 }
 
-export default function PurchaseInvoiceForm({ suppliers, products, perceptionTypes, initialData }: Props) {
+export default function PurchaseInvoiceForm({ suppliers, products: initialProducts, perceptionTypes, initialData }: Props) {
   const router = useRouter();
   const isEditMode = !!initialData;
   const [availableOrders, setAvailableOrders] = useState<any[]>([]);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
+  const [localProducts, setLocalProducts] = useState(initialProducts);
+  const [quickProductOpen, setQuickProductOpen] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(purchaseInvoiceSchema),
@@ -106,6 +110,7 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
           global_discount_value: initialData.global_discount_value,
           lines: initialData.lines.length > 0 ? initialData.lines : [{ product_id: '', description: '', quantity: 1, unit_cost: 0, vat_rate: 21, discount_type: null, discount_value: null }],
           perceptions: initialData.perceptions,
+          other_charges: initialData.other_charges || [],
         }
       : {
           supplier_id: '', voucher_type: 'FACTURA_A', point_of_sale: '00001', number: '',
@@ -116,6 +121,7 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
           global_discount_value: null,
           lines: [{ product_id: '', description: '', quantity: 1, unit_cost: 0, vat_rate: 21, discount_type: null, discount_value: null }],
           perceptions: [],
+          other_charges: [],
         },
   });
 
@@ -125,12 +131,18 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
     append: appendPerception,
     remove: removePerception,
   } = useFieldArray({ control: form.control, name: 'perceptions' });
+  const {
+    fields: otherChargeFields,
+    append: appendOtherCharge,
+    remove: removeOtherCharge,
+  } = useFieldArray({ control: form.control, name: 'other_charges' });
   const watchedLines = useWatch({ control: form.control, name: 'lines' });
   const watchedPerceptions = useWatch({ control: form.control, name: 'perceptions' });
   const watchedSupplier = useWatch({ control: form.control, name: 'supplier_id' });
   const watchedOrderIds = (useWatch({ control: form.control, name: 'purchase_order_ids' }) as string[]) || [];
   const globalDiscountType = useWatch({ control: form.control, name: 'global_discount_type' });
   const globalDiscountValue = useWatch({ control: form.control, name: 'global_discount_value' });
+  const watchedOtherCharges = useWatch({ control: form.control, name: 'other_charges' });
 
   // Índice line_id → order_id para poder filtrar al deseleccionar OCs
   const poLineToOrderRef = useRef<Map<string, string>>(new Map());
@@ -275,6 +287,11 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
       0
     );
 
+    const otherChargesTotal = (watchedOtherCharges || []).reduce(
+      (acc: number, oc: any) => acc + (Number(oc?.amount) || 0),
+      0
+    );
+
     return {
       subtotalBruto,
       lineDiscounts,
@@ -282,9 +299,10 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
       subtotal,
       vatAmount,
       otherTaxes,
-      total: subtotal + vatAmount + otherTaxes,
+      otherChargesTotal,
+      total: subtotal + vatAmount + otherTaxes + otherChargesTotal,
     };
-  }, [watchedLines, watchedPerceptions, globalDiscountType, globalDiscountValue]);
+  }, [watchedLines, watchedPerceptions, watchedOtherCharges, globalDiscountType, globalDiscountValue]);
 
   const handlePerceptionTypeChange = (index: number, taxTypeId: string) => {
     const t = perceptionTypes.find((p) => p.id === taxTypeId);
@@ -312,7 +330,7 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
   };
 
   const handleProductSelect = (index: number, productId: string) => {
-    const product = products.find((p) => p.id === productId);
+    const product = localProducts.find((p) => p.id === productId);
     if (product) {
       form.setValue(`lines.${index}.description`, product.name);
       form.setValue(`lines.${index}.unit_cost`, product.cost_price);
@@ -358,6 +376,10 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
       amount: Number(p.amount) || 0,
       notes: p.notes,
     }));
+    const sanitizedOtherCharges = (values.other_charges || []).map((oc) => ({
+      description: oc.description,
+      amount: Number(oc.amount) || 0,
+    }));
     const payload = {
       voucher_type: values.voucher_type,
       point_of_sale: values.point_of_sale,
@@ -371,6 +393,7 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
       global_discount_value: values.global_discount_value != null ? values.global_discount_value : undefined,
       lines: sanitizedLines,
       perceptions: sanitizedPerceptions,
+      other_charges: sanitizedOtherCharges,
     };
 
     toast.promise(async () => {
@@ -506,9 +529,14 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Líneas</CardTitle>
-            <Button type="button" variant="outline" size="sm" onClick={() => append({ product_id: '', description: '', quantity: 1, unit_cost: 0, vat_rate: 21, discount_type: null, discount_value: null })}>
-              <Plus className="size-4 mr-1" /> Agregar línea
-            </Button>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => append({ product_id: '', description: '', quantity: 1, unit_cost: 0, vat_rate: 21, discount_type: null, discount_value: null })}>
+                <Plus className="size-4 mr-1" /> Agregar línea
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => setQuickProductOpen(true)}>
+                <PackagePlus className="size-4 mr-1" /> Nuevo producto
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
@@ -535,7 +563,7 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
                     <TableRow key={field.id}>
                       <TableCell>
                         <SearchableSelect
-                          options={products.map((p) => ({ value: p.id, label: `${p.name} (${p.code})` }))}
+                          options={localProducts.map((p) => ({ value: p.id, label: `${p.name} (${p.code})` }))}
                           value={form.watch(`lines.${index}.product_id`) || ''}
                           onValueChange={(v) => { form.setValue(`lines.${index}.product_id`, v); handleProductSelect(index, v); }}
                           placeholder="Seleccionar"
@@ -623,6 +651,9 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
               <p>IVA: <span className="font-mono font-medium">${totals.vatAmount.toFixed(2)}</span></p>
               {totals.otherTaxes > 0 && (
                 <p>Percepciones: <span className="font-mono font-medium">${totals.otherTaxes.toFixed(2)}</span></p>
+              )}
+              {totals.otherChargesTotal > 0 && (
+                <p>Otros gastos: <span className="font-mono font-medium">${totals.otherChargesTotal.toFixed(2)}</span></p>
               )}
               <p className="text-lg font-bold">Total: <span className="font-mono">${totals.total.toFixed(2)}</span></p>
             </div></div>
@@ -740,6 +771,71 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Otros gastos</CardTitle>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => appendOtherCharge({ description: '', amount: 0 })}
+              >
+                <Plus className="size-4 mr-1" /> Agregar otro gasto
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {otherChargeFields.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Si la factura incluye gastos adicionales (flete, seguro, etc.) que no forman parte del subtotal ni afectan IVA, agregalos acá.
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Descripción</TableHead>
+                    <TableHead className="w-[160px] text-right">Monto</TableHead>
+                    <TableHead className="w-[40px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {otherChargeFields.map((field, index) => (
+                    <TableRow key={field.id}>
+                      <TableCell>
+                        <Input
+                          className="h-8 text-sm"
+                          placeholder="Ej: Flete, Seguro..."
+                          {...form.register(`other_charges.${index}.description`)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          className="h-8 text-sm text-right font-mono"
+                          type="number"
+                          step="0.001"
+                          {...form.register(`other_charges.${index}.amount`, { valueAsNumber: true })}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-7"
+                          onClick={() => removeOtherCharge(index)}
+                        >
+                          <Trash2 className="size-3.5 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
         {!isEditMode && (
           <Card>
             <CardHeader>
@@ -788,6 +884,14 @@ export default function PurchaseInvoiceForm({ suppliers, products, perceptionTyp
           </Button>
         </div>
       </form>
+
+      <QuickCreateProductModal
+        open={quickProductOpen}
+        onOpenChange={setQuickProductOpen}
+        onProductCreated={(product) => {
+          setLocalProducts((prev) => [...prev, product]);
+        }}
+      />
     </Form>
   );
 }
