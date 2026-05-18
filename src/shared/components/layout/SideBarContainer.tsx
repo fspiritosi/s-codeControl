@@ -2,6 +2,7 @@ import { getSession } from '@/shared/lib/session';
 import InitState from '@/shared/store/InitUser';
 import {
   Building2,
+  Calculator,
   Calendar,
   ClipboardList,
   FileText,
@@ -27,6 +28,8 @@ interface SideLink {
   position: number;
   /** Permiso requerido para mostrar el link. null = siempre visible. */
   requiredPermission: string | null;
+  /** Módulo contratado (hired_modules) requerido para mostrar el link. null = siempre visible. */
+  requiredModule?: string | null;
 }
 
 const ALL_LINKS: SideLink[] = [
@@ -44,20 +47,29 @@ const ALL_LINKS: SideLink[] = [
   { name: 'HSE',           href: '/dashboard/hse',                      icon: <GraduationCap size={sizeIcons} />,   position: 12, requiredPermission: null },
   { name: 'Configuración', href: '/dashboard/settings',                 icon: <Settings size={sizeIcons} />,        position: 13, requiredPermission: null },
   { name: 'Ayuda',         href: '/dashboard/help',                     icon: <HelpCircle size={sizeIcons} />,      position: 14, requiredPermission: 'ayuda.view' },
+  { name: 'Gestión de Costos', href: '/dashboard/costos',              icon: <Calculator size={sizeIcons} />,      position: 15, requiredPermission: null, requiredModule: 'costos' },
 ];
 
-function filterLinks(role: string | null, permissions: string[]): SideLink[] {
-  // owner: shortcut (también podríamos verificar permissions, pero el set ya es completo).
-  if (role === 'owner') return ALL_LINKS;
+function filterLinks(role: string | null, permissions: string[], hiredModules: string[]): SideLink[] {
+  const hired = new Set(hiredModules);
+
+  // owner: no restricción por permisos, pero sí filtra por módulos contratados.
+  if (role === 'owner') {
+    return ALL_LINKS.filter((link) => !link.requiredModule || hired.has(link.requiredModule));
+  }
 
   const granted = new Set(permissions);
-  return ALL_LINKS.filter((link) => link.requiredPermission === null || granted.has(link.requiredPermission));
+  return ALL_LINKS.filter(
+    (link) =>
+      (link.requiredPermission === null || granted.has(link.requiredPermission)) &&
+      (!link.requiredModule || hired.has(link.requiredModule))
+  );
 }
 
 async function SideBarContainer() {
   const session = await getSession();
 
-  const links = filterLinks(session.role, session.permissions).sort((a, b) => a.position - b.position);
+  const links = filterLinks(session.role, session.permissions, session.hiredModules).sort((a, b) => a.position - b.position);
 
   return (
     <>

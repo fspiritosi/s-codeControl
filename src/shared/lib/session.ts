@@ -11,6 +11,8 @@ export interface Session {
   role: string | null;
   modules: string[];
   permissions: string[];
+  /** Nombres de módulos adicionales contratados por la empresa (tabla hired_modules). */
+  hiredModules: string[];
   companies: any[];
   sharedCompanies: any[];
 }
@@ -22,6 +24,7 @@ const EMPTY_SESSION: Session = {
   role: null,
   modules: [],
   permissions: [],
+  hiredModules: [],
   companies: [],
   sharedCompanies: [],
 };
@@ -66,8 +69,15 @@ const buildSessionForUser = unstable_cache(
     let role: string | null = null;
     let modules: string[] = [];
     let permissions: string[] = [];
+    let hiredModules: string[] = [];
 
     if (activeCompanyId) {
+      const hiredRows = await prisma.hired_modules.findMany({
+        where: { company_id: activeCompanyId },
+        include: { module: { select: { name: true } } },
+      });
+      hiredModules = hiredRows.map((h) => h.module?.name).filter((n): n is string => Boolean(n));
+
       const isOwner = companies?.some((c: any) => c.id === activeCompanyId);
       if (isOwner) {
         role = 'owner';
@@ -127,6 +137,7 @@ const buildSessionForUser = unstable_cache(
       role,
       modules,
       permissions,
+      hiredModules,
       companies: safeCompanies,
       sharedCompanies: safeShared,
     };
