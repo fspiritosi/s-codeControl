@@ -18,10 +18,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-function ActionsCell({ row }: { row: any }) {
+function ActionsCell({ row, isOwner }: { row: any; isOwner: boolean }) {
   const router = useRouter();
   const status = row.original.status;
   const id = row.original.id;
+
+  // DRAFT: editable por cualquiera con acceso. CONFIRMED: solo el owner de la empresa.
+  const canEdit = status === 'DRAFT' || (status === 'CONFIRMED' && isOwner);
 
   return (
     <DropdownMenu>
@@ -36,7 +39,7 @@ function ActionsCell({ row }: { row: any }) {
             <Eye className="size-4 mr-2" /> Ver detalle
           </Link>
         </DropdownMenuItem>
-        {status === 'DRAFT' && (
+        {canEdit && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
@@ -44,28 +47,31 @@ function ActionsCell({ row }: { row: any }) {
                 <Pencil className="size-4 mr-2" /> Editar
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                toast.promise(
-                  async () => {
-                    const result = await confirmPurchaseInvoice(id);
-                    if (result.error) throw new Error(result.error);
-                    router.refresh();
-                  },
-                  { loading: 'Confirmando...', success: 'Factura confirmada', error: (e) => e.message }
-                );
-              }}
-            >
-              <CheckCircle className="size-4 mr-2" /> Confirmar
-            </DropdownMenuItem>
           </>
+        )}
+        {status === 'DRAFT' && (
+          <DropdownMenuItem
+            onClick={() => {
+              toast.promise(
+                async () => {
+                  const result = await confirmPurchaseInvoice(id);
+                  if (result.error) throw new Error(result.error);
+                  router.refresh();
+                },
+                { loading: 'Confirmando...', success: 'Factura confirmada', error: (e) => e.message }
+              );
+            }}
+          >
+            <CheckCircle className="size-4 mr-2" /> Confirmar
+          </DropdownMenuItem>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-export const invoiceColumns: ColumnDef<any>[] = [
+export function makeInvoiceColumns(isOwner: boolean): ColumnDef<any>[] {
+  return [
   {
     accessorKey: 'full_number',
     header: 'Número',
@@ -122,9 +128,10 @@ export const invoiceColumns: ColumnDef<any>[] = [
     },
     filterFn: 'equals',
   },
-  {
-    id: 'actions',
-    header: '',
-    cell: ({ row }) => <ActionsCell row={row} />,
-  },
-];
+    {
+      id: 'actions',
+      header: '',
+      cell: ({ row }) => <ActionsCell row={row} isOwner={isOwner} />,
+    },
+  ];
+}

@@ -2,6 +2,7 @@
 
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
+import { isActiveUserOwner } from '@/shared/lib/permissions';
 import { storageServer } from '@/shared/lib/storage-server';
 import { supabaseServer } from '@/shared/lib/supabase/server';
 import {
@@ -416,9 +417,14 @@ export async function getPurchaseInvoiceForEdit(invoiceId: string) {
   if (!companyId) return null;
 
   const invoice = await prisma.purchase_invoices.findFirst({
-    where: { id: invoiceId, company_id: companyId, status: 'DRAFT' },
+    where: { id: invoiceId, company_id: companyId },
   });
   if (!invoice) return null;
+
+  // DRAFT es editable por cualquiera con acceso; CONFIRMED solo por el owner de la empresa.
+  const editable =
+    invoice.status === 'DRAFT' || (invoice.status === 'CONFIRMED' && (await isActiveUserOwner()));
+  if (!editable) return null;
 
   const [lines, perceptions, otherChargesItems] = await Promise.all([
     prisma.purchase_invoice_lines.findMany({
@@ -522,12 +528,25 @@ export async function updatePurchaseInvoice(
   const r2 = (n: number) => Math.round(n * 100) / 100;
 
   try {
-    // Verificar que la factura existe y está en DRAFT
+    // Verificar que la factura existe y es editable.
+    // DRAFT: editable por cualquiera con acceso. CONFIRMED: solo el owner de la empresa.
     const existing = await prisma.purchase_invoices.findFirst({
-      where: { id: invoiceId, company_id: companyId, status: 'DRAFT' },
-      select: { id: true, supplier_id: true },
+      where: { id: invoiceId, company_id: companyId },
+      select: { id: true, supplier_id: true, status: true },
     });
-    if (!existing) return { data: null, error: 'Factura no encontrada o no está en borrador' };
+    if (!existing) return { data: null, error: 'Factura no encontrada' };
+    const editable =
+      existing.status === 'DRAFT' ||
+      (existing.status === 'CONFIRMED' && (await isActiveUserOwner()));
+    if (!editable) {
+      return {
+        data: null,
+        error:
+          existing.status === 'CONFIRMED'
+            ? 'Solo el dueño de la empresa puede editar una factura confirmada'
+            : 'La factura no está en un estado editable',
+      };
+    }
 
     const fullNumber = `${data.point_of_sale.padStart(5, '0')}-${data.number.padStart(8, '0')}`;
 

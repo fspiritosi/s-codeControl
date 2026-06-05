@@ -410,6 +410,12 @@ model company {
   // Gastos
   expense_categories expense_categories[]
   expenses           expenses[]
+
+  // Costos
+  config_cct            config_cct[]
+  costo_equipos         costo_equipo[]
+  servicios_contrato    servicio_contrato[]
+  liquidaciones_sueldos liquidacion_sueldo[]
 }
 
 model pdf_settings {
@@ -532,6 +538,10 @@ model employees {
   training_material_readings       training_material_readings[]
   hse_document_assignments         hse_document_assignments[]
   hse_document_assignment_versions hse_document_assignment_versions[]
+
+  // Costos
+  asignaciones_mod      asignacion_mod[]
+  liquidaciones_sueldos liquidacion_sueldo[]
 }
 
 model companies_employees {
@@ -628,6 +638,10 @@ model vehicles {
   dailyreportequipmentrelations dailyreportequipmentrelations[]
   repair_solicitudes            repair_solicitudes[]
   withdrawal_orders             withdrawal_orders[]
+
+  // Costos
+  costo_equipo          costo_equipo?
+  asignaciones_servicio asignacion_equipo_servicio[]
 }
 
 model work_diagram {
@@ -838,6 +852,9 @@ model customers {
   share_company_users  share_company_users[]
   dailyreportrows      dailyreportrows[]
   checks               checks[]
+
+  // Costos
+  servicios_contrato servicio_contrato[]
 }
 
 model contacts {
@@ -2586,4 +2603,393 @@ model expense_attachments {
   expense expenses @relation(fields: [expense_id], references: [id], onDelete: Cascade)
 
   @@index([expense_id])
+}
+
+// ─── MÓDULO COSTOS ────────────────────────────────────────────────────────────
+
+enum tipo_concepto_cct {
+  remunerativo
+  no_remunerativo
+  descuento
+  aporte_patronal
+  provision
+  prevision
+  ausentismo
+}
+
+enum ambito_concepto_cct {
+  mod_servicio
+  liquidacion
+}
+
+enum clase_calculo_concepto {
+  FIJO_GLOBAL
+  FIJO_POR_CATEGORIA
+  PCT_CONCEPTO
+  PCT_SUMA_CONCEPTOS
+  POR_ANTIGUEDAD_VALOR
+  POR_ANTIGUEDAD_PCT
+  POR_UNIDAD
+}
+
+enum tipo_indice_polinomico {
+  cct
+  ipim_34
+  gasoil_g3
+  ipim_ng
+  custom
+}
+
+enum estado_liquidacion {
+  borrador
+  confirmada
+  pagada
+}
+
+// CCT vigente en una paritaria — una entrada por acuerdo sindical
+model config_cct {
+  id             String   @id @default(uuid()) @db.Uuid
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  company_id     String   @db.Uuid
+  cct_codigo     String
+  cct_nombre     String
+  vigencia_desde String   @db.VarChar(7)
+  vigencia_hasta String?  @db.VarChar(7)
+  is_active      Boolean  @default(true)
+  descripcion    String?
+
+  company       company              @relation(fields: [company_id], references: [id])
+  categorias    categoria_cct[]
+  conceptos     concepto_cct[]
+  servicios     servicio_contrato[]
+  liquidaciones liquidacion_sueldo[]
+  composiciones composicion_costo[]
+
+  @@index([company_id, cct_codigo, is_active])
+}
+
+// Categorías del CCT (G B, J B, M B, Oficial Especializado, etc.)
+model categoria_cct {
+  id            String @id @default(uuid()) @db.Uuid
+  config_cct_id String @db.Uuid
+  codigo        String
+  nombre        String
+  orden         Int    @default(0)
+
+  config_cct    config_cct                 @relation(fields: [config_cct_id], references: [id])
+  valores       valor_concepto_categoria[]
+  asignaciones  asignacion_mod[]
+  liquidaciones liquidacion_sueldo[]
+
+  @@unique([config_cct_id, codigo])
+}
+
+// Definición de cada concepto del CCT
+model concepto_cct {
+  id             String                  @id @default(uuid()) @db.Uuid
+  config_cct_id  String                  @db.Uuid
+  codigo         String
+  nombre         String
+  tipo           tipo_concepto_cct
+  aplica_en      ambito_concepto_cct[]
+  clase_calculo  clase_calculo_concepto
+  parametros     Json
+  orden          Int                     @default(0)
+  is_active      Boolean                 @default(true)
+
+  config_cct config_cct               @relation(fields: [config_cct_id], references: [id])
+  valores    valor_concepto_categoria[]
+
+  @@unique([config_cct_id, codigo])
+}
+
+// Valores fijos cuando un concepto varía por categoría (típicamente Básico)
+model valor_concepto_categoria {
+  id               String  @id @default(uuid()) @db.Uuid
+  concepto_cct_id  String  @db.Uuid
+  categoria_cct_id String  @db.Uuid
+  valor            Decimal @db.Decimal(15, 2)
+
+  concepto  concepto_cct  @relation(fields: [concepto_cct_id], references: [id])
+  categoria categoria_cct @relation(fields: [categoria_cct_id], references: [id])
+
+  @@unique([concepto_cct_id, categoria_cct_id])
+}
+
+// Topes imponibles AFIP/ANSES — global del sistema, no por empresa ni por CCT
+model tope_imponible {
+  id             String  @id @default(uuid()) @db.Uuid
+  codigo         String
+  vigencia_desde String  @db.VarChar(7)
+  valor          Decimal @db.Decimal(15, 2)
+  fuente         String?
+
+  @@unique([codigo, vigencia_desde])
+}
+
+// Extensión de datos de costo para un vehículo existente
+model costo_equipo {
+  id                 String   @id @default(uuid()) @db.Uuid
+  created_at         DateTime @default(now()) @db.Timestamptz(6)
+  vehicle_id         String   @unique @db.Uuid
+  company_id         String   @db.Uuid
+  valor_compra       Decimal  @db.Decimal(15, 2)
+  valor_residual     Decimal  @db.Decimal(15, 2)
+  anios_amortizacion Int
+  km_vida_util       Int
+  is_active          Boolean  @default(true)
+
+  vehicle             vehicles             @relation(fields: [vehicle_id], references: [id])
+  company             company              @relation(fields: [company_id], references: [id])
+  items_mantenimiento item_mantenimiento[]
+}
+
+model item_mantenimiento {
+  id              String  @id @default(uuid()) @db.Uuid
+  costo_equipo_id String  @db.Uuid
+  nombre          String
+  frecuencia_km   Int
+  precio_unitario Decimal @db.Decimal(15, 2)
+  cantidad        Int     @default(1)
+  is_active       Boolean @default(true)
+
+  costo_equipo costo_equipo @relation(fields: [costo_equipo_id], references: [id])
+}
+
+// Servicio/contrato: agrupador maestro de todos los módulos de costo
+model servicio_contrato {
+  id                  String   @id @default(uuid()) @db.Uuid
+  created_at          DateTime @default(now()) @db.Timestamptz(6)
+  company_id          String   @db.Uuid
+  customer_id         String   @db.Uuid
+  config_cct_id       String   @db.Uuid
+  nombre              String
+  descripcion         String?
+  fecha_inicio        String   @db.VarChar(7)
+  fecha_fin           String?  @db.VarChar(7)
+  is_active           Boolean  @default(true)
+  margen_iibb         Decimal  @db.Decimal(5, 2) @default(0)
+  margen_debcred      Decimal  @db.Decimal(5, 2) @default(0)
+  margen_estructura   Decimal  @db.Decimal(5, 2) @default(0)
+  margen_ganancia     Decimal  @db.Decimal(5, 2) @default(0)
+  licencia_ordenanza  Decimal  @db.Decimal(5, 2) @default(0)
+
+  company    company    @relation(fields: [company_id], references: [id])
+  customer   customers  @relation(fields: [customer_id], references: [id])
+  config_cct config_cct @relation(fields: [config_cct_id], references: [id])
+
+  asignaciones_mod      asignacion_mod[]
+  asignaciones_equipo   asignacion_equipo_servicio[]
+  items_ocp             item_ocp[]
+  registros_combustible registro_combustible[]
+  composiciones_costo   composicion_costo[]
+  outputs_configurados  tipo_output_servicio[]
+  periodos_polinomico   periodo_formula_polinomica[]
+  formula_polinomica    formula_polinomica?
+}
+
+// Asignación de choferes a un servicio con % de afectación
+model asignacion_mod {
+  id               String  @id @default(uuid()) @db.Uuid
+  servicio_id      String  @db.Uuid
+  employee_id      String  @db.Uuid
+  categoria_cct_id String  @db.Uuid
+  afectacion_pct   Decimal @db.Decimal(5, 2)
+  antiguedad_anios Int     @default(0)
+  is_active        Boolean @default(true)
+  overrides_calculo Json?
+
+  servicio  servicio_contrato @relation(fields: [servicio_id], references: [id])
+  employee  employees         @relation(fields: [employee_id], references: [id])
+  categoria categoria_cct     @relation(fields: [categoria_cct_id], references: [id])
+}
+
+// Asignación de equipos a un servicio
+model asignacion_equipo_servicio {
+  id           String  @id @default(uuid()) @db.Uuid
+  servicio_id  String  @db.Uuid
+  vehicle_id   String  @db.Uuid
+  km_mensuales Int     @default(0)
+  is_active    Boolean @default(true)
+
+  servicio servicio_contrato @relation(fields: [servicio_id], references: [id])
+  vehicle  vehicles          @relation(fields: [vehicle_id], references: [id])
+}
+
+// Otros Costos de Personal (OCP)
+model item_ocp {
+  id                 String  @id @default(uuid()) @db.Uuid
+  servicio_id        String  @db.Uuid
+  concepto           String
+  costo_anual        Decimal @db.Decimal(15, 2)
+  cantidad_empleados Int     @default(1)
+  is_active          Boolean @default(true)
+
+  servicio servicio_contrato @relation(fields: [servicio_id], references: [id])
+}
+
+// Precios mensuales de combustible por período
+model registro_combustible {
+  id               String  @id @default(uuid()) @db.Uuid
+  servicio_id      String  @db.Uuid
+  periodo          String  @db.VarChar(7)
+  litros_mensuales Decimal @db.Decimal(10, 2)
+  precio_gasoil_lt Decimal @db.Decimal(15, 2)
+  precio_urea_lt   Decimal @db.Decimal(15, 2) @default(0)
+
+  servicio servicio_contrato @relation(fields: [servicio_id], references: [id])
+
+  @@unique([servicio_id, periodo])
+}
+
+// Snapshot de la composición completa de costos para un período
+model composicion_costo {
+  id                    String   @id @default(uuid()) @db.Uuid
+  created_at            DateTime @default(now()) @db.Timestamptz(6)
+  servicio_id           String   @db.Uuid
+  periodo               String   @db.VarChar(7)
+  config_cct_id         String   @db.Uuid
+  subtotal_mod          Decimal  @db.Decimal(15, 2)
+  subtotal_equipos      Decimal  @db.Decimal(15, 2)
+  subtotal_combustible  Decimal  @db.Decimal(15, 2)
+  subtotal_ocp          Decimal  @db.Decimal(15, 2)
+  total_costo_directo   Decimal  @db.Decimal(15, 2)
+  total_con_margenes    Decimal  @db.Decimal(15, 2)
+  precio_mensual        Decimal  @db.Decimal(15, 2)
+  detalle_json          Json
+  pdf_path              String?
+
+  servicio   servicio_contrato    @relation(fields: [servicio_id], references: [id])
+  config_cct config_cct           @relation(fields: [config_cct_id], references: [id])
+  outputs    output_composicion[]
+
+  @@unique([servicio_id, periodo])
+}
+
+// Outputs derivados del precio mensual (km excedente, día feriado, etc.)
+model output_composicion {
+  id              String  @id @default(uuid()) @db.Uuid
+  composicion_id  String  @db.Uuid
+  tipo_output_id  String  @db.Uuid
+  valor           Decimal @db.Decimal(15, 4)
+  detalle_calculo Json?
+
+  composicion composicion_costo    @relation(fields: [composicion_id], references: [id])
+  tipo_output tipo_output_servicio @relation(fields: [tipo_output_id], references: [id])
+
+  @@unique([composicion_id, tipo_output_id])
+}
+
+// Catálogo de tipos de output configurables por servicio
+model tipo_output_servicio {
+  id          String  @id @default(uuid()) @db.Uuid
+  servicio_id String  @db.Uuid
+  codigo      String
+  nombre      String
+  formula     Json
+  orden       Int     @default(0)
+  is_active   Boolean @default(true)
+
+  servicio servicio_contrato  @relation(fields: [servicio_id], references: [id])
+  outputs  output_composicion[]
+
+  @@unique([servicio_id, codigo])
+}
+
+// Definición de ponderaciones de la fórmula para un servicio
+model formula_polinomica {
+  id          String  @id @default(uuid()) @db.Uuid
+  servicio_id String  @unique @db.Uuid
+  descripcion String?
+  fecha_base  String  @db.VarChar(7)
+  precio_base Decimal @db.Decimal(15, 2)
+
+  servicio    servicio_contrato            @relation(fields: [servicio_id], references: [id])
+  componentes componente_formula[]
+  periodos    periodo_formula_polinomica[]
+}
+
+// Componentes de la fórmula con su ponderación e índice asociado
+model componente_formula {
+  id                String                @id @default(uuid()) @db.Uuid
+  formula_id        String                @db.Uuid
+  codigo            String
+  nombre            String
+  tipo_indice       tipo_indice_polinomico
+  ponderacion       Decimal               @db.Decimal(5, 4)
+  valor_indice_base Decimal               @db.Decimal(15, 4)
+  fuente_indice     String?
+
+  formula         formula_polinomica         @relation(fields: [formula_id], references: [id])
+  valores_periodo valor_componente_periodo[]
+
+  @@unique([formula_id, codigo])
+}
+
+// Registro mensual de la fórmula
+model periodo_formula_polinomica {
+  id                          String   @id @default(uuid()) @db.Uuid
+  formula_id                  String   @db.Uuid
+  servicio_id                 String   @db.Uuid
+  periodo                     String   @db.VarChar(7)
+  ajuste_porcentual_acumulado Decimal  @db.Decimal(10, 6)
+  ajuste_monto                Decimal  @db.Decimal(15, 2)
+  valor_ajustado              Decimal  @db.Decimal(15, 2)
+  importe_certificado         Decimal? @db.Decimal(15, 2)
+  retroactivo_acumulado       Decimal? @db.Decimal(15, 2)
+
+  formula  formula_polinomica         @relation(fields: [formula_id], references: [id])
+  servicio servicio_contrato          @relation(fields: [servicio_id], references: [id])
+  valores  valor_componente_periodo[]
+
+  @@unique([formula_id, periodo])
+}
+
+// Valor de cada componente en cada período
+model valor_componente_periodo {
+  id               String  @id @default(uuid()) @db.Uuid
+  periodo_id       String  @db.Uuid
+  componente_id    String  @db.Uuid
+  valor_indice     Decimal @db.Decimal(15, 4)
+  variacion_pct    Decimal @db.Decimal(10, 6)
+  contribucion_pct Decimal @db.Decimal(10, 6)
+
+  periodo    periodo_formula_polinomica @relation(fields: [periodo_id], references: [id])
+  componente componente_formula         @relation(fields: [componente_id], references: [id])
+
+  @@unique([periodo_id, componente_id])
+}
+
+// Liquidación de sueldos
+model liquidacion_sueldo {
+  id                  String             @id @default(uuid()) @db.Uuid
+  created_at          DateTime           @default(now()) @db.Timestamptz(6)
+  company_id          String             @db.Uuid
+  employee_id         String             @db.Uuid
+  config_cct_id       String             @db.Uuid
+  categoria_cct_id    String             @db.Uuid
+  periodo             String             @db.VarChar(7)
+  estado              estado_liquidacion @default(borrador)
+  dias_trabajados     Int                @default(30)
+  inasistencias_dias  Int                @default(0)
+  hs_nocturnas        Decimal            @default(0) @db.Decimal(8, 2)
+  hs_extras_50        Decimal            @default(0) @db.Decimal(8, 2)
+  hs_extras_100       Decimal            @default(0) @db.Decimal(8, 2)
+  dias_feriado        Int                @default(0)
+  dias_desarraigo     Int                @default(0)
+  inputs_extra        Json?
+  total_remunerativo  Decimal            @db.Decimal(15, 2)
+  total_no_remun      Decimal            @db.Decimal(15, 2)
+  total_descuentos    Decimal            @db.Decimal(15, 2)
+  total_sac           Decimal            @default(0) @db.Decimal(15, 2)
+  neto_a_pagar        Decimal            @db.Decimal(15, 2)
+  conceptos_json      Json
+  pdf_path            String?
+
+  company    company       @relation(fields: [company_id], references: [id])
+  employee   employees     @relation(fields: [employee_id], references: [id])
+  config_cct config_cct    @relation(fields: [config_cct_id], references: [id])
+  categoria  categoria_cct @relation(fields: [categoria_cct_id], references: [id])
+
+  @@unique([employee_id, periodo])
 }

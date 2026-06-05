@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { DataTable } from '@/shared/components/common/DataTable';
 import type { DataTableFacetedFilterConfig } from '@/shared/components/common/DataTable/types';
-import { invoiceColumns } from './columns';
+import { makeInvoiceColumns } from './columns';
 import { getInvoiceFacets } from '../actions.server';
 import { INVOICE_STATUS_LABELS, VOUCHER_TYPE_LABELS, INVOICE_RECEIVING_STATUS_LABELS } from '@/modules/purchasing/shared/types';
 
@@ -20,10 +20,12 @@ interface Props {
   data: any[];
   totalRows: number;
   searchParams: Record<string, string | undefined>;
+  isOwner?: boolean;
 }
 
-export function InvoicesDataTable({ data, totalRows, searchParams }: Props) {
+export function InvoicesDataTable({ data, totalRows, searchParams, isOwner = false }: Props) {
   const [facets, setFacets] = useState<Record<string, { value: string; count: number }[]> | null>(null);
+  const columns = useMemo(() => makeInvoiceColumns(isOwner), [isOwner]);
 
   useEffect(() => {
     getInvoiceFacets().then(setFacets).catch(console.error);
@@ -45,7 +47,7 @@ export function InvoicesDataTable({ data, totalRows, searchParams }: Props) {
 
   return (
     <DataTable
-      columns={invoiceColumns as any}
+      columns={columns as any}
       data={data}
       totalRows={totalRows}
       searchParams={searchParams}
