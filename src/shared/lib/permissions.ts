@@ -85,6 +85,15 @@ export const getSessionPermissions = cache(async (): Promise<Set<string>> => {
 });
 
 /**
+ * `true` si el usuario activo es el dueño (owner_id) de la empresa activa.
+ * El owner recibe acceso total, por lo que la sesión marca su rol como 'owner'.
+ */
+export async function isActiveUserOwner(): Promise<boolean> {
+  const session = await getSession();
+  return session.role === OWNER_ROLE;
+}
+
+/**
  * `true` si el usuario activo tiene el permiso indicado en la empresa activa.
  */
 export async function can(permission: PermissionCode): Promise<boolean> {
