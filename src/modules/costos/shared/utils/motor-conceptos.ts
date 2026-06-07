@@ -1,5 +1,3 @@
-'use server';
-
 import { Decimal, parseDecimal } from './decimal';
 import type {
   ConceptoCCTClient,
