@@ -137,15 +137,16 @@ export async function getCostoEquipo(vehicleId: string): Promise<CostoEquipoDeta
     afectacion_pct: 1,
   });
 
+  const { items_mantenimiento, ...ceScalar } = ce;
   return {
     vehiculo: { id: v.id, interno: v.intern_number, dominio: v.domain, marca, modelo, anio: v.year },
     costo: {
-      ...ce,
+      ...ceScalar,
       valor_compra: toClientNumber(ce.valor_compra),
       valor_residual_pct: toClientNumber(ce.valor_residual_pct),
       accesorios: toClientNumber(ce.accesorios),
     },
-    items: ce.items_mantenimiento.map((i) => ({ ...i, precio_anual: toClientNumber(i.precio_anual) })),
+    items: items_mantenimiento.map((i) => ({ ...i, precio_anual: toClientNumber(i.precio_anual) })),
     amortizacion_mensual: amortizacion_mensual.toDecimalPlaces(2).toNumber(),
     mantenimiento_mensual: mantenimiento_mensual.toDecimalPlaces(2).toNumber(),
     costo_mensual: costo_mensual.toDecimalPlaces(2).toNumber(),
@@ -189,12 +190,14 @@ export async function getEquipoParaEdicion(vehicleId: string): Promise<{
   const ce = v.costo_equipo;
   if (!ce) return { vehiculo, costo: null, items: [], resumen: null };
 
+  const { items_mantenimiento, ...ceScalar } = ce;
+
   const { amortizacion_mensual, mantenimiento_mensual, costo_mensual } = calcularCostoMensualEquipo({
     valor_compra: ce.valor_compra.toString(),
     valor_residual_pct: ce.valor_residual_pct.toString(),
     anios_amortizacion: ce.anios_amortizacion,
     accesorios: ce.accesorios.toString(),
-    items: ce.items_mantenimiento.map((i) => ({
+    items: items_mantenimiento.map((i) => ({
       precio_anual: i.precio_anual.toString(),
       is_active: i.is_active,
     })),
@@ -204,12 +207,12 @@ export async function getEquipoParaEdicion(vehicleId: string): Promise<{
   return {
     vehiculo,
     costo: {
-      ...ce,
+      ...ceScalar,
       valor_compra: toClientNumber(ce.valor_compra),
       valor_residual_pct: toClientNumber(ce.valor_residual_pct),
       accesorios: toClientNumber(ce.accesorios),
     },
-    items: ce.items_mantenimiento.map((i) => ({ ...i, precio_anual: toClientNumber(i.precio_anual) })),
+    items: items_mantenimiento.map((i) => ({ ...i, precio_anual: toClientNumber(i.precio_anual) })),
     resumen: {
       amortizacion_mensual: amortizacion_mensual.toDecimalPlaces(2).toNumber(),
       mantenimiento_mensual: mantenimiento_mensual.toDecimalPlaces(2).toNumber(),
