@@ -27,6 +27,7 @@ interface Props<TData extends Record<string, unknown>> {
   searchParams: DataTableSearchParams;
   columns: ColumnDef<TData, any>[];
   mechanic?: boolean;
+  finalized?: boolean;
   defaultEquipmentId?: string;
   tableId: string;
 }
@@ -37,16 +38,17 @@ export function RepairSolicitudesDataTable<TData extends Record<string, unknown>
   searchParams,
   columns,
   mechanic,
+  finalized,
   defaultEquipmentId,
   tableId,
 }: Props<TData>) {
   const [facets, setFacets] = useState<Record<string, FacetEntry[]> | null>(null);
 
   useEffect(() => {
-    getRepairSolicitudFacets({ mechanic, defaultEquipmentId })
+    getRepairSolicitudFacets({ mechanic, finalized, defaultEquipmentId })
       .then((f) => setFacets(f as Record<string, FacetEntry[]>))
       .catch(console.error);
-  }, [mechanic, defaultEquipmentId]);
+  }, [mechanic, finalized, defaultEquipmentId]);
 
   const facetedFilters: DataTableFacetedFilterConfig[] = useMemo(() => {
     const buildOptions = (
@@ -66,14 +68,15 @@ export function RepairSolicitudesDataTable<TData extends Record<string, unknown>
     const domain = buildOptions(facets?.domain);
     const intern = buildOptions(facets?.intern_number);
 
-    return [
-      {
-        columnId: 'state',
-        title: 'Estado',
-        type: 'faceted',
-        options: state.options,
-        externalCounts: state.externalCounts,
-      },
+    const stateFilter: DataTableFacetedFilterConfig = {
+      columnId: 'state',
+      title: 'Estado',
+      type: 'faceted',
+      options: state.options,
+      externalCounts: state.externalCounts,
+    };
+
+    const commonFilters: DataTableFacetedFilterConfig[] = [
       {
         columnId: 'title',
         title: 'Titulo',
@@ -108,7 +111,22 @@ export function RepairSolicitudesDataTable<TData extends Record<string, unknown>
         type: 'text',
       },
     ];
-  }, [facets]);
+
+    // En finalizadas el estado es fijo: lo reemplazamos por un filtro de rango de
+    // fecha para que el usuario pueda ampliar la ventana de 30 días por defecto.
+    if (finalized) {
+      return [
+        {
+          columnId: 'created_at',
+          title: 'Fecha de creación',
+          type: 'dateRange',
+        },
+        ...commonFilters,
+      ];
+    }
+
+    return [stateFilter, ...commonFilters];
+  }, [facets, finalized]);
 
   return (
     <div className="mt-8">
@@ -125,12 +143,13 @@ export function RepairSolicitudesDataTable<TData extends Record<string, unknown>
           fetchAllData: async () =>
             (await getAllRepairSolicitudesForExport(searchParams, {
               mechanic,
+              finalized,
               defaultEquipmentId,
             })) as unknown as TData[],
           options: {
-            filename: 'solicitudes-mantenimiento',
+            filename: finalized ? 'solicitudes-finalizadas' : 'solicitudes-mantenimiento',
             sheetName: 'Solicitudes',
-            title: 'Solicitudes de mantenimiento',
+            title: finalized ? 'Solicitudes finalizadas' : 'Solicitudes de mantenimiento',
             includeDate: true,
           },
         }}
