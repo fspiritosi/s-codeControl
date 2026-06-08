@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { Button } from '@/shared/components/ui/button';
 import { Plus } from 'lucide-react';
-import { getPaymentOrdersPaginated } from '../actions.server';
+import { getPaymentOrdersPaginated, getPaymentOrderTotalsByStatus } from '../actions.server';
 import { PaymentOrdersDataTable } from './_PaymentOrdersDataTable';
+import { PaymentOrderTotals } from './PaymentOrderTotals';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
 
 interface Props {
@@ -10,9 +11,10 @@ interface Props {
 }
 
 export default async function PaymentOrdersList({ searchParams }: Props) {
-  const { data, total } = await getPaymentOrdersPaginated(
-    searchParams as DataTableSearchParams
-  );
+  const [{ data, total }, totals] = await Promise.all([
+    getPaymentOrdersPaginated(searchParams as DataTableSearchParams),
+    getPaymentOrderTotalsByStatus(searchParams as DataTableSearchParams),
+  ]);
 
   return (
     <div className="space-y-4">
@@ -25,6 +27,12 @@ export default async function PaymentOrdersList({ searchParams }: Props) {
           </Link>
         </Button>
       </div>
+
+      <PaymentOrderTotals
+        byStatus={totals.byStatus}
+        grandTotal={totals.grandTotal}
+        grandCount={totals.grandCount}
+      />
 
       <PaymentOrdersDataTable
         data={data}
