@@ -62,7 +62,17 @@ export async function getPurchaseInvoicesPaginated(searchParams: DataTableSearch
     ]);
 
     return {
-      data: data.map((inv) => ({ ...inv, subtotal: Number(inv.subtotal), vat_amount: Number(inv.vat_amount), other_taxes: Number(inv.other_taxes), other_charges: Number(inv.other_charges), total: Number(inv.total) })),
+      data: data.map((inv) => ({
+        ...inv,
+        subtotal: Number(inv.subtotal),
+        vat_amount: Number(inv.vat_amount),
+        other_taxes: Number(inv.other_taxes),
+        other_charges: Number(inv.other_charges),
+        total: Number(inv.total),
+        discount_amount: Number(inv.discount_amount),
+        global_discount_value:
+          inv.global_discount_value !== null ? Number(inv.global_discount_value) : null,
+      })),
       total,
     };
   } catch (error) {
