@@ -642,6 +642,7 @@ model vehicles {
   // Costos
   costo_equipo          costo_equipo?
   asignaciones_servicio asignacion_equipo_servicio[]
+  registros_combustible registro_combustible[]
 }
 
 model work_diagram {
@@ -2734,9 +2735,10 @@ model costo_equipo {
   vehicle_id         String   @unique @db.Uuid
   company_id         String   @db.Uuid
   valor_compra       Decimal  @db.Decimal(15, 2)
-  valor_residual     Decimal  @db.Decimal(15, 2)
+  valor_residual_pct Decimal  @db.Decimal(5, 4)
   anios_amortizacion Int
-  km_vida_util       Int
+  km_anuales         Int      @default(0)
+  accesorios         Decimal  @default(0) @db.Decimal(15, 2)
   is_active          Boolean  @default(true)
 
   vehicle             vehicles             @relation(fields: [vehicle_id], references: [id])
@@ -2748,12 +2750,11 @@ model item_mantenimiento {
   id              String  @id @default(uuid()) @db.Uuid
   costo_equipo_id String  @db.Uuid
   nombre          String
-  frecuencia_km   Int
-  precio_unitario Decimal @db.Decimal(15, 2)
-  cantidad        Int     @default(1)
+  precio_anual    Decimal @db.Decimal(15, 2)
+  orden           Int     @default(0)
   is_active       Boolean @default(true)
 
-  costo_equipo costo_equipo @relation(fields: [costo_equipo_id], references: [id])
+  costo_equipo costo_equipo @relation(fields: [costo_equipo_id], references: [id], onDelete: Cascade)
 }
 
 // Servicio/contrato: agrupador maestro de todos los módulos de costo
@@ -2763,16 +2764,17 @@ model servicio_contrato {
   company_id          String   @db.Uuid
   customer_id         String   @db.Uuid
   config_cct_id       String   @db.Uuid
-  nombre              String
+  nombre              String   @db.VarChar(160)
   descripcion         String?
-  fecha_inicio        String   @db.VarChar(7)
-  fecha_fin           String?  @db.VarChar(7)
+  fecha_inicio        String   @db.VarChar(10)
+  fecha_fin           String?  @db.VarChar(10)
   is_active           Boolean  @default(true)
-  margen_iibb         Decimal  @db.Decimal(5, 2) @default(0)
-  margen_debcred      Decimal  @db.Decimal(5, 2) @default(0)
-  margen_estructura   Decimal  @db.Decimal(5, 2) @default(0)
-  margen_ganancia     Decimal  @db.Decimal(5, 2) @default(0)
-  licencia_ordenanza  Decimal  @db.Decimal(5, 2) @default(0)
+  margen_iibb         Decimal  @db.Decimal(5, 4) @default(0)
+  margen_debcred      Decimal  @db.Decimal(5, 4) @default(0)
+  margen_estructura   Decimal  @db.Decimal(5, 4) @default(0)
+  margen_ganancia     Decimal  @db.Decimal(5, 4) @default(0)
+  licencia_ordenanza  Decimal  @db.Decimal(5, 4) @default(0)
+  config_servicio     Json?
 
   company    company    @relation(fields: [company_id], references: [id])
   customer   customers  @relation(fields: [customer_id], references: [id])
@@ -2794,52 +2796,59 @@ model asignacion_mod {
   servicio_id      String  @db.Uuid
   employee_id      String  @db.Uuid
   categoria_cct_id String  @db.Uuid
-  afectacion_pct   Decimal @db.Decimal(5, 2)
+  afectacion_pct   Decimal @db.Decimal(5, 4)
   antiguedad_anios Int     @default(0)
   is_active        Boolean @default(true)
   overrides_calculo Json?
 
-  servicio  servicio_contrato @relation(fields: [servicio_id], references: [id])
+  servicio  servicio_contrato @relation(fields: [servicio_id], references: [id], onDelete: Cascade)
   employee  employees         @relation(fields: [employee_id], references: [id])
   categoria categoria_cct     @relation(fields: [categoria_cct_id], references: [id])
 }
 
 // Asignación de equipos a un servicio
 model asignacion_equipo_servicio {
-  id           String  @id @default(uuid()) @db.Uuid
-  servicio_id  String  @db.Uuid
-  vehicle_id   String  @db.Uuid
-  km_mensuales Int     @default(0)
-  is_active    Boolean @default(true)
+  id             String  @id @default(uuid()) @db.Uuid
+  servicio_id    String  @db.Uuid
+  vehicle_id     String  @db.Uuid
+  afectacion_pct Decimal @default(1) @db.Decimal(5, 4)
+  km_mensuales   Int     @default(0)
+  is_active      Boolean @default(true)
 
-  servicio servicio_contrato @relation(fields: [servicio_id], references: [id])
+  servicio servicio_contrato @relation(fields: [servicio_id], references: [id], onDelete: Cascade)
   vehicle  vehicles          @relation(fields: [vehicle_id], references: [id])
+
+  @@unique([servicio_id, vehicle_id])
 }
 
 // Otros Costos de Personal (OCP)
 model item_ocp {
-  id                 String  @id @default(uuid()) @db.Uuid
-  servicio_id        String  @db.Uuid
-  concepto           String
-  costo_anual        Decimal @db.Decimal(15, 2)
-  cantidad_empleados Int     @default(1)
-  is_active          Boolean @default(true)
+  id                String  @id @default(uuid()) @db.Uuid
+  servicio_id       String  @db.Uuid
+  grupo             String  @db.VarChar(40)
+  concepto          String  @db.VarChar(160)
+  costo_anual       Decimal @db.Decimal(15, 2)
+  cantidad_personas Decimal @default(1) @db.Decimal(5, 2)
+  is_active         Boolean @default(true)
 
-  servicio servicio_contrato @relation(fields: [servicio_id], references: [id])
+  servicio servicio_contrato @relation(fields: [servicio_id], references: [id], onDelete: Cascade)
 }
 
 // Precios mensuales de combustible por período
 model registro_combustible {
   id               String  @id @default(uuid()) @db.Uuid
   servicio_id      String  @db.Uuid
+  vehicle_id       String  @db.Uuid
   periodo          String  @db.VarChar(7)
   litros_mensuales Decimal @db.Decimal(10, 2)
   precio_gasoil_lt Decimal @db.Decimal(15, 2)
+  litros_urea      Decimal @db.Decimal(10, 2) @default(0)
   precio_urea_lt   Decimal @db.Decimal(15, 2) @default(0)
 
-  servicio servicio_contrato @relation(fields: [servicio_id], references: [id])
+  servicio servicio_contrato @relation(fields: [servicio_id], references: [id], onDelete: Cascade)
+  vehicle  vehicles          @relation(fields: [vehicle_id], references: [id])
 
-  @@unique([servicio_id, periodo])
+  @@unique([servicio_id, vehicle_id, periodo])
 }
 
 // Snapshot de la composición completa de costos para un período

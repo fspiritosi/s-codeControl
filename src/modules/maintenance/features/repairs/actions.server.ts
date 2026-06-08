@@ -7,6 +7,7 @@ import {
   stateToPrismaParams,
   buildFiltersWhere,
   buildTextFiltersWhere,
+  buildDateRangeFiltersWhere,
 } from '@/shared/components/common/DataTable/helpers';
 
 // Repair-related queries
@@ -212,7 +213,13 @@ const repairSolicitudesTextColumns = ['user_description'];
 type GetRepairSolicitudesOptions = {
   mechanic?: boolean;
   defaultEquipmentId?: string;
+  /** Vista de solicitudes finalizadas: fuerza state='Finalizado' y limita a los
+   *  últimos 30 días salvo que el usuario aplique un filtro de fecha (created_at). */
+  finalized?: boolean;
 };
+
+/** Días por defecto que se muestran en la vista de solicitudes finalizadas. */
+const FINALIZED_DEFAULT_WINDOW_DAYS = 30;
 
 function buildRepairSolicitudesWhere(
   state: ReturnType<typeof parseSearchParams>,
@@ -227,19 +234,33 @@ function buildRepairSolicitudesWhere(
     where.equipment_id = options.defaultEquipmentId;
   }
 
-  const allowedStates = options.mechanic ? [...MECHANIC_OPEN_STATES] : null;
-  const stateFilter = state.filters.state;
-  if (stateFilter?.length) {
-    const requested = allowedStates
-      ? stateFilter.filter((v) => (allowedStates as string[]).includes(v))
-      : stateFilter;
-    if (requested.length > 0) {
-      where.state = requested.length === 1 ? requested[0] : { in: requested };
+  if (options.finalized) {
+    // Vista de finalizadas: estado fijo + ventana de fechas (default últimos 30 días).
+    where.state = 'Finalizado';
+    const dateWhere = buildDateRangeFiltersWhere(state.filters, ['created_at']);
+    if (dateWhere.created_at) {
+      where.created_at = dateWhere.created_at;
+    } else {
+      const since = new Date();
+      since.setHours(0, 0, 0, 0);
+      since.setDate(since.getDate() - FINALIZED_DEFAULT_WINDOW_DAYS);
+      where.created_at = { gte: since };
+    }
+  } else {
+    const allowedStates = options.mechanic ? [...MECHANIC_OPEN_STATES] : null;
+    const stateFilter = state.filters.state;
+    if (stateFilter?.length) {
+      const requested = allowedStates
+        ? stateFilter.filter((v) => (allowedStates as string[]).includes(v))
+        : stateFilter;
+      if (requested.length > 0) {
+        where.state = requested.length === 1 ? requested[0] : { in: requested };
+      } else if (allowedStates) {
+        where.state = { in: allowedStates };
+      }
     } else if (allowedStates) {
       where.state = { in: allowedStates };
     }
-  } else if (allowedStates) {
-    where.state = { in: allowedStates };
   }
 
   const scalarFilters = buildFiltersWhere(state.filters, repairSolicitudesColumnMap, {
@@ -411,7 +432,8 @@ export async function getRepairSolicitudFacets(options: GetRepairSolicitudesOpti
   try {
     const baseWhere: Record<string, unknown> = { equipment: { company_id: companyId } };
     if (options.defaultEquipmentId) baseWhere.equipment_id = options.defaultEquipmentId;
-    if (options.mechanic) baseWhere.state = { in: [...MECHANIC_OPEN_STATES] };
+    if (options.finalized) baseWhere.state = 'Finalizado';
+    else if (options.mechanic) baseWhere.state = { in: [...MECHANIC_OPEN_STATES] };
 
     const [stateGroups, solicitudes] = await Promise.all([
       prisma.repair_solicitudes.groupBy({

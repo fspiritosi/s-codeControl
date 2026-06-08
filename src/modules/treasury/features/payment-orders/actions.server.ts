@@ -93,11 +93,53 @@ export async function getPaymentOrdersPaginated(searchParams: DataTableSearchPar
       prisma.payment_orders.count({ where: where as any }),
     ]);
 
-    const formatted = data.map((po) => ({ ...po, total_amount: Number(po.total_amount) }));
+    const formatted = data.map((po) => ({
+      ...po,
+      total_amount: Number(po.total_amount),
+      retentions_total: Number(po.retentions_total),
+      net_to_pay: po.net_to_pay !== null ? Number(po.net_to_pay) : null,
+    }));
     return { data: formatted, total };
   } catch (error) {
     console.error('Error fetching payment orders:', error);
     return { data: [], total: 0 };
+  }
+}
+
+/**
+ * Suma de órdenes de pago agrupada por estado, respetando los filtros activos
+ * (mismos searchParams que la tabla). El cálculo es server-side con groupBy +
+ * aggregate, por lo que el total es exacto sobre TODAS las OPs filtradas, no
+ * solo la página visible. Devuelve también el total general.
+ */
+export async function getPaymentOrderTotalsByStatus(searchParams: DataTableSearchParams) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return { byStatus: [], grandTotal: 0, grandCount: 0 };
+
+  try {
+    const state = parseSearchParams(searchParams);
+    const where = buildPaymentOrderWhere(state, companyId);
+
+    const groups = await prisma.payment_orders.groupBy({
+      by: ['status'],
+      where: where as any,
+      _sum: { total_amount: true },
+      _count: true,
+    });
+
+    const byStatus = groups.map((g) => ({
+      status: g.status,
+      total: Number(g._sum.total_amount ?? 0),
+      count: g._count,
+    }));
+
+    const grandTotal = byStatus.reduce((acc, g) => acc + g.total, 0);
+    const grandCount = byStatus.reduce((acc, g) => acc + g.count, 0);
+
+    return { byStatus, grandTotal, grandCount };
+  } catch (error) {
+    console.error('Error fetching payment order totals:', error);
+    return { byStatus: [], grandTotal: 0, grandCount: 0 };
   }
 }
 
@@ -131,6 +173,8 @@ export async function getAllPaymentOrdersForExport() {
   return data.map((po) => ({
     ...po,
     total_amount: Number(po.total_amount),
+    retentions_total: Number(po.retentions_total),
+    net_to_pay: po.net_to_pay !== null ? Number(po.net_to_pay) : null,
     supplier_name: po.supplier?.business_name ?? '',
   }));
 }

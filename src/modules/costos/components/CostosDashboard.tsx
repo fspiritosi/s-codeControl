@@ -1,23 +1,30 @@
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { BookOpen, Briefcase, Calculator, Users } from 'lucide-react';
+import { BookOpen, Briefcase, Calculator, Users, Truck, Fuel } from 'lucide-react';
 
 async function getCostosCounts(companyId: string) {
-  // Los modelos del módulo se agregan en E-1 y siguientes.
-  // Por ahora retornamos 0 hasta que existan las tablas.
-  return { cct: 0, servicios: 0, composiciones: 0, liquidaciones: 0 };
+  const [cct, equiposConCosto, servicios] = await Promise.all([
+    prisma.config_cct.count({ where: { company_id: companyId } }),
+    prisma.costo_equipo.count({ where: { company_id: companyId } }),
+    prisma.servicio_contrato.count({ where: { company_id: companyId } }),
+  ]);
+  return { cct, equiposConCosto, servicios, composiciones: 0, liquidaciones: 0 };
 }
 
 export default async function CostosDashboard() {
   const { companyId } = await getActionContext();
-  const counts = companyId ? await getCostosCounts(companyId) : { cct: 0, servicios: 0, composiciones: 0, liquidaciones: 0 };
+  const counts = companyId
+    ? await getCostosCounts(companyId)
+    : { cct: 0, equiposConCosto: 0, servicios: 0, composiciones: 0, liquidaciones: 0 };
 
   const cards = [
-    { title: 'CCTs configurados',  value: counts.cct,           icon: BookOpen,   href: '/dashboard/costos/configuracion-cct' },
-    { title: 'Servicios',          value: counts.servicios,     icon: Briefcase,  href: '/dashboard/costos/servicios' },
-    { title: 'Composiciones',      value: counts.composiciones, icon: Calculator, href: '/dashboard/costos/composicion' },
-    { title: 'Liquidaciones',      value: counts.liquidaciones, icon: Users,      href: '/dashboard/costos/liquidacion-sueldos' },
+    { title: 'CCTs configurados',  value: counts.cct,             icon: BookOpen,   href: '/dashboard/costos/configuracion-cct' },
+    { title: 'Equipos con costo',  value: counts.equiposConCosto, icon: Truck,      href: '/dashboard/costos/equipos' },
+    { title: 'Combustible',        value: counts.servicios,       icon: Fuel,       href: '/dashboard/costos/combustible' },
+    { title: 'Servicios',          value: counts.servicios,       icon: Briefcase,  href: '/dashboard/costos/servicios' },
+    { title: 'Composiciones',      value: counts.composiciones,   icon: Calculator, href: '/dashboard/costos/composicion' },
+    { title: 'Liquidaciones',      value: counts.liquidaciones,   icon: Users,      href: '/dashboard/costos/liquidacion-sueldos' },
   ];
 
   return (

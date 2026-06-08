@@ -149,6 +149,10 @@ export async function getPurchaseOrderLinesForReceiving(orderId: string) {
       pending_qty: Number(l.quantity) - Number(l.received_qty),
       unit_cost: Number(l.unit_cost),
       vat_rate: Number(l.vat_rate),
+      vat_amount: Number(l.vat_amount),
+      subtotal: Number(l.subtotal),
+      total: Number(l.total),
+      invoiced_qty: Number(l.invoiced_qty),
     }))
     .filter((l) => l.pending_qty > 0);
 }
@@ -205,6 +209,7 @@ export async function getPurchaseOrderLinesForInvoicing(orderId: string) {
       vat_amount: Number(l.vat_amount),
       subtotal: Number(l.subtotal),
       total: Number(l.total),
+      received_qty: Number(l.received_qty),
     }))
     .filter((l) => l.pending_qty > 0);
 }

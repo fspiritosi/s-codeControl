@@ -6,23 +6,31 @@ import { RepairSolicitudesDataTable } from './_RepairSolicitudesDataTable';
 
 interface Props {
   mechanic?: boolean;
+  finalized?: boolean;
   default_equipment_id?: string;
   searchParams?: DataTableSearchParams;
 }
 
 export default async function RepairSolicitudes({
   mechanic,
+  finalized,
   default_equipment_id,
   searchParams,
 }: Props) {
   const params = searchParams ?? {};
   const { data, total } = await getRepairSolicitudesPaginated(params, {
     mechanic,
+    finalized,
     defaultEquipmentId: default_equipment_id,
   });
 
-  const columns = (mechanic ? mechanicColums : repairSolicitudesColums) as any;
-  const tableId = mechanic ? 'repair-solicitudes-mechanic' : 'repair-solicitudes';
+  // En finalizadas usamos las columnas estándar (no las de mecánico con acciones de flujo).
+  const columns = (mechanic && !finalized ? mechanicColums : repairSolicitudesColums) as any;
+  const tableId = finalized
+    ? 'repair-solicitudes-finalized'
+    : mechanic
+      ? 'repair-solicitudes-mechanic'
+      : 'repair-solicitudes';
 
   return (
     <RepairSolicitudesDataTable
@@ -31,6 +39,7 @@ export default async function RepairSolicitudes({
       searchParams={params}
       columns={columns}
       mechanic={mechanic}
+      finalized={finalized}
       defaultEquipmentId={default_equipment_id}
       tableId={tableId}
     />
