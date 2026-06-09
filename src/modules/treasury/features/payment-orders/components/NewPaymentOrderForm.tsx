@@ -124,6 +124,11 @@ interface SupplierPaymentMethodOpt {
   alias: string | null;
   currency: string | null;
   is_default: boolean;
+  check_bank_name?: string | null;
+  check_type?: 'COMMON' | 'DEFERRED' | 'ELECTRONIC' | null;
+  check_max_days?: number | null;
+  check_payee?: string | null;
+  check_notes?: string | null;
 }
 
 const ACCOUNT_TYPE_SHORT: Record<string, string> = {
@@ -131,8 +136,22 @@ const ACCOUNT_TYPE_SHORT: Record<string, string> = {
   SAVINGS: 'CA',
 };
 
+const CHECK_TYPE_SHORT: Record<string, string> = {
+  COMMON: 'Común',
+  DEFERRED: 'Diferido',
+  ELECTRONIC: 'Electrónico',
+};
+
 function describeSupplierMethod(m: SupplierPaymentMethodOpt): string {
-  if (m.type === 'CHECK') return 'Acepta cheques';
+  if (m.type === 'CHECK') {
+    const parts = [
+      m.check_bank_name,
+      m.check_type ? CHECK_TYPE_SHORT[m.check_type] ?? m.check_type : null,
+      m.check_type === 'DEFERRED' && m.check_max_days ? `hasta ${m.check_max_days} días` : null,
+      m.check_payee ? `a ${m.check_payee}` : null,
+    ].filter(Boolean);
+    return parts.length ? `Cheque · ${parts.join(' · ')}` : 'Acepta cheques';
+  }
   const accType = m.account_type ? ACCOUNT_TYPE_SHORT[m.account_type] ?? m.account_type : '';
   const parts = [m.bank_name ?? 'Cuenta bancaria', accType, m.currency].filter(Boolean);
   const tail = m.cbu

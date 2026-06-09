@@ -272,6 +272,11 @@ export async function getSupplierPaymentMethodsForPaymentOrder(supplierId: strin
       alias: true,
       currency: true,
       is_default: true,
+      check_bank_name: true,
+      check_type: true,
+      check_max_days: true,
+      check_payee: true,
+      check_notes: true,
     },
     orderBy: [{ is_default: 'desc' }, { created_at: 'asc' }],
   });

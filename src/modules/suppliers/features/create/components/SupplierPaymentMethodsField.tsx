@@ -4,12 +4,13 @@ import { Control, useFieldArray, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { Trash2, Plus } from 'lucide-react';
 import { createSupplierSchema } from '@/modules/suppliers/shared/validators';
-import { SUPPLIER_ACCOUNT_TYPE_LABELS } from '@/modules/suppliers/shared/types';
+import { SUPPLIER_ACCOUNT_TYPE_LABELS, SUPPLIER_CHECK_TYPE_LABELS } from '@/modules/suppliers/shared/types';
 import { parseCbuInput } from '@/modules/suppliers/shared/utils';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
+import { Textarea } from '@/shared/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Switch } from '@/shared/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/shared/components/ui/radio-group';
@@ -93,6 +94,108 @@ export default function SupplierPaymentMethodsField({ control }: Props) {
           </div>
           <Switch checked={acceptsChecks} onCheckedChange={handleToggleCheck} />
         </div>
+
+        {acceptsChecks && checkIndex >= 0 && (
+          <div className="rounded-lg border p-4 space-y-4">
+            <div>
+              <Label className="text-base">Datos del cheque (opcional)</Label>
+              <p className="text-sm text-muted-foreground">
+                Información de referencia para operar con cheques de este proveedor.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <FormField
+                control={control}
+                name={`payment_methods.${checkIndex}.check_bank_name` as const}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Banco emisor</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Banco" {...field} value={(field.value as string) ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name={`payment_methods.${checkIndex}.check_type` as const}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de cheque</FormLabel>
+                    <Select onValueChange={field.onChange} value={(field.value as string) ?? ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Object.entries(SUPPLIER_CHECK_TYPE_LABELS).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {(watched[checkIndex] as any)?.check_type === 'DEFERRED' && (
+                <FormField
+                  control={control}
+                  name={`payment_methods.${checkIndex}.check_max_days` as const}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Plazo máximo (días)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={0}
+                          placeholder="Ej: 90"
+                          {...field}
+                          value={(field.value as number | undefined) ?? ''}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              <FormField
+                control={control}
+                name={`payment_methods.${checkIndex}.check_payee` as const}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Beneficiario / titular preferido</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nombre del beneficiario" {...field} value={(field.value as string) ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <FormField
+              control={control}
+              name={`payment_methods.${checkIndex}.check_notes` as const}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Observaciones</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      rows={2}
+                      placeholder="Notas sobre el cheque de este proveedor"
+                      {...field}
+                      value={(field.value as string) ?? ''}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">

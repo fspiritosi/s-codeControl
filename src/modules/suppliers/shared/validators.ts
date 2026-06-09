@@ -6,6 +6,12 @@ const supplierPaymentMethodCheckSchema = z.object({
   id: z.string().uuid().optional(),
   type: z.literal('CHECK'),
   is_default: z.boolean().default(false),
+  // Metadata opcional del cheque (TSK-7)
+  check_bank_name: z.string().max(200).optional().or(z.literal('')),
+  check_type: z.enum(['COMMON', 'DEFERRED', 'ELECTRONIC']).optional(),
+  check_max_days: z.coerce.number().int().min(0).max(3650).optional(),
+  check_payee: z.string().max(200).optional().or(z.literal('')),
+  check_notes: z.string().max(500).optional().or(z.literal('')),
 });
 
 const supplierPaymentMethodAccountSchema = z.object({

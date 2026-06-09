@@ -49,7 +49,16 @@ export default function SupplierForm({ supplier }: Props) {
       notes: supplier?.notes || '',
       payment_methods: (supplier?.payment_methods ?? []).map((pm: any) => {
         if (pm.type === 'CHECK') {
-          return { id: pm.id, type: 'CHECK', is_default: !!pm.is_default };
+          return {
+            id: pm.id,
+            type: 'CHECK',
+            is_default: !!pm.is_default,
+            check_bank_name: pm.check_bank_name ?? '',
+            check_type: pm.check_type ?? undefined,
+            check_max_days: pm.check_max_days ?? undefined,
+            check_payee: pm.check_payee ?? '',
+            check_notes: pm.check_notes ?? '',
+          };
         }
         return {
           id: pm.id,

@@ -58,7 +58,21 @@ export function buildCreateData(
     };
   }
 
-  return base;
+  return { ...base, ...buildCheckMetadata(input) };
+}
+
+/**
+ * Normaliza la metadata opcional del cheque. check_max_days solo se conserva
+ * para cheques diferidos (en común/electrónico no aplica).
+ */
+function buildCheckMetadata(input: Extract<SupplierPaymentMethodInput, { type: 'CHECK' }>) {
+  return {
+    check_bank_name: input.check_bank_name?.trim() || null,
+    check_type: input.check_type ?? null,
+    check_max_days: input.check_type === 'DEFERRED' ? (input.check_max_days ?? null) : null,
+    check_payee: input.check_payee?.trim() || null,
+    check_notes: input.check_notes?.trim() || null,
+  };
 }
 
 export function buildUpdateData(
@@ -84,6 +98,7 @@ export function buildUpdateData(
     type: 'CHECK' as const,
     is_default: input.is_default ?? false,
     updated_by: userId,
+    ...buildCheckMetadata(input),
   };
 }
 
