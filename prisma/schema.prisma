@@ -2492,15 +2492,18 @@ model payment_order_payments {
   check_number               String?
   card_last4                 String?
   reference                  String?
+  check_id                   String?        @db.Uuid
 
   payment_order           payment_orders            @relation(fields: [payment_order_id], references: [id], onDelete: Cascade)
   cash_register           cash_registers?           @relation(fields: [cash_register_id], references: [id])
   bank_account            bank_accounts?            @relation(fields: [bank_account_id], references: [id])
   supplier_payment_method supplier_payment_methods? @relation(fields: [supplier_payment_method_id], references: [id], onDelete: SetNull)
-  check                   checks?
+  check                   checks?                   @relation("CheckConfirmedPayment")
+  selected_check          checks?                   @relation("SelectedCheckForPayment", fields: [check_id], references: [id], onDelete: SetNull)
 
   @@index([payment_order_id])
   @@index([supplier_payment_method_id])
+  @@index([check_id])
 }
 
 // ============================================================
@@ -2544,7 +2547,8 @@ model checks {
   supplier              suppliers?              @relation(fields: [supplier_id], references: [id])
   bank_account          bank_accounts?          @relation(fields: [bank_account_id], references: [id])
   bank_movement         bank_movements?         @relation(fields: [bank_movement_id], references: [id])
-  payment_order_payment payment_order_payments? @relation(fields: [payment_order_payment_id], references: [id])
+  payment_order_payment payment_order_payments? @relation("CheckConfirmedPayment", fields: [payment_order_payment_id], references: [id])
+  selected_in_payments  payment_order_payments[] @relation("SelectedCheckForPayment")
 
   @@index([company_id, type, status])
   @@index([company_id, due_date])
