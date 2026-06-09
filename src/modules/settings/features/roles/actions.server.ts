@@ -118,9 +118,8 @@ export async function createCustomRole(input: {
     const name = input.name.trim();
     if (!name) return { data: null, error: 'El nombre es requerido' };
 
-    // El campo name es UNIQUE global; prefijar con companyId acotado evita
-    // colisiones entre empresas pero mantiene un name humano. La UI mostrará
-    // el nombre limpio (sin prefijo).
+    // Unicidad por empresa (DB: UNIQUE(name, company_id)). Se valida también
+    // contra los roles de sistema (company_id null) para no permitir pisarlos.
     const existing = await prisma.roles.findFirst({
       where: { name, OR: [{ company_id: null }, { company_id: companyId }] },
       select: { id: true },

@@ -1,5 +1,6 @@
 export type SupplierPaymentMethodType = 'CHECK' | 'ACCOUNT';
 export type SupplierAccountType = 'CHECKING' | 'SAVINGS';
+export type SupplierCheckType = 'COMMON' | 'DEFERRED' | 'ELECTRONIC';
 export type SupplierPaymentMethodStatus = 'ACTIVE' | 'INACTIVE' | 'BLOCKED';
 
 export interface SupplierPaymentMethod {
@@ -16,6 +17,12 @@ export interface SupplierPaymentMethod {
   currency: string | null;
   is_default: boolean;
   status: SupplierPaymentMethodStatus;
+  // Metadata del cheque (solo type === 'CHECK')
+  check_bank_name: string | null;
+  check_type: SupplierCheckType | null;
+  check_max_days: number | null;
+  check_payee: string | null;
+  check_notes: string | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -71,4 +78,10 @@ export const SUPPLIER_ACCOUNT_TYPE_LABELS: Record<SupplierAccountType, string> =
 export const SUPPLIER_PAYMENT_METHOD_TYPE_LABELS: Record<SupplierPaymentMethodType, string> = {
   CHECK: 'Cheque',
   ACCOUNT: 'Cuenta bancaria',
+};
+
+export const SUPPLIER_CHECK_TYPE_LABELS: Record<SupplierCheckType, string> = {
+  COMMON: 'Común',
+  DEFERRED: 'Diferido',
+  ELECTRONIC: 'Electrónico',
 };

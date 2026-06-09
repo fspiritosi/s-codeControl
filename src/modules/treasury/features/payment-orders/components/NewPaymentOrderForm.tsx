@@ -43,6 +43,7 @@ import {
   getSupplierPaymentMethodsForPaymentOrder,
 } from '../actions.server';
 import { PAYMENT_METHOD_LABELS } from '../../../shared/validators';
+import { CheckPaymentField } from './CheckPaymentField';
 
 interface Supplier {
   id: string;
@@ -112,6 +113,8 @@ interface PaymentDraft {
   check_number: string;
   card_last4: string;
   reference: string;
+  check_kind: 'OWN' | 'THIRD_PARTY' | null;
+  check_id: string | null;
 }
 
 interface SupplierPaymentMethodOpt {
@@ -124,6 +127,11 @@ interface SupplierPaymentMethodOpt {
   alias: string | null;
   currency: string | null;
   is_default: boolean;
+  check_bank_name?: string | null;
+  check_type?: 'COMMON' | 'DEFERRED' | 'ELECTRONIC' | null;
+  check_max_days?: number | null;
+  check_payee?: string | null;
+  check_notes?: string | null;
 }
 
 const ACCOUNT_TYPE_SHORT: Record<string, string> = {
@@ -131,8 +139,22 @@ const ACCOUNT_TYPE_SHORT: Record<string, string> = {
   SAVINGS: 'CA',
 };
 
+const CHECK_TYPE_SHORT: Record<string, string> = {
+  COMMON: 'Común',
+  DEFERRED: 'Diferido',
+  ELECTRONIC: 'Electrónico',
+};
+
 function describeSupplierMethod(m: SupplierPaymentMethodOpt): string {
-  if (m.type === 'CHECK') return 'Acepta cheques';
+  if (m.type === 'CHECK') {
+    const parts = [
+      m.check_bank_name,
+      m.check_type ? CHECK_TYPE_SHORT[m.check_type] ?? m.check_type : null,
+      m.check_type === 'DEFERRED' && m.check_max_days ? `hasta ${m.check_max_days} días` : null,
+      m.check_payee ? `a ${m.check_payee}` : null,
+    ].filter(Boolean);
+    return parts.length ? `Cheque · ${parts.join(' · ')}` : 'Acepta cheques';
+  }
   const accType = m.account_type ? ACCOUNT_TYPE_SHORT[m.account_type] ?? m.account_type : '';
   const parts = [m.bank_name ?? 'Cuenta bancaria', accType, m.currency].filter(Boolean);
   const tail = m.cbu
@@ -199,6 +221,8 @@ export interface PaymentOrderEditData {
     check_number: string;
     card_last4: string;
     reference: string;
+    check_kind?: 'OWN' | 'THIRD_PARTY' | null;
+    check_id?: string | null;
   }>;
   retentions?: RetentionDraft[];
 }
@@ -223,6 +247,8 @@ function emptyPayment(): PaymentDraft {
     check_number: '',
     card_last4: '',
     reference: '',
+    check_kind: null,
+    check_id: null,
   };
 }
 
@@ -310,7 +336,11 @@ export function NewPaymentOrderForm({
 
   const [items, setItems] = useState<ItemDraft[]>(initialData?.items ?? []);
   const [payments, setPayments] = useState<PaymentDraft[]>(
-    initialData?.payments ?? [emptyPayment()]
+    initialData?.payments?.map((p) => ({
+      ...p,
+      check_kind: p.check_kind ?? null,
+      check_id: p.check_id ?? null,
+    })) ?? [emptyPayment()]
   );
   const [retentions, setRetentions] = useState<RetentionDraft[]>(initialData?.retentions ?? []);
 
@@ -617,6 +647,8 @@ export function NewPaymentOrderForm({
           check_number: p.check_number.trim() || null,
           card_last4: p.card_last4.trim() || null,
           reference: p.reference.trim() || null,
+          check_kind: p.payment_method === 'CHECK' ? p.check_kind : null,
+          check_id: p.payment_method === 'CHECK' ? p.check_id : null,
         })),
         retentions: retentions.map((r) => ({
           tax_type_id: r.tax_type_id,
@@ -1070,14 +1102,12 @@ export function NewPaymentOrderForm({
                 )}
 
                 {p.payment_method === 'CHECK' && (
-                  <div className="md:col-span-3 space-y-1.5">
-                    <Label>Nº de cheque</Label>
-                    <Input
-                      value={p.check_number}
-                      onChange={(e) => updatePayment(idx, { check_number: e.target.value })}
-                      className="font-mono"
-                    />
-                  </div>
+                  <CheckPaymentField
+                    checkKind={p.check_kind}
+                    checkId={p.check_id}
+                    currentOrderId={initialData?.id}
+                    onChange={(patch) => updatePayment(idx, patch)}
+                  />
                 )}
 
                 {(p.payment_method === 'DEBIT_CARD' || p.payment_method === 'CREDIT_CARD') && (

@@ -19,6 +19,7 @@ import {
   paymentOrderSchema,
   type PaymentOrderFormData,
 } from '../../shared/payment-order-validators';
+import { CHECK_STATUS_LABELS } from '../../shared/validators';
 import { sendPaymentOrderPaidEmail } from './shared/email/sendPaymentOrderPaidEmail';
 
 const columnMap: Record<string, string> = { status: 'status' };
@@ -210,6 +211,7 @@ export async function getPaymentOrderById(id: string) {
               is_default: true,
             },
           },
+          selected_check: { select: { id: true, type: true, check_number: true } },
         },
       },
       retentions: {
@@ -272,11 +274,58 @@ export async function getSupplierPaymentMethodsForPaymentOrder(supplierId: strin
       alias: true,
       currency: true,
       is_default: true,
+      check_bank_name: true,
+      check_type: true,
+      check_max_days: true,
+      check_payee: true,
+      check_notes: true,
     },
     orderBy: [{ is_default: 'desc' }, { created_at: 'asc' }],
   });
 
   return methods;
+}
+
+/**
+ * Cheques disponibles para asignar a una Orden de Pago, por tipo (propio/tercero).
+ * Solo los que están EN CARTERA (PORTFOLIO) y no están usados por otra OP no
+ * anulada. `currentOrderId` excluye los vínculos de la propia OP en edición,
+ * para que el cheque ya elegido siga apareciendo como disponible.
+ */
+export async function getAvailableChecksForPaymentOrder(
+  kind: 'OWN' | 'THIRD_PARTY',
+  currentOrderId?: string
+) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return [];
+
+  const checks = await prisma.checks.findMany({
+    where: {
+      company_id: companyId,
+      type: kind,
+      status: 'PORTFOLIO',
+      selected_in_payments: {
+        none: {
+          payment_order: {
+            status: { not: 'CANCELLED' },
+            ...(currentOrderId ? { id: { not: currentOrderId } } : {}),
+          },
+        },
+      },
+    },
+    orderBy: [{ due_date: 'asc' }],
+    select: {
+      id: true,
+      check_number: true,
+      bank_name: true,
+      amount: true,
+      issue_date: true,
+      due_date: true,
+      drawer_name: true,
+    },
+  });
+
+  return checks.map((c) => ({ ...c, amount: Number(c.amount) }));
 }
 
 export async function getPendingPurchaseInvoices(supplierId: string) {
@@ -495,6 +544,7 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
             bank_account_id: p.bank_account_id || null,
             supplier_payment_method_id: p.supplier_payment_method_id || null,
             check_number: p.check_number || null,
+            check_id: p.check_id || null,
             card_last4: p.card_last4 || null,
             reference: p.reference || null,
           })),
@@ -627,6 +677,7 @@ export async function updatePaymentOrder(id: string, data: PaymentOrderFormData)
               bank_account_id: p.bank_account_id || null,
               supplier_payment_method_id: p.supplier_payment_method_id || null,
               check_number: p.check_number || null,
+              check_id: p.check_id || null,
               card_last4: p.card_last4 || null,
               reference: p.reference || null,
             })),
@@ -666,7 +717,11 @@ export async function confirmPaymentOrder(id: string) {
     await requirePermission('tesoreria.confirm');
     const order = await prisma.payment_orders.findFirst({
       where: { id, company_id: companyId },
-      include: { payments: true, retentions: true },
+      include: {
+        payments: true,
+        retentions: true,
+        supplier: { select: { id: true, business_name: true, tax_id: true } },
+      },
     });
     if (!order) return { error: 'Orden no encontrada' };
     if (order.status !== 'DRAFT') return { error: 'Solo se pueden confirmar órdenes en borrador' };
@@ -718,6 +773,32 @@ export async function confirmPaymentOrder(id: string) {
         });
         if (account?.status === 'CLOSED') {
           return { error: 'Una de las cuentas bancarias del pago está cerrada' };
+        }
+      }
+      if (p.payment_method === 'CHECK') {
+        if (!p.check_id) {
+          return { error: 'Hay un pago con cheque sin cheque asignado' };
+        }
+        const chk = await prisma.checks.findFirst({
+          where: { id: p.check_id, company_id: companyId },
+          select: { id: true, type: true, status: true, check_number: true },
+        });
+        if (!chk) return { error: 'Un cheque asignado a un pago no existe' };
+        if (chk.status !== 'PORTFOLIO') {
+          return {
+            error: `El cheque ${chk.check_number} ya no está en cartera (${CHECK_STATUS_LABELS[chk.status] ?? chk.status})`,
+          };
+        }
+        const usedElsewhere = await prisma.payment_order_payments.findFirst({
+          where: {
+            check_id: p.check_id,
+            payment_order_id: { not: order.id },
+            payment_order: { status: { not: 'CANCELLED' } },
+          },
+          select: { id: true },
+        });
+        if (usedElsewhere) {
+          return { error: `El cheque ${chk.check_number} ya está asignado a otra orden de pago` };
         }
       }
     }
@@ -784,9 +865,51 @@ export async function confirmPaymentOrder(id: string) {
           });
         }
 
-        // CHECK: no genera movimiento automático. El cheque propio se crea
-        // manualmente desde el módulo de cheques y el bank_movement se emite
-        // cuando el banco lo debita (status CASHED).
+        // CHECK: cambia el estado del cheque vinculado y lo ata a la OP.
+        //  - Tercero  → ENDOSADO (endosado al proveedor de la OP)
+        //  - Propio   → ENTREGADO (al proveedor)
+        // No genera bank_movement automático: el cheque propio impacta el banco
+        // cuando se debita (status CASHED), gestionado desde el módulo de cheques.
+        if (p.payment_method === 'CHECK' && p.check_id) {
+          const chk = await tx.checks.findUnique({
+            where: { id: p.check_id },
+            select: { type: true, status: true, notes: true },
+          });
+          if (!chk) throw new Error('El cheque del pago no existe');
+          if (chk.status !== 'PORTFOLIO') {
+            throw new Error('El cheque ya no está en cartera al confirmar');
+          }
+          const supplierName = order.supplier?.business_name ?? null;
+          const supplierTaxId = order.supplier?.tax_id ?? null;
+          const opRef = `OP ${order.full_number}`;
+          const notes = chk.notes ? `${chk.notes} · ${opRef}` : opRef;
+
+          if (chk.type === 'THIRD_PARTY') {
+            await tx.checks.update({
+              where: { id: p.check_id },
+              data: {
+                status: 'ENDORSED',
+                endorsed_at: new Date(),
+                endorsed_to_name: supplierName,
+                endorsed_to_tax_id: supplierTaxId,
+                supplier_id: order.supplier_id,
+                payment_order_payment_id: p.id,
+                notes,
+              },
+            });
+          } else {
+            await tx.checks.update({
+              where: { id: p.check_id },
+              data: {
+                status: 'DELIVERED',
+                payee_name: supplierName,
+                supplier_id: order.supplier_id,
+                payment_order_payment_id: p.id,
+                notes,
+              },
+            });
+          }
+        }
         // ACCOUNT: no impacta tesorería.
       }
 
@@ -1047,6 +1170,32 @@ export async function cancelPaymentOrder(id: string) {
               reference: `REV-${cm.reference || order.full_number}`,
               payment_order_id: order.id,
               created_by: user.id!,
+            },
+          });
+        }
+
+        // Reverso de cheques: los endosados/entregados por esta OP vuelven a
+        // cartera (PORTFOLIO) y se limpia el endoso/entrega y el vínculo.
+        const checkPayments = await tx.payment_order_payments.findMany({
+          where: { payment_order_id: order.id, check_id: { not: null } },
+          select: { check_id: true },
+        });
+        for (const cp of checkPayments) {
+          if (!cp.check_id) continue;
+          const chk = await tx.checks.findUnique({
+            where: { id: cp.check_id },
+            select: { status: true },
+          });
+          if (!chk || (chk.status !== 'ENDORSED' && chk.status !== 'DELIVERED')) continue;
+          await tx.checks.update({
+            where: { id: cp.check_id },
+            data: {
+              status: 'PORTFOLIO',
+              endorsed_at: null,
+              endorsed_to_name: null,
+              endorsed_to_tax_id: null,
+              payee_name: null,
+              payment_order_payment_id: null,
             },
           });
         }

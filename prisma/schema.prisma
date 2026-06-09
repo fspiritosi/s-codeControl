@@ -206,19 +206,18 @@ model roles {
   id          BigInt   @id @default(autoincrement())
   created_at  DateTime @default(now()) @db.Timestamptz
   updated_at  DateTime @default(now()) @db.Timestamptz
-  name        String   @unique
+  name        String
   is_active   Boolean? @default(true)
   intern      Boolean? @default(false)
   is_system   Boolean  @default(false)
   description String?
   company_id  String?  @db.Uuid
 
-  company             company?              @relation(fields: [company_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
-  profiles            profile[]
-  share_company_users share_company_users[]
-  role_permissions    role_permissions[]
-  user_roles          user_roles[]
+  company          company?           @relation(fields: [company_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  role_permissions role_permissions[]
+  user_roles       user_roles[]
 
+  @@unique([name, company_id])
   @@index([company_id])
 }
 
@@ -305,7 +304,6 @@ model profile {
   modulos       modulos[]
   password_hash String?   @db.Text
 
-  role_rel                    roles?                    @relation(fields: [role], references: [name])
   owned_companies             company[]                 @relation("company_owner")
   share_company_users         share_company_users[]
   documents_employees         documents_employees[]     @relation("documents_employees_user")
@@ -801,7 +799,6 @@ model share_company_users {
 
   profile  profile?   @relation(fields: [profile_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
   company  company?   @relation(fields: [company_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
-  role_rel roles?     @relation(fields: [role], references: [name], onUpdate: Cascade, onDelete: Cascade)
   customer customers? @relation(fields: [customer_id], references: [id])
 }
 
@@ -1592,6 +1589,12 @@ enum supplier_account_type {
   SAVINGS
 }
 
+enum supplier_check_type {
+  COMMON
+  DEFERRED
+  ELECTRONIC
+}
+
 enum warehouse_type {
   MAIN
   BRANCH
@@ -1772,6 +1775,11 @@ model supplier_payment_methods {
   currency              String?
   is_default            Boolean                @default(false)
   status                supplier_status        @default(ACTIVE)
+  check_bank_name       String?
+  check_type            supplier_check_type?
+  check_max_days        Int?
+  check_payee           String?
+  check_notes           String?
   created_at            DateTime               @default(now()) @db.Timestamptz
   updated_at            DateTime               @default(now()) @updatedAt @db.Timestamptz
   created_by            String?                @db.Uuid
@@ -2484,15 +2492,18 @@ model payment_order_payments {
   check_number               String?
   card_last4                 String?
   reference                  String?
+  check_id                   String?        @db.Uuid
 
   payment_order           payment_orders            @relation(fields: [payment_order_id], references: [id], onDelete: Cascade)
   cash_register           cash_registers?           @relation(fields: [cash_register_id], references: [id])
   bank_account            bank_accounts?            @relation(fields: [bank_account_id], references: [id])
   supplier_payment_method supplier_payment_methods? @relation(fields: [supplier_payment_method_id], references: [id], onDelete: SetNull)
-  check                   checks?
+  check                   checks?                   @relation("CheckConfirmedPayment")
+  selected_check          checks?                   @relation("SelectedCheckForPayment", fields: [check_id], references: [id], onDelete: SetNull)
 
   @@index([payment_order_id])
   @@index([supplier_payment_method_id])
+  @@index([check_id])
 }
 
 // ============================================================
@@ -2536,7 +2547,8 @@ model checks {
   supplier              suppliers?              @relation(fields: [supplier_id], references: [id])
   bank_account          bank_accounts?          @relation(fields: [bank_account_id], references: [id])
   bank_movement         bank_movements?         @relation(fields: [bank_movement_id], references: [id])
-  payment_order_payment payment_order_payments? @relation(fields: [payment_order_payment_id], references: [id])
+  payment_order_payment payment_order_payments? @relation("CheckConfirmedPayment", fields: [payment_order_payment_id], references: [id])
+  selected_in_payments  payment_order_payments[] @relation("SelectedCheckForPayment")
 
   @@index([company_id, type, status])
   @@index([company_id, due_date])

@@ -41,6 +41,8 @@ export default async function EditPaymentOrderPage({
       check_number: p.check_number ?? '',
       card_last4: p.card_last4 ?? '',
       reference: p.reference ?? '',
+      check_kind: p.selected_check?.type ?? null,
+      check_id: p.check_id ?? null,
     })),
     retentions: order.retentions.map((r) => ({
       tax_type_id: r.tax_type_id,

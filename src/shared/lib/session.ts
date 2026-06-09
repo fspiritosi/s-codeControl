@@ -107,9 +107,16 @@ const buildSessionForUser = unstable_cache(
 
         // Fallback de coexistencia: si todavía no se migró a user_roles,
         // resolver permisos por el rol legacy en share_company_users.role.
+        // Se acota el rol a la empresa activa (o de sistema) porque los nombres
+        // pueden repetirse entre empresas y ya no existe la FK role -> roles(name).
         if (permissions.length === 0 && role) {
           const legacyPerms = await prisma.role_permissions.findMany({
-            where: { role: { name: role } },
+            where: {
+              role: {
+                name: role,
+                OR: [{ company_id: activeCompanyId }, { company_id: null }],
+              },
+            },
             select: { permission: { select: { code: true } } },
             distinct: ['permission_id'],
           });

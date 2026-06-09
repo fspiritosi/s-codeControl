@@ -29,6 +29,9 @@ export const paymentOrderPaymentSchema = z
     check_number: z.string().max(50).optional().nullable(),
     card_last4: z.string().max(4).optional().nullable(),
     reference: z.string().max(100).optional().nullable(),
+    // Cheque: tipo (propio/tercero) y cheque seleccionado o cargado para este pago
+    check_kind: z.enum(['OWN', 'THIRD_PARTY']).optional().nullable(),
+    check_id: z.string().uuid().optional().nullable(),
   })
   .superRefine((data, ctx) => {
     if (data.payment_method === 'CASH' && !data.cash_register_id) {
@@ -45,12 +48,21 @@ export const paymentOrderPaymentSchema = z
         message: 'Seleccioná la cuenta bancaria',
       });
     }
-    if (data.payment_method === 'CHECK' && !data.check_number) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['check_number'],
-        message: 'Ingresá el número de cheque',
-      });
+    if (data.payment_method === 'CHECK') {
+      if (!data.check_kind) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['check_kind'],
+          message: 'Indicá si el cheque es propio o de tercero',
+        });
+      }
+      if (!data.check_id) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['check_id'],
+          message: 'Seleccioná o cargá un cheque',
+        });
+      }
     }
   });
 export type PaymentOrderPaymentFormData = z.infer<typeof paymentOrderPaymentSchema>;

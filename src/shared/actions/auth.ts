@@ -131,8 +131,15 @@ export const updateProfileAvatar = async (profileId: string, avatarUrl: string) 
 
 export const fetchRoles = async () => {
   try {
+    // Solo roles de la empresa activa + roles de sistema (company_id null).
+    // Sin este filtro, una empresa veía los roles de las demás (fuga multi-tenant).
+    const { companyId } = await getActionContext();
     const data = await prisma.roles.findMany({
-      where: { intern: false, NOT: { name: 'Invitado' } },
+      where: {
+        intern: false,
+        NOT: { name: 'Invitado' },
+        OR: [{ company_id: null }, ...(companyId ? [{ company_id: companyId }] : [])],
+      },
     });
     return data;
   } catch (error) {
