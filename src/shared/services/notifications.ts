@@ -161,22 +161,30 @@ async function resolveProfilesByPermission(
   for (const ur of viaUserRoles) result.add(ur.profile_id);
 
   // 3. Fallback legacy: usuarios sin user_roles cuyo share_company_users.role
-  //    referencie un rol con ese permiso.
+  //    (string) coincida con un rol de ESTA empresa (o de sistema) que tenga el
+  //    permiso. Se resuelve por nombre acotado a la empresa porque ya no existe
+  //    la FK role -> roles(name) y los nombres pueden repetirse entre empresas.
   const profilesAlready = Array.from(result);
-  const viaLegacy = await prisma.share_company_users.findMany({
+  const rolesWithPermission = await prisma.roles.findMany({
     where: {
-      company_id: companyId,
-      profile_id: { not: null, notIn: profilesAlready.length ? profilesAlready : undefined },
-      role: { not: null },
-      role_rel: {
-        role_permissions: {
-          some: { permission: { code: permissionCode } },
-        },
-      },
+      OR: [{ company_id: companyId }, { company_id: null }],
+      role_permissions: { some: { permission: { code: permissionCode } } },
     },
-    select: { profile_id: true },
-    distinct: ['profile_id'],
+    select: { name: true },
   });
+  const roleNamesWithPermission = rolesWithPermission.map((r) => r.name);
+
+  const viaLegacy = roleNamesWithPermission.length
+    ? await prisma.share_company_users.findMany({
+        where: {
+          company_id: companyId,
+          profile_id: { not: null, notIn: profilesAlready.length ? profilesAlready : undefined },
+          role: { in: roleNamesWithPermission },
+        },
+        select: { profile_id: true },
+        distinct: ['profile_id'],
+      })
+    : [];
   for (const s of viaLegacy) {
     if (s.profile_id) result.add(s.profile_id);
   }
