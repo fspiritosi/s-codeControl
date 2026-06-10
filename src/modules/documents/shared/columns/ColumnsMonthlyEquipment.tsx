@@ -49,6 +49,7 @@ import { ColumnDef, FilterFn, Row } from '@tanstack/react-table';
 import { addMonths, format, formatRelative } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { saveAs } from 'file-saver';
+import { resolveDownloadType } from '@/shared/lib/mime';
 import { ArrowUpDown, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -137,7 +138,7 @@ export const ColumnsMonthlyEquipment: ColumnDef<Colum>[] = [
             // Extrae la extensión del archivo del path
             const extension = path.split('.').pop();
 
-            const blob = new Blob([data], { type: 'application/octet-stream' });
+            const blob = new Blob([data], { type: resolveDownloadType(data.type, path) });
             // Usa la extensión del archivo al guardar el archivo
             saveAs(blob, `${resourceName} ${fileName}.${extension}`);
           },

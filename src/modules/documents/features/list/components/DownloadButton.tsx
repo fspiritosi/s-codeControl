@@ -5,6 +5,7 @@ import { DownloadIcon } from '@radix-ui/react-icons';
 import { saveAs } from 'file-saver';
 import { toast } from 'sonner';
 import { storage } from '@/shared/lib/storage';
+import { blobWithResolvedType } from '@/shared/lib/mime';
 function DownloadButton({ path, fileName }: { path: string; fileName: string }) {
   const handleDownload = async (path: string, fileName: string) => {
     toast.promise(
@@ -14,9 +15,10 @@ function DownloadButton({ path, fileName }: { path: string; fileName: string }) 
         // Extrae la extensión del archivo del path
         const extension = path.split('.').pop();
 
-        const blob = new Blob([data], { type: 'application/octet-stream' });
-        // Usa la extensión del archivo al guardar el archivo
-        saveAs(blob, `${fileName}CodeControl.${extension}`);
+        const outName = `${fileName}CodeControl.${extension}`;
+        // Descarga con el Content-Type real (no octet-stream) para no disparar
+        // la cuarentena de antivirus como McAfee.
+        saveAs(blobWithResolvedType(data, outName), outName);
       },
       {
         loading: 'Descargando documento...',

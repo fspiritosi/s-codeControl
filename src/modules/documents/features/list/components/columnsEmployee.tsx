@@ -39,6 +39,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/shared/com
 import { useEdgeFunctions } from '@/shared/hooks/useEdgeFunctions';
 import { cn } from '@/shared/lib/utils';
 import { saveAs } from 'file-saver';
+import { resolveDownloadType } from '@/shared/lib/mime';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
@@ -104,7 +105,7 @@ export const columEmp: ColumnDef<Colum>[] = [
             // Extrae la extensión del archivo del path
             const extension = path.split('.').pop();
 
-            const blob = new Blob([data], { type: 'application/octet-stream' });
+            const blob = new Blob([data], { type: resolveDownloadType(data.type, path) });
             // Usa la extensión del archivo al guardar el archivo
             saveAs(blob, `${resourceName} ${fileName}.${extension}`);
           },

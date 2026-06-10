@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
 import { saveAs } from 'file-saver';
+import { resolveDownloadType } from '@/shared/lib/mime';
 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
@@ -105,7 +106,7 @@ export const columns: ColumnDef<Colum>[] = [
             // Extrae la extensión del archivo del path
             const extension = path.split('.').pop();
 
-            const blob = new Blob([data], { type: 'application/octet-stream' });
+            const blob = new Blob([data], { type: resolveDownloadType(data.type, path) });
             // Usa la extensión del archivo al guardar el archivo
             saveAs(blob, `${resourceName} ${fileName}.${extension}`);
           },
