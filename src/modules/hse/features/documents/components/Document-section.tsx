@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui
 import type { Document } from '../actions.server';
 import { DocumentUploadDialog } from './Document-upload-dialog';
 import { storage } from '@/shared/lib/storage';
+import { blobWithResolvedType } from '@/shared/lib/mime';
 import Cookies from 'js-cookie';
 import { Calendar, Download, Eye, FileText, LayoutGrid, List, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -520,7 +521,7 @@ export function DocumentsSection({ initialDocuments, initialEmployees, allTags, 
     try {
       const data = await storage.download('documents-hse', file_path);
 
-      const url = window.URL.createObjectURL(data);
+      const url = window.URL.createObjectURL(blobWithResolvedType(data, file_name));
       const a = document.createElement('a');
       a.href = url;
       a.download = file_name;

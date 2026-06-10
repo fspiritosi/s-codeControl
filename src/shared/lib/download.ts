@@ -1,6 +1,7 @@
 "use client"
 
 import { storage } from "./storage"
+import { blobWithResolvedType } from "./mime"
 
 export async function downloadFile(filePath: string, fileName: string) {
   // Verificar si estamos en el navegador
@@ -12,7 +13,7 @@ export async function downloadFile(filePath: string, fileName: string) {
   try {
     const data = await storage.download('documents-hse', filePath)
 
-    const url = window.URL.createObjectURL(new Blob([data]))
+    const url = window.URL.createObjectURL(blobWithResolvedType(data, fileName))
     const link = document.createElement('a')
     link.href = url
     link.setAttribute('download', fileName)

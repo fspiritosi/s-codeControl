@@ -13,6 +13,7 @@ import {
   AlertDialogTrigger,
 } from '@/shared/components/ui/alert-dialog';
 import { saveAs } from 'file-saver';
+import { resolveDownloadType } from '@/shared/lib/mime';
 
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
@@ -273,7 +274,7 @@ export const ExpiredColums: ColumnDef<any>[] = [
             // Extrae la extensión del archivo del path
             const extension = path.split('.').pop();
 
-            const blob = new Blob([data], { type: 'application/octet-stream' });
+            const blob = new Blob([data], { type: resolveDownloadType(data.type, path) });
             // Usa la extensión del archivo al guardar el archivo
             saveAs(blob, `${resourceName} ${fileName}.${extension}`);
           },

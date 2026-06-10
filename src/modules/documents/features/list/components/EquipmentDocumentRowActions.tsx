@@ -23,6 +23,7 @@ import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { formatRelative } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { saveAs } from 'file-saver';
+import { blobWithResolvedType } from '@/shared/lib/mime';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -41,8 +42,8 @@ export function EquipmentDocumentRowActions({ row }: EquipmentDocumentRowActions
       async () => {
         const data = await storage.download('document_files', path);
         const extension = path.split('.').pop();
-        const blob = new Blob([data], { type: 'application/octet-stream' });
-        saveAs(blob, `${resourceName} ${fileName}.${extension}`);
+        const outName = `${resourceName} ${fileName}.${extension}`;
+        saveAs(blobWithResolvedType(data, outName), outName);
       },
       {
         loading: 'Descargando documento...',
