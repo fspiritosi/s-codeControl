@@ -10,63 +10,125 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/shared/components/ui/alert-dialog';
 import { INVOICE_STATUS_LABELS, VOUCHER_TYPE_LABELS, INVOICE_RECEIVING_STATUS_LABELS, INVOICE_RECEIVING_STATUS_COLORS } from '@/modules/purchasing/shared/types';
-import { confirmPurchaseInvoice } from '../actions.server';
+import { confirmPurchaseInvoice, deletePurchaseInvoice } from '../actions.server';
 import { format } from 'date-fns';
-import { MoreHorizontal, Eye, CheckCircle, Pencil } from 'lucide-react';
+import { MoreHorizontal, Eye, CheckCircle, Pencil, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 function ActionsCell({ row, isOwner }: { row: any; isOwner: boolean }) {
   const router = useRouter();
   const status = row.original.status;
   const id = row.original.id;
+  const fullNumber = row.original.full_number;
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   // DRAFT: editable por cualquiera con acceso. CONFIRMED: solo el owner de la empresa.
   const canEdit = status === 'DRAFT' || (status === 'CONFIRMED' && isOwner);
 
+  const handleDelete = () => {
+    toast.promise(
+      async () => {
+        const result = await deletePurchaseInvoice(id);
+        if (result.error) throw new Error(result.error);
+        router.refresh();
+      },
+      { loading: 'Eliminando...', success: 'Factura eliminada', error: (e) => e.message }
+    );
+  };
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-8">
-          <MoreHorizontal className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link href={`/dashboard/purchasing/invoices/${id}`}>
-            <Eye className="size-4 mr-2" /> Ver detalle
-          </Link>
-        </DropdownMenuItem>
-        {canEdit && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href={`/dashboard/purchasing/invoices/${id}/edit`}>
-                <Pencil className="size-4 mr-2" /> Editar
-              </Link>
-            </DropdownMenuItem>
-          </>
-        )}
-        {status === 'DRAFT' && (
-          <DropdownMenuItem
-            onClick={() => {
-              toast.promise(
-                async () => {
-                  const result = await confirmPurchaseInvoice(id);
-                  if (result.error) throw new Error(result.error);
-                  router.refresh();
-                },
-                { loading: 'Confirmando...', success: 'Factura confirmada', error: (e) => e.message }
-              );
-            }}
-          >
-            <CheckCircle className="size-4 mr-2" /> Confirmar
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="size-8">
+            <MoreHorizontal className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link href={`/dashboard/purchasing/invoices/${id}`}>
+              <Eye className="size-4 mr-2" /> Ver detalle
+            </Link>
           </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          {canEdit && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/purchasing/invoices/${id}/edit`}>
+                  <Pencil className="size-4 mr-2" /> Editar
+                </Link>
+              </DropdownMenuItem>
+            </>
+          )}
+          {status === 'DRAFT' && (
+            <DropdownMenuItem
+              onClick={() => {
+                toast.promise(
+                  async () => {
+                    const result = await confirmPurchaseInvoice(id);
+                    if (result.error) throw new Error(result.error);
+                    router.refresh();
+                  },
+                  { loading: 'Confirmando...', success: 'Factura confirmada', error: (e) => e.message }
+                );
+              }}
+            >
+              <CheckCircle className="size-4 mr-2" /> Confirmar
+            </DropdownMenuItem>
+          )}
+          {isOwner && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setConfirmDeleteOpen(true);
+                }}
+              >
+                <Trash2 className="size-4 mr-2" /> Eliminar
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar factura {fullNumber}</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción elimina la factura de forma permanente, incluso si está confirmada. No se
+              puede deshacer. Si la factura tiene pagos imputados o movimientos de caja, el sistema
+              lo impedirá.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDelete}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 

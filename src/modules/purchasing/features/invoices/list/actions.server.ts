@@ -907,3 +907,58 @@ export async function updatePurchaseInvoiceReceivingStatus(invoiceId: string) {
     data: { receiving_status: newStatus },
   });
 }
+
+/**
+ * Elimina (borrado físico) una factura de compra, incluso confirmada.
+ * Restricciones:
+ *  - Solo el OWNER de la empresa puede hacerlo.
+ *  - Se bloquea si la factura tiene pagos imputados en una OP no anulada o
+ *    movimientos de caja asociados, para no dejar tesorería inconsistente.
+ * Las líneas/percepciones/otros cargos se borran en cascada (FK ON DELETE CASCADE);
+ * remitos de recepción y cuotas quedan desvinculados (ON DELETE SET NULL).
+ */
+export async function deletePurchaseInvoice(id: string) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return { error: 'No company selected' };
+
+  const isOwner = await isActiveUserOwner();
+  if (!isOwner) {
+    return { error: 'Solo el dueño de la empresa puede eliminar facturas de compra' };
+  }
+
+  try {
+    const invoice = await prisma.purchase_invoices.findFirst({
+      where: { id, company_id: companyId },
+      select: { id: true, full_number: true },
+    });
+    if (!invoice) return { error: 'Factura no encontrada' };
+
+    // Bloqueo: pagos imputados (en OP no anulada) o movimientos de caja.
+    const [activePayment, cashMovement] = await Promise.all([
+      prisma.payment_order_items.findFirst({
+        where: { invoice_id: id, payment_order: { status: { not: 'CANCELLED' } } },
+        select: { payment_order: { select: { full_number: true } } },
+      }),
+      prisma.cash_movements.findFirst({
+        where: { purchase_invoice_id: id },
+        select: { id: true },
+      }),
+    ]);
+    if (activePayment) {
+      return {
+        error: `No se puede eliminar: la factura está imputada a la orden de pago ${activePayment.payment_order?.full_number ?? ''}. Anulá esa OP primero.`,
+      };
+    }
+    if (cashMovement) {
+      return { error: 'No se puede eliminar: la factura tiene movimientos de caja asociados.' };
+    }
+
+    await prisma.purchase_invoices.delete({ where: { id } });
+
+    revalidatePath('/dashboard/purchasing');
+    return { error: null };
+  } catch (error) {
+    console.error('Error deleting purchase invoice:', error);
+    return { error: String(error) };
+  }
+}
