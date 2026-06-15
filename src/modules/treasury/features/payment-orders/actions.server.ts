@@ -347,7 +347,12 @@ export async function getPendingPurchaseInvoices(supplierId: string) {
       subtotal: true,
       vat_amount: true,
       total: true,
-      payment_order_items: { select: { amount: true } },
+      // Solo cuentan las imputaciones de OPs no anuladas: al anular una OP sus
+      // items se conservan (audit), pero no deben descontar del saldo pendiente.
+      payment_order_items: {
+        where: { payment_order: { status: { not: 'CANCELLED' } } },
+        select: { amount: true },
+      },
     },
     orderBy: { issue_date: 'asc' },
   });
@@ -399,7 +404,11 @@ export async function getPendingExpenses(supplierId?: string) {
       amount: true,
       category: { select: { id: true, name: true } },
       supplier: { select: { id: true, business_name: true } },
-      payment_order_items: { select: { amount: true } },
+      // Igual que en facturas: ignorar imputaciones de OPs anuladas.
+      payment_order_items: {
+        where: { payment_order: { status: { not: 'CANCELLED' } } },
+        select: { amount: true },
+      },
     },
     orderBy: { date: 'asc' },
   });
