@@ -1080,7 +1080,7 @@ export function NewPaymentOrderForm({
                   </div>
                 )}
 
-                {['TRANSFER', 'DEBIT_CARD', 'CREDIT_CARD'].includes(p.payment_method) && (
+                {['TRANSFER', 'DEBIT_CARD', 'CREDIT_CARD', 'DEBIN_CREDIN'].includes(p.payment_method) && (
                   <div className="md:col-span-3 space-y-1.5">
                     <Label>Cuenta bancaria</Label>
                     <Select

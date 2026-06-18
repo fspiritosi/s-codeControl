@@ -2168,6 +2168,7 @@ enum payment_method {
   DEBIT_CARD
   CREDIT_CARD
   ACCOUNT
+  DEBIN_CREDIN
 }
 
 enum payment_order_status {

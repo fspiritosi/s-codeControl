@@ -708,7 +708,7 @@ export async function updatePaymentOrder(id: string, data: PaymentOrderFormData)
 /**
  * Confirma una orden de pago. Por cada payment genera:
  *   - CASH → cash_movement tipo EXPENSE en la caja (requiere sesión abierta)
- *   - TRANSFER → bank_movement tipo TRANSFER_OUT + actualiza balance
+ *   - TRANSFER / DEBIN_CREDIN → bank_movement tipo TRANSFER_OUT + actualiza balance
  *   - DEBIT_CARD / CREDIT_CARD → bank_movement tipo DEBIT + actualiza balance
  *   - CHECK → solo queda registrado en payment_order_payments.check_number
  *     (el cheque propio se carga aparte desde el módulo de cheques)
@@ -770,10 +770,11 @@ export async function confirmPaymentOrder(id: string) {
       if (
         (p.payment_method === 'TRANSFER' ||
           p.payment_method === 'DEBIT_CARD' ||
-          p.payment_method === 'CREDIT_CARD') &&
+          p.payment_method === 'CREDIT_CARD' ||
+          p.payment_method === 'DEBIN_CREDIN') &&
         !p.bank_account_id
       ) {
-        return { error: 'Hay un pago con tarjeta/transferencia sin cuenta bancaria asignada' };
+        return { error: 'Hay un pago con tarjeta/transferencia/DEBIN/CREDIN sin cuenta bancaria asignada' };
       }
       if (p.bank_account_id) {
         const account = await prisma.bank_accounts.findUnique({
@@ -842,11 +843,16 @@ export async function confirmPaymentOrder(id: string) {
         if (
           (p.payment_method === 'TRANSFER' ||
             p.payment_method === 'DEBIT_CARD' ||
-            p.payment_method === 'CREDIT_CARD') &&
+            p.payment_method === 'CREDIT_CARD' ||
+            p.payment_method === 'DEBIN_CREDIN') &&
           p.bank_account_id
         ) {
+          // DEBIN/CREDIN y TRANSFER son transferencias electrónicas (TRANSFER_OUT);
+          // las tarjetas se registran como DEBIT. Todas restan del saldo de la cuenta.
           const movementType =
-            p.payment_method === 'TRANSFER' ? 'TRANSFER_OUT' : 'DEBIT';
+            p.payment_method === 'DEBIT_CARD' || p.payment_method === 'CREDIT_CARD'
+              ? 'DEBIT'
+              : 'TRANSFER_OUT';
 
           const account = await tx.bank_accounts.findUnique({
             where: { id: p.bank_account_id },

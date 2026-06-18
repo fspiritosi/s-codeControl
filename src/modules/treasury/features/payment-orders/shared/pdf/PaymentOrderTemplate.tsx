@@ -12,6 +12,7 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
   DEBIT_CARD: 'Tarjeta de débito',
   CREDIT_CARD: 'Tarjeta de crédito',
   ACCOUNT: 'Cuenta corriente',
+  DEBIN_CREDIN: 'DEBIN/CREDIN',
 };
 
 function fmtDate(d: Date | string | null | undefined): string {

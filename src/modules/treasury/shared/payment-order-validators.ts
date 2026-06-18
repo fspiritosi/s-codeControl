@@ -21,6 +21,7 @@ export const paymentOrderPaymentSchema = z
       'DEBIT_CARD',
       'CREDIT_CARD',
       'ACCOUNT',
+      'DEBIN_CREDIN',
     ]),
     amount: amountString.refine((v) => parseFloat(v) > 0, 'Debe ser mayor a 0'),
     cash_register_id: z.string().uuid().optional().nullable(),
@@ -41,7 +42,10 @@ export const paymentOrderPaymentSchema = z
         message: 'Seleccioná la caja para pagos en efectivo',
       });
     }
-    if (['TRANSFER', 'DEBIT_CARD', 'CREDIT_CARD'].includes(data.payment_method) && !data.bank_account_id) {
+    if (
+      ['TRANSFER', 'DEBIT_CARD', 'CREDIT_CARD', 'DEBIN_CREDIN'].includes(data.payment_method) &&
+      !data.bank_account_id
+    ) {
       ctx.addIssue({
         code: 'custom',
         path: ['bank_account_id'],
