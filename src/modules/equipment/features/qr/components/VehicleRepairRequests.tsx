@@ -56,27 +56,27 @@ export default function VehicleRepairRequests({
             <Card key={request.id}>
               <CardHeader>
                 <CardTitle className="flex justify-between items-center">
-                  <span className="text-xl">{request.reparation_type.name}</span>
+                  <span className="text-xl">{request.reparation_type?.name}</span>
                   <Badge
                     variant={
-                      request.reparation_type.criticity === 'Alta'
+                      request.reparation_type?.criticity === 'Alta'
                         ? 'destructive'
-                        : request.reparation_type.criticity === 'Media'
+                        : request.reparation_type?.criticity === 'Media'
                           ? 'yellow'
                           : 'outline'
                     }
                   >
-                    {request.reparation_type.criticity}
+                    {request.reparation_type?.criticity}
                   </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
-                    <strong>Dominio:</strong> {request.equipment_id.domain}
+                    <strong>Dominio:</strong> {request.equipment_id?.domain}
                   </div>
                   <div>
-                    <strong>Equipo:</strong> {request.equipment_id.brand.name} {request.equipment_id.model.name}
+                    <strong>Equipo:</strong> {request.equipment_id?.brand?.name} {request.equipment_id?.model?.name}
                   </div>
                   <div>
                     <strong>Fecha:</strong>{' '}
@@ -100,7 +100,7 @@ export default function VehicleRepairRequests({
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-[90vw] w-full max-h-[90vh] overflow-y-auto rounded-lg">
           <DialogHeader>
-            <DialogTitle className="text-xl">{selectedRequest?.reparation_type.name}</DialogTitle>
+            <DialogTitle className="text-xl">{selectedRequest?.reparation_type?.name}</DialogTitle>
             <DialogDescription>Detalles de la reparacion y del vehiculo</DialogDescription>
           </DialogHeader>
           <Tabs defaultValue="vehicle" className="w-full">
@@ -112,31 +112,31 @@ export default function VehicleRepairRequests({
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-2 items-center gap-4">
                   <span className="font-bold">Marca:</span>
-                  <span>{selectedRequest?.equipment_id.brand.name}</span>
+                  <span>{selectedRequest?.equipment_id?.brand?.name}</span>
                 </div>
                 <div className="grid grid-cols-2 items-center gap-4">
                   <span className="font-bold">Modelo:</span>
-                  <span>{selectedRequest?.equipment_id.model.name}</span>
+                  <span>{selectedRequest?.equipment_id?.model?.name}</span>
                 </div>
                 <div className="grid grid-cols-2 items-center gap-4">
                   <span className="font-bold">Ano:</span>
-                  <span>{selectedRequest?.equipment_id.year}</span>
+                  <span>{selectedRequest?.equipment_id?.year}</span>
                 </div>
                 <div className="grid grid-cols-2 items-center gap-4">
                   <span className="font-bold">Dominio:</span>
-                  <span>{selectedRequest?.equipment_id.domain}</span>
+                  <span>{selectedRequest?.equipment_id?.domain}</span>
                 </div>
                 <div className="grid grid-cols-2 items-center gap-4">
                   <span className="font-bold">Numero interno:</span>
-                  <span>{selectedRequest?.equipment_id.intern_number}</span>
+                  <span>{selectedRequest?.equipment_id?.intern_number}</span>
                 </div>
                 <div className="grid grid-cols-2 items-center gap-4">
                   <span className="font-bold">Kilometraje:</span>
-                  <span>{selectedRequest?.equipment_id.kilometer} km</span>
+                  <span>{selectedRequest?.equipment_id?.kilometer} km</span>
                 </div>
                 <div className="grid grid-cols-2 items-center gap-4">
                   <span className="font-bold">Condicion:</span>
-                  <span>{selectedRequest?.equipment_id.condition}</span>
+                  <span>{selectedRequest?.equipment_id?.condition}</span>
                 </div>
               </div>
             </TabsContent>
@@ -148,11 +148,11 @@ export default function VehicleRepairRequests({
                 </div>
                 <div className="grid grid-cols-2 items-center gap-4">
                   <span className="font-bold">Prioridad:</span>
-                  <span>{selectedRequest?.reparation_type.criticity}</span>
+                  <span>{selectedRequest?.reparation_type?.criticity}</span>
                 </div>
                 <div className="grid grid-cols-2 items-center gap-4">
                   <span className="font-bold">Tipo de mantenimiento:</span>
-                  <span>{selectedRequest?.reparation_type.type_of_maintenance}</span>
+                  <span>{selectedRequest?.reparation_type?.type_of_maintenance}</span>
                 </div>
                 <div className="grid grid-cols-2 items-center gap-4">
                   <span className="font-bold">Descripcion:</span>
