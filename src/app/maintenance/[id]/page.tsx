@@ -99,6 +99,19 @@ export default async function Home({
     })
   ) as any[];
 
+  // Normalizar las solicitudes pendientes al shape que espera VehicleRepairRequests
+  // (reparation_type + equipment_id como objeto con brand/model). El include de
+  // Prisma las trae como reparation_type_rel + equipment(brand_rel/model_rel).
+  const pendingRequestsForView = serializeBigInt(
+    (pendingRepairs as any[]).map((r) => ({
+      ...r,
+      reparation_type: r.reparation_type_rel ?? null,
+      equipment_id: r.equipment
+        ? { ...r.equipment, brand: r.equipment.brand_rel ?? null, model: r.equipment.model_rel ?? null }
+        : null,
+    }))
+  ) as any;
+
   const vehiclesFormatted = setVehiclesToShow(equipments || []) || [];
 
   const equipmentsForComboBox = [
@@ -126,7 +139,7 @@ export default async function Home({
       tipo_de_mantenimiento={typesOfRepairs as unknown as TypeOfRepair}
       default_equipment_id={id}
       role={role}
-      pendingRequests={pendingRepairs as any}
+      pendingRequests={pendingRequestsForView}
       checkList={
         checklists
           .filter(

@@ -114,6 +114,7 @@ export const PAYMENT_METHOD_LABELS = {
   DEBIT_CARD: 'Tarjeta de débito',
   CREDIT_CARD: 'Tarjeta de crédito',
   ACCOUNT: 'Cuenta corriente',
+  DEBIN_CREDIN: 'DEBIN/CREDIN',
 } as const;
 
 export const PAYMENT_ORDER_STATUS_LABELS = {
