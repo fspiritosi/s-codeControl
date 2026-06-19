@@ -14,6 +14,7 @@ import {
   updatePurchaseInvoice,
   preparePurchaseInvoiceAttachmentUpload,
   confirmPurchaseInvoiceAttachmentUpload,
+  getInvoicesForCreditNote,
 } from '@/modules/purchasing/features/invoices/list/actions.server';
 import { storage } from '@/shared/lib/storage';
 import {
@@ -68,6 +69,7 @@ export type InvoiceInitialData = {
   due_date: string;
   cae: string;
   notes: string;
+  original_invoice_id: string | null;
   purchase_order_ids: string[];
   global_discount_type: 'PERCENTAGE' | 'FIXED' | null;
   global_discount_value: number | null;
@@ -104,6 +106,7 @@ export default function PurchaseInvoiceForm({ suppliers, products: initialProduc
           due_date: initialData.due_date,
           cae: initialData.cae,
           notes: initialData.notes,
+          original_invoice_id: initialData.original_invoice_id ?? null,
           purchase_order_id: '',
           purchase_order_ids: initialData.purchase_order_ids,
           global_discount_type: initialData.global_discount_type,
@@ -115,6 +118,7 @@ export default function PurchaseInvoiceForm({ suppliers, products: initialProduc
       : {
           supplier_id: '', voucher_type: 'FACTURA_A', point_of_sale: '00001', number: '',
           issue_date: new Date().toISOString().split('T')[0], due_date: '', cae: '', notes: '',
+          original_invoice_id: null,
           purchase_order_id: '',
           purchase_order_ids: [],
           global_discount_type: null,
@@ -143,6 +147,24 @@ export default function PurchaseInvoiceForm({ suppliers, products: initialProduc
   const globalDiscountType = useWatch({ control: form.control, name: 'global_discount_type' });
   const globalDiscountValue = useWatch({ control: form.control, name: 'global_discount_value' });
   const watchedOtherCharges = useWatch({ control: form.control, name: 'other_charges' });
+  const watchedVoucherType = useWatch({ control: form.control, name: 'voucher_type' });
+  const isCreditNote = ['NOTA_CREDITO_A', 'NOTA_CREDITO_B', 'NOTA_CREDITO_C'].includes(
+    watchedVoucherType as string
+  );
+  const [creditNoteInvoices, setCreditNoteInvoices] = useState<
+    { id: string; full_number: string; voucher_type: string; total: number }[]
+  >([]);
+
+  // Cargar facturas que una NC puede corregir (del proveedor elegido).
+  useEffect(() => {
+    if (isCreditNote && watchedSupplier) {
+      getInvoicesForCreditNote(watchedSupplier)
+        .then((invs) => setCreditNoteInvoices(invs as any))
+        .catch(() => setCreditNoteInvoices([]));
+    } else {
+      setCreditNoteInvoices([]);
+    }
+  }, [isCreditNote, watchedSupplier]);
 
   // Índice line_id → order_id para poder filtrar al deseleccionar OCs
   const poLineToOrderRef = useRef<Map<string, string>>(new Map());
@@ -388,6 +410,7 @@ export default function PurchaseInvoiceForm({ suppliers, products: initialProduc
       due_date: values.due_date,
       cae: values.cae,
       notes: values.notes,
+      original_invoice_id: isCreditNote ? (values.original_invoice_id || null) : null,
       purchase_order_ids: values.purchase_order_ids || [],
       global_discount_type: values.global_discount_type || undefined,
       global_discount_value: values.global_discount_value != null ? values.global_discount_value : undefined,
@@ -479,6 +502,29 @@ export default function PurchaseInvoiceForm({ suppliers, products: initialProduc
                   <SelectContent>{Object.entries(VOUCHER_TYPE_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
                 </Select><FormMessage /></FormItem>
             )} />
+            {isCreditNote && (
+              <FormField control={form.control} name="original_invoice_id" render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Factura que corrige *</FormLabel>
+                  <Select onValueChange={field.onChange} value={(field.value as string) ?? ''}>
+                    <FormControl><SelectTrigger>
+                      <SelectValue placeholder={watchedSupplier ? 'Seleccioná la factura' : 'Elegí primero el proveedor'} />
+                    </SelectTrigger></FormControl>
+                    <SelectContent>
+                      {creditNoteInvoices.length === 0 && (
+                        <div className="px-2 py-1.5 text-sm text-muted-foreground">No hay facturas del proveedor</div>
+                      )}
+                      {creditNoteInvoices.map((inv) => (
+                        <SelectItem key={inv.id} value={inv.id}>
+                          {(VOUCHER_TYPE_LABELS[inv.voucher_type] ?? inv.voucher_type)} {inv.full_number} — ${inv.total.toFixed(2)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            )}
             <FormField control={form.control} name="point_of_sale" render={({ field }) => (
               <FormItem><FormLabel>Pto. venta *</FormLabel><FormControl><Input placeholder="00001" maxLength={5} {...field} onBlur={(e) => { field.onBlur(); field.onChange(e.target.value.padStart(5, '0')); }} /></FormControl><FormMessage /></FormItem>
             )} />

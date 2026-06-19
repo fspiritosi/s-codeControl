@@ -78,10 +78,16 @@ export async function getSupplierInvoices(supplierId: string) {
     }
   }
 
+  // Notas de crédito: restan saldo deudor (su saldo se computa en negativo).
+  const NC_TYPES = new Set(['NOTA_CREDITO_A', 'NOTA_CREDITO_B', 'NOTA_CREDITO_C']);
+
   const rows = data.map((inv) => {
     const total = Number(inv.total);
     const paid = paidByInvoice.get(inv.id) ?? 0;
-    const remaining = Math.max(0, Math.round((total - paid) * 100) / 100);
+    const isNC = NC_TYPES.has(inv.voucher_type as string);
+    const net = Math.round((total - paid) * 100) / 100;
+    // Factura/ND: deuda positiva. NC: crédito (negativo) que descuenta deuda.
+    const remaining = isNC ? -net : Math.max(0, net);
     return {
       id: inv.id,
       full_number: inv.full_number,
@@ -100,8 +106,11 @@ export async function getSupplierInvoices(supplierId: string) {
   let totalDebt = 0;
   for (const r of rows) {
     countByStatus[r.status] = (countByStatus[r.status] ?? 0) + 1;
-    totalAmount += r.total;
-    if (r.status !== 'CANCELLED') totalDebt += r.remaining;
+    if (r.status === 'CANCELLED') continue;
+    // "Monto facturado" = solo facturas/ND (las NC no son facturación).
+    if (!NC_TYPES.has(r.voucher_type as string)) totalAmount += r.total;
+    // Total adeudado neto: las NC restan (remaining negativo). Puede quedar a favor.
+    totalDebt += r.remaining;
   }
 
   const summary: InvoicesSummary = {
