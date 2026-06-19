@@ -18,7 +18,6 @@ import { Button } from '@/shared/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/shared/components/ui/command';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from '@/shared/components/ui/form';
 
-import * as XLSX from 'xlsx';
 import InfoComponent from '@/shared/components/common/InfoComponent';
 
 type Checked = DropdownMenuCheckboxItemProps['checked'];
@@ -112,7 +111,8 @@ function DiagramEmployeeView({
 
   /*---------------------INICIO DESCARGA DE ARCHIVO ---------------------------*/
 
-  function createAndDownloadFile(data: any) {
+  async function createAndDownloadFile(data: any) {
+    const XLSX = await import('xlsx');
     const mes = generarDiasEntreFechas({ fechaInicio, fechaFin });
     // const dataToDownload = mes.map((dato: any) => ({
     //   Empleado: '',

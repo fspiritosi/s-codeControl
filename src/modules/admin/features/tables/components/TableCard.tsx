@@ -13,7 +13,6 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { format } from 'date-fns';
 import { MoreHorizontal } from 'lucide-react';
-import * as XLSX from 'xlsx';
 
 type Props = {
   title: string;
@@ -22,7 +21,8 @@ type Props = {
 };
 
 export default function CardTable({ title, data, dbName }: Props) {
-  function createAndDownloadFile(data: any) {
+  async function createAndDownloadFile(data: any) {
+    const XLSX = await import('xlsx');
     const dataToDownload = data.map((dato: any) => ({
       id: dato.id,
       estado: dato.is_active ? 'Activo' : 'Inactivo',

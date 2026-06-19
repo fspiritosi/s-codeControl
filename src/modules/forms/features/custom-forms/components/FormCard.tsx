@@ -2,8 +2,11 @@ import { Button } from '@/shared/components/ui/button';
 import { Card, CardDescription, CardHeader } from '@/shared/components/ui/card';
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerTrigger } from '@/shared/components/ui/drawer';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { FormUseChart } from './FormUseChart';
+import dynamic from 'next/dynamic';
 import { SubmitCustomForm } from './SubmitCustomForm';
+
+// Carga diferida: recharts (~45KB) sale del bundle inicial.
+const FormUseChart = dynamic(() => import('./FormUseChart').then((m) => m.FormUseChart));
 
 function FormCard({
   form,

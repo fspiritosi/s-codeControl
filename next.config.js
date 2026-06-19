@@ -1,5 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    // Tree-shaking selectivo: solo importa lo usado de estos paquetes, evita código muerto.
+    optimizePackageImports: [
+      'lucide-react',
+      'react-icons',
+      'recharts',
+      'date-fns',
+      '@radix-ui/react-icons'
+    ]
+  },
   images: {
     // domains: ['zktcbhhlcksopklpnubj.supabase.co', 'th.bing.com'],
     remotePatterns: [

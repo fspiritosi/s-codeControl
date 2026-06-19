@@ -129,16 +129,9 @@ export const fetchSharedUsersByCompany = async (companyId: string) => {
             share_company_users: { include: { profile: true } },
             city_rel: { select: { name: true, id: true } },
             province_rel: { select: { name: true, id: true } },
-            employees: {
-              include: {
-                city_rel: { select: { name: true } },
-                province_rel: { select: { name: true } },
-                workflow_diagram_rel: { select: { name: true } },
-                hierarchy_rel: { select: { name: true } },
-                birthplace_rel: { select: { name: true } },
-                contractor_employee: { include: { contractor: true } },
-              },
-            },
+            // NOTA: se removió el include de `employees` (6 JOINs por empleado).
+            // Ningún consumidor de `sharedUsers` accede a company.employees y traía
+            // cientos de KB en cada cambio de empresa activa.
           },
         },
       },

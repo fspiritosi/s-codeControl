@@ -15,36 +15,41 @@ import {
 
 export const fetchAllEmployeesWithRelations = async () => {
   const { companyId } = await getActionContext();
-  const user = await fetchCurrentUser();
   if (!companyId) return [];
 
-  // Update user metadata via supabase auth admin
-  const supabase = await supabaseServer();
-  supabase.auth.admin.updateUserById(user?.id || '', {
-    app_metadata: {
-      company: companyId,
-    },
-  });
-
   try {
-    const data = await prisma.employees.findMany({
-      where: { company_id: companyId },
-      include: {
-        guild_rel: true,
-        covenants_rel: true,
-        category_rel: true,
-        city_rel: true,
-        province_rel: true,
-        workflow_diagram_rel: true,
-        hierarchy_rel: true,
-        birthplace_rel: true,
-        contractor_employee: {
-          include: { contractor: true },
+    // La query principal (lo más caro) arranca en paralelo con auth y el cliente
+    // de Supabase, en vez de esperarlos en cascada.
+    const [user, supabase, data] = await Promise.all([
+      fetchCurrentUser(),
+      supabaseServer(),
+      prisma.employees.findMany({
+        where: { company_id: companyId },
+        include: {
+          guild_rel: true,
+          covenants_rel: true,
+          category_rel: true,
+          city_rel: true,
+          province_rel: true,
+          workflow_diagram_rel: true,
+          hierarchy_rel: true,
+          birthplace_rel: true,
+          contractor_employee: {
+            include: { contractor: true },
+          },
         },
+        orderBy: { lastname: 'asc' },
+      }),
+    ]);
+
+    // Update user metadata via supabase auth admin (fire-and-forget, no bloquea)
+    supabase.auth.admin.updateUserById(user?.id || '', {
+      app_metadata: {
+        company: companyId,
       },
-      orderBy: { lastname: 'asc' },
     });
-    return (data ?? []);
+
+    return data ?? [];
   } catch (error) {
     console.error('Error fetching employees:', error);
     return [];

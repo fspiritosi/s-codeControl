@@ -1,9 +1,10 @@
 import { FileDown } from 'lucide-react';
-import * as XLSX from 'xlsx';
 import { Button } from '@/shared/components/ui/button';
 
 function BtnXlsDownload({ dataToDownload, fn, nameFile }: { dataToDownload: any; nameFile: string; fn: any }) {
-  function createAndDownloadFile(data: any) {
+  async function createAndDownloadFile(data: any) {
+    // Carga diferida de xlsx (~300KB): solo cuando el usuario descarga.
+    const XLSX = await import('xlsx');
     // Obtener todas las propiedades únicas
     const allKeys = Array.from(new Set(data.flatMap((item: any) => Object.keys(item))));
 

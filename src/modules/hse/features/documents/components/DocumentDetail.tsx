@@ -37,7 +37,6 @@ import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import * as XLSX from 'xlsx';
 import Cookies from 'js-cookie';
 // interface ExtendedDocument extends Document {
 //   documentTitle: string;
@@ -638,8 +637,9 @@ export default function DocumentDetail({ id }: DocumentDetailProps) {
     }
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     try {
+      const XLSX = await import('xlsx');
       if (!document || !employeesWithDocuments.length) {
         toast.info('No hay empleados para exportar');
         return;

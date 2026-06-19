@@ -19,8 +19,13 @@ import { Separator } from '@/shared/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { prisma } from '@/shared/lib/prisma';
-import { CompanieChart } from '@/modules/admin/features/panel/components/CompaniesChart';
+import dynamic from 'next/dynamic';
 import CreateUser from '@/modules/admin/features/panel/components/CreateUser';
+
+// Carga diferida: recharts (~45KB) sale del bundle inicial de la ruta.
+const CompanieChart = dynamic(() =>
+  import('@/modules/admin/features/panel/components/CompaniesChart').then((m) => m.CompanieChart)
+);
 
 export default async function Dashboard() {
   const company = await prisma.company.findMany();
