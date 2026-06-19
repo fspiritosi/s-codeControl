@@ -14,6 +14,7 @@ export type StorageBucket =
   | 'logo'
   | 'documents'
   | 'purchase_invoices'
+  | 'purchase_orders'
 
 export interface UploadOptions {
   cacheControl?: string
