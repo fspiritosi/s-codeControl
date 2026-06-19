@@ -62,6 +62,7 @@ export const purchaseInvoiceSchema = z.object({
   due_date: z.string().optional().or(z.literal('')),
   cae: z.string().optional().or(z.literal('')),
   notes: z.string().optional().or(z.literal('')),
+  original_invoice_id: z.string().uuid().nullable().optional().or(z.literal('')),
   purchase_order_id: z.string().uuid().optional().or(z.literal('')),
   purchase_order_ids: z.array(z.string().uuid()).optional().default([]),
   global_discount_type: z.enum(['PERCENTAGE', 'FIXED']).nullable().optional(),
@@ -70,6 +71,15 @@ export const purchaseInvoiceSchema = z.object({
   perceptions: z.array(purchaseInvoicePerceptionSchema).optional().default([]),
   other_charges: z.array(purchaseInvoiceOtherChargeSchema).optional().default([]),
   attachment: z.any().optional(),
+}).superRefine((data, ctx) => {
+  const isNC = ['NOTA_CREDITO_A', 'NOTA_CREDITO_B', 'NOTA_CREDITO_C'].includes(data.voucher_type);
+  if (isNC && !data.original_invoice_id) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['original_invoice_id'],
+      message: 'Seleccioná la factura que corrige esta nota de crédito',
+    });
+  }
 });
 
 // MIME types y tamaño máximo para adjunto de Factura de Compra

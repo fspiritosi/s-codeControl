@@ -50,9 +50,14 @@ export async function listPendingInvoices(
   const page = Math.max(1, filters.page ?? 1);
   const pageSize = Math.min(200, Math.max(1, filters.pageSize ?? 25));
 
+  // Las notas de crédito no son deuda a pagar: se excluyen del listado y
+  // descuentan el saldo de su factura original.
+  const NC_TYPES = ['NOTA_CREDITO_A', 'NOTA_CREDITO_B', 'NOTA_CREDITO_C'];
+
   const where: Record<string, unknown> = {
     company_id: companyId,
     status: { in: ['CONFIRMED', 'PARTIAL_PAID'] },
+    voucher_type: { notIn: NC_TYPES as any },
   };
   if (filters.supplier_id) where.supplier_id = filters.supplier_id;
   if (filters.search && filters.search.trim()) {
@@ -82,9 +87,28 @@ export async function listPendingInvoices(
     orderBy: { issue_date: 'asc' },
   });
 
+  // Crédito de notas de crédito (confirmadas) por factura original.
+  const creditByInvoice = new Map<string, number>();
+  if (invoices.length > 0) {
+    const ncGroups = await prisma.purchase_invoices.groupBy({
+      by: ['original_invoice_id'],
+      where: {
+        company_id: companyId,
+        voucher_type: { in: NC_TYPES as any },
+        status: { notIn: ['DRAFT', 'CANCELLED'] },
+        original_invoice_id: { in: invoices.map((i) => i.id) },
+      },
+      _sum: { total: true },
+    });
+    for (const g of ncGroups) {
+      if (g.original_invoice_id) creditByInvoice.set(g.original_invoice_id, Number(g._sum.total ?? 0));
+    }
+  }
+
   const computed: PendingInvoiceRow[] = [];
   for (const inv of invoices) {
     const total = Number(inv.total);
+    const credit = creditByInvoice.get(inv.id) ?? 0;
     let paid = 0;
     let latestActiveOp: {
       id: string;
@@ -113,7 +137,8 @@ export async function listPendingInvoices(
       }
     }
 
-    const pending = Math.round((total - paid) * 100) / 100;
+    // El saldo a pagar descuenta pagos y notas de crédito aplicadas.
+    const pending = Math.round((total - paid - credit) * 100) / 100;
     if (pending <= 0) continue;
 
     const op_status: 'NONE' | 'SCHEDULED' = latestActiveOp ? 'SCHEDULED' : 'NONE';

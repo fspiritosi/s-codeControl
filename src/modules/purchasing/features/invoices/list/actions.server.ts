@@ -9,6 +9,7 @@ import {
   PURCHASE_INVOICE_ATTACHMENT_ALLOWED_MIME,
   PURCHASE_INVOICE_ATTACHMENT_MAX_BYTES,
 } from '@/modules/purchasing/shared/validators';
+import { isCreditNoteVoucherType, CREDIT_NOTE_VOUCHER_TYPES } from '@/modules/purchasing/shared/types';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
 import {
   parseSearchParams,
@@ -111,6 +112,7 @@ export async function createPurchaseInvoice(data: {
   due_date?: string;
   cae?: string;
   notes?: string;
+  original_invoice_id?: string | null;
   purchase_order_id?: string;
   purchase_order_ids?: string[];
   global_discount_type?: 'PERCENTAGE' | 'FIXED' | null;
@@ -228,6 +230,25 @@ export async function createPurchaseInvoice(data: {
       }
     }
 
+    // Nota de crédito: debe asociarse a una factura del mismo proveedor (a la que descuenta saldo).
+    let creditNoteOriginalId: string | null = null;
+    if (isCreditNoteVoucherType(data.voucher_type)) {
+      if (!data.original_invoice_id) {
+        return { data: null, error: 'La nota de crédito debe indicar la factura que corrige' };
+      }
+      const original = await prisma.purchase_invoices.findFirst({
+        where: { id: data.original_invoice_id, company_id: companyId, supplier_id: data.supplier_id },
+        select: { id: true, voucher_type: true },
+      });
+      if (!original) {
+        return { data: null, error: 'La factura a corregir no existe o no pertenece al proveedor' };
+      }
+      if (isCreditNoteVoucherType(original.voucher_type)) {
+        return { data: null, error: 'No se puede asociar una nota de crédito a otra nota de crédito' };
+      }
+      creditNoteOriginalId = original.id;
+    }
+
     // Derivar OC primaria
     let primaryOrderId: string | null = null;
     if (Array.isArray(data.purchase_order_ids)) {
@@ -248,6 +269,7 @@ export async function createPurchaseInvoice(data: {
         due_date: data.due_date ? new Date(data.due_date) : null,
         cae: data.cae || null,
         notes: data.notes || null,
+        original_invoice_id: creditNoteOriginalId,
         purchase_order_id: primaryOrderId,
         global_discount_type: globalType as any,
         global_discount_value: globalType ? globalValue : null,
@@ -475,6 +497,7 @@ export async function getPurchaseInvoiceForEdit(invoiceId: string) {
     due_date: invoice.due_date ? invoice.due_date.toISOString().split('T')[0] : '',
     cae: invoice.cae || '',
     notes: invoice.notes || '',
+    original_invoice_id: invoice.original_invoice_id ?? null,
     purchase_order_ids: orderIds,
     global_discount_type: invoice.global_discount_type as 'PERCENTAGE' | 'FIXED' | null,
     global_discount_value: invoice.global_discount_value != null ? Number(invoice.global_discount_value) : null,
@@ -514,6 +537,7 @@ export async function updatePurchaseInvoice(
     due_date?: string;
     cae?: string;
     notes?: string;
+    original_invoice_id?: string | null;
     purchase_order_ids?: string[];
     global_discount_type?: 'PERCENTAGE' | 'FIXED' | null;
     global_discount_value?: number | null;
@@ -651,6 +675,29 @@ export async function updatePurchaseInvoice(
       primaryOrderId = data.purchase_order_ids.length === 1 ? data.purchase_order_ids[0] : null;
     }
 
+    // Nota de crédito: validar/actualizar la factura que corrige (mismo proveedor).
+    let creditNoteOriginalId: string | null = null;
+    if (isCreditNoteVoucherType(data.voucher_type)) {
+      if (!data.original_invoice_id) {
+        return { data: null, error: 'La nota de crédito debe indicar la factura que corrige' };
+      }
+      const original = await prisma.purchase_invoices.findFirst({
+        where: {
+          id: data.original_invoice_id,
+          company_id: companyId,
+          supplier_id: existing.supplier_id,
+        },
+        select: { id: true, voucher_type: true },
+      });
+      if (!original) {
+        return { data: null, error: 'La factura a corregir no existe o no pertenece al proveedor' };
+      }
+      if (original.id === invoiceId || isCreditNoteVoucherType(original.voucher_type)) {
+        return { data: null, error: 'La factura a corregir no es válida' };
+      }
+      creditNoteOriginalId = original.id;
+    }
+
     // Transacción: borrar líneas/percepciones/other_charges existentes y recrear + actualizar cabecera
     await prisma.$transaction([
       prisma.purchase_invoice_lines.deleteMany({ where: { invoice_id: invoiceId } }),
@@ -667,6 +714,7 @@ export async function updatePurchaseInvoice(
           due_date: data.due_date ? new Date(data.due_date) : null,
           cae: data.cae || null,
           notes: data.notes || null,
+          original_invoice_id: creditNoteOriginalId,
           purchase_order_id: primaryOrderId,
           global_discount_type: globalType as any,
           global_discount_value: globalType ? globalValue : null,
@@ -822,6 +870,28 @@ export async function confirmPurchaseInvoice(id: string) {
     console.error('Error confirming invoice:', error);
     return { error: String(error) };
   }
+}
+
+/**
+ * Facturas (no notas de crédito) de un proveedor que una NC puede corregir.
+ * Excluye notas de crédito y comprobantes anulados.
+ */
+export async function getInvoicesForCreditNote(supplierId: string) {
+  const { companyId } = await getActionContext();
+  if (!companyId || !supplierId) return [];
+
+  const invoices = await prisma.purchase_invoices.findMany({
+    where: {
+      company_id: companyId,
+      supplier_id: supplierId,
+      voucher_type: { notIn: [...CREDIT_NOTE_VOUCHER_TYPES] as any },
+      status: { notIn: ['CANCELLED'] },
+    },
+    select: { id: true, full_number: true, voucher_type: true, total: true, issue_date: true },
+    orderBy: { issue_date: 'desc' },
+  });
+
+  return invoices.map((i) => ({ ...i, total: Number(i.total) }));
 }
 
 // ============================================================

@@ -43,6 +43,13 @@ export const VOUCHER_TYPE_LABELS: Record<string, string> = {
   RECIBO: 'Recibo',
 };
 
+/** Tipos de comprobante que son notas de crédito (restan saldo deudor). */
+export const CREDIT_NOTE_VOUCHER_TYPES = ['NOTA_CREDITO_A', 'NOTA_CREDITO_B', 'NOTA_CREDITO_C'] as const;
+
+export function isCreditNoteVoucherType(voucherType: string): boolean {
+  return (CREDIT_NOTE_VOUCHER_TYPES as readonly string[]).includes(voucherType);
+}
+
 export const RECEIVING_NOTE_STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Borrador',
   CONFIRMED: 'Confirmado',

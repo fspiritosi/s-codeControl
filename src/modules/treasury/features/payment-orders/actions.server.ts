@@ -332,11 +332,16 @@ export async function getPendingPurchaseInvoices(supplierId: string) {
   const { companyId } = await getActionContext();
   if (!companyId) return [];
 
+  // Las notas de crédito no se imputan a una OP: se excluyen y descuentan el
+  // saldo de su factura original.
+  const NC_TYPES = ['NOTA_CREDITO_A', 'NOTA_CREDITO_B', 'NOTA_CREDITO_C'];
+
   const invoices = await prisma.purchase_invoices.findMany({
     where: {
       company_id: companyId,
       supplier_id: supplierId,
       status: { notIn: ['CANCELLED'] },
+      voucher_type: { notIn: NC_TYPES as any },
     },
     select: {
       id: true,
@@ -357,6 +362,24 @@ export async function getPendingPurchaseInvoices(supplierId: string) {
     orderBy: { issue_date: 'asc' },
   });
 
+  // Crédito de notas de crédito (confirmadas) por factura original.
+  const creditByInvoice = new Map<string, number>();
+  if (invoices.length > 0) {
+    const ncGroups = await prisma.purchase_invoices.groupBy({
+      by: ['original_invoice_id'],
+      where: {
+        company_id: companyId,
+        voucher_type: { in: NC_TYPES as any },
+        status: { notIn: ['DRAFT', 'CANCELLED'] },
+        original_invoice_id: { in: invoices.map((i) => i.id) },
+      },
+      _sum: { total: true },
+    });
+    for (const g of ncGroups) {
+      if (g.original_invoice_id) creditByInvoice.set(g.original_invoice_id, Number(g._sum.total ?? 0));
+    }
+  }
+
   return invoices
     .map((inv) => {
       const alreadyPaid = inv.payment_order_items.reduce(
@@ -364,7 +387,8 @@ export async function getPendingPurchaseInvoices(supplierId: string) {
         0
       );
       const total = Number(inv.total);
-      const remaining = Math.round((total - alreadyPaid) * 100) / 100;
+      const credit = creditByInvoice.get(inv.id) ?? 0;
+      const remaining = Math.round((total - alreadyPaid - credit) * 100) / 100;
       return {
         id: inv.id,
         point_of_sale: inv.point_of_sale,
