@@ -20,12 +20,17 @@ import BackButton from '@/shared/components/common/BackButton';
 import { PurchaseOrderPDFButton } from './PurchaseOrderPDFButton';
 import { PriceReviewButton } from '@/modules/purchasing/shared/price-review/components/PriceReviewButton';
 import { usePermissions } from '@/shared/hooks/usePermissions';
+import PurchaseOrderImputations from './PurchaseOrderImputations';
+import PurchaseOrderAttachmentsSection from './PurchaseOrderAttachmentsSection';
 
 interface Props {
   order: any;
+  linkedExpenses?: any[];
+  attachments?: any[];
+  imputationSummary?: any;
 }
 
-export default function PurchaseOrderDetail({ order }: Props) {
+export default function PurchaseOrderDetail({ order, linkedExpenses = [], attachments = [], imputationSummary = null }: Props) {
   const router = useRouter();
   const { can } = usePermissions();
   const canUpdate  = can('compras.update');
@@ -229,33 +234,15 @@ export default function PurchaseOrderDetail({ order }: Props) {
         </Card>
       )}
 
-      {order.purchase_invoices?.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Facturas vinculadas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Número</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {order.purchase_invoices.map((inv: any) => (
-                  <TableRow key={inv.id}>
-                    <TableCell className="font-mono">{inv.full_number}</TableCell>
-                    <TableCell><Badge variant={inv.status === 'CONFIRMED' ? 'default' : 'secondary'}>{inv.status}</Badge></TableCell>
-                    <TableCell className="text-right">${Number(inv.total).toFixed(2)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+      <PurchaseOrderImputations
+        orderId={order.id}
+        canUpdate={canUpdate}
+        linkedInvoices={order.purchase_invoices ?? []}
+        linkedExpenses={linkedExpenses}
+        summary={imputationSummary}
+      />
+
+      <PurchaseOrderAttachmentsSection orderId={order.id} attachments={attachments} canUpdate={canUpdate} />
     </div>
   );
 }

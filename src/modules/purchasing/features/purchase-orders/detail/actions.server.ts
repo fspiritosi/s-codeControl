@@ -129,7 +129,12 @@ export async function getOrderImputationSummary(orderId: string) {
   const { companyId } = await getActionContext();
   if (!companyId) return null;
 
-  const order = await getOrderOrThrow(orderId, companyId);
+  const order = await prisma.purchase_orders.findFirst({
+    where: { id: orderId, company_id: companyId },
+    select: { id: true, total: true },
+  });
+  if (!order) return null;
+
   const [invAgg, expAgg] = await Promise.all([
     prisma.purchase_invoices.aggregate({
       where: { purchase_order_id: orderId, status: { not: 'CANCELLED' } },
