@@ -12,7 +12,7 @@ import {
   rejectPurchaseOrder,
   cancelPurchaseOrder,
 } from '@/modules/purchasing/features/purchase-orders/list/actions.server';
-import { format } from 'date-fns';
+import { formatDateUTC } from '@/shared/lib/utils/formatters';
 import { Send, CheckCircle, XCircle, Ban } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -20,12 +20,17 @@ import BackButton from '@/shared/components/common/BackButton';
 import { PurchaseOrderPDFButton } from './PurchaseOrderPDFButton';
 import { PriceReviewButton } from '@/modules/purchasing/shared/price-review/components/PriceReviewButton';
 import { usePermissions } from '@/shared/hooks/usePermissions';
+import PurchaseOrderImputations from './PurchaseOrderImputations';
+import PurchaseOrderAttachmentsSection from './PurchaseOrderAttachmentsSection';
 
 interface Props {
   order: any;
+  linkedExpenses?: any[];
+  attachments?: any[];
+  imputationSummary?: any;
 }
 
-export default function PurchaseOrderDetail({ order }: Props) {
+export default function PurchaseOrderDetail({ order, linkedExpenses = [], attachments = [], imputationSummary = null }: Props) {
   const router = useRouter();
   const { can } = usePermissions();
   const canUpdate  = can('compras.update');
@@ -123,14 +128,14 @@ export default function PurchaseOrderDetail({ order }: Props) {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Fecha de emisión</CardDescription>
-            <CardTitle className="text-lg">{format(new Date(order.issue_date), 'dd/MM/yyyy')}</CardTitle>
+            <CardTitle className="text-lg">{formatDateUTC(order.issue_date)}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Entrega estimada</CardDescription>
             <CardTitle className="text-lg">
-              {order.expected_delivery_date ? format(new Date(order.expected_delivery_date), 'dd/MM/yyyy') : 'No definida'}
+              {order.expected_delivery_date ? formatDateUTC(order.expected_delivery_date) : 'No definida'}
             </CardTitle>
           </CardHeader>
         </Card>
@@ -175,10 +180,13 @@ export default function PurchaseOrderDetail({ order }: Props) {
                 <TableHead className="text-right">Subtotal</TableHead>
                 <TableHead className="text-right">Recibido</TableHead>
                 <TableHead className="text-right">Facturado</TableHead>
+                <TableHead className="text-right">Pend. facturar</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {order.lines.map((line: any) => (
+              {order.lines.map((line: any) => {
+                const pendingQty = Math.round((Number(line.quantity) - Number(line.invoiced_qty)) * 1000) / 1000;
+                return (
                 <TableRow key={line.id}>
                   <TableCell className="font-mono text-xs">{line.product?.code || '-'}</TableCell>
                   <TableCell>{line.description}</TableCell>
@@ -188,8 +196,12 @@ export default function PurchaseOrderDetail({ order }: Props) {
                   <TableCell className="text-right">${line.subtotal.toFixed(2)}</TableCell>
                   <TableCell className="text-right font-medium">{line.received_qty}</TableCell>
                   <TableCell className="text-right font-medium">{line.invoiced_qty}</TableCell>
+                  <TableCell className={pendingQty > 0 ? 'text-right font-medium text-amber-600' : 'text-right font-medium text-muted-foreground'}>
+                    {pendingQty}
+                  </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
           <Separator className="my-4" />
@@ -219,7 +231,7 @@ export default function PurchaseOrderDetail({ order }: Props) {
                 {order.receiving_notes.map((rn: any) => (
                   <TableRow key={rn.id}>
                     <TableCell className="font-mono">{rn.full_number}</TableCell>
-                    <TableCell>{format(new Date(rn.reception_date), 'dd/MM/yyyy')}</TableCell>
+                    <TableCell>{formatDateUTC(rn.reception_date)}</TableCell>
                     <TableCell><Badge variant={rn.status === 'CONFIRMED' ? 'default' : 'secondary'}>{rn.status}</Badge></TableCell>
                   </TableRow>
                 ))}
@@ -229,33 +241,15 @@ export default function PurchaseOrderDetail({ order }: Props) {
         </Card>
       )}
 
-      {order.purchase_invoices?.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Facturas vinculadas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Número</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {order.purchase_invoices.map((inv: any) => (
-                  <TableRow key={inv.id}>
-                    <TableCell className="font-mono">{inv.full_number}</TableCell>
-                    <TableCell><Badge variant={inv.status === 'CONFIRMED' ? 'default' : 'secondary'}>{inv.status}</Badge></TableCell>
-                    <TableCell className="text-right">${Number(inv.total).toFixed(2)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+      <PurchaseOrderImputations
+        orderId={order.id}
+        canUpdate={canUpdate}
+        linkedInvoices={order.purchase_invoices ?? []}
+        linkedExpenses={linkedExpenses}
+        summary={imputationSummary}
+      />
+
+      <PurchaseOrderAttachmentsSection orderId={order.id} attachments={attachments} canUpdate={canUpdate} />
     </div>
   );
 }

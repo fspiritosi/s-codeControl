@@ -22,7 +22,7 @@ import {
 } from '@/shared/components/ui/alert-dialog';
 import { INVOICE_STATUS_LABELS, VOUCHER_TYPE_LABELS, INVOICE_RECEIVING_STATUS_LABELS, INVOICE_RECEIVING_STATUS_COLORS } from '@/modules/purchasing/shared/types';
 import { confirmPurchaseInvoice, deletePurchaseInvoice } from '../actions.server';
-import { format } from 'date-fns';
+import { formatDateUTC } from '@/shared/lib/utils/formatters';
 import { MoreHorizontal, Eye, CheckCircle, Pencil, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -159,7 +159,7 @@ export function makeInvoiceColumns(isOwner: boolean): ColumnDef<any>[] {
     accessorKey: 'issue_date',
     header: 'Fecha',
     meta: { title: 'Fecha' },
-    cell: ({ row }) => <span className="text-sm">{format(new Date(row.original.issue_date), 'dd/MM/yyyy')}</span>,
+    cell: ({ row }) => <span className="text-sm">{formatDateUTC(row.original.issue_date)}</span>,
   },
   {
     accessorKey: 'total',

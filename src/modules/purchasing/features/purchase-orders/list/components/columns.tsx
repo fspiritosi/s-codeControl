@@ -18,7 +18,7 @@ import {
   cancelPurchaseOrder,
   deletePurchaseOrder,
 } from '../actions.server';
-import { format } from 'date-fns';
+import { formatDateUTC } from '@/shared/lib/utils/formatters';
 import { MoreHorizontal, Eye, Send, CheckCircle, XCircle, Ban, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -147,7 +147,7 @@ export const purchaseOrderColumns: ColumnDef<any>[] = [
     header: 'Fecha',
     meta: { title: 'Fecha' },
     cell: ({ row }) => (
-      <span className="text-sm">{format(new Date(row.original.issue_date), 'dd/MM/yyyy')}</span>
+      <span className="text-sm">{formatDateUTC(row.original.issue_date)}</span>
     ),
   },
   {

@@ -13,7 +13,7 @@ import InvoiceAttachmentSection from '@/modules/purchasing/features/invoices/lis
 import { PriceReviewButton } from '@/modules/purchasing/shared/price-review/components/PriceReviewButton';
 import { isActiveUserOwner } from '@/shared/lib/permissions';
 import { ExternalLink, Pencil } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatDateUTC } from '@/shared/lib/utils/formatters';
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -110,13 +110,13 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Fecha emisión</CardDescription>
-            <CardTitle className="text-lg">{format(new Date(invoice.issue_date), 'dd/MM/yyyy')}</CardTitle>
+            <CardTitle className="text-lg">{formatDateUTC(invoice.issue_date)}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Vencimiento</CardDescription>
-            <CardTitle className="text-lg">{invoice.due_date ? format(new Date(invoice.due_date), 'dd/MM/yyyy') : '-'}</CardTitle>
+            <CardTitle className="text-lg">{formatDateUTC(invoice.due_date)}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
@@ -312,7 +312,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                   return (
                     <TableRow key={po.id}>
                       <TableCell className="font-mono">{po.fullNumber}</TableCell>
-                      <TableCell>{format(new Date(po.date), 'dd/MM/yyyy')}</TableCell>
+                      <TableCell>{formatDateUTC(po.date)}</TableCell>
                       <TableCell>
                         <Badge variant={variant as any}>
                           {PAYMENT_ORDER_STATUS_LABELS[po.status]}

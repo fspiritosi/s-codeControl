@@ -1,4 +1,9 @@
 import { getPurchaseOrderById } from '@/modules/purchasing/features/purchase-orders/list/actions.server';
+import {
+  getExpensesByOrderId,
+  listPurchaseOrderAttachments,
+  getOrderImputationSummary,
+} from '@/modules/purchasing/features/purchase-orders/detail/actions.server';
 import { notFound } from 'next/navigation';
 import PurchaseOrderDetail from '@/modules/purchasing/features/purchase-orders/detail/components/PurchaseOrderDetail';
 
@@ -11,6 +16,12 @@ export default async function PurchaseOrderDetailPage({
   const order = await getPurchaseOrderById(id);
 
   if (!order) return notFound();
+
+  const [linkedExpenses, attachments, imputationSummary] = await Promise.all([
+    getExpensesByOrderId(id),
+    listPurchaseOrderAttachments(id),
+    getOrderImputationSummary(id),
+  ]);
 
   // Convert Decimals for serialization
   const serialized = {
@@ -35,5 +46,12 @@ export default async function PurchaseOrderDetailPage({
     })),
   };
 
-  return <PurchaseOrderDetail order={serialized} />;
+  return (
+    <PurchaseOrderDetail
+      order={serialized}
+      linkedExpenses={linkedExpenses}
+      attachments={attachments}
+      imputationSummary={imputationSummary}
+    />
+  );
 }

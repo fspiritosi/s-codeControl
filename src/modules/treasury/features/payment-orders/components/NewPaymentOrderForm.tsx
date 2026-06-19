@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
+import { formatDateUTC } from '@/shared/lib/utils/formatters';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/shared/components/ui/button';
@@ -787,10 +787,10 @@ export function NewPaymentOrderForm({
                           <TableRow key={inv.id}>
                             <TableCell className="font-mono">{inv.full_number}</TableCell>
                             <TableCell className="text-sm">
-                              {format(new Date(inv.issue_date), 'dd/MM/yyyy')}
+                              {formatDateUTC(inv.issue_date)}
                             </TableCell>
                             <TableCell className="text-sm">
-                              {inv.due_date ? format(new Date(inv.due_date), 'dd/MM/yyyy') : '-'}
+                              {formatDateUTC(inv.due_date)}
                             </TableCell>
                             <TableCell className="text-right font-mono text-sm">
                               ${inv.total.toFixed(2)}
@@ -877,7 +877,7 @@ export function NewPaymentOrderForm({
                             <TableCell className="text-sm">{exp.category_name}</TableCell>
                             <TableCell className="text-sm">{exp.supplier_name || '-'}</TableCell>
                             <TableCell className="text-sm">
-                              {exp.due_date ? format(new Date(exp.due_date), 'dd/MM/yyyy') : '-'}
+                              {formatDateUTC(exp.due_date)}
                             </TableCell>
                             <TableCell className="text-right font-mono text-sm">${exp.total.toFixed(2)}</TableCell>
                             <TableCell className="text-right font-mono font-semibold">${exp.remaining.toFixed(2)}</TableCell>

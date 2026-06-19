@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
-import { format } from 'date-fns';
+import { formatDateUTC } from '@/shared/lib/utils/formatters';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/shared/components/ui/button';
@@ -253,10 +253,10 @@ export function ChecksClient({ checks, bankAccounts }: Props) {
                         </TableCell>
                         <TableCell className="text-right font-mono">${c.amount.toFixed(2)}</TableCell>
                         <TableCell className="text-sm">
-                          {format(new Date(c.issue_date), 'dd/MM/yyyy')}
+                          {formatDateUTC(c.issue_date)}
                         </TableCell>
                         <TableCell className="text-sm">
-                          {format(new Date(c.due_date), 'dd/MM/yyyy')}
+                          {formatDateUTC(c.due_date)}
                         </TableCell>
                         <TableCell>
                           <Badge variant={statusVariant(c.status)}>
