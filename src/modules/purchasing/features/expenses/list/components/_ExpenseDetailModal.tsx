@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { format, isBefore, startOfDay } from 'date-fns';
+import { isBefore, startOfDay } from 'date-fns';
+import { formatDateUTC } from '@/shared/lib/utils/formatters';
 import { CheckCircle, XCircle } from 'lucide-react';
 
 import {
@@ -170,7 +171,7 @@ export function _ExpenseDetailModal({
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Fecha</p>
-                      <p className="font-medium">{format(new Date(expense.date), 'dd/MM/yyyy')}</p>
+                      <p className="font-medium">{formatDateUTC(expense.date)}</p>
                     </div>
                     {expense.due_date && (
                       <div>
@@ -184,7 +185,7 @@ export function _ExpenseDetailModal({
                               'text-red-600',
                           )}
                         >
-                          {format(new Date(expense.due_date), 'dd/MM/yyyy')}
+                          {formatDateUTC(expense.due_date)}
                         </p>
                       </div>
                     )}
@@ -276,7 +277,7 @@ export function _ExpenseDetailModal({
                           <div>
                             <p className="font-medium">{item.payment_order.full_number}</p>
                             <p className="text-xs text-muted-foreground">
-                              {format(new Date(item.payment_order.date), 'dd/MM/yyyy')}{' '}
+                              {formatDateUTC(item.payment_order.date)}{' '}
                               &middot; {item.payment_order.status}
                             </p>
                           </div>

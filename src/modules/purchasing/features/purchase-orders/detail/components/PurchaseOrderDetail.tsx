@@ -12,7 +12,7 @@ import {
   rejectPurchaseOrder,
   cancelPurchaseOrder,
 } from '@/modules/purchasing/features/purchase-orders/list/actions.server';
-import { format } from 'date-fns';
+import { formatDateUTC } from '@/shared/lib/utils/formatters';
 import { Send, CheckCircle, XCircle, Ban } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -123,14 +123,14 @@ export default function PurchaseOrderDetail({ order }: Props) {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Fecha de emisión</CardDescription>
-            <CardTitle className="text-lg">{format(new Date(order.issue_date), 'dd/MM/yyyy')}</CardTitle>
+            <CardTitle className="text-lg">{formatDateUTC(order.issue_date)}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Entrega estimada</CardDescription>
             <CardTitle className="text-lg">
-              {order.expected_delivery_date ? format(new Date(order.expected_delivery_date), 'dd/MM/yyyy') : 'No definida'}
+              {order.expected_delivery_date ? formatDateUTC(order.expected_delivery_date) : 'No definida'}
             </CardTitle>
           </CardHeader>
         </Card>
@@ -219,7 +219,7 @@ export default function PurchaseOrderDetail({ order }: Props) {
                 {order.receiving_notes.map((rn: any) => (
                   <TableRow key={rn.id}>
                     <TableCell className="font-mono">{rn.full_number}</TableCell>
-                    <TableCell>{format(new Date(rn.reception_date), 'dd/MM/yyyy')}</TableCell>
+                    <TableCell>{formatDateUTC(rn.reception_date)}</TableCell>
                     <TableCell><Badge variant={rn.status === 'CONFIRMED' ? 'default' : 'secondary'}>{rn.status}</Badge></TableCell>
                   </TableRow>
                 ))}

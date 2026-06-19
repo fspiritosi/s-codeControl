@@ -2,7 +2,8 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal, Eye, Edit, CheckCircle, XCircle, Trash2 } from 'lucide-react';
-import { format, isBefore, startOfDay } from 'date-fns';
+import { isBefore, startOfDay } from 'date-fns';
+import { formatDateUTC } from '@/shared/lib/utils/formatters';
 
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
@@ -103,7 +104,7 @@ export function getExpenseColumns({
       accessorKey: 'date',
       meta: { title: 'Fecha' },
       header: ({ column }) => <DataTableColumnHeader column={column} title="Fecha" />,
-      cell: ({ row }) => format(new Date(row.original.date), 'dd/MM/yyyy'),
+      cell: ({ row }) => formatDateUTC(row.original.date),
     },
     {
       accessorKey: 'due_date',
@@ -120,7 +121,7 @@ export function getExpenseColumns({
 
         return (
           <span className={isOverdue ? 'text-red-600 font-medium' : undefined}>
-            {format(new Date(due_date), 'dd/MM/yyyy')}
+            {formatDateUTC(due_date)}
           </span>
         );
       },

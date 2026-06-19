@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
+import { formatDateUTC } from '@/shared/lib/utils/formatters';
 import { Badge } from '@/shared/components/ui/badge';
 import {
   INVOICE_STATUS_LABELS,
@@ -88,13 +88,13 @@ export function InvoicesSection({ rows, summary }: { rows: Row[]; summary: Summa
           },
           {
             header: 'Fecha',
-            cell: (r) => <span className="text-sm">{format(new Date(r.issue_date), 'dd/MM/yyyy')}</span>,
+            cell: (r) => <span className="text-sm">{formatDateUTC(r.issue_date)}</span>,
           },
           {
             header: 'Vencimiento',
             cell: (r) => (
               <span className="text-sm">
-                {r.due_date ? format(new Date(r.due_date), 'dd/MM/yyyy') : '-'}
+                {formatDateUTC(r.due_date)}
               </span>
             ),
           },

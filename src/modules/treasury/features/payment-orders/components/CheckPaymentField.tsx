@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { format } from 'date-fns';
 import { Plus } from 'lucide-react';
 import { Label } from '@/shared/components/ui/label';
 import { Input } from '@/shared/components/ui/input';
@@ -20,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/components/ui/dialog';
-import { formatCurrencyARS } from '@/shared/lib/utils/formatters';
+import { formatCurrencyARS, formatDateUTC } from '@/shared/lib/utils/formatters';
 import { getAvailableChecksForPaymentOrder } from '../actions.server';
 import { createCheck } from '@/modules/treasury/features/checks/actions.server';
 
@@ -40,13 +39,11 @@ interface Props {
   checkKind: CheckKind | null;
   checkId: string | null;
   currentOrderId?: string;
-  onChange: (patch: { check_kind?: CheckKind | null; check_id?: string | null; check_number?: string }) => void;
+  onChange: (patch: { check_kind?: CheckKind | null; check_id?: string | null; check_number?: string; amount?: string }) => void;
 }
 
-const fmtDate = (d: Date | string) => format(new Date(d), 'dd/MM/yyyy');
-
 function describeCheck(c: AvailableCheck) {
-  return `N° ${c.check_number} · ${c.bank_name} · ${formatCurrencyARS(c.amount)} · vto ${fmtDate(c.due_date)}`;
+  return `N° ${c.check_number} · ${c.bank_name} · ${formatCurrencyARS(c.amount)} · vto ${formatDateUTC(c.due_date)}`;
 }
 
 const emptyNewCheck = {
@@ -96,7 +93,12 @@ export function CheckPaymentField({ checkKind, checkId, currentOrderId, onChange
 
   const handleSelectCheck = (id: string) => {
     const chk = checks.find((c) => c.id === id);
-    onChange({ check_id: id, check_number: chk?.check_number ?? '' });
+    // Al seleccionar un cheque, autocompletar el monto del pago con el del cheque.
+    onChange({
+      check_id: id,
+      check_number: chk?.check_number ?? '',
+      ...(chk ? { amount: chk.amount.toFixed(2) } : {}),
+    });
   };
 
   const handleCreateOwnCheck = async () => {
@@ -124,7 +126,12 @@ export function CheckPaymentField({ checkKind, checkId, currentOrderId, onChange
         return;
       }
       await loadChecks('OWN');
-      onChange({ check_id: res.data.id, check_number: res.data.check_number });
+      const createdAmount = Number(newCheck.amount);
+      onChange({
+        check_id: res.data.id,
+        check_number: res.data.check_number,
+        ...(isNaN(createdAmount) ? {} : { amount: createdAmount.toFixed(2) }),
+      });
       setDialogOpen(false);
       setNewCheck({ ...emptyNewCheck });
     } finally {
