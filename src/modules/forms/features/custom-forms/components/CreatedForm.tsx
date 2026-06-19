@@ -24,7 +24,6 @@ import { types } from '@/shared/types/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import cookie from 'js-cookie';
-import jsPDF from 'jspdf';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import DisplayCreatedForms from './DisplayCreatedForms';
 import FormCard from './FormCard';
@@ -192,7 +191,8 @@ function CreatedForm() {
     }
   }, [companyInfo]);
 
-  const generarPDF = (formItem: any, printEmpty: boolean) => {
+  const generarPDF = async (formItem: any, printEmpty: boolean) => {
+    const { default: jsPDF } = await import('jspdf'); // Carga diferida (~200KB)
     const doc = new jsPDF(); // Crear una nueva instancia de jsPDF
     const pageHeight = doc.internal.pageSize.height; // Obtener la altura de la página
     const pageWidth = doc.internal.pageSize.width; // Obtener el ancho de la página

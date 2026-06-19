@@ -1,5 +1,8 @@
 import { fetchAllTags, fetchTrainingById } from '@/modules/hse/features/training/actions.server';
-import TrainingDetail from '@/modules/hse/features/training/components/trainin-detail-wrapper';
+import dynamic from 'next/dynamic';
+
+// Carga diferida: recharts (~45KB) sale del bundle inicial de la ruta.
+const TrainingDetail = dynamic(() => import('@/modules/hse/features/training/components/trainin-detail-wrapper'));
 
 export default async function TrainingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
