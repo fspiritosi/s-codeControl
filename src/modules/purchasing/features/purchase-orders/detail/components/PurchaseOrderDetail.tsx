@@ -180,10 +180,13 @@ export default function PurchaseOrderDetail({ order, linkedExpenses = [], attach
                 <TableHead className="text-right">Subtotal</TableHead>
                 <TableHead className="text-right">Recibido</TableHead>
                 <TableHead className="text-right">Facturado</TableHead>
+                <TableHead className="text-right">Pend. facturar</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {order.lines.map((line: any) => (
+              {order.lines.map((line: any) => {
+                const pendingQty = Math.round((Number(line.quantity) - Number(line.invoiced_qty)) * 1000) / 1000;
+                return (
                 <TableRow key={line.id}>
                   <TableCell className="font-mono text-xs">{line.product?.code || '-'}</TableCell>
                   <TableCell>{line.description}</TableCell>
@@ -193,8 +196,12 @@ export default function PurchaseOrderDetail({ order, linkedExpenses = [], attach
                   <TableCell className="text-right">${line.subtotal.toFixed(2)}</TableCell>
                   <TableCell className="text-right font-medium">{line.received_qty}</TableCell>
                   <TableCell className="text-right font-medium">{line.invoiced_qty}</TableCell>
+                  <TableCell className={pendingQty > 0 ? 'text-right font-medium text-amber-600' : 'text-right font-medium text-muted-foreground'}>
+                    {pendingQty}
+                  </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
           <Separator className="my-4" />

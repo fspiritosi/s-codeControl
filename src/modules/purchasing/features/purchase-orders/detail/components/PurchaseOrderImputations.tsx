@@ -141,8 +141,38 @@ export default function PurchaseOrderImputations({
     });
   };
 
+  const pendingAmount = summary ? Math.round((summary.orderTotal - summary.imputedTotal) * 100) / 100 : 0;
+
   return (
     <>
+      {summary && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Saldo de la orden de compra (montos)</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <p className="text-muted-foreground">Total OC</p>
+              <p className="font-mono font-medium">{formatCurrencyARS(summary.orderTotal)}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Facturas imputadas</p>
+              <p className="font-mono">{formatCurrencyARS(summary.invoicesTotal)}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Gastos imputados</p>
+              <p className="font-mono">{formatCurrencyARS(summary.expensesTotal)}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">{pendingAmount >= 0 ? 'Saldo pendiente' : 'Excedente'}</p>
+              <p className={pendingAmount < 0 ? 'font-mono font-semibold text-red-600' : 'font-mono font-semibold'}>
+                {formatCurrencyARS(Math.abs(pendingAmount))}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {summary && summary.over > 0 && (
         <div className="flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
           <AlertTriangle className="size-4 shrink-0" />
