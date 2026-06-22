@@ -28,25 +28,15 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { CATEGORIES, type CategorySlug } from '../constants/categories';
+import { CATEGORIES, CATEGORY_SLUGS, type CategorySlug } from '../constants/categories';
 import { useCreateTicket } from '../hooks/useCreateTicket';
 import { useUploadAttachment } from '../hooks/useUploadAttachment';
 import { TicketAttachmentInput } from './TicketAttachmentInput';
 import { TicketPrioritySelect } from './TicketPrioritySelect';
 
 const formSchema = z.object({
-  category: z.enum([
-    'dashboard',
-    'empresa',
-    'empleados',
-    'equipos',
-    'comercial',
-    'documentacion',
-    'operaciones',
-    'mantenimiento',
-    'formularios',
-    'otro',
-  ]),
+  // Derivado de CATEGORIES para que el form siga al sidebar sin desincronizarse.
+  category: z.enum(CATEGORY_SLUGS),
   priority: z.enum(['low', 'medium', 'high', 'critical']),
   title: z.string().trim().min(3, 'Mínimo 3 caracteres').max(200, 'Máximo 200 caracteres'),
   description: z
