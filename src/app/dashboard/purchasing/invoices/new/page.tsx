@@ -14,7 +14,7 @@ export default async function NewInvoicePage() {
     <div className="w-full">
       <h1 className="text-2xl font-bold mb-6">Nueva factura de compra</h1>
       <PurchaseInvoiceForm
-        suppliers={suppliers as any}
+        suppliers={suppliers}
         products={products.map((p) => ({ ...p, cost_price: Number(p.cost_price), vat_rate: Number(p.vat_rate) }))}
         perceptionTypes={perceptionTypes.filter((t) => t.is_active)}
       />

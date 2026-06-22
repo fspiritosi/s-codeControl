@@ -21,6 +21,7 @@ import {
   getOrdersForInvoicing,
   getPurchaseOrderLinesForInvoicingBulk,
 } from '@/modules/purchasing/features/purchase-orders/list/actions.server';
+import { Alert, AlertDescription, AlertTitle } from '@/shared/components/ui/alert';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
@@ -32,11 +33,42 @@ import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, LinkIcon, Paperclip, X, PackagePlus } from 'lucide-react';
+import { Plus, Trash2, LinkIcon, Paperclip, X, PackagePlus, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useMemo, useState, useEffect, useRef } from 'react';
 import QuickCreateProductModal from './_QuickCreateProductModal';
+import InvoiceAIUpload, { type InvoiceExtractionResult } from './InvoiceAIUpload';
+import QuickCreateSupplierModal, { type QuickCreatedSupplier } from './_QuickCreateSupplierModal';
 
 type FormValues = z.infer<typeof purchaseInvoiceSchema>;
+
+/** Formatea 11 dígitos a XX-XXXXXXXX-X para mostrar; si no, devuelve tal cual. */
+function formatCuitDisplay(cuit: string | null): string {
+  if (!cuit) return '';
+  const clean = cuit.replace(/\D/g, '');
+  if (clean.length === 11) {
+    return `${clean.slice(0, 2)}-${clean.slice(2, 10)}-${clean.slice(10)}`;
+  }
+  return cuit;
+}
+
+/** Badge de estado de extracción AI para un campo. */
+function FieldStatusBadge({ status }: { status: 'extracted' | 'review' | null }) {
+  if (status === 'extracted') {
+    return (
+      <Badge variant="success" className="ml-2 gap-1 px-1.5 py-0 text-[10px]">
+        <CheckCircle2 className="size-3" /> Extraído
+      </Badge>
+    );
+  }
+  if (status === 'review') {
+    return (
+      <Badge variant="yellow" className="ml-2 gap-1 px-1.5 py-0 text-[10px]">
+        <AlertTriangle className="size-3" /> Revisar
+      </Badge>
+    );
+  }
+  return null;
+}
 
 type LineField = {
   product_id?: string;
@@ -79,13 +111,13 @@ export type InvoiceInitialData = {
 };
 
 interface Props {
-  suppliers: { id: string; code: string; business_name: string }[];
+  suppliers: { id: string; code: string; business_name: string; tax_id?: string | null }[];
   products: { id: string; code: string; name: string; cost_price: number; vat_rate: number }[];
   perceptionTypes: PerceptionTypeOpt[];
   initialData?: InvoiceInitialData;
 }
 
-export default function PurchaseInvoiceForm({ suppliers, products: initialProducts, perceptionTypes, initialData }: Props) {
+export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, products: initialProducts, perceptionTypes, initialData }: Props) {
   const router = useRouter();
   const isEditMode = !!initialData;
   const [availableOrders, setAvailableOrders] = useState<any[]>([]);
@@ -93,6 +125,21 @@ export default function PurchaseInvoiceForm({ suppliers, products: initialProduc
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const [localProducts, setLocalProducts] = useState(initialProducts);
   const [quickProductOpen, setQuickProductOpen] = useState(false);
+
+  // Proveedores en estado local: la extracción AI puede dar de alta uno nuevo
+  // y necesitamos que aparezca en el dropdown sin recargar.
+  const [suppliers, setSuppliers] = useState(initialSuppliers);
+
+  // --- Extracción AI: estado para badges y mini-modal de proveedor ----------
+  const [extractedFields, setExtractedFields] = useState<Set<string>>(new Set());
+  const [lowConfidenceFields, setLowConfidenceFields] = useState<Set<string>>(new Set());
+  const [quickSupplierOpen, setQuickSupplierOpen] = useState(false);
+  const [pendingSupplierData, setPendingSupplierData] = useState<{
+    razonSocial: string | null;
+    cuit: string | null;
+  }>({ razonSocial: null, cuit: null });
+  // El usuario eligió "Elegir manualmente": ocultar el aviso de crear proveedor.
+  const [supplierAlertDismissed, setSupplierAlertDismissed] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(purchaseInvoiceSchema),
@@ -380,6 +427,87 @@ export default function PurchaseInvoiceForm({ suppliers, products: initialProduc
     setAttachment(file);
   };
 
+  // --- Extracción AI: aplicar lo extraído al formulario --------------------
+  const handleExtracted = (result: InvoiceExtractionResult) => {
+    const { values, supplierMatch, lowConfidenceFields: lowConf, file } = result;
+    const filled = new Set<string>();
+
+    // Pre-llenar cada clave resuelta con confianza.
+    (Object.keys(values) as (keyof FormValues)[]).forEach((key) => {
+      if (key === 'lines') return; // se trata aparte con replace()
+      const value = values[key];
+      if (value === undefined) return;
+      form.setValue(key, value as any, { shouldValidate: true, shouldDirty: true });
+      filled.add(key as string);
+    });
+
+    // Líneas: reemplazar solo si la AI extrajo al menos una.
+    if (values.lines && values.lines.length > 0) {
+      replace(
+        values.lines.map((l) => ({
+          product_id: '',
+          description: l.description,
+          quantity: l.quantity,
+          unit_cost: l.unit_cost,
+          vat_rate: l.vat_rate,
+          discount_type: null,
+          discount_value: null,
+        }))
+      );
+      filled.add('lines');
+    }
+
+    setExtractedFields(filled);
+    setLowConfidenceFields(new Set(lowConf));
+
+    // El archivo leído queda como adjunto (se sube al guardar).
+    setAttachment(file);
+    setAttachmentError(null);
+
+    // Si no matcheó proveedor, ofrecer crearlo con datos pre-cargados.
+    if (!supplierMatch.matched) {
+      setPendingSupplierData({
+        razonSocial: supplierMatch.razonSocial,
+        cuit: supplierMatch.cuit,
+      });
+      setSupplierAlertDismissed(false);
+    } else {
+      setPendingSupplierData({ razonSocial: null, cuit: null });
+    }
+
+    toast.success('Datos cargados — revisá los campos antes de guardar');
+
+    // Mover el foco al primer campo de baja confianza para que el usuario lo corrija.
+    if (lowConf.length > 0) {
+      const first = lowConf.find((f) => f !== 'supplier_id' && f !== 'lines');
+      if (first) {
+        setTimeout(() => {
+          try {
+            form.setFocus(first as any);
+          } catch {
+            /* el campo puede no ser focusable (ej. selects custom) */
+          }
+        }, 50);
+      }
+    }
+  };
+
+  const handleSupplierCreated = (supplier: QuickCreatedSupplier) => {
+    setSuppliers((prev) => [
+      ...prev,
+      { id: supplier.id, code: supplier.code, business_name: supplier.business_name, tax_id: supplier.tax_id },
+    ]);
+    form.setValue('supplier_id', supplier.id, { shouldValidate: true, shouldDirty: true });
+    // Ya no es un campo de baja confianza, y quedó "extraído"/resuelto.
+    setLowConfidenceFields((prev) => {
+      const next = new Set(prev);
+      next.delete('supplier_id');
+      return next;
+    });
+    setExtractedFields((prev) => new Set(prev).add('supplier_id'));
+    setPendingSupplierData({ razonSocial: null, cuit: null });
+  };
+
   const onSubmit = async (values: FormValues) => {
     const sanitizedLines = (values.lines as LineField[]).map((l) => ({
       product_id: l.product_id,
@@ -470,14 +598,33 @@ export default function PurchaseInvoiceForm({ suppliers, products: initialProduc
     });
   };
 
+  // Estado de un campo para el badge: revisar > extraído > nada.
+  const fieldStatus = (name: string): 'extracted' | 'review' | null => {
+    if (lowConfidenceFields.has(name)) return 'review';
+    if (extractedFields.has(name)) return 'extracted';
+    return null;
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {!isEditMode && (
+          <InvoiceAIUpload
+            suppliers={suppliers.map((s) => ({
+              id: s.id,
+              business_name: s.business_name,
+              tax_id: s.tax_id ?? null,
+            }))}
+            onExtracted={handleExtracted}
+            disabled={form.formState.isSubmitting}
+          />
+        )}
         <Card>
           <CardHeader><CardTitle>Datos del comprobante</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <FormField control={form.control} name="supplier_id" render={({ field }) => (
-              <FormItem className="lg:col-span-2"><FormLabel>Proveedor *</FormLabel>
+              <FormItem className="lg:col-span-2">
+                <FormLabel className="flex items-center">Proveedor *<FieldStatusBadge status={fieldStatus('supplier_id')} /></FormLabel>
                 {isEditMode ? (
                   <Input
                     value={suppliers.find((s) => s.id === field.value)?.business_name || ''}
@@ -493,10 +640,50 @@ export default function PurchaseInvoiceForm({ suppliers, products: initialProduc
                     searchPlaceholder="Buscar proveedor..."
                   />
                 )}
+                {!isEditMode &&
+                  !supplierAlertDismissed &&
+                  (pendingSupplierData.cuit || pendingSupplierData.razonSocial) &&
+                  !field.value && (
+                    <Alert className="mt-2 border-yellow-500/50 text-yellow-700 dark:text-yellow-500 [&>svg]:text-yellow-600">
+                      <AlertTriangle className="size-4" />
+                      <AlertTitle>Proveedor no encontrado</AlertTitle>
+                      <AlertDescription className="text-yellow-700/90 dark:text-yellow-500/90">
+                        <p>
+                          No encontramos un proveedor con CUIT{' '}
+                          <span className="font-mono font-medium">
+                            {formatCuitDisplay(pendingSupplierData.cuit) || '(sin CUIT)'}
+                          </span>
+                          .
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="gap-1"
+                            onClick={() => setQuickSupplierOpen(true)}
+                          >
+                            <Plus className="size-4" />
+                            Crear proveedor
+                            {pendingSupplierData.razonSocial
+                              ? ` "${pendingSupplierData.razonSocial}"`
+                              : ''}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setSupplierAlertDismissed(true)}
+                          >
+                            Elegir manualmente
+                          </Button>
+                        </div>
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 <FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="voucher_type" render={({ field }) => (
-              <FormItem><FormLabel>Tipo *</FormLabel>
+              <FormItem><FormLabel className="flex items-center">Tipo *<FieldStatusBadge status={fieldStatus('voucher_type')} /></FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                   <SelectContent>{Object.entries(VOUCHER_TYPE_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
@@ -526,19 +713,19 @@ export default function PurchaseInvoiceForm({ suppliers, products: initialProduc
               )} />
             )}
             <FormField control={form.control} name="point_of_sale" render={({ field }) => (
-              <FormItem><FormLabel>Pto. venta *</FormLabel><FormControl><Input placeholder="00001" maxLength={5} {...field} onBlur={(e) => { field.onBlur(); field.onChange(e.target.value.padStart(5, '0')); }} /></FormControl><FormMessage /></FormItem>
+              <FormItem><FormLabel className="flex items-center">Pto. venta *<FieldStatusBadge status={fieldStatus('point_of_sale')} /></FormLabel><FormControl><Input placeholder="00001" maxLength={5} {...field} onBlur={(e) => { field.onBlur(); field.onChange(e.target.value.padStart(5, '0')); }} /></FormControl><FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="number" render={({ field }) => (
-              <FormItem><FormLabel>Número *</FormLabel><FormControl><Input placeholder="00000001" {...field} /></FormControl><FormMessage /></FormItem>
+              <FormItem><FormLabel className="flex items-center">Número *<FieldStatusBadge status={fieldStatus('number')} /></FormLabel><FormControl><Input placeholder="00000001" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="issue_date" render={({ field }) => (
-              <FormItem><FormLabel>Fecha emisión *</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+              <FormItem><FormLabel className="flex items-center">Fecha emisión *<FieldStatusBadge status={fieldStatus('issue_date')} /></FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="due_date" render={({ field }) => (
-              <FormItem><FormLabel>Vencimiento</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+              <FormItem><FormLabel className="flex items-center">Vencimiento<FieldStatusBadge status={fieldStatus('due_date')} /></FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="cae" render={({ field }) => (
-              <FormItem><FormLabel>CAE</FormLabel><FormControl><Input placeholder="CAE" {...field} /></FormControl><FormMessage /></FormItem>
+              <FormItem><FormLabel className="flex items-center">CAE<FieldStatusBadge status={fieldStatus('cae')} /></FormLabel><FormControl><Input placeholder="CAE" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
           </CardContent>
         </Card>
@@ -574,7 +761,7 @@ export default function PurchaseInvoiceForm({ suppliers, products: initialProduc
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Líneas</CardTitle>
+            <CardTitle className="flex items-center">Líneas<FieldStatusBadge status={fieldStatus('lines')} /></CardTitle>
             <div className="flex gap-2">
               <Button type="button" variant="outline" size="sm" onClick={() => append({ product_id: '', description: '', quantity: 1, unit_cost: 0, vat_rate: 21, discount_type: null, discount_value: null })}>
                 <Plus className="size-4 mr-1" /> Agregar línea
@@ -930,6 +1117,14 @@ export default function PurchaseInvoiceForm({ suppliers, products: initialProduc
           </Button>
         </div>
       </form>
+
+      <QuickCreateSupplierModal
+        open={quickSupplierOpen}
+        onOpenChange={setQuickSupplierOpen}
+        initialBusinessName={pendingSupplierData.razonSocial}
+        initialCuit={pendingSupplierData.cuit}
+        onSupplierCreated={handleSupplierCreated}
+      />
 
       <QuickCreateProductModal
         open={quickProductOpen}

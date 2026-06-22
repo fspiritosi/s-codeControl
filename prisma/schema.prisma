@@ -3050,3 +3050,17 @@ model support_ticket_views {
   @@id([user_id, taskapp_ticket_id])
   @@index([user_id], map: "idx_support_ticket_views_user_id")
 }
+
+// ============================================================
+// IA — Configuración global de proveedores de extracción
+// ============================================================
+
+model ai_provider_config {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider   String   @unique // 'gemini' | 'openai'
+  api_key    String? // cifrado (iv:tag:cipher en base64); null si no configurada
+  model      String? // ej 'gemini-2.5-flash' | 'gpt-4o-mini'
+  is_active  Boolean  @default(false) // exactamente UNA fila true = proveedor en uso
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz
+}
