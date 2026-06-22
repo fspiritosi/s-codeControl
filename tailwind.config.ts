@@ -93,6 +93,10 @@ const config = {
           from: { opacity: '0', transform: 'translateY(8px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
         },
+        'indeterminate-progress': {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(400%)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -101,6 +105,7 @@ const config = {
         dash: 'dash 1.5s ease-in-out infinite',
         'fade-in': 'fade-in 0.3s ease-out',
         'fade-in-up': 'fade-in-up 0.4s ease-out',
+        'indeterminate-progress': 'indeterminate-progress 1.4s ease-in-out infinite',
       },
     },
   },

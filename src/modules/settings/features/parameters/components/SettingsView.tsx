@@ -26,11 +26,13 @@ import { PdfSettingsForm } from '@/modules/settings/features/pdf/components/PdfS
 import { PdfEmailSettingsForm } from '@/modules/settings/features/pdf/components/PdfEmailSettingsForm';
 import RolesAndPermissionsSection from '@/modules/settings/features/roles/components/RolesAndPermissionsSection';
 import TaxesSection from '@/modules/settings/features/taxes/components/TaxesSection';
+import { getAiProviderConfigs } from '@/modules/settings/features/ai/actions.server';
+import { AiProviderSettingsForm } from '@/modules/settings/features/ai/components/AiProviderSettingsForm';
 import { can } from '@/shared/lib/permissions';
 import { getSession } from '@/shared/lib/session';
 import { prisma } from '@/shared/lib/prisma';
 
-const VALID_SECTIONS = ['employees', 'pdf', 'roles', 'taxes'] as const;
+const VALID_SECTIONS = ['employees', 'pdf', 'roles', 'taxes', 'ai'] as const;
 type Section = (typeof VALID_SECTIONS)[number];
 
 interface Props {
@@ -42,10 +44,18 @@ export default async function SettingsView({ currentSection }: Props) {
     ? (currentSection as Section)
     : 'employees';
 
-  const [canViewRoles, canManageTaxes] = await Promise.all([
+  const [canViewRoles, canManageTaxes, session] = await Promise.all([
     can('roles.view'),
     can('empresa.update'),
+    getSession(),
   ]);
+
+  const isPlatformAdmin = ['Admin', 'Super Admin', 'Developer'].includes(
+    session.profile?.role ?? ''
+  );
+  // La config de proveedores de IA es global: la administran el admin de
+  // plataforma o el dueño (owner) de la empresa activa.
+  const canManageAi = isPlatformAdmin || session.role === 'owner';
 
   return (
     <section className="space-y-4">
@@ -60,6 +70,7 @@ export default async function SettingsView({ currentSection }: Props) {
           <UrlTabsTrigger value="pdf">PDF</UrlTabsTrigger>
           {canManageTaxes && <UrlTabsTrigger value="taxes">Impuestos</UrlTabsTrigger>}
           {canViewRoles && <UrlTabsTrigger value="roles">Roles y permisos</UrlTabsTrigger>}
+          {canManageAi && <UrlTabsTrigger value="ai">IA / Proveedores</UrlTabsTrigger>}
         </UrlTabsList>
 
         <UrlTabsContent value="employees">
@@ -79,6 +90,12 @@ export default async function SettingsView({ currentSection }: Props) {
         {canViewRoles && (
           <UrlTabsContent value="roles">
             {section === 'roles' && <RolesAndPermissionsSection />}
+          </UrlTabsContent>
+        )}
+
+        {canManageAi && (
+          <UrlTabsContent value="ai">
+            {section === 'ai' && <AiSection />}
           </UrlTabsContent>
         )}
       </UrlTabs>
@@ -215,5 +232,23 @@ async function PdfSection() {
       <PdfSettingsForm initial={settings} />
       <PdfEmailSettingsForm initial={emailSettings} companyContactEmail={companyContactEmail} />
     </div>
+  );
+}
+
+async function AiSection() {
+  const configs = await getAiProviderConfigs();
+
+  return (
+    <section className="space-y-4">
+      <div>
+        <h2 className="text-xl font-semibold">Proveedores de IA</h2>
+        <p className="text-sm text-muted-foreground">
+          Configurá el motor de IA que se usa para leer las facturas de compra. La
+          API key se guarda cifrada y solo el proveedor activo se utiliza en la
+          extracción.
+        </p>
+      </div>
+      <AiProviderSettingsForm initial={configs} />
+    </section>
   );
 }
