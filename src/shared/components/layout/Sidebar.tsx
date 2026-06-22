@@ -1,9 +1,11 @@
 'use client';
 
+import { useUnreadSupportTicketsCount } from '@/modules/ayuda/hooks/useUnreadSupportTicketsCount';
 import { cn } from '@/shared/lib/utils';
 import { useLoggedUserStore } from '@/shared/store/loggedUser';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Badge } from '@/shared/components/ui/badge';
 import { CardTitle } from '@/shared/components/ui/card';
 import { CompanySwitcher } from '@/shared/components/layout/CompanySwitcher';
 
@@ -13,6 +15,7 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
 
   const isActive = useLoggedUserStore((state) => state.active_sidebar);
   const pathName = usePathname();
+  const ayudaUnreadCount = useUnreadSupportTicketsCount();
 
   // Find the most specific matching link for active state
   const activeLink = Allinks.reduce(
@@ -41,24 +44,41 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
       </div>
 
       <ul className="flex-1 overflow-y-auto mt-2">
-        {Allinks.map((link: any) => (
-          <Link
-            key={link.name}
-            href={link.href}
-            className={cn(
-              'flex items-center p-4 cursor-pointer transition-all duration-500 rounded-s-full lisidebar relative',
-              link.name === activeLink
-                ? 'bg-muted activesidebar before:shadow-custom-white after:shadow-custom-white-inverted'
-                : 'hover:bg-muted/80',
-              isActive ? 'ml-0' : 'ml-4'
-            )}
-          >
-            <div className={cn('flex items-center overflow-hidden min-w-0', link.name === activeLink ? 'text-primary' : 'text-foreground')}>
-              <span className="relative shrink-0">{link.icon}</span>
-              <span className="ml-3 relative block text-sm truncate">{link.name}</span>
-            </div>
-          </Link>
-        ))}
+        {Allinks.map((link: any) => {
+          const showUnread = link.href === '/dashboard/help' && ayudaUnreadCount > 0;
+          return (
+            <Link
+              key={link.name}
+              href={link.href}
+              className={cn(
+                'flex items-center p-4 cursor-pointer transition-all duration-500 rounded-s-full lisidebar relative',
+                link.name === activeLink
+                  ? 'bg-muted activesidebar before:shadow-custom-white after:shadow-custom-white-inverted'
+                  : 'hover:bg-muted/80',
+                isActive ? 'ml-0' : 'ml-4'
+              )}
+            >
+              <div className={cn('flex items-center overflow-hidden min-w-0', link.name === activeLink ? 'text-primary' : 'text-foreground')}>
+                <span className="relative shrink-0">
+                  {link.icon}
+                  {showUnread && (
+                    <span aria-hidden className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-destructive" />
+                  )}
+                </span>
+                <span className="ml-3 relative block text-sm truncate">{link.name}</span>
+              </div>
+              {showUnread &&
+                (isActive ? (
+                  <span className="sr-only">{ayudaUnreadCount} tickets sin leer</span>
+                ) : (
+                  <Badge variant="destructive" className="ml-auto min-w-5 shrink-0 justify-center px-1.5 py-0">
+                    {ayudaUnreadCount}
+                    <span className="sr-only"> tickets sin leer</span>
+                  </Badge>
+                ))}
+            </Link>
+          );
+        })}
       </ul>
 
       <div className={cn('flex items-center p-3 border-t', isActive ? 'justify-center' : 'justify-center gap-2')}>

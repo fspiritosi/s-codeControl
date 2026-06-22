@@ -3034,3 +3034,19 @@ model liquidacion_sueldo {
 
   @@unique([employee_id, periodo])
 }
+
+// ============================================================
+// TASKAPP — Centro de Ayuda (módulo de tickets/soporte)
+// ============================================================
+
+model support_ticket_views {
+  user_id             String   @db.Uuid
+  taskapp_ticket_id   BigInt
+  last_seen_at        DateTime @default(now()) @db.Timestamptz(6)
+  last_seen_status_id BigInt
+  created_at          DateTime @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime @default(now()) @db.Timestamptz(6)
+
+  @@id([user_id, taskapp_ticket_id])
+  @@index([user_id], map: "idx_support_ticket_views_user_id")
+}
