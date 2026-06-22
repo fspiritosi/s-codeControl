@@ -1,46 +1,42 @@
-import { ReportAnIssue } from '@/shared/components/common/ReportAnIssue';
+import { getReporterEmail } from '@/modules/ayuda/actions/getReporterEmail';
+import { getMyTicketsWithUnread, getSupportTicketById } from '@/modules/ayuda/actions/support-tickets';
+import { HelpCenter } from '@/modules/ayuda/components/HelpCenter';
+import type { Metadata } from 'next';
 
-export default function page() {
-  //  return <VehicleInspectionForm />;
-  return <ReportAnIssue />;
-  // return (
-  //   <Viewcomponent
-  //     viewData={
-  //       {
-  //         defaulValue: "general",
-  //         tabsValues:[
-  //           {
-  //             value: "general",
-  //             name:"General",
-  //             restricted: ["usuario"],
-  //             content:{
-  //               title: "Empresa",
-  //               description: "Datos generales de la compañía",
-  //               component: <div>Hola Yordan</div>,
-  //             }
-  //           },
-  //           {
-  //             value: "documents",
-  //             name:"Documentacion",
-  //             restricted: [] ,
-  //             content:{
-  //             title: "Documentación",
-  //             description: "Documentos generales de la compañía",
-  //             component: <TypesDocumentsView equipos personas />,
-  //           }},
-  //           {
-  //             value: "clients",
-  //             name:"Clientes",
-  //             restricted: [] ,
-  //             content:{
-  //             title: "Clientes",
-  //             description: "Documentos generales de la Clientes",
-  //             component: <Customers />,
+export const metadata: Metadata = {
+  title: 'Ayuda | CodeControl',
+  description: 'Centro de ayuda y soporte',
+};
 
-  //           }},
-  //         ]
-  //       }
-  //     }
-  //   />
-  // )
+interface SearchParams {
+  ticket?: string;
+}
+
+interface Props {
+  searchParams: Promise<SearchParams>;
+}
+
+export default async function HelpPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const rawId = params.ticket ? Number(params.ticket) : null;
+  const ticketId = rawId != null && Number.isFinite(rawId) ? rawId : null;
+
+  const [initialTickets, initialTicket, reporter] = await Promise.all([
+    getMyTicketsWithUnread(),
+    ticketId != null ? getSupportTicketById(ticketId) : Promise.resolve(null),
+    getReporterEmail(),
+  ]);
+
+  const currentUserEmail = reporter?.email ?? '';
+  const currentUserName = reporter?.name ?? reporter?.email ?? 'Usuario';
+
+  return (
+    <HelpCenter
+      initialTickets={initialTickets}
+      initialTicket={initialTicket}
+      initialTicketId={ticketId}
+      currentUserEmail={currentUserEmail}
+      currentUserName={currentUserName}
+    />
+  );
 }
