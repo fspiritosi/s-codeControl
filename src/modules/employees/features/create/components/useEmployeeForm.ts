@@ -404,7 +404,12 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
     };
 
     try {
-      await deactivateEmployee(user.document_number, data.termination_date, data.reason_for_termination);
+      const result = await deactivateEmployee(user.document_number, data.termination_date, data.reason_for_termination);
+
+      if (result?.error) {
+        toast.error('Error al dar de baja al emplead@', { description: result.error });
+        return;
+      }
 
       setShowModal(!showModal);
       toast('Emplead@ eliminado', { description: `El emplead@ ${user.full_name} ha sido eliminado` });

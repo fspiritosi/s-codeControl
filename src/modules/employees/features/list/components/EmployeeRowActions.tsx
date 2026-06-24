@@ -176,7 +176,13 @@ export function EmployeeRowActions({ row }: EmployeeRowActionsProps) {
     };
 
     try {
-      await deactivateEmployee(document, data.termination_date, data.reason_for_termination);
+      const result = await deactivateEmployee(document, data.termination_date, data.reason_for_termination);
+
+      if (result?.error) {
+        const message = await errorTranslate(result.error);
+        toast('Error al dar de baja al empleado', { description: message });
+        return;
+      }
 
       setShowModal(!showModal);
 

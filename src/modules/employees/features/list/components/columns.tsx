@@ -195,7 +195,13 @@ export const EmployeesListColumns: ColumnDef<Colum>[] = [
           ?.map((e: any) => e.id);
 
         try {
-          await reactivateEmployeeByDocNumber(document);
+          const result = await reactivateEmployeeByDocNumber(document);
+
+          if (result?.error) {
+            const message = await errorTranslate(result.error);
+            toast('Error al reintegrar al empleado', { description: message });
+            return;
+          }
 
           if (documentToUpdate?.length) {
             await resetDocumentEmployeesForReintegration(documentToUpdate);
@@ -220,7 +226,13 @@ export const EmployeesListColumns: ColumnDef<Colum>[] = [
         };
 
         try {
-          await deactivateEmployee(document, data.termination_date, data.reason_for_termination);
+          const result = await deactivateEmployee(document, data.termination_date, data.reason_for_termination);
+
+          if (result?.error) {
+            const message = await errorTranslate(result.error);
+            toast('Error al dar de baja al empleado', { description: message });
+            return;
+          }
 
           setShowModal(!showModal);
 

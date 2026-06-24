@@ -54,12 +54,18 @@ export const deactivateEmployee = async (documentNumber: string, terminationDate
     const { companyId } = await getActionContext();
     if (!companyId) throw new Error('No company selected');
 
+    // El cliente Prisma expone reason_for_termination_enum con los nombres de
+    // miembro (guion bajo: "Despido_sin_causa"), mientras que la UI envía el
+    // valor de DB con espacios ("Despido sin causa"). Normalizamos para que
+    // Prisma valide el enum correctamente; el @map lo persiste con espacios.
+    const normalizedReason = reason?.replaceAll(' ', '_');
+
     const data = await prisma.employees.updateMany({
       where: { document_number: documentNumber, company_id: companyId },
       data: {
         is_active: false,
         termination_date: new Date(terminationDate),
-        reason_for_termination: reason,
+        reason_for_termination: normalizedReason,
       } as any,
     });
 
@@ -180,7 +186,7 @@ export const deactivateEmployeeByDocNumber = async (
       data: {
         is_active: false,
         termination_date: terminationDate,
-        reason_for_termination: reason as any,
+        reason_for_termination: reason?.replaceAll(' ', '_') as any,
       },
     });
     return { error: null };
