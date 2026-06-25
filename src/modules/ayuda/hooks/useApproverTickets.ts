@@ -21,6 +21,8 @@ export function useApproverTicketsPage(page: number) {
     queryFn: () => getApproverTicketsPage(page, APPROVER_ALL_PAGE_SIZE),
     placeholderData: keepPreviousData,
     staleTime: 30_000,
+    // Polling mientras la vista del aprobador está abierta (reemplaza al SSE).
+    refetchInterval: 30_000,
   });
 }
 
@@ -33,5 +35,7 @@ export function usePendingApproverTickets() {
     queryKey: [...APPROVER_TICKETS_QUERY_KEY, 'pending'],
     queryFn: () => getPendingApproverTickets(),
     staleTime: 30_000,
+    // Polling de pendientes de aprobación (reemplaza al SSE).
+    refetchInterval: 30_000,
   });
 }

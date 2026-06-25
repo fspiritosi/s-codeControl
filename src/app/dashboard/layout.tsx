@@ -1,5 +1,4 @@
 import { getMyTicketsWithUnread } from '@/modules/ayuda/actions/support-tickets';
-import { SupportTicketsRealtimeProvider } from '@/modules/ayuda/components/SupportTicketsRealtimeProvider';
 import { MY_TICKETS_WITH_UNREAD_QUERY_KEY } from '@/modules/ayuda/hooks/queryKeys';
 import NavBar from '@/shared/components/layout/NavBar';
 import NotificationsAlert from '@/shared/components/layout/NotificationsAlert';
@@ -47,24 +46,22 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <TanstackQueryProvider>
       <HydrationBoundary state={dehydratedState}>
-        <SupportTicketsRealtimeProvider>
-          <div className={`grid grid-rows-[auto,1fr] grid-cols-[auto,1fr] h-screen `}>
-            <div className="row-span-2 ">
-              <SideBarContainer />
-            </div>
-            <div className="border-r border-b border-muted/50">
-              <NavBar />
-            </div>
-            <div className="overflow-y-auto">
-              <div className="animate-fade-in px-6 pb-6 space-y-4">
-                <Suspense fallback={null}>
-                  <NotificationsAlert />
-                </Suspense>
-                {children}
-              </div>
+        <div className={`grid grid-rows-[auto,1fr] grid-cols-[auto,1fr] h-screen `}>
+          <div className="row-span-2 ">
+            <SideBarContainer />
+          </div>
+          <div className="border-r border-b border-muted/50">
+            <NavBar />
+          </div>
+          <div className="overflow-y-auto">
+            <div className="animate-fade-in px-6 pb-6 space-y-4">
+              <Suspense fallback={null}>
+                <NotificationsAlert />
+              </Suspense>
+              {children}
             </div>
           </div>
-        </SupportTicketsRealtimeProvider>
+        </div>
       </HydrationBoundary>
     </TanstackQueryProvider>
   );
