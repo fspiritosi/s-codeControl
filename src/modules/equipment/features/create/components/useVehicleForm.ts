@@ -138,9 +138,9 @@ export function useVehicleForm(
   async function onCreate(values: z.infer<typeof vehicleSchema>) {
     toast.promise(
       async () => {
-        const { type_of_vehicle, brand, model, domain } = values;
+        const { type_of_vehicle, brand, model, domain, allocated_to, ...rest } = values;
         const { data: vehicleData, error } = await insertVehicle({
-          ...values,
+          ...rest,
           domain: domain?.toUpperCase() || null,
           type_of_vehicle: data.tipe_of_vehicles.find((e) => e.name === type_of_vehicle)?.id,
           brand: brand_vehicles?.find((e) => e.name === brand)?.id,
@@ -152,6 +152,13 @@ export function useVehicleForm(
         });
         if (error) throw new Error(handleSupabaseError(error));
         const vehicleId = vehicleData?.id || '';
+
+        if (allocated_to?.length) {
+          for (const contractorId of allocated_to) {
+            const { error: allocError } = await insertContractorEquipment(vehicleId, contractorId);
+            if (allocError) throw new Error(handleSupabaseError(allocError));
+          }
+        }
 
         const { data: existingTypes } = await fetchExistingDocumentTypes(
           'documents_equipment',
@@ -185,7 +192,7 @@ export function useVehicleForm(
         }
         router.push('/dashboard/equipment');
       },
-      { loading: 'Guardando...', success: 'equipo registrado', error: (error) => error }
+      { loading: 'Guardando...', success: 'equipo registrado', error: (error) => error?.message ?? 'No se pudo registrar el equipo' }
     );
   }
 
@@ -252,7 +259,7 @@ export function useVehicleForm(
           throw new Error('Error al editar el equipo');
         }
       },
-      { loading: 'Guardando...', success: 'equipo editado', error: (error) => error }
+      { loading: 'Guardando...', success: 'equipo editado', error: (error) => error?.message ?? 'No se pudo editar el equipo' }
     );
   }
 
