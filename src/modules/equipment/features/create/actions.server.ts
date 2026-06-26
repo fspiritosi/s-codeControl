@@ -22,6 +22,8 @@ export const insertVehicle = async (vehicleData: any) => {
   try {
     const data = await prisma.vehicles.create({ data: vehicleData });
     await ensurePendingDocumentsForEquipment(data.id);
+    revalidatePath('/dashboard/equipment');
+    revalidatePath('/dashboard/document');
     return { data, error: null };
   } catch (error) {
     console.error('Error inserting vehicle:', error);

@@ -12,6 +12,10 @@ export function useMyTicketsWithUnread(initialData?: TicketWithUnread[]) {
     queryKey: MY_TICKETS_WITH_UNREAD_QUERY_KEY,
     queryFn: () => getMyTicketsWithUnread(),
     staleTime: 60_000,
+    // Polling del badge global (sidebar). Reemplaza al SSE: refresca novedades
+    // sin mantener una conexión persistente. Por defecto NO pollea con la
+    // pestaña en segundo plano (refetchIntervalInBackground: false).
+    refetchInterval: 60_000,
     initialData,
   });
 }

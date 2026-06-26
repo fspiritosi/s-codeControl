@@ -22,6 +22,8 @@ export function useMyTicketsPage(page: number, initialTickets?: TicketWithUnread
     queryFn: () => getMyTicketsPageWithUnread(page, MY_TICKETS_PAGE_SIZE),
     placeholderData: keepPreviousData,
     staleTime: 30_000,
+    // Polling mientras la página de "Mis tickets" está abierta (reemplaza al SSE).
+    refetchInterval: 30_000,
     initialData:
       page === 1 && initialTickets
         ? ({
