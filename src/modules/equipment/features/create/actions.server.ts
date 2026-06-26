@@ -20,7 +20,23 @@ export const UpdateVehicle = async (vehicleId: string, vehicleData: any) => {
 
 export const insertVehicle = async (vehicleData: any) => {
   try {
-    const data = await prisma.vehicles.create({ data: vehicleData });
+    const missing = ['type_of_vehicle', 'brand', 'model', 'type'].filter(
+      (k) => vehicleData[k] === undefined || vehicleData[k] === null || vehicleData[k] === ''
+    );
+    if (missing.length) {
+      return {
+        data: null,
+        error: 'No se pudieron resolver tipo de equipo, marca o modelo. Verificá la selección e intentá nuevamente.',
+      };
+    }
+    const data = await prisma.vehicles.create({
+      data: {
+        ...vehicleData,
+        type_of_vehicle: BigInt(vehicleData.type_of_vehicle),
+        brand: BigInt(vehicleData.brand),
+        model: BigInt(vehicleData.model),
+      },
+    });
     await ensurePendingDocumentsForEquipment(data.id);
     revalidatePath('/dashboard/equipment');
     revalidatePath('/dashboard/document');

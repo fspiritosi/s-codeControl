@@ -110,13 +110,11 @@ export function useVehicleForm(
 
   const fetchData = async () => {
     const types_of_vehicles = await fetchTypesOfVehicles();
-    setData({ ...data, tipe_of_vehicles: types_of_vehicles as unknown as generic[] });
+    setData((prev) => ({ ...prev, tipe_of_vehicles: types_of_vehicles as unknown as generic[] }));
   };
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
   }, []);
 
   // Contractors loaded via initCatalogs() above
@@ -132,7 +130,7 @@ export function useVehicleForm(
 
   const fetchModels = async (brand_id: string) => {
     const model_vehicles = await fetchVehicleModelsByBrand(brand_id);
-    setData({ ...data, models: model_vehicles as unknown as generic[] });
+    setData((prev) => ({ ...prev, models: model_vehicles as unknown as generic[] }));
   };
 
   async function onCreate(values: z.infer<typeof vehicleSchema>) {
