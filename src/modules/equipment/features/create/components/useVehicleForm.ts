@@ -110,13 +110,11 @@ export function useVehicleForm(
 
   const fetchData = async () => {
     const types_of_vehicles = await fetchTypesOfVehicles();
-    setData({ ...data, tipe_of_vehicles: types_of_vehicles as unknown as generic[] });
+    setData((prev) => ({ ...prev, tipe_of_vehicles: types_of_vehicles as unknown as generic[] }));
   };
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
   }, []);
 
   // Contractors loaded via initCatalogs() above
@@ -132,15 +130,15 @@ export function useVehicleForm(
 
   const fetchModels = async (brand_id: string) => {
     const model_vehicles = await fetchVehicleModelsByBrand(brand_id);
-    setData({ ...data, models: model_vehicles as unknown as generic[] });
+    setData((prev) => ({ ...prev, models: model_vehicles as unknown as generic[] }));
   };
 
   async function onCreate(values: z.infer<typeof vehicleSchema>) {
     toast.promise(
       async () => {
-        const { type_of_vehicle, brand, model, domain } = values;
+        const { type_of_vehicle, brand, model, domain, allocated_to, ...rest } = values;
         const { data: vehicleData, error } = await insertVehicle({
-          ...values,
+          ...rest,
           domain: domain?.toUpperCase() || null,
           type_of_vehicle: data.tipe_of_vehicles.find((e) => e.name === type_of_vehicle)?.id,
           brand: brand_vehicles?.find((e) => e.name === brand)?.id,
@@ -152,6 +150,13 @@ export function useVehicleForm(
         });
         if (error) throw new Error(handleSupabaseError(error));
         const vehicleId = vehicleData?.id || '';
+
+        if (allocated_to?.length) {
+          for (const contractorId of allocated_to) {
+            const { error: allocError } = await insertContractorEquipment(vehicleId, contractorId);
+            if (allocError) throw new Error(handleSupabaseError(allocError));
+          }
+        }
 
         const { data: existingTypes } = await fetchExistingDocumentTypes(
           'documents_equipment',
@@ -185,7 +190,7 @@ export function useVehicleForm(
         }
         router.push('/dashboard/equipment');
       },
-      { loading: 'Guardando...', success: 'equipo registrado', error: (error) => error }
+      { loading: 'Guardando...', success: 'equipo registrado', error: (error) => error?.message ?? 'No se pudo registrar el equipo' }
     );
   }
 
@@ -252,7 +257,7 @@ export function useVehicleForm(
           throw new Error('Error al editar el equipo');
         }
       },
-      { loading: 'Guardando...', success: 'equipo editado', error: (error) => error }
+      { loading: 'Guardando...', success: 'equipo editado', error: (error) => error?.message ?? 'No se pudo editar el equipo' }
     );
   }
 
