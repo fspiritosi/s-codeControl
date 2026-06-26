@@ -139,55 +139,51 @@ export function useVehicleForm(
     toast.promise(
       async () => {
         const { type_of_vehicle, brand, model, domain } = values;
-        try {
-          const { data: vehicleData, error } = await insertVehicle({
-              ...values,
-              domain: domain?.toUpperCase() || null,
-              type_of_vehicle: data.tipe_of_vehicles.find((e) => e.name === type_of_vehicle)?.id,
-              brand: brand_vehicles?.find((e) => e.name === brand)?.id,
-              model: data.models.find((e) => e.name === model)?.id,
-              type: vehicleType.find((e) => e.name === values.type)?.id,
-              company_id: actualCompany?.id,
-              condition: 'operativo',
-              kilometer: values.kilometer || 0,
-            });
-          if (error) throw new Error(handleSupabaseError(error));
-          const vehicleId = vehicleData?.id || '';
+        const { data: vehicleData, error } = await insertVehicle({
+          ...values,
+          domain: domain?.toUpperCase() || null,
+          type_of_vehicle: data.tipe_of_vehicles.find((e) => e.name === type_of_vehicle)?.id,
+          brand: brand_vehicles?.find((e) => e.name === brand)?.id,
+          model: data.models.find((e) => e.name === model)?.id,
+          type: vehicleType.find((e) => e.name === values.type)?.id,
+          company_id: actualCompany?.id,
+          condition: 'operativo',
+          kilometer: values.kilometer || null,
+        });
+        if (error) throw new Error(handleSupabaseError(error));
+        const vehicleId = vehicleData?.id || '';
 
-          const { data: existingTypes } = await fetchExistingDocumentTypes(
-            'documents_equipment',
-            vehicleId
-          );
-          const existingTypesSet = new Set(existingTypes);
+        const { data: existingTypes } = await fetchExistingDocumentTypes(
+          'documents_equipment',
+          vehicleId
+        );
+        const existingTypesSet = new Set(existingTypes);
 
-          const documentsMissing: { applies: string; id_document_types: string; validity: string | null; user_id: string | undefined }[] = [];
-          mandatoryDocuments?.Equipos?.forEach((document: any) => {
-            if (!existingTypesSet.has(document.id)) {
-              documentsMissing.push({ applies: vehicleId, id_document_types: document.id, validity: null, user_id: loggedUser });
-            }
-          });
-          if (documentsMissing.length > 0) {
-            const { error: documentError } = await insertDocumentsEquipment(documentsMissing);
-            if (documentError) throw new Error(handleSupabaseError(documentError));
+        const documentsMissing: { applies: string; id_document_types: string; validity: string | null; user_id: string | undefined }[] = [];
+        mandatoryDocuments?.Equipos?.forEach((document: any) => {
+          if (!existingTypesSet.has(document.id)) {
+            documentsMissing.push({ applies: vehicleId, id_document_types: document.id, validity: null, user_id: loggedUser });
           }
-          const id = vehicleData?.id;
-          const fileExtension = imageFile?.name.split('.').pop();
-          if (imageFile && id) {
-            try {
-              const renamedFile = new File([imageFile], `${id.replace(/\s/g, '')}.${fileExtension}`, { type: `image/${fileExtension}` });
-              await uploadImage(renamedFile, 'vehicle_photos');
-              try {
-                const vehicleImage = `${url}/vehicle_photos/${id}.${fileExtension}`.trim().replace(/\s/g, '');
-                await updateVehicleByIdAndCompany(id, actualCompany?.id || '', { picture: vehicleImage });
-              } catch (error) {}
-            } catch (error: any) {
-              throw new Error(handleSupabaseError(error.message));
-            }
-          }
-          router.push('/dashboard/equipment');
-        } catch (error) {
-          console.error(error);
+        });
+        if (documentsMissing.length > 0) {
+          const { error: documentError } = await insertDocumentsEquipment(documentsMissing);
+          if (documentError) throw new Error(handleSupabaseError(documentError));
         }
+        const id = vehicleData?.id;
+        const fileExtension = imageFile?.name.split('.').pop();
+        if (imageFile && id) {
+          try {
+            const renamedFile = new File([imageFile], `${id.replace(/\s/g, '')}.${fileExtension}`, { type: `image/${fileExtension}` });
+            await uploadImage(renamedFile, 'vehicle_photos');
+            try {
+              const vehicleImage = `${url}/vehicle_photos/${id}.${fileExtension}`.trim().replace(/\s/g, '');
+              await updateVehicleByIdAndCompany(id, actualCompany?.id || '', { picture: vehicleImage });
+            } catch (error) {}
+          } catch (error: any) {
+            throw new Error(handleSupabaseError(error.message));
+          }
+        }
+        router.push('/dashboard/equipment');
       },
       { loading: 'Guardando...', success: 'equipo registrado', error: (error) => error }
     );
