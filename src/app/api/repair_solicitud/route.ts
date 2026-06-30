@@ -1,7 +1,11 @@
 import { prisma } from '@/shared/lib/prisma';
 import { apiSuccess, apiError } from '@/shared/lib/api-response';
 import { serializeBigInt } from '@/shared/lib/utils';
-import { recalculateVehicleCondition } from '@/modules/maintenance/features/repairs/actions.server';
+import {
+  recalculateVehicleCondition,
+  findConflictingOpenRepairs,
+} from '@/modules/maintenance/features/repairs/actions.server';
+import { buildRepairConflictMessage } from '@/modules/maintenance/features/repairs/repairRules';
 import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -75,6 +79,40 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
 
   try {
+    // --- Guard: no permitir un pedido de reparación si la unidad ya tiene uno
+    // del mismo tipo sin resolver (tarea 380). Aplica a todos los puntos de carga
+    // porque todos pasan por este endpoint. ---
+    const items: any[] = Array.isArray(body) ? body : [body];
+    const pairs = items
+      .filter((it) => it?.equipment_id && it?.reparation_type)
+      .map((it) => ({ equipment_id: it.equipment_id as string, reparation_type: it.reparation_type as string }));
+
+    // 1. Duplicados dentro del mismo payload (mismo equipo + tipo repetido).
+    const seen = new Set<string>();
+    for (const p of pairs) {
+      const key = `${p.equipment_id}::${p.reparation_type}`;
+      if (seen.has(key)) {
+        return apiError(
+          'No es posible crear la solicitud: cargaste dos veces el mismo tipo de reparación para la misma unidad.',
+          409,
+        );
+      }
+      seen.add(key);
+    }
+
+    // 2. Conflictos con solicitudes abiertas ya existentes en la base.
+    const conflicts = await findConflictingOpenRepairs(pairs);
+    if (conflicts.length > 0) {
+      const message = buildRepairConflictMessage(
+        conflicts.map((c: any) => ({
+          unit: c.equipment?.domain || c.equipment?.serie || 'sin dominio',
+          typeName: c.reparation_type_rel?.name ?? 'desconocido',
+          state: c.state,
+        })),
+      );
+      return apiError(message, 409);
+    }
+
     if (Array.isArray(body)) {
       const result = await prisma.repair_solicitudes.createMany({ data: body });
 

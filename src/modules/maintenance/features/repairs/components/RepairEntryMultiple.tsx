@@ -7,6 +7,7 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shar
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { updateVehicleById } from '@/modules/equipment/features/create/actions.server';
 import { fetchOpenRepairsByEquipmentIdsAndType } from '@/modules/maintenance/features/repairs/actions.server';
+import { buildRepairConflictMessage } from '@/modules/maintenance/features/repairs/repairRules';
 import { cn } from '@/shared/lib/utils';
 
 import { setVehiclesToShow } from '@/shared/lib/utils/utils';
@@ -93,12 +94,12 @@ export default function RepairNewEntryMultiple({
     );
 
     const hasOpenRepair = allRepairs.filter((e) => domainsOrSeries.includes(e.domain) && e.repair === repairTypeId);
+    const typeName = tipo_de_mantenimiento.find((t) => t.id === repairTypeId)?.name ?? 'desconocido';
 
     if (hasOpenRepair.length > 0) {
+      const units = hasOpenRepair.map((e) => e.domain).join(', ');
       toast.error(
-        `Los equipos con los siguientes dominios o series ya tienen una solicitud de reparacion a ser registrada ${hasOpenRepair
-          .map((e) => e.domain)
-          .join(', ')}`
+        `No es posible agregar la solicitud: las unidades ${units} ya tienen una solicitud del tipo "${typeName}" en esta carga.`
       );
       return true;
     }
@@ -106,10 +107,15 @@ export default function RepairNewEntryMultiple({
     //Consultar en la base de datos si ya existe una solicitud de reparacion abierta para alguno de los vehiculos
     const data = await fetchOpenRepairsByEquipmentIdsAndType(vehiclesIds, repairTypeId);
 
-    if (data?.length ?? 0 > 0) {
+    if ((data?.length ?? 0) > 0) {
       toast.error(
-        `
-        El equipo con dominio o serie "${(data?.[0].equipment_id as any).domain || (data?.[0].equipment_id as any).serie}" ya tiene una solicitud de reparacion con los mismos datos en estado ${data?.[0].state}`
+        buildRepairConflictMessage(
+          (data ?? []).map((d: any) => ({
+            unit: d.equipment?.domain || d.equipment?.serie || 'sin dominio',
+            typeName,
+            state: String(d.state),
+          }))
+        )
       );
       return true; // Indica que se encontró una solicitud abierta
     }
@@ -215,12 +221,13 @@ export default function RepairNewEntryMultiple({
           }
         } catch (error) {
           console.error(error);
+          throw error;
         }
       },
       {
-        loading: 'Creando tipo de reparación...',
-        success: 'Tipo de reparación creado con éxito',
-        error: 'Hubo un error al crear el tipo de reparación',
+        loading: 'Creando solicitud de reparación...',
+        success: 'Solicitud de reparación creada con éxito',
+        error: (err) => (err instanceof Error ? err.message : 'Hubo un error al crear la solicitud'),
       }
     );
   };
