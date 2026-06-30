@@ -96,8 +96,9 @@ export const equipmentColumns: ColumnDef<any>[] = [
   {
     accessorKey: 'type',
     meta: { title: 'Tipo' },
-    header: 'Tipo',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Tipo" />,
     cell: ({ row }) => <Badge>{row.original.type_rel?.name}</Badge>,
+    enableSorting: true,
     filterFn: (row, columnId, filterValue) => {
       return (
         row.original.type_rel?.name?.toLowerCase()?.includes(filterValue.toLowerCase()) ?? false
@@ -107,8 +108,9 @@ export const equipmentColumns: ColumnDef<any>[] = [
   {
     accessorKey: 'types_of_vehicles',
     meta: { title: 'Tipo de vehiculo' },
-    header: 'Tipo de vehiculo',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Tipo de vehiculo" />,
     cell: ({ row }) => <Badge>{row.original.type_of_vehicle_rel?.name as string}</Badge>,
+    enableSorting: true,
   },
   {
     accessorKey: 'engine',
@@ -179,8 +181,9 @@ export const equipmentColumns: ColumnDef<any>[] = [
   {
     accessorKey: 'brand',
     meta: { title: 'Marca' },
-    header: 'Marca',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Marca" />,
     cell: ({ row }) => <div>{row.original.brand_rel?.name}</div>,
+    enableSorting: true,
     filterFn: (row, columnId, filterValue) => {
       return (
         row.original?.brand_rel?.name?.toLowerCase()?.includes(filterValue.toLowerCase()) ?? false
@@ -196,8 +199,9 @@ export const equipmentColumns: ColumnDef<any>[] = [
   {
     accessorKey: 'model',
     meta: { title: 'Modelo' },
-    header: 'Modelo',
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Modelo" />,
     cell: ({ row }) => <div>{row.original.model_rel?.name}</div>,
+    enableSorting: true,
     filterFn: (row, columnId, filterValue) => {
       return (
         row.original.model_rel?.name?.toLowerCase().includes(filterValue.toLowerCase()) ?? false
