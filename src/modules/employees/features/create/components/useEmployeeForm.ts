@@ -31,6 +31,20 @@ import {
 import { Province } from '@/modules/employees/shared/types';
 import { getPersonalDataFields, getContactDataFields, getLaboralDataFields } from './fieldDefinitions';
 
+/**
+ * Resuelve el id de una opción (FK) a string para campos REQUERIDOS.
+ * Si la opción no se encontró (id null/undefined) devuelve `undefined` para que
+ * Prisma omita el campo, en lugar del string literal "undefined" que rompe la
+ * validación de tipos (BigInt/UUID) y aborta el update/create completo.
+ */
+const reqId = (id: unknown): string | undefined => (id == null ? undefined : String(id));
+
+/**
+ * Igual que `reqId` pero para campos OPCIONALES (nullable): devuelve `null`
+ * cuando la opción no se encontró, preservando la semántica de "sin valor".
+ */
+const optId = (id: unknown): string | null => (id == null ? null : String(id));
+
 export function useEmployeeFormLogic(user: any, guild: any, covenants: any, categories: any) {
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   const searchParams = useSearchParams();
@@ -184,11 +198,11 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
             values.born_date instanceof Date
               ? values.born_date.toISOString()
               : values.born_date,
-          province: String(provincesOptions.find((e: any) => e.name.trim() === values.province)?.id),
-          birthplace: String(countryOptions.find((e: any) => e.name === values.birthplace)?.id),
-          city: String(citysOptions.find((e: any) => e.name.trim() === values.city)?.id),
-          hierarchical_position: String(hierarchyOptions.find((e: any) => e.name === values.hierarchical_position)?.id),
-          workflow_diagram: String(workDiagramOptions.find((e: any) => e.name === values.workflow_diagram)?.id),
+          province: reqId(provincesOptions.find((e: any) => e.name.trim() === values.province)?.id),
+          birthplace: reqId(countryOptions.find((e: any) => e.name === values.birthplace)?.id),
+          city: reqId(citysOptions.find((e: any) => e.name.trim() === values.city)?.id),
+          hierarchical_position: optId(hierarchyOptions.find((e: any) => e.name === values.hierarchical_position)?.id),
+          workflow_diagram: optId(workDiagramOptions.find((e: any) => e.name === values.workflow_diagram)?.id),
           guild_id: values.guild_id || null,
           covenants_id: values.covenants_id || null,
           category_id: values.category_id || null,
@@ -200,7 +214,7 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
         };
 
         try {
-          const applies = await createEmployee(finalValues);
+          const applies = await createEmployee(finalValues as any);
           const employeeId = applies?.[0]?.id ?? '';
 
           const { data: existingTypes } = await fetchExistingDocumentTypes(
@@ -295,11 +309,11 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
             values.born_date instanceof Date
               ? values.born_date.toISOString()
               : values.born_date,
-          province: String(provincesOptions.find((e: any) => e.name.trim() === values.province)?.id),
-          birthplace: String(countryOptions.find((e: any) => e.name === values.birthplace)?.id),
-          city: String(citysOptions.find((e: any) => e.name.trim() === values.city)?.id),
-          hierarchical_position: String(hierarchyOptions.find((e: any) => e.name === values.hierarchical_position)?.id),
-          workflow_diagram: String(workDiagramOptions.find((e: any) => e.name === values.workflow_diagram)?.id),
+          province: reqId(provincesOptions.find((e: any) => e.name.trim() === values.province)?.id),
+          birthplace: reqId(countryOptions.find((e: any) => e.name === values.birthplace)?.id),
+          city: reqId(citysOptions.find((e: any) => e.name.trim() === values.city)?.id),
+          hierarchical_position: optId(hierarchyOptions.find((e: any) => e.name === values.hierarchical_position)?.id),
+          workflow_diagram: optId(workDiagramOptions.find((e: any) => e.name === values.workflow_diagram)?.id),
           guild_id: values.guild_id || null,
           covenants_id: values.covenants_id || null,
           category_id: values.category_id || null,
@@ -326,7 +340,7 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
         }
 
         try {
-          await updateEmployee(finalValues, user?.id);
+          await updateEmployee(finalValues as any, user?.id);
           await handleUpload();
           router.refresh();
           router.push('/dashboard/employee');

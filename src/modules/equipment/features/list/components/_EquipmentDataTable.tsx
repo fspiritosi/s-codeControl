@@ -9,7 +9,7 @@ import {
 import { equipmentColumns } from './equipment-columns';
 import { getEquipmentFacets, getAllEquipmentForExport } from '../actions.server';
 
-interface FacetEntry { value: string; count: number }
+interface FacetEntry { value: string; count: number; label?: string }
 
 interface Props {
   data: any[];
@@ -42,7 +42,7 @@ export function _EquipmentDataTable({ data, totalRows, searchParams }: Props) {
   const buildFacetConfig = (entries: FacetEntry[] | undefined) => {
     if (!entries || entries.length === 0) return { options: [], externalCounts: new Map<string, number>() };
     return {
-      options: entries.map((e) => ({ value: e.value, label: e.value })),
+      options: entries.map((e) => ({ value: e.value, label: e.label ?? e.value })),
       externalCounts: new Map(entries.map((e) => [e.value, e.count])),
     };
   };

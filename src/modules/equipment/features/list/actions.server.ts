@@ -198,6 +198,29 @@ const equipmentFkTextFilters: Record<string, { relation: string; field: string }
 /** Search fields for global search */
 const equipmentSearchFields = ['domain', 'intern_number', 'chassis', 'engine', 'serie'];
 
+/**
+ * Columnas que son FK a una relación: ordenar por el id numérico de la FK no
+ * tiene sentido para el usuario, hay que ordenar por el `name` de la relación.
+ * Mapea el columnId del DataTable → path anidado de Prisma.
+ */
+const equipmentRelationOrderBy: Record<string, string> = {
+  brand: 'brand_rel',
+  model: 'model_rel',
+  type: 'type_rel',
+  types_of_vehicles: 'type_of_vehicle_rel',
+};
+
+/** Construye el `orderBy` de Prisma resolviendo columnas de relación a `{ rel: { name } }`. */
+function buildEquipmentOrderBy(
+  sortBy: string | null,
+  sortOrder: 'asc' | 'desc',
+): Record<string, unknown> {
+  if (!sortBy) return { domain: 'asc' };
+  const relation = equipmentRelationOrderBy[sortBy];
+  if (relation) return { [relation]: { name: sortOrder } };
+  return { [sortBy]: sortOrder };
+}
+
 type EquipmentPaginatedOptions = { showInactive?: boolean };
 
 /**
@@ -275,7 +298,8 @@ export async function getEquipmentPaginated(
 
   try {
     const state = parseSearchParams(searchParams);
-    const { skip, take, orderBy } = stateToPrismaParams(state);
+    const { skip, take } = stateToPrismaParams(state);
+    const orderBy = buildEquipmentOrderBy(state.sortBy, state.sortOrder);
 
     const where = buildEquipmentWhere(state, companyId, options?.showInactive);
 
@@ -285,7 +309,7 @@ export async function getEquipmentPaginated(
         include: equipmentPaginatedInclude,
         skip,
         take,
-        orderBy: orderBy ?? { domain: 'asc' },
+        orderBy,
       }),
       prisma.vehicles.count({ where }),
     ]);
@@ -303,7 +327,7 @@ export async function getEquipmentPaginated(
  */
 export async function getEquipmentFacets(
   showInactive?: boolean,
-): Promise<Record<string, { value: string; count: number }[]>> {
+): Promise<Record<string, { value: string; count: number; label?: string }[]>> {
   const { companyId } = await getActionContext();
   if (!companyId) return {};
 
@@ -328,12 +352,15 @@ export async function getEquipmentFacets(
       groupByField('condition'),
     ]);
 
-    // Helper to convert groupBy result to facet array
+    // Helper to convert groupBy result to facet array.
+    // `value` es el nombre de miembro del enum Prisma (con guion bajo, ej. "No_avalado");
+    // `label` es el texto legible que ve el usuario en el dropdown (ej. "No avalado").
     const toFacetArray = (counts: any[], field: string) =>
       counts
         .filter((item) => item[field] != null && item[field] !== '')
         .map((item) => ({
           value: String(item[field]),
+          label: String(item[field]).replaceAll('_', ' '),
           count: item._count?._all ?? item._count ?? 0,
         }));
 
@@ -362,10 +389,8 @@ export async function getAllEquipmentForExport(
     const state = parseSearchParams(searchParams);
     const where = buildEquipmentWhere(state, companyId, options?.showInactive);
 
-    // Use orderBy from state if provided, otherwise default
-    const orderBy = state.sortBy
-      ? { [state.sortBy]: state.sortOrder }
-      : { domain: 'asc' as const };
+    // Resuelve columnas de relación a `{ rel: { name } }` igual que la query paginada
+    const orderBy = buildEquipmentOrderBy(state.sortBy, state.sortOrder);
 
     const data = await prisma.vehicles.findMany({
       where,
