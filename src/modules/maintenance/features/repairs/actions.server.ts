@@ -9,6 +9,7 @@ import {
   buildTextFiltersWhere,
   buildDateRangeFiltersWhere,
 } from '@/shared/components/common/DataTable/helpers';
+import { RESOLVED_STATES } from './repairRules';
 
 // Repair-related queries
 
@@ -95,7 +96,7 @@ export const fetchOpenRepairsByEquipmentIdsAndType = async (
       where: {
         equipment_id: { in: equipmentIds },
         reparation_type: reparationTypeId,
-        state: { notIn: ['Cancelado', 'Finalizado', 'Rechazado'] },
+        state: { notIn: [...RESOLVED_STATES] },
       },
       include: { equipment: true },
     });
@@ -115,12 +116,45 @@ export const fetchOpenRepairsByEquipmentAndType = async (
       where: {
         equipment_id: equipmentId,
         reparation_type: reparationTypeId,
-        state: { notIn: ['Cancelado', 'Finalizado', 'Rechazado'] },
+        state: { notIn: [...RESOLVED_STATES] },
       },
     });
     return data;
   } catch (error) {
     console.error('Error fetching open repairs:', error);
+    return [];
+  }
+};
+
+/**
+ * Dado un conjunto de pares (equipo, tipo de reparación), devuelve las
+ * solicitudes ABIERTAS (no resueltas) que coinciden, incluyendo dominio/serie
+ * de la unidad y el nombre del tipo, para construir el mensaje de conflicto.
+ *
+ * Es la fuente de verdad del guard de duplicados del API (cubre todos los
+ * puntos de carga y llamadas directas al endpoint).
+ */
+export const findConflictingOpenRepairs = async (
+  pairs: { equipment_id: string; reparation_type: string }[]
+) => {
+  if (!pairs.length) return [];
+  try {
+    const data = await prisma.repair_solicitudes.findMany({
+      where: {
+        state: { notIn: [...RESOLVED_STATES] },
+        OR: pairs.map((p) => ({
+          equipment_id: p.equipment_id,
+          reparation_type: p.reparation_type,
+        })),
+      },
+      include: {
+        equipment: { select: { domain: true, serie: true } },
+        reparation_type_rel: { select: { name: true } },
+      },
+    });
+    return data;
+  } catch (error) {
+    console.error('Error finding conflicting open repairs:', error);
     return [];
   }
 };

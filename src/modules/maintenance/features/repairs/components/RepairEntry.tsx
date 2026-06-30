@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { storage } from '@/shared/lib/storage';
 import { updateVehicleById } from '@/modules/equipment/features/create/actions.server';
 import { fetchOpenRepairsByEquipmentAndType } from '@/modules/maintenance/features/repairs/actions.server';
+import { buildRepairConflictMessage } from '@/modules/maintenance/features/repairs/repairRules';
 import { cn } from '@/shared/lib/utils';
 
 import { formatDocumentTypeName, setVehiclesToShow } from '@/shared/lib/utils/utils';
@@ -122,20 +123,23 @@ export default function RepairNewEntry({
     );
 
     if (vehicle_id?.id) {
-      //Primero verificar el array de reparaciones
+      const unit = vehicle_id.domain || vehicle_id.serie || 'sin dominio';
+      const typeName = tipo_de_mantenimiento.find((t) => t.id === repairTypeId)?.name ?? 'desconocido';
+
+      //Primero verificar el array de reparaciones (en la carga actual)
       const hasOpenRepair = allRepairs.some((e) => e.repair === repairTypeId);
       if (hasOpenRepair) {
         toast.error(
-          'Ya existe una solicitud de reparacion con los mismos datos en estado pendiente para este vehiculo'
+          `No es posible agregar la solicitud: la unidad ${unit} ya tiene una solicitud del tipo "${typeName}" en esta carga.`
         );
         return true;
       }
 
       const repair_solicitudes = await fetchOpenRepairsByEquipmentAndType(vehicle_id?.id, repairTypeId);
 
-      if (repair_solicitudes?.length ?? 0 > 0) {
+      if ((repair_solicitudes?.length ?? 0) > 0) {
         toast.error(
-          `Ya existe una solicitud de reparacion con los mismos datos en estado ${repair_solicitudes?.[0].state} para este vehiculo`
+          buildRepairConflictMessage([{ unit, typeName, state: String(repair_solicitudes?.[0].state) }])
         );
         return true; // Indica que se encontró una solicitud abierta
       }
@@ -282,12 +286,13 @@ export default function RepairNewEntry({
           }
         } catch (error) {
           console.error(error);
+          throw error;
         }
       },
       {
-        loading: 'Creando tipo de reparación...',
-        success: 'Tipo de reparación creado con éxito',
-        error: 'Hubo un error al crear el tipo de reparación',
+        loading: 'Creando solicitud de reparación...',
+        success: 'Solicitud de reparación creada con éxito',
+        error: (err) => (err instanceof Error ? err.message : 'Hubo un error al crear la solicitud'),
       }
     );
   };
