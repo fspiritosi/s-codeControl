@@ -2,7 +2,7 @@
 
 import type { ColumnFiltersState, PaginationState, SortingState } from '@tanstack/react-table';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useTransition } from 'react';
 
 import { DEFAULT_PAGE_SIZE, parseSearchParams, stateToSearchParams } from './helpers';
 import type { DataTableSearchParams, DataTableState } from './types';
@@ -59,6 +59,8 @@ interface UseDataTableReturn {
   onGlobalFilterChange: (value: string) => void;
   /** Resetear todos los filtros */
   resetFilters: () => void;
+  /** `true` mientras la navegación (sort/filtro/paginación) se está procesando en el servidor */
+  isPending: boolean;
 }
 
 /**
@@ -101,6 +103,7 @@ export function useDataTable(options: UseDataTableOptions = {}): UseDataTableRet
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   // Parsear estado actual de la URL
   const state = useMemo(() => {
@@ -154,8 +157,11 @@ export function useDataTable(options: UseDataTableOptions = {}): UseDataTableRet
       const merged = { ...state, ...newState };
       const params = stateToSearchParams(merged);
       const queryString = params.toString();
-      router.push(queryString ? `${pathname}?${queryString}` : pathname, {
-        scroll: false,
+      // Transición: la navegación no bloquea la UI y exponemos `isPending` para el loader.
+      startTransition(() => {
+        router.push(queryString ? `${pathname}?${queryString}` : pathname, {
+          scroll: false,
+        });
       });
     },
     [state, pathname, router]
@@ -243,7 +249,9 @@ export function useDataTable(options: UseDataTableOptions = {}): UseDataTableRet
       if (value) newParams.set(key, value);
     });
     const queryString = newParams.toString();
-    router.push(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
+    startTransition(() => {
+      router.push(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
+    });
   }, [pathname, router, searchParams, preserveParams]);
 
   return {
@@ -256,5 +264,6 @@ export function useDataTable(options: UseDataTableOptions = {}): UseDataTableRet
     onColumnFiltersChange,
     onGlobalFilterChange,
     resetFilters,
+    isPending,
   };
 }

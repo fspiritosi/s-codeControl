@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { Loader2 } from 'lucide-react';
 import {
   flexRender,
   getCoreRowModel,
@@ -114,6 +115,7 @@ export function DataTable<TData extends Record<string, unknown>, TValue = unknow
     onPaginationChange,
     onSortingChange,
     onColumnFiltersChange,
+    isPending,
   } = useDataTable({
     filterableColumns,
   });
@@ -199,8 +201,15 @@ export function DataTable<TData extends Record<string, unknown>, TValue = unknow
       />
 
       {/* Table */}
-      <div className="overflow-hidden rounded-md border">
-        <Table>
+      <div className="relative overflow-hidden rounded-md border">
+        {isPending && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[1px]">
+            <Loader2 className="size-6 animate-spin text-muted-foreground" />
+          </div>
+        )}
+        <Table
+          className={isPending ? 'pointer-events-none opacity-60 transition-opacity' : 'transition-opacity'}
+        >
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>

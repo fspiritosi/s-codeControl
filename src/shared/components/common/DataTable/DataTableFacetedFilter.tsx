@@ -31,8 +31,24 @@ export function DataTableFacetedFilter<TData, TValue>({
   externalCounts,
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const facets = externalCounts ?? column?.getFacetedUniqueValues();
-  const selectedValues = new Set(column?.getFilterValue() as string[]);
   const [search, setSearch] = React.useState('');
+
+  // Estado optimista: el checkbox reacciona al instante al clickear, sin esperar
+  // el round-trip al servidor (el filtro real viaja por la URL). Se re-sincroniza
+  // cuando el servidor confirma el cambio y la URL/columna se actualiza.
+  const urlValue = (column?.getFilterValue() as string[] | undefined) ?? [];
+  const urlKey = urlValue.join(',');
+  const [optimisticValues, setOptimisticValues] = React.useState<string[]>(urlValue);
+  React.useEffect(() => {
+    setOptimisticValues(urlValue);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlKey]);
+  const selectedValues = new Set(optimisticValues);
+
+  const applySelection = (values: string[]) => {
+    setOptimisticValues(values);
+    column?.setFilterValue(values.length ? values : undefined);
+  };
 
   // Filter options: by externalCounts (if provided) and by local search
   const visibleOptions = React.useMemo(() => {
@@ -115,15 +131,13 @@ export function DataTableFacetedFilter<TData, TValue>({
                     key={option.value}
                     value={option.value}
                     onSelect={() => {
+                      const next = new Set(selectedValues);
                       if (isSelected) {
-                        selectedValues.delete(option.value);
+                        next.delete(option.value);
                       } else {
-                        selectedValues.add(option.value);
+                        next.add(option.value);
                       }
-                      const filterValues = Array.from(selectedValues);
-                      column?.setFilterValue(
-                        filterValues.length ? filterValues : undefined
-                      );
+                      applySelection(Array.from(next));
                     }}
                     data-testid={`filter-option-${option.value}`}
                   >
@@ -156,7 +170,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                 <CommandGroup>
                   <CommandItem
                     value="__clear__"
-                    onSelect={() => column?.setFilterValue(undefined)}
+                    onSelect={() => applySelection([])}
                     className="justify-center text-center"
                     data-testid={`filter-clear-${column?.id}`}
                   >
