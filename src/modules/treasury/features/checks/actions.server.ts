@@ -78,6 +78,50 @@ export async function createCheck(data: CheckFormData) {
   }
 }
 
+export async function updateCheck(id: string, data: CheckFormData) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return { data: null, error: 'No company selected' };
+
+  const parsed = checkSchema.safeParse(data);
+  if (!parsed.success) return { data: null, error: parsed.error.issues[0]?.message ?? 'Datos inválidos' };
+
+  try {
+    const current = await prisma.checks.findFirst({
+      where: { id, company_id: companyId },
+      select: { id: true, type: true, status: true },
+    });
+    if (!current) return { data: null, error: 'Cheque no encontrado' };
+
+    // Solo se pueden editar los datos de un cheque propio en cartera
+    if (current.type !== 'OWN' || current.status !== 'PORTFOLIO') {
+      return { data: null, error: 'Solo se pueden editar cheques propios en cartera' };
+    }
+
+    const check = await prisma.checks.update({
+      where: { id },
+      data: {
+        check_number: parsed.data.check_number,
+        bank_name: parsed.data.bank_name,
+        branch: parsed.data.branch || null,
+        account_number: parsed.data.account_number || null,
+        amount: parseFloat(parsed.data.amount),
+        issue_date: new Date(parsed.data.issue_date),
+        due_date: new Date(parsed.data.due_date),
+        drawer_name: parsed.data.drawer_name,
+        drawer_tax_id: parsed.data.drawer_tax_id || null,
+        payee_name: parsed.data.payee_name || null,
+        notes: parsed.data.notes || null,
+      },
+    });
+
+    revalidatePath('/dashboard/treasury');
+    return { data: { ...check, amount: Number(check.amount) }, error: null };
+  } catch (error) {
+    console.error('Error updating check:', error);
+    return { data: null, error: String(error) };
+  }
+}
+
 interface ChangeStatusPayload {
   status: CheckStatusValue;
   bank_account_id?: string | null;
