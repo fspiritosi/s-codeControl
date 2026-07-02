@@ -127,8 +127,17 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Total</CardDescription>
-            <CardTitle className="text-lg">${Number(invoice.total).toFixed(2)}</CardTitle>
+            <CardDescription>
+              Total{invoice.currency !== 'ARS' ? ` (${invoice.currency} @ ${Number(invoice.exchange_rate).toFixed(2)})` : ''}
+            </CardDescription>
+            <CardTitle className="text-lg">
+              {invoice.currency === 'USD' ? 'US$' : '$'} {Number(invoice.total).toFixed(2)}
+            </CardTitle>
+            {invoice.currency !== 'ARS' && (
+              <CardDescription className="mt-1">
+                = ${(Number(invoice.total) * Number(invoice.exchange_rate)).toFixed(2)} ARS
+              </CardDescription>
+            )}
           </CardHeader>
         </Card>
       </div>
@@ -205,7 +214,13 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             {Number(invoice.other_charges) > 0 && (
               <div>Otros gastos: <span className="font-mono font-medium">${Number(invoice.other_charges).toFixed(2)}</span></div>
             )}
-            <div className="text-lg font-bold">Total: <span className="font-mono">${Number(invoice.total).toFixed(2)}</span></div>
+            <div className="text-lg font-bold">Total: <span className="font-mono">{invoice.currency === 'USD' ? 'US$' : '$'}{Number(invoice.total).toFixed(2)}</span></div>
+            {invoice.currency !== 'ARS' && (
+              <div className="text-sm text-muted-foreground">
+                Tipo de cambio: {Number(invoice.exchange_rate).toFixed(2)} · Total en ARS:{' '}
+                <span className="font-mono font-medium">${(Number(invoice.total) * Number(invoice.exchange_rate)).toFixed(2)}</span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

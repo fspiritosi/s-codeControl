@@ -100,6 +100,8 @@ export type InvoiceInitialData = {
   issue_date: string;
   due_date: string;
   cae: string;
+  currency: string;
+  exchange_rate: number;
   notes: string;
   original_invoice_id: string | null;
   purchase_order_ids: string[];
@@ -152,6 +154,8 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
           issue_date: initialData.issue_date,
           due_date: initialData.due_date,
           cae: initialData.cae,
+          currency: (initialData.currency as 'ARS' | 'USD') ?? 'ARS',
+          exchange_rate: initialData.exchange_rate ?? 1,
           notes: initialData.notes,
           original_invoice_id: initialData.original_invoice_id ?? null,
           purchase_order_id: '',
@@ -164,7 +168,8 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
         }
       : {
           supplier_id: '', voucher_type: 'FACTURA_A', point_of_sale: '00001', number: '',
-          issue_date: new Date().toISOString().split('T')[0], due_date: '', cae: '', notes: '',
+          issue_date: new Date().toISOString().split('T')[0], due_date: '', cae: '',
+          currency: 'ARS', exchange_rate: 1, notes: '',
           original_invoice_id: null,
           purchase_order_id: '',
           purchase_order_ids: [],
@@ -537,6 +542,8 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
       issue_date: values.issue_date,
       due_date: values.due_date,
       cae: values.cae,
+      currency: values.currency,
+      exchange_rate: values.currency === 'ARS' ? 1 : Number(values.exchange_rate) || 1,
       notes: values.notes,
       original_invoice_id: isCreditNote ? (values.original_invoice_id || null) : null,
       purchase_order_ids: values.purchase_order_ids || [],
@@ -727,6 +734,46 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
             <FormField control={form.control} name="cae" render={({ field }) => (
               <FormItem><FormLabel className="flex items-center">CAE<FieldStatusBadge status={fieldStatus('cae')} /></FormLabel><FormControl><Input placeholder="CAE" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
+            <FormField control={form.control} name="currency" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Moneda</FormLabel>
+                <Select
+                  value={field.value}
+                  onValueChange={(v) => {
+                    field.onChange(v);
+                    if (v === 'ARS') form.setValue('exchange_rate', 1);
+                  }}
+                >
+                  <FormControl>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="ARS">Peso (ARS)</SelectItem>
+                    <SelectItem value="USD">Dólar (USD)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+            {form.watch('currency') === 'USD' && (
+              <FormField control={form.control} name="exchange_rate" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo de cambio (ARS por USD)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.0001"
+                      min="0"
+                      placeholder="1200.0000"
+                      {...field}
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            )}
           </CardContent>
         </Card>
 

@@ -70,6 +70,7 @@ export async function getPurchaseInvoicesPaginated(searchParams: DataTableSearch
         other_taxes: Number(inv.other_taxes),
         other_charges: Number(inv.other_charges),
         total: Number(inv.total),
+        exchange_rate: Number(inv.exchange_rate),
         discount_amount: Number(inv.discount_amount),
         global_discount_value:
           inv.global_discount_value !== null ? Number(inv.global_discount_value) : null,
@@ -111,6 +112,8 @@ export async function createPurchaseInvoice(data: {
   issue_date: string;
   due_date?: string;
   cae?: string;
+  currency?: string;
+  exchange_rate?: number;
   notes?: string;
   original_invoice_id?: string | null;
   purchase_order_id?: string;
@@ -268,6 +271,8 @@ export async function createPurchaseInvoice(data: {
         issue_date: new Date(data.issue_date),
         due_date: data.due_date ? new Date(data.due_date) : null,
         cae: data.cae || null,
+        currency: data.currency || 'ARS',
+        exchange_rate: data.currency === 'ARS' ? 1 : (data.exchange_rate ?? 1),
         notes: data.notes || null,
         original_invoice_id: creditNoteOriginalId,
         purchase_order_id: primaryOrderId,
@@ -496,6 +501,8 @@ export async function getPurchaseInvoiceForEdit(invoiceId: string) {
     issue_date: invoice.issue_date.toISOString().split('T')[0],
     due_date: invoice.due_date ? invoice.due_date.toISOString().split('T')[0] : '',
     cae: invoice.cae || '',
+    currency: invoice.currency || 'ARS',
+    exchange_rate: invoice.exchange_rate != null ? Number(invoice.exchange_rate) : 1,
     notes: invoice.notes || '',
     original_invoice_id: invoice.original_invoice_id ?? null,
     purchase_order_ids: orderIds,
@@ -536,6 +543,8 @@ export async function updatePurchaseInvoice(
     issue_date: string;
     due_date?: string;
     cae?: string;
+    currency?: string;
+    exchange_rate?: number;
     notes?: string;
     original_invoice_id?: string | null;
     purchase_order_ids?: string[];
@@ -713,6 +722,8 @@ export async function updatePurchaseInvoice(
           issue_date: new Date(data.issue_date),
           due_date: data.due_date ? new Date(data.due_date) : null,
           cae: data.cae || null,
+          currency: data.currency || 'ARS',
+          exchange_rate: data.currency === 'ARS' ? 1 : (data.exchange_rate ?? 1),
           notes: data.notes || null,
           original_invoice_id: creditNoteOriginalId,
           purchase_order_id: primaryOrderId,
