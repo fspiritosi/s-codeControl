@@ -1963,6 +1963,8 @@ model purchase_invoices {
   issue_date          DateTime                          @db.Timestamptz
   due_date            DateTime?                         @db.Timestamptz
   cae                 String?
+  currency            String                            @default("ARS")
+  exchange_rate       Decimal                           @default(1) @db.Decimal(12, 4)
   subtotal            Decimal                           @default(0) @db.Decimal(12, 2)
   vat_amount          Decimal                           @default(0) @db.Decimal(12, 2)
   other_taxes         Decimal                           @default(0) @db.Decimal(12, 2)

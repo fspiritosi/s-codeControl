@@ -61,6 +61,8 @@ export const purchaseInvoiceSchema = z.object({
   issue_date: z.string().min(1, 'La fecha es requerida'),
   due_date: z.string().optional().or(z.literal('')),
   cae: z.string().optional().or(z.literal('')),
+  currency: z.enum(['ARS', 'USD']).default('ARS'),
+  exchange_rate: z.coerce.number().positive('El tipo de cambio debe ser mayor a 0').default(1),
   notes: z.string().optional().or(z.literal('')),
   original_invoice_id: z.string().uuid().nullable().optional().or(z.literal('')),
   purchase_order_id: z.string().uuid().optional().or(z.literal('')),

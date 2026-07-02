@@ -33,8 +33,8 @@ import {
   TableRow,
 } from '@/shared/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
-import { Plus, RefreshCw } from 'lucide-react';
-import { createCheck, changeCheckStatus } from '../actions.server';
+import { Pencil, Plus, RefreshCw } from 'lucide-react';
+import { createCheck, updateCheck, changeCheckStatus } from '../actions.server';
 import {
   CHECK_STATUS_LABELS,
   CHECK_TYPE_LABELS,
@@ -92,6 +92,7 @@ export function ChecksClient({ checks, bankAccounts }: Props) {
   const [tab, setTab] = useState<CheckTypeValue>('THIRD_PARTY');
 
   const [createDialog, setCreateDialog] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const [createForm, setCreateForm] = useState({
     type: 'THIRD_PARTY' as CheckTypeValue,
     check_number: '',
@@ -120,13 +121,46 @@ export function ChecksClient({ checks, bankAccounts }: Props) {
   const filtered = useMemo(() => checks.filter((c) => c.type === tab), [checks, tab]);
 
   const openCreate = (type: CheckTypeValue) => {
-    setCreateForm((f) => ({ ...f, type }));
+    setEditId(null);
+    setCreateForm({
+      type,
+      check_number: '',
+      bank_name: '',
+      branch: '',
+      account_number: '',
+      amount: '',
+      issue_date: today(),
+      due_date: today(),
+      drawer_name: '',
+      drawer_tax_id: '',
+      payee_name: '',
+      notes: '',
+    });
     setCreateDialog(true);
   };
 
-  const handleCreate = async () => {
+  const openEdit = (check: CheckRow) => {
+    setEditId(check.id);
+    setCreateForm({
+      type: check.type,
+      check_number: check.check_number,
+      bank_name: check.bank_name,
+      branch: check.branch ?? '',
+      account_number: check.account_number ?? '',
+      amount: String(check.amount),
+      issue_date: check.issue_date.slice(0, 10),
+      due_date: check.due_date.slice(0, 10),
+      drawer_name: check.drawer_name,
+      drawer_tax_id: check.drawer_tax_id ?? '',
+      payee_name: check.payee_name ?? '',
+      notes: check.notes ?? '',
+    });
+    setCreateDialog(true);
+  };
+
+  const handleSubmit = async () => {
     startTransition(async () => {
-      const result = await createCheck({
+      const payload = {
         type: createForm.type,
         check_number: createForm.check_number.trim(),
         bank_name: createForm.bank_name.trim(),
@@ -141,27 +175,15 @@ export function ChecksClient({ checks, bankAccounts }: Props) {
         customer_id: null,
         supplier_id: null,
         notes: createForm.notes.trim() || null,
-      });
+      };
+      const result = editId ? await updateCheck(editId, payload) : await createCheck(payload);
       if (result.error) {
         toast.error(result.error);
         return;
       }
-      toast.success('Cheque creado');
+      toast.success(editId ? 'Cheque actualizado' : 'Cheque creado');
       setCreateDialog(false);
-      setCreateForm({
-        type: createForm.type,
-        check_number: '',
-        bank_name: '',
-        branch: '',
-        account_number: '',
-        amount: '',
-        issue_date: today(),
-        due_date: today(),
-        drawer_name: '',
-        drawer_tax_id: '',
-        payee_name: '',
-        notes: '',
-      });
+      setEditId(null);
       router.refresh();
     });
   };
@@ -243,6 +265,7 @@ export function ChecksClient({ checks, bankAccounts }: Props) {
                 ) : (
                   filtered.map((c) => {
                     const canTransition = getNextStatuses(c.type, c.status).length > 0;
+                    const canEdit = c.type === 'OWN' && c.status === 'PORTFOLIO';
                     return (
                       <TableRow key={c.id}>
                         <TableCell className="font-mono">{c.check_number}</TableCell>
@@ -264,17 +287,30 @@ export function ChecksClient({ checks, bankAccounts }: Props) {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          {canTransition && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-8"
-                              onClick={() => openStatusChange(c)}
-                              title="Cambiar estado"
-                            >
-                              <RefreshCw className="size-4" />
-                            </Button>
-                          )}
+                          <div className="flex items-center justify-end gap-1">
+                            {canEdit && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8"
+                                onClick={() => openEdit(c)}
+                                title="Editar cheque"
+                              >
+                                <Pencil className="size-4" />
+                              </Button>
+                            )}
+                            {canTransition && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8"
+                                onClick={() => openStatusChange(c)}
+                                title="Cambiar estado"
+                              >
+                                <RefreshCw className="size-4" />
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -290,9 +326,13 @@ export function ChecksClient({ checks, bankAccounts }: Props) {
       <Dialog open={createDialog} onOpenChange={setCreateDialog}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>Nuevo cheque {CHECK_TYPE_LABELS[createForm.type].toLowerCase()}</DialogTitle>
+            <DialogTitle>
+              {editId ? 'Editar' : 'Nuevo'} cheque {CHECK_TYPE_LABELS[createForm.type].toLowerCase()}
+            </DialogTitle>
             <DialogDescription>
-              Registrá un cheque {createForm.type === 'OWN' ? 'propio emitido' : 'recibido de tercero'}. Se crea en estado &quot;En cartera&quot;.
+              {editId
+                ? 'Modificá los datos del cheque propio en cartera.'
+                : `Registrá un cheque ${createForm.type === 'OWN' ? 'propio emitido' : 'recibido de tercero'}. Se crea en estado "En cartera".`}
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-3">
@@ -396,7 +436,7 @@ export function ChecksClient({ checks, bankAccounts }: Props) {
             <Button variant="outline" onClick={() => setCreateDialog(false)} disabled={isPending}>
               Cancelar
             </Button>
-            <Button onClick={handleCreate} disabled={isPending}>
+            <Button onClick={handleSubmit} disabled={isPending}>
               {isPending ? 'Guardando...' : 'Guardar'}
             </Button>
           </DialogFooter>

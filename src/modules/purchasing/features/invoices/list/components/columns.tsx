@@ -162,10 +162,42 @@ export function makeInvoiceColumns(isOwner: boolean): ColumnDef<any>[] {
     cell: ({ row }) => <span className="text-sm">{formatDateUTC(row.original.issue_date)}</span>,
   },
   {
+    accessorKey: 'currency',
+    header: 'Moneda',
+    meta: { title: 'Moneda' },
+    cell: ({ row }) => {
+      const currency = row.original.currency || 'ARS';
+      if (currency === 'ARS') return <span className="text-sm text-muted-foreground">ARS</span>;
+      return (
+        <div className="text-sm">
+          <span className="font-medium">{currency}</span>
+          <span className="text-muted-foreground"> @ {Number(row.original.exchange_rate || 1).toFixed(2)}</span>
+        </div>
+      );
+    },
+  },
+  {
     accessorKey: 'total',
     header: 'Total',
     meta: { title: 'Total' },
-    cell: ({ row }) => <span className="font-medium">${row.original.total.toFixed(2)}</span>,
+    cell: ({ row }) => {
+      const currency = row.original.currency || 'ARS';
+      const total = Number(row.original.total);
+      const rate = Number(row.original.exchange_rate || 1);
+      const symbol = currency === 'USD' ? 'US$' : '$';
+      return (
+        <div className="text-right">
+          <div className="font-medium">
+            {symbol} {total.toFixed(2)}
+          </div>
+          {currency !== 'ARS' && (
+            <div className="text-xs text-muted-foreground">
+              $ {(total * rate).toFixed(2)} ARS
+            </div>
+          )}
+        </div>
+      );
+    },
   },
   {
     accessorKey: 'status',
