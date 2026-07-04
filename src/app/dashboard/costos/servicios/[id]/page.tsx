@@ -11,6 +11,7 @@ import {
 } from '@/modules/costos/features/mod/actions.server';
 import { listItemsOCP, calcularResumenOCP } from '@/modules/costos/features/ocp/actions.server';
 import { listVehiculosConCosto } from '@/modules/costos/features/equipos/actions.server';
+import { listComposiciones, listOutputsServicio } from '@/modules/costos/features/composicion/actions.server';
 import { DetalleServicio } from '@/modules/costos/features/servicios/components/DetalleServicio';
 import BackButton from '@/shared/components/common/BackButton';
 
@@ -20,16 +21,27 @@ async function DetalleContent({ id }: { id: string }) {
 
   const periodo = detalle.servicio.fecha_inicio.slice(0, 7); // YYYY-MM
 
-  const [modAsignaciones, modResumen, modFormData, ocpItems, ocpResumen, equipoAsignaciones, vehiculos] =
-    await Promise.all([
-      listAsignacionesMOD(id),
-      calcularResumenMOD(id, periodo),
-      getMODFormData(id),
-      listItemsOCP(id),
-      calcularResumenOCP(id),
-      listAsignacionesEquipo(id),
-      listVehiculosConCosto(),
-    ]);
+  const [
+    modAsignaciones,
+    modResumen,
+    modFormData,
+    ocpItems,
+    ocpResumen,
+    equipoAsignaciones,
+    vehiculos,
+    composiciones,
+    outputs,
+  ] = await Promise.all([
+    listAsignacionesMOD(id),
+    calcularResumenMOD(id, periodo),
+    getMODFormData(id),
+    listItemsOCP(id),
+    calcularResumenOCP(id),
+    listAsignacionesEquipo(id),
+    listVehiculosConCosto(),
+    listComposiciones(id),
+    listOutputsServicio(id),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -58,6 +70,7 @@ async function DetalleContent({ id }: { id: string }) {
             tiene_costo: v.tiene_costo,
           })),
         }}
+        composicion={{ composiciones, outputs, periodoDefault: periodo }}
       />
     </div>
   );

@@ -5,19 +5,22 @@ import { TabServicioGeneral } from './TabServicioGeneral';
 import { TabServicioEquipos } from './TabServicioEquipos';
 import { TabServicioMOD } from '@/modules/costos/features/mod/components/TabServicioMOD';
 import { TabServicioOCP } from '@/modules/costos/features/ocp/components/TabServicioOCP';
+import { TabServicioComposicion } from '@/modules/costos/features/composicion/components/TabServicioComposicion';
 import type { ServicioDetalle } from '@/modules/costos/shared/types/servicio.types';
 import type { AsignacionMODConDetalle, ResumenMOD } from '@/modules/costos/shared/types/mod.types';
 import type { MODFormData } from '@/modules/costos/features/mod/components/FormAsignacionMOD';
 import type { ItemOCPClient, ResumenOCP } from '@/modules/costos/shared/types/ocp.types';
+import type { ComposicionListItem, TipoOutputServicioClient } from '@/modules/costos/shared/types/composicion.types';
 
 interface Props {
   detalle: ServicioDetalle;
   mod: { asignaciones: AsignacionMODConDetalle[]; resumen: ResumenMOD; formData: MODFormData };
   ocp: { items: ItemOCPClient[]; resumen: ResumenOCP };
   equipos: { asignaciones: any[]; vehiculos: any[] };
+  composicion: { composiciones: ComposicionListItem[]; outputs: TipoOutputServicioClient[]; periodoDefault: string };
 }
 
-export function DetalleServicio({ detalle, mod, ocp, equipos }: Props) {
+export function DetalleServicio({ detalle, mod, ocp, equipos, composicion }: Props) {
   const servicioId = detalle.servicio.id;
 
   return (
@@ -27,7 +30,7 @@ export function DetalleServicio({ detalle, mod, ocp, equipos }: Props) {
         <TabsTrigger value="mod">MOD</TabsTrigger>
         <TabsTrigger value="ocp">OCP</TabsTrigger>
         <TabsTrigger value="equipos">Equipos</TabsTrigger>
-        <TabsTrigger value="composicion" disabled>Composición</TabsTrigger>
+        <TabsTrigger value="composicion">Composición</TabsTrigger>
       </TabsList>
 
       <TabsContent value="general" className="mt-4">
@@ -46,6 +49,15 @@ export function DetalleServicio({ detalle, mod, ocp, equipos }: Props) {
       </TabsContent>
       <TabsContent value="equipos" className="mt-4">
         <TabServicioEquipos servicioId={servicioId} asignaciones={equipos.asignaciones} vehiculos={equipos.vehiculos} />
+      </TabsContent>
+      <TabsContent value="composicion" className="mt-4">
+        <TabServicioComposicion
+          servicioId={servicioId}
+          servicioNombre={detalle.servicio.nombre}
+          periodoDefault={composicion.periodoDefault}
+          composiciones={composicion.composiciones}
+          outputs={composicion.outputs}
+        />
       </TabsContent>
     </Tabs>
   );

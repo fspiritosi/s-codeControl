@@ -260,6 +260,44 @@ export async function getComposicion(id: string): Promise<ComposicionDetalle | n
   return composicion.detalle_json as unknown as ComposicionDetalle;
 }
 
+export type ComposicionView = {
+  meta: {
+    id: string;
+    servicio_id: string;
+    servicio_nombre: string;
+    customer_nombre: string;
+    periodo: string;
+    precio_mensual: number;
+    tiene_pdf: boolean;
+  };
+  detalle: ComposicionDetalle;
+};
+
+/** Composición con metadatos del servicio, para la pantalla de detalle. */
+export async function getComposicionView(id: string): Promise<ComposicionView | null> {
+  const { companyId } = await getRequiredActionContext();
+  await assertModuloHabilitado(companyId);
+
+  const composicion = await prisma.composicion_costo.findFirst({
+    where: { id, servicio: { company_id: companyId } },
+    include: { servicio: { select: { nombre: true, customer: { select: { name: true } } } } },
+  });
+  if (!composicion) return null;
+
+  return {
+    meta: {
+      id: composicion.id,
+      servicio_id: composicion.servicio_id,
+      servicio_nombre: composicion.servicio?.nombre ?? '—',
+      customer_nombre: composicion.servicio?.customer?.name ?? '—',
+      periodo: composicion.periodo,
+      precio_mensual: Number(composicion.precio_mensual),
+      tiene_pdf: !!composicion.pdf_path,
+    },
+    detalle: composicion.detalle_json as unknown as ComposicionDetalle,
+  };
+}
+
 // ─── PDF ────────────────────────────────────────────────────────────────────
 
 /** Regenera el PDF de una composición desde su snapshot guardado. */

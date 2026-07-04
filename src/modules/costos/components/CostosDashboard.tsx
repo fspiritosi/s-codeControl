@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui
 import { BookOpen, Briefcase, Calculator, Users, Truck, Fuel } from 'lucide-react';
 
 async function getCostosCounts(companyId: string) {
-  const [cct, equiposConCosto, servicios] = await Promise.all([
+  const [cct, equiposConCosto, servicios, composiciones] = await Promise.all([
     prisma.config_cct.count({ where: { company_id: companyId } }),
     prisma.costo_equipo.count({ where: { company_id: companyId } }),
     prisma.servicio_contrato.count({ where: { company_id: companyId } }),
+    prisma.composicion_costo.count({ where: { servicio: { company_id: companyId } } }),
   ]);
-  return { cct, equiposConCosto, servicios, composiciones: 0, liquidaciones: 0 };
+  return { cct, equiposConCosto, servicios, composiciones, liquidaciones: 0 };
 }
 
 export default async function CostosDashboard() {
