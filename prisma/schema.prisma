@@ -2900,7 +2900,7 @@ model composicion_costo {
   total_con_margenes    Decimal  @db.Decimal(15, 2)
   precio_mensual        Decimal  @db.Decimal(15, 2)
   detalle_json          Json
-  pdf_path              String?
+  pdf_path              String?  @db.VarChar(500)
 
   servicio   servicio_contrato    @relation(fields: [servicio_id], references: [id])
   config_cct config_cct           @relation(fields: [config_cct_id], references: [id])
@@ -2917,7 +2917,7 @@ model output_composicion {
   valor           Decimal @db.Decimal(15, 4)
   detalle_calculo Json?
 
-  composicion composicion_costo    @relation(fields: [composicion_id], references: [id])
+  composicion composicion_costo    @relation(fields: [composicion_id], references: [id], onDelete: Cascade)
   tipo_output tipo_output_servicio @relation(fields: [tipo_output_id], references: [id])
 
   @@unique([composicion_id, tipo_output_id])
@@ -2927,13 +2927,13 @@ model output_composicion {
 model tipo_output_servicio {
   id          String  @id @default(uuid()) @db.Uuid
   servicio_id String  @db.Uuid
-  codigo      String
-  nombre      String
+  codigo      String  @db.VarChar(40)
+  nombre      String  @db.VarChar(120)
   formula     Json
   orden       Int     @default(0)
   is_active   Boolean @default(true)
 
-  servicio servicio_contrato  @relation(fields: [servicio_id], references: [id])
+  servicio servicio_contrato  @relation(fields: [servicio_id], references: [id], onDelete: Cascade)
   outputs  output_composicion[]
 
   @@unique([servicio_id, codigo])
