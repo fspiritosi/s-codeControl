@@ -2947,7 +2947,7 @@ model formula_polinomica {
   fecha_base  String  @db.VarChar(7)
   precio_base Decimal @db.Decimal(15, 2)
 
-  servicio    servicio_contrato            @relation(fields: [servicio_id], references: [id])
+  servicio    servicio_contrato            @relation(fields: [servicio_id], references: [id], onDelete: Cascade)
   componentes componente_formula[]
   periodos    periodo_formula_polinomica[]
 }
@@ -2956,14 +2956,14 @@ model formula_polinomica {
 model componente_formula {
   id                String                @id @default(uuid()) @db.Uuid
   formula_id        String                @db.Uuid
-  codigo            String
-  nombre            String
+  codigo            String                @db.VarChar(20)
+  nombre            String                @db.VarChar(120)
   tipo_indice       tipo_indice_polinomico
   ponderacion       Decimal               @db.Decimal(5, 4)
   valor_indice_base Decimal               @db.Decimal(15, 4)
-  fuente_indice     String?
+  fuente_indice     String?               @db.VarChar(160)
 
-  formula         formula_polinomica         @relation(fields: [formula_id], references: [id])
+  formula         formula_polinomica         @relation(fields: [formula_id], references: [id], onDelete: Cascade)
   valores_periodo valor_componente_periodo[]
 
   @@unique([formula_id, codigo])
@@ -2981,7 +2981,7 @@ model periodo_formula_polinomica {
   importe_certificado         Decimal? @db.Decimal(15, 2)
   retroactivo_acumulado       Decimal? @db.Decimal(15, 2)
 
-  formula  formula_polinomica         @relation(fields: [formula_id], references: [id])
+  formula  formula_polinomica         @relation(fields: [formula_id], references: [id], onDelete: Cascade)
   servicio servicio_contrato          @relation(fields: [servicio_id], references: [id])
   valores  valor_componente_periodo[]
 
@@ -2997,7 +2997,7 @@ model valor_componente_periodo {
   variacion_pct    Decimal @db.Decimal(10, 6)
   contribucion_pct Decimal @db.Decimal(10, 6)
 
-  periodo    periodo_formula_polinomica @relation(fields: [periodo_id], references: [id])
+  periodo    periodo_formula_polinomica @relation(fields: [periodo_id], references: [id], onDelete: Cascade)
   componente componente_formula         @relation(fields: [componente_id], references: [id])
 
   @@unique([periodo_id, componente_id])
