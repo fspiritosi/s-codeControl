@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
 export async function createdContact(formData: FormData) {
-  revalidatePath('/dashboard/company/customers');
+  revalidatePath('/dashboard/company/actualCompany/customers');
 
   const contactData = {
     contact_name: formData.get('contact_name') as string | null,

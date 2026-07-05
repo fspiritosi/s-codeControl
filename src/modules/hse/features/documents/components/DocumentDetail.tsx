@@ -434,7 +434,7 @@ export default function DocumentDetail({ id }: DocumentDetailProps) {
 
         if (!doc) {
           console.error('Documento no encontrado');
-          router.push('/dashboard/hse/documents');
+          router.push('/dashboard/hse');
           return;
         }
 
