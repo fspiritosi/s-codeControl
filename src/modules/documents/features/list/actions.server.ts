@@ -1000,13 +1000,16 @@ function buildEmployeeDocumentsWhere(
     };
   }
 
-  // 8. Date range filter for validity (field is String, not DateTime)
+  // 8. Date range filter for validity (columna timestamptz en DB)
   const validityFrom = state.filters.validity_from?.[0];
   const validityTo = state.filters.validity_to?.[0];
   if (validityFrom || validityTo) {
+    // La columna `validity` es timestamptz: el rango debe cubrir el día completo.
+    // Sin la hora, Postgres castea 'yyyy-MM-dd' a medianoche y el `lte` excluye
+    // los documentos que vencen ese día a cualquier hora posterior.
     const validityFilter: Record<string, string> = {};
-    if (validityFrom) validityFilter.gte = validityFrom;
-    if (validityTo) validityFilter.lte = validityTo;
+    if (validityFrom) validityFilter.gte = `${validityFrom}T00:00:00.000`;
+    if (validityTo) validityFilter.lte = `${validityTo}T23:59:59.999`;
     baseWhere.validity = validityFilter;
   }
 
@@ -1305,13 +1308,16 @@ function buildEquipmentDocumentsWhere(
     };
   }
 
-  // Date range filter for validity (field is String, not DateTime)
+  // Date range filter for validity (columna timestamptz en DB)
   const validityFrom = state.filters.validity_from?.[0];
   const validityTo = state.filters.validity_to?.[0];
   if (validityFrom || validityTo) {
+    // La columna `validity` es timestamptz: el rango debe cubrir el día completo.
+    // Sin la hora, Postgres castea 'yyyy-MM-dd' a medianoche y el `lte` excluye
+    // los documentos que vencen ese día a cualquier hora posterior.
     const validityFilter: Record<string, string> = {};
-    if (validityFrom) validityFilter.gte = validityFrom;
-    if (validityTo) validityFilter.lte = validityTo;
+    if (validityFrom) validityFilter.gte = `${validityFrom}T00:00:00.000`;
+    if (validityTo) validityFilter.lte = `${validityTo}T23:59:59.999`;
     baseWhere.validity = validityFilter;
   }
 
