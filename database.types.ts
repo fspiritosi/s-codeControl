@@ -34,6 +34,133 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_provider_config: {
+        Row: {
+          api_key: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          model: string | null
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          api_key?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          model?: string | null
+          provider: string
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          model?: string | null
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      asignacion_equipo_servicio: {
+        Row: {
+          afectacion_pct: number
+          id: string
+          is_active: boolean
+          km_mensuales: number
+          servicio_id: string
+          vehicle_id: string
+        }
+        Insert: {
+          afectacion_pct?: number
+          id?: string
+          is_active?: boolean
+          km_mensuales?: number
+          servicio_id: string
+          vehicle_id: string
+        }
+        Update: {
+          afectacion_pct?: number
+          id?: string
+          is_active?: boolean
+          km_mensuales?: number
+          servicio_id?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asignacion_equipo_servicio_servicio_id_fkey"
+            columns: ["servicio_id"]
+            isOneToOne: false
+            referencedRelation: "servicio_contrato"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asignacion_equipo_servicio_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asignacion_mod: {
+        Row: {
+          afectacion_pct: number
+          antiguedad_anios: number
+          categoria_cct_id: string
+          employee_id: string
+          id: string
+          is_active: boolean
+          overrides_calculo: Json | null
+          servicio_id: string
+        }
+        Insert: {
+          afectacion_pct: number
+          antiguedad_anios?: number
+          categoria_cct_id: string
+          employee_id: string
+          id?: string
+          is_active?: boolean
+          overrides_calculo?: Json | null
+          servicio_id: string
+        }
+        Update: {
+          afectacion_pct?: number
+          antiguedad_anios?: number
+          categoria_cct_id?: string
+          employee_id?: string
+          id?: string
+          is_active?: boolean
+          overrides_calculo?: Json | null
+          servicio_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asignacion_mod_categoria_cct_id_fkey"
+            columns: ["categoria_cct_id"]
+            isOneToOne: false
+            referencedRelation: "categoria_cct"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asignacion_mod_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asignacion_mod_servicio_id_fkey"
+            columns: ["servicio_id"]
+            isOneToOne: false
+            referencedRelation: "servicio_contrato"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assing_customer: {
         Row: {
           created_at: string
@@ -455,6 +582,38 @@ export type Database = {
           },
         ]
       }
+      categoria_cct: {
+        Row: {
+          codigo: string
+          config_cct_id: string
+          id: string
+          nombre: string
+          orden: number
+        }
+        Insert: {
+          codigo: string
+          config_cct_id: string
+          id?: string
+          nombre: string
+          orden?: number
+        }
+        Update: {
+          codigo?: string
+          config_cct_id?: string
+          id?: string
+          nombre?: string
+          orden?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categoria_cct_config_cct_id_fkey"
+            columns: ["config_cct_id"]
+            isOneToOne: false
+            referencedRelation: "config_cct"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       category: {
         Row: {
           covenant_id: string | null
@@ -834,6 +993,204 @@ export type Database = {
         }
         Relationships: []
       }
+      componente_formula: {
+        Row: {
+          codigo: string
+          formula_id: string
+          fuente_indice: string | null
+          id: string
+          nombre: string
+          ponderacion: number
+          tipo_indice: Database["public"]["Enums"]["tipo_indice_polinomico"]
+          valor_indice_base: number
+        }
+        Insert: {
+          codigo: string
+          formula_id: string
+          fuente_indice?: string | null
+          id?: string
+          nombre: string
+          ponderacion: number
+          tipo_indice: Database["public"]["Enums"]["tipo_indice_polinomico"]
+          valor_indice_base: number
+        }
+        Update: {
+          codigo?: string
+          formula_id?: string
+          fuente_indice?: string | null
+          id?: string
+          nombre?: string
+          ponderacion?: number
+          tipo_indice?: Database["public"]["Enums"]["tipo_indice_polinomico"]
+          valor_indice_base?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "componente_formula_formula_id_fkey"
+            columns: ["formula_id"]
+            isOneToOne: false
+            referencedRelation: "formula_polinomica"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      composicion_costo: {
+        Row: {
+          config_cct_id: string
+          created_at: string
+          detalle_json: Json
+          id: string
+          pdf_path: string | null
+          periodo: string
+          precio_mensual: number
+          servicio_id: string
+          subtotal_combustible: number
+          subtotal_equipos: number
+          subtotal_mod: number
+          subtotal_ocp: number
+          total_con_margenes: number
+          total_costo_directo: number
+        }
+        Insert: {
+          config_cct_id: string
+          created_at?: string
+          detalle_json: Json
+          id?: string
+          pdf_path?: string | null
+          periodo: string
+          precio_mensual: number
+          servicio_id: string
+          subtotal_combustible: number
+          subtotal_equipos: number
+          subtotal_mod: number
+          subtotal_ocp: number
+          total_con_margenes: number
+          total_costo_directo: number
+        }
+        Update: {
+          config_cct_id?: string
+          created_at?: string
+          detalle_json?: Json
+          id?: string
+          pdf_path?: string | null
+          periodo?: string
+          precio_mensual?: number
+          servicio_id?: string
+          subtotal_combustible?: number
+          subtotal_equipos?: number
+          subtotal_mod?: number
+          subtotal_ocp?: number
+          total_con_margenes?: number
+          total_costo_directo?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "composicion_costo_config_cct_id_fkey"
+            columns: ["config_cct_id"]
+            isOneToOne: false
+            referencedRelation: "config_cct"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "composicion_costo_servicio_id_fkey"
+            columns: ["servicio_id"]
+            isOneToOne: false
+            referencedRelation: "servicio_contrato"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      concepto_cct: {
+        Row: {
+          aplica_en: Database["public"]["Enums"]["ambito_concepto_cct"][]
+          clase_calculo: Database["public"]["Enums"]["clase_calculo_concepto"]
+          codigo: string
+          config_cct_id: string
+          id: string
+          is_active: boolean
+          nombre: string
+          orden: number
+          parametros: Json
+          tipo: Database["public"]["Enums"]["tipo_concepto_cct"]
+        }
+        Insert: {
+          aplica_en?: Database["public"]["Enums"]["ambito_concepto_cct"][]
+          clase_calculo: Database["public"]["Enums"]["clase_calculo_concepto"]
+          codigo: string
+          config_cct_id: string
+          id?: string
+          is_active?: boolean
+          nombre: string
+          orden?: number
+          parametros?: Json
+          tipo: Database["public"]["Enums"]["tipo_concepto_cct"]
+        }
+        Update: {
+          aplica_en?: Database["public"]["Enums"]["ambito_concepto_cct"][]
+          clase_calculo?: Database["public"]["Enums"]["clase_calculo_concepto"]
+          codigo?: string
+          config_cct_id?: string
+          id?: string
+          is_active?: boolean
+          nombre?: string
+          orden?: number
+          parametros?: Json
+          tipo?: Database["public"]["Enums"]["tipo_concepto_cct"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concepto_cct_config_cct_id_fkey"
+            columns: ["config_cct_id"]
+            isOneToOne: false
+            referencedRelation: "config_cct"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      config_cct: {
+        Row: {
+          cct_codigo: string
+          cct_nombre: string
+          company_id: string
+          created_at: string
+          descripcion: string | null
+          id: string
+          is_active: boolean
+          vigencia_desde: string
+          vigencia_hasta: string | null
+        }
+        Insert: {
+          cct_codigo: string
+          cct_nombre: string
+          company_id: string
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          is_active?: boolean
+          vigencia_desde: string
+          vigencia_hasta?: string | null
+        }
+        Update: {
+          cct_codigo?: string
+          cct_nombre?: string
+          company_id?: string
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          is_active?: boolean
+          vigencia_desde?: string
+          vigencia_hasta?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "config_cct_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           company_id: string | null
@@ -980,6 +1337,60 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      costo_equipo: {
+        Row: {
+          accesorios: number
+          anios_amortizacion: number
+          company_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          km_anuales: number
+          valor_compra: number
+          valor_residual_pct: number
+          vehicle_id: string
+        }
+        Insert: {
+          accesorios?: number
+          anios_amortizacion: number
+          company_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          km_anuales?: number
+          valor_compra: number
+          valor_residual_pct: number
+          vehicle_id: string
+        }
+        Update: {
+          accesorios?: number
+          anios_amortizacion?: number
+          company_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          km_anuales?: number
+          valor_compra?: number
+          valor_residual_pct?: number
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "costo_equipo_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "costo_equipo_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: true
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       countries: {
         Row: {
@@ -2025,6 +2436,168 @@ export type Database = {
           },
         ]
       }
+      expense_attachments: {
+        Row: {
+          created_at: string
+          expense_id: string
+          file_key: string
+          file_name: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          expense_id: string
+          file_key: string
+          file_name: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          expense_id?: string
+          file_key?: string
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_attachments_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_categories: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_categories_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          category_id: string
+          company_id: string
+          created_at: string
+          created_by: string
+          date: string
+          description: string
+          due_date: string | null
+          full_number: string
+          id: string
+          notes: string | null
+          number: number
+          purchase_order_id: string | null
+          status: Database["public"]["Enums"]["expense_status"]
+          supplier_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category_id: string
+          company_id: string
+          created_at?: string
+          created_by: string
+          date: string
+          description: string
+          due_date?: string | null
+          full_number: string
+          id?: string
+          notes?: string | null
+          number: number
+          purchase_order_id?: string | null
+          status?: Database["public"]["Enums"]["expense_status"]
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          date?: string
+          description?: string
+          due_date?: string | null
+          full_number?: string
+          id?: string
+          notes?: string | null
+          number?: number
+          purchase_order_id?: string | null
+          status?: Database["public"]["Enums"]["expense_status"]
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       form_answers: {
         Row: {
           answer: Json
@@ -2050,6 +2623,38 @@ export type Database = {
             columns: ["form_id"]
             isOneToOne: false
             referencedRelation: "custom_form"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      formula_polinomica: {
+        Row: {
+          descripcion: string | null
+          fecha_base: string
+          id: string
+          precio_base: number
+          servicio_id: string
+        }
+        Insert: {
+          descripcion?: string | null
+          fecha_base: string
+          id?: string
+          precio_base: number
+          servicio_id: string
+        }
+        Update: {
+          descripcion?: string | null
+          fecha_base?: string
+          id?: string
+          precio_base?: number
+          servicio_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "formula_polinomica_servicio_id_fkey"
+            columns: ["servicio_id"]
+            isOneToOne: true
+            referencedRelation: "servicio_contrato"
             referencedColumns: ["id"]
           },
         ]
@@ -2587,6 +3192,186 @@ export type Database = {
         }
         Relationships: []
       }
+      item_mantenimiento: {
+        Row: {
+          costo_equipo_id: string
+          id: string
+          is_active: boolean
+          nombre: string
+          orden: number
+          precio_anual: number
+        }
+        Insert: {
+          costo_equipo_id: string
+          id?: string
+          is_active?: boolean
+          nombre: string
+          orden?: number
+          precio_anual: number
+        }
+        Update: {
+          costo_equipo_id?: string
+          id?: string
+          is_active?: boolean
+          nombre?: string
+          orden?: number
+          precio_anual?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_mantenimiento_costo_equipo_id_fkey"
+            columns: ["costo_equipo_id"]
+            isOneToOne: false
+            referencedRelation: "costo_equipo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      item_ocp: {
+        Row: {
+          cantidad_personas: number
+          concepto: string
+          costo_anual: number
+          grupo: string
+          id: string
+          is_active: boolean
+          servicio_id: string
+        }
+        Insert: {
+          cantidad_personas?: number
+          concepto: string
+          costo_anual: number
+          grupo: string
+          id?: string
+          is_active?: boolean
+          servicio_id: string
+        }
+        Update: {
+          cantidad_personas?: number
+          concepto?: string
+          costo_anual?: number
+          grupo?: string
+          id?: string
+          is_active?: boolean
+          servicio_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_ocp_servicio_id_fkey"
+            columns: ["servicio_id"]
+            isOneToOne: false
+            referencedRelation: "servicio_contrato"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      liquidacion_sueldo: {
+        Row: {
+          categoria_cct_id: string
+          company_id: string
+          conceptos_json: Json
+          config_cct_id: string
+          created_at: string
+          dias_desarraigo: number
+          dias_feriado: number
+          dias_trabajados: number
+          employee_id: string
+          estado: Database["public"]["Enums"]["estado_liquidacion"]
+          hs_extras_100: number
+          hs_extras_50: number
+          hs_nocturnas: number
+          id: string
+          inasistencias_dias: number
+          inputs_extra: Json | null
+          neto_a_pagar: number
+          pdf_path: string | null
+          periodo: string
+          total_descuentos: number
+          total_no_remun: number
+          total_remunerativo: number
+          total_sac: number
+        }
+        Insert: {
+          categoria_cct_id: string
+          company_id: string
+          conceptos_json?: Json
+          config_cct_id: string
+          created_at?: string
+          dias_desarraigo?: number
+          dias_feriado?: number
+          dias_trabajados?: number
+          employee_id: string
+          estado?: Database["public"]["Enums"]["estado_liquidacion"]
+          hs_extras_100?: number
+          hs_extras_50?: number
+          hs_nocturnas?: number
+          id?: string
+          inasistencias_dias?: number
+          inputs_extra?: Json | null
+          neto_a_pagar: number
+          pdf_path?: string | null
+          periodo: string
+          total_descuentos: number
+          total_no_remun: number
+          total_remunerativo: number
+          total_sac?: number
+        }
+        Update: {
+          categoria_cct_id?: string
+          company_id?: string
+          conceptos_json?: Json
+          config_cct_id?: string
+          created_at?: string
+          dias_desarraigo?: number
+          dias_feriado?: number
+          dias_trabajados?: number
+          employee_id?: string
+          estado?: Database["public"]["Enums"]["estado_liquidacion"]
+          hs_extras_100?: number
+          hs_extras_50?: number
+          hs_nocturnas?: number
+          id?: string
+          inasistencias_dias?: number
+          inputs_extra?: Json | null
+          neto_a_pagar?: number
+          pdf_path?: string | null
+          periodo?: string
+          total_descuentos?: number
+          total_no_remun?: number
+          total_remunerativo?: number
+          total_sac?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "liquidacion_sueldo_categoria_cct_id_fkey"
+            columns: ["categoria_cct_id"]
+            isOneToOne: false
+            referencedRelation: "categoria_cct"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "liquidacion_sueldo_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "liquidacion_sueldo_config_cct_id_fkey"
+            columns: ["config_cct_id"]
+            isOneToOne: false
+            referencedRelation: "config_cct"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "liquidacion_sueldo_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       measure_units: {
         Row: {
           id: number
@@ -2829,26 +3614,78 @@ export type Database = {
           },
         ]
       }
+      output_composicion: {
+        Row: {
+          composicion_id: string
+          detalle_calculo: Json | null
+          id: string
+          tipo_output_id: string
+          valor: number
+        }
+        Insert: {
+          composicion_id: string
+          detalle_calculo?: Json | null
+          id?: string
+          tipo_output_id: string
+          valor: number
+        }
+        Update: {
+          composicion_id?: string
+          detalle_calculo?: Json | null
+          id?: string
+          tipo_output_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "output_composicion_composicion_id_fkey"
+            columns: ["composicion_id"]
+            isOneToOne: false
+            referencedRelation: "composicion_costo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "output_composicion_tipo_output_id_fkey"
+            columns: ["tipo_output_id"]
+            isOneToOne: false
+            referencedRelation: "tipo_output_servicio"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_order_items: {
         Row: {
           amount: number
+          discount_pct: number
+          expense_id: string | null
           id: string
           invoice_id: string | null
           payment_order_id: string
         }
         Insert: {
           amount: number
+          discount_pct?: number
+          expense_id?: string | null
           id?: string
           invoice_id?: string | null
           payment_order_id: string
         }
         Update: {
           amount?: number
+          discount_pct?: number
+          expense_id?: string | null
           id?: string
           invoice_id?: string | null
           payment_order_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "payment_order_items_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payment_order_items_invoice_id_fkey"
             columns: ["invoice_id"]
@@ -2871,6 +3708,7 @@ export type Database = {
           bank_account_id: string | null
           card_last4: string | null
           cash_register_id: string | null
+          check_id: string | null
           check_number: string | null
           id: string
           payment_method: Database["public"]["Enums"]["payment_method"]
@@ -2883,6 +3721,7 @@ export type Database = {
           bank_account_id?: string | null
           card_last4?: string | null
           cash_register_id?: string | null
+          check_id?: string | null
           check_number?: string | null
           id?: string
           payment_method: Database["public"]["Enums"]["payment_method"]
@@ -2895,6 +3734,7 @@ export type Database = {
           bank_account_id?: string | null
           card_last4?: string | null
           cash_register_id?: string | null
+          check_id?: string | null
           check_number?: string | null
           id?: string
           payment_method?: Database["public"]["Enums"]["payment_method"]
@@ -2915,6 +3755,13 @@ export type Database = {
             columns: ["cash_register_id"]
             isOneToOne: false
             referencedRelation: "cash_registers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_order_payments_check_id_fkey"
+            columns: ["check_id"]
+            isOneToOne: false
+            referencedRelation: "checks"
             referencedColumns: ["id"]
           },
           {
@@ -3150,6 +3997,57 @@ export type Database = {
           },
         ]
       }
+      periodo_formula_polinomica: {
+        Row: {
+          ajuste_monto: number
+          ajuste_porcentual_acumulado: number
+          formula_id: string
+          id: string
+          importe_certificado: number | null
+          periodo: string
+          retroactivo_acumulado: number | null
+          servicio_id: string
+          valor_ajustado: number
+        }
+        Insert: {
+          ajuste_monto: number
+          ajuste_porcentual_acumulado: number
+          formula_id: string
+          id?: string
+          importe_certificado?: number | null
+          periodo: string
+          retroactivo_acumulado?: number | null
+          servicio_id: string
+          valor_ajustado: number
+        }
+        Update: {
+          ajuste_monto?: number
+          ajuste_porcentual_acumulado?: number
+          formula_id?: string
+          id?: string
+          importe_certificado?: number | null
+          periodo?: string
+          retroactivo_acumulado?: number | null
+          servicio_id?: string
+          valor_ajustado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "periodo_formula_polinomica_formula_id_fkey"
+            columns: ["formula_id"]
+            isOneToOne: false
+            referencedRelation: "formula_polinomica"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "periodo_formula_polinomica_servicio_id_fkey"
+            columns: ["servicio_id"]
+            isOneToOne: false
+            referencedRelation: "servicio_contrato"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       permissions: {
         Row: {
           action: string
@@ -3297,15 +4195,7 @@ export type Database = {
           password_hash?: string | null
           role?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "profile_role_fkey"
-            columns: ["role"]
-            isOneToOne: false
-            referencedRelation: "roles"
-            referencedColumns: ["name"]
-          },
-        ]
+        Relationships: []
       }
       provinces: {
         Row: {
@@ -3328,6 +4218,9 @@ export type Database = {
       purchase_invoice_lines: {
         Row: {
           description: string
+          discount_amount: number
+          discount_type: Database["public"]["Enums"]["discount_type"] | null
+          discount_value: number | null
           id: string
           invoice_id: string
           product_id: string | null
@@ -3342,6 +4235,9 @@ export type Database = {
         }
         Insert: {
           description: string
+          discount_amount?: number
+          discount_type?: Database["public"]["Enums"]["discount_type"] | null
+          discount_value?: number | null
           id?: string
           invoice_id: string
           product_id?: string | null
@@ -3356,6 +4252,9 @@ export type Database = {
         }
         Update: {
           description?: string
+          discount_amount?: number
+          discount_type?: Database["public"]["Enums"]["discount_type"] | null
+          discount_value?: number | null
           id?: string
           invoice_id?: string
           product_id?: string | null
@@ -3388,6 +4287,38 @@ export type Database = {
             columns: ["purchase_order_line_id"]
             isOneToOne: false
             referencedRelation: "purchase_order_lines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_invoice_other_charges: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description: string
+          id?: string
+          invoice_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_invoice_other_charges_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -3446,15 +4377,23 @@ export type Database = {
           company_id: string
           created_at: string
           created_by: string | null
+          currency: string
+          discount_amount: number
           document_key: string | null
           document_url: string | null
           due_date: string | null
+          exchange_rate: number
           full_number: string
+          global_discount_type:
+            | Database["public"]["Enums"]["discount_type"]
+            | null
+          global_discount_value: number | null
           id: string
           issue_date: string
           notes: string | null
           number: string
           original_invoice_id: string | null
+          other_charges: number
           other_taxes: number
           point_of_sale: string
           purchase_order_id: string | null
@@ -3472,15 +4411,23 @@ export type Database = {
           company_id: string
           created_at?: string
           created_by?: string | null
+          currency?: string
+          discount_amount?: number
           document_key?: string | null
           document_url?: string | null
           due_date?: string | null
+          exchange_rate?: number
           full_number: string
+          global_discount_type?:
+            | Database["public"]["Enums"]["discount_type"]
+            | null
+          global_discount_value?: number | null
           id?: string
           issue_date: string
           notes?: string | null
           number: string
           original_invoice_id?: string | null
+          other_charges?: number
           other_taxes?: number
           point_of_sale: string
           purchase_order_id?: string | null
@@ -3498,15 +4445,23 @@ export type Database = {
           company_id?: string
           created_at?: string
           created_by?: string | null
+          currency?: string
+          discount_amount?: number
           document_key?: string | null
           document_url?: string | null
           due_date?: string | null
+          exchange_rate?: number
           full_number?: string
+          global_discount_type?:
+            | Database["public"]["Enums"]["discount_type"]
+            | null
+          global_discount_value?: number | null
           id?: string
           issue_date?: string
           notes?: string | null
           number?: string
           original_invoice_id?: string | null
+          other_charges?: number
           other_taxes?: number
           point_of_sale?: string
           purchase_order_id?: string | null
@@ -3546,6 +4501,44 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_order_attachments: {
+        Row: {
+          created_at: string
+          file_key: string
+          file_name: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          purchase_order_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_key: string
+          file_name: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          purchase_order_id: string
+        }
+        Update: {
+          created_at?: string
+          file_key?: string
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          purchase_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_attachments_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -3910,6 +4903,54 @@ export type Database = {
           },
         ]
       }
+      registro_combustible: {
+        Row: {
+          id: string
+          litros_mensuales: number
+          litros_urea: number
+          periodo: string
+          precio_gasoil_lt: number
+          precio_urea_lt: number
+          servicio_id: string
+          vehicle_id: string
+        }
+        Insert: {
+          id?: string
+          litros_mensuales: number
+          litros_urea?: number
+          periodo: string
+          precio_gasoil_lt: number
+          precio_urea_lt?: number
+          servicio_id: string
+          vehicle_id: string
+        }
+        Update: {
+          id?: string
+          litros_mensuales?: number
+          litros_urea?: number
+          periodo?: string
+          precio_gasoil_lt?: number
+          precio_urea_lt?: number
+          servicio_id?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registro_combustible_servicio_id_fkey"
+            columns: ["servicio_id"]
+            isOneToOne: false
+            referencedRelation: "servicio_contrato"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registro_combustible_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       repair_solicitudes: {
         Row: {
           created_at: string
@@ -4226,6 +5267,85 @@ export type Database = {
           },
         ]
       }
+      servicio_contrato: {
+        Row: {
+          company_id: string
+          config_cct_id: string
+          config_servicio: Json | null
+          created_at: string
+          customer_id: string
+          descripcion: string | null
+          fecha_fin: string | null
+          fecha_inicio: string
+          id: string
+          is_active: boolean
+          licencia_ordenanza: number
+          margen_debcred: number
+          margen_estructura: number
+          margen_ganancia: number
+          margen_iibb: number
+          nombre: string
+        }
+        Insert: {
+          company_id: string
+          config_cct_id: string
+          config_servicio?: Json | null
+          created_at?: string
+          customer_id: string
+          descripcion?: string | null
+          fecha_fin?: string | null
+          fecha_inicio: string
+          id?: string
+          is_active?: boolean
+          licencia_ordenanza?: number
+          margen_debcred?: number
+          margen_estructura?: number
+          margen_ganancia?: number
+          margen_iibb?: number
+          nombre: string
+        }
+        Update: {
+          company_id?: string
+          config_cct_id?: string
+          config_servicio?: Json | null
+          created_at?: string
+          customer_id?: string
+          descripcion?: string | null
+          fecha_fin?: string | null
+          fecha_inicio?: string
+          id?: string
+          is_active?: boolean
+          licencia_ordenanza?: number
+          margen_debcred?: number
+          margen_estructura?: number
+          margen_ganancia?: number
+          margen_iibb?: number
+          nombre?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servicio_contrato_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "servicio_contrato_config_cct_id_fkey"
+            columns: ["config_cct_id"]
+            isOneToOne: false
+            referencedRelation: "config_cct"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "servicio_contrato_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       share_company_users: {
         Row: {
           company_id: string | null
@@ -4275,13 +5395,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "share_company_users_role_fkey"
-            columns: ["role"]
-            isOneToOne: false
-            referencedRelation: "roles"
-            referencedColumns: ["name"]
           },
         ]
       }
@@ -4395,6 +5508,11 @@ export type Database = {
           alias: string | null
           bank_name: string | null
           cbu: string | null
+          check_bank_name: string | null
+          check_max_days: number | null
+          check_notes: string | null
+          check_payee: string | null
+          check_type: Database["public"]["Enums"]["supplier_check_type"] | null
           company_id: string
           created_at: string
           created_by: string | null
@@ -4416,6 +5534,11 @@ export type Database = {
           alias?: string | null
           bank_name?: string | null
           cbu?: string | null
+          check_bank_name?: string | null
+          check_max_days?: number | null
+          check_notes?: string | null
+          check_payee?: string | null
+          check_type?: Database["public"]["Enums"]["supplier_check_type"] | null
           company_id: string
           created_at?: string
           created_by?: string | null
@@ -4437,6 +5560,11 @@ export type Database = {
           alias?: string | null
           bank_name?: string | null
           cbu?: string | null
+          check_bank_name?: string | null
+          check_max_days?: number | null
+          check_notes?: string | null
+          check_payee?: string | null
+          check_type?: Database["public"]["Enums"]["supplier_check_type"] | null
           company_id?: string
           created_at?: string
           created_by?: string | null
@@ -4555,6 +5683,33 @@ export type Database = {
           },
         ]
       }
+      support_ticket_views: {
+        Row: {
+          created_at: string
+          last_seen_at: string
+          last_seen_status_id: number
+          taskapp_ticket_id: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          last_seen_at?: string
+          last_seen_status_id: number
+          taskapp_ticket_id: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          last_seen_at?: string
+          last_seen_status_id?: number
+          taskapp_ticket_id?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tax_types: {
         Row: {
           calculation_base: Database["public"]["Enums"]["tax_calculation_base"]
@@ -4613,6 +5768,68 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tipo_output_servicio: {
+        Row: {
+          codigo: string
+          formula: Json
+          id: string
+          is_active: boolean
+          nombre: string
+          orden: number
+          servicio_id: string
+        }
+        Insert: {
+          codigo: string
+          formula: Json
+          id?: string
+          is_active?: boolean
+          nombre: string
+          orden?: number
+          servicio_id: string
+        }
+        Update: {
+          codigo?: string
+          formula?: Json
+          id?: string
+          is_active?: boolean
+          nombre?: string
+          orden?: number
+          servicio_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tipo_output_servicio_servicio_id_fkey"
+            columns: ["servicio_id"]
+            isOneToOne: false
+            referencedRelation: "servicio_contrato"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tope_imponible: {
+        Row: {
+          codigo: string
+          fuente: string | null
+          id: string
+          valor: number
+          vigencia_desde: string
+        }
+        Insert: {
+          codigo: string
+          fuente?: string | null
+          id?: string
+          valor: number
+          vigencia_desde: string
+        }
+        Update: {
+          codigo?: string
+          fuente?: string | null
+          id?: string
+          valor?: number
+          vigencia_desde?: string
+        }
+        Relationships: []
       }
       training_tag_assignments: {
         Row: {
@@ -4881,6 +6098,84 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      valor_componente_periodo: {
+        Row: {
+          componente_id: string
+          contribucion_pct: number
+          id: string
+          periodo_id: string
+          valor_indice: number
+          variacion_pct: number
+        }
+        Insert: {
+          componente_id: string
+          contribucion_pct: number
+          id?: string
+          periodo_id: string
+          valor_indice: number
+          variacion_pct: number
+        }
+        Update: {
+          componente_id?: string
+          contribucion_pct?: number
+          id?: string
+          periodo_id?: string
+          valor_indice?: number
+          variacion_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "valor_componente_periodo_componente_id_fkey"
+            columns: ["componente_id"]
+            isOneToOne: false
+            referencedRelation: "componente_formula"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "valor_componente_periodo_periodo_id_fkey"
+            columns: ["periodo_id"]
+            isOneToOne: false
+            referencedRelation: "periodo_formula_polinomica"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      valor_concepto_categoria: {
+        Row: {
+          categoria_cct_id: string
+          concepto_cct_id: string
+          id: string
+          valor: number
+        }
+        Insert: {
+          categoria_cct_id: string
+          concepto_cct_id: string
+          id?: string
+          valor: number
+        }
+        Update: {
+          categoria_cct_id?: string
+          concepto_cct_id?: string
+          id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "valor_concepto_categoria_categoria_cct_id_fkey"
+            columns: ["categoria_cct_id"]
+            isOneToOne: false
+            referencedRelation: "categoria_cct"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "valor_concepto_categoria_concepto_cct_id_fkey"
+            columns: ["concepto_cct_id"]
+            isOneToOne: false
+            referencedRelation: "concepto_cct"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vehicles: {
         Row: {
@@ -5386,6 +6681,7 @@ export type Database = {
     }
     Enums: {
       affiliate_status_enum: "Dentro de convenio" | "Fuera de convenio"
+      ambito_concepto_cct: "mod_servicio" | "liquidacion"
       bank_account_status: "ACTIVE" | "INACTIVE" | "CLOSED"
       bank_account_type:
         | "CHECKING"
@@ -5419,6 +6715,14 @@ export type Database = {
         | "CASHED"
         | "VOIDED"
       check_type: "OWN" | "THIRD_PARTY"
+      clase_calculo_concepto:
+        | "FIJO_GLOBAL"
+        | "FIJO_POR_CATEGORIA"
+        | "PCT_CONCEPTO"
+        | "PCT_SUMA_CONCEPTOS"
+        | "POR_ANTIGUEDAD_VALOR"
+        | "POR_ANTIGUEDAD_PCT"
+        | "POR_UNIDAD"
       condition_enum:
         | "operativo"
         | "no operativo"
@@ -5429,8 +6733,16 @@ export type Database = {
         | "ejecutado"
         | "reprogramado"
         | "cancelado"
+      discount_type: "PERCENTAGE" | "FIXED"
       document_applies: "Persona" | "Equipos" | "Empresa"
       document_type_enum: "DNI" | "LE" | "LC" | "PASAPORTE"
+      estado_liquidacion: "borrador" | "confirmada" | "pagada"
+      expense_status:
+        | "DRAFT"
+        | "CONFIRMED"
+        | "PARTIAL_PAID"
+        | "PAID"
+        | "CANCELLED"
       gender_enum: "Masculino" | "Femenino" | "No Declarado"
       hse_doc_status: "pendiente" | "aceptado" | "rechazado" | "pending"
       level_of_education_enum:
@@ -5481,6 +6793,9 @@ export type Database = {
         | "DEBIT_CARD"
         | "CREDIT_CARD"
         | "ACCOUNT"
+        | "DEBIN"
+        | "CREDIN"
+        | "DEBIN_CREDIN"
       payment_order_status: "DRAFT" | "CONFIRMED" | "PAID" | "CANCELLED"
       product_purchase_sale_type: "PURCHASE" | "PURCHASE_SALE"
       product_status: "ACTIVE" | "INACTIVE" | "DISCONTINUED"
@@ -5543,6 +6858,7 @@ export type Database = {
         | "LOSS"
         | "WITHDRAWAL"
       supplier_account_type: "CHECKING" | "SAVINGS"
+      supplier_check_type: "COMMON" | "DEFERRED" | "ELECTRONIC"
       supplier_status: "ACTIVE" | "INACTIVE" | "BLOCKED"
       supplier_tax_condition:
         | "RESPONSABLE_INSCRIPTO"
@@ -5553,6 +6869,20 @@ export type Database = {
       tax_calculation_base: "NET" | "TOTAL" | "VAT"
       tax_kind: "RETENTION" | "PERCEPTION"
       tax_scope: "NATIONAL" | "PROVINCIAL" | "MUNICIPAL"
+      tipo_concepto_cct:
+        | "remunerativo"
+        | "no_remunerativo"
+        | "descuento"
+        | "aporte_patronal"
+        | "provision"
+        | "prevision"
+        | "ausentismo"
+      tipo_indice_polinomico:
+        | "cct"
+        | "ipim_34"
+        | "gasoil_g3"
+        | "ipim_ng"
+        | "custom"
       type_of_maintenance_ENUM: "Correctivo" | "Preventivo"
       voucher_type:
         | "FACTURA_A"

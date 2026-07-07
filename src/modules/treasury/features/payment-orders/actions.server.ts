@@ -234,6 +234,7 @@ export async function getPaymentOrderById(id: string) {
     items: order.items.map((i) => ({
       ...i,
       amount: Number(i.amount),
+      discount_pct: Number(i.discount_pct),
       invoice: i.invoice ? { ...i.invoice, total: Number(i.invoice.total) } : null,
       expense: i.expense ? { ...i.expense, amount: Number(i.expense.amount) } : null,
     })),
@@ -567,6 +568,7 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
             invoice_id: i.invoice_id || null,
             expense_id: i.expense_id || null,
             amount: parseFloat(i.amount),
+            discount_pct: Math.round((i.discount_pct ?? 0) * 100) / 100,
           })),
         },
         payments: {

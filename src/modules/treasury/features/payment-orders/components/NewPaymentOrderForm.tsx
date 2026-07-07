@@ -102,6 +102,10 @@ interface ItemDraft {
   expense_id: string | null;
   invoice_label: string | null;
   amount: string;
+  // Importe base (saldo de la factura/gasto) antes de aplicar el descuento.
+  base_amount: string;
+  // % de descuento aplicado a esta línea (0-100). El amount ya es el neto.
+  discount_pct: string;
 }
 
 interface PaymentDraft {
@@ -211,6 +215,7 @@ export interface PaymentOrderEditData {
     expense_id: string | null;
     invoice_label: string | null;
     amount: string;
+    discount_pct?: number;
   }>;
   payments: Array<{
     payment_method: PaymentMethod;
@@ -236,6 +241,14 @@ interface Props {
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
+
+// Neto a pagar = base × (1 − descuento%). Redondeado a 2 decimales.
+function netFromDiscount(baseAmount: string, discountPct: string): string {
+  const base = parseFloat(baseAmount) || 0;
+  const disc = parseFloat(discountPct) || 0;
+  const net = Math.round(base * (1 - disc / 100) * 100) / 100;
+  return net.toFixed(2);
+}
 
 function emptyPayment(): PaymentDraft {
   return {
@@ -334,7 +347,23 @@ export function NewPaymentOrderForm({
     return result;
   }, [pendingExpenses, expenseCategoryFilter, expenseDueDateFilter]);
 
-  const [items, setItems] = useState<ItemDraft[]>(initialData?.items ?? []);
+  const [globalDiscount, setGlobalDiscount] = useState('0');
+  const [items, setItems] = useState<ItemDraft[]>(
+    initialData?.items?.map((i) => {
+      const disc = i.discount_pct ?? 0;
+      const amt = parseFloat(i.amount) || 0;
+      // Reconstruye el importe base a partir del neto guardado y el % de descuento.
+      const base = disc > 0 && disc < 100 ? amt / (1 - disc / 100) : amt;
+      return {
+        invoice_id: i.invoice_id,
+        expense_id: i.expense_id,
+        invoice_label: i.invoice_label,
+        amount: i.amount,
+        base_amount: (Math.round(base * 100) / 100).toFixed(2),
+        discount_pct: disc ? String(disc) : '0',
+      };
+    }) ?? []
+  );
   const [payments, setPayments] = useState<PaymentDraft[]>(
     initialData?.payments?.map((p) => ({
       ...p,
@@ -422,6 +451,8 @@ export function NewPaymentOrderForm({
         expense_id: null,
         invoice_label: inv.full_number,
         amount: amount.toFixed(2),
+        base_amount: amount.toFixed(2),
+        discount_pct: '0',
       });
       totalAmount += amount;
       appliedCount += 1;
@@ -462,6 +493,11 @@ export function NewPaymentOrderForm({
     () => items.reduce((acc, i) => acc + (parseFloat(i.amount) || 0), 0),
     [items]
   );
+  const grossItemsTotal = useMemo(
+    () => items.reduce((acc, i) => acc + (parseFloat(i.base_amount) || 0), 0),
+    [items]
+  );
+  const discountTotal = Math.round((grossItemsTotal - itemsTotal) * 100) / 100;
   const paymentsTotal = useMemo(
     () => payments.reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0),
     [payments]
@@ -531,13 +567,16 @@ export function NewPaymentOrderForm({
       toast.info('Esa factura ya está agregada');
       return;
     }
+    const base = invoice.remaining.toFixed(2);
     setItems((prev) => [
       ...prev,
       {
         invoice_id: invoice.id,
         expense_id: null,
         invoice_label: invoice.full_number,
-        amount: invoice.remaining.toFixed(2),
+        base_amount: base,
+        discount_pct: globalDiscount,
+        amount: netFromDiscount(base, globalDiscount),
       },
     ]);
   };
@@ -547,27 +586,61 @@ export function NewPaymentOrderForm({
       toast.info('Ese gasto ya está agregado');
       return;
     }
+    const base = expense.remaining.toFixed(2);
     setItems((prev) => [
       ...prev,
       {
         invoice_id: null,
         expense_id: expense.id,
         invoice_label: expense.full_number,
-        amount: expense.remaining.toFixed(2),
+        base_amount: base,
+        discount_pct: globalDiscount,
+        amount: netFromDiscount(base, globalDiscount),
       },
     ]);
   };
 
   const addFreeItem = () => {
-    setItems((prev) => [...prev, { invoice_id: null, expense_id: null, invoice_label: null, amount: '' }]);
+    setItems((prev) => [
+      ...prev,
+      { invoice_id: null, expense_id: null, invoice_label: null, amount: '', base_amount: '', discount_pct: '0' },
+    ]);
   };
 
   const removeItem = (index: number) => {
     setItems((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Editar el monto a mano desvincula la línea del %: pasa a ser un importe manual.
   const updateItemAmount = (index: number, amount: string) => {
-    setItems((prev) => prev.map((item, i) => (i === index ? { ...item, amount } : item)));
+    setItems((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, amount, base_amount: amount, discount_pct: '0' } : item
+      )
+    );
+  };
+
+  // Cambiar el % de una línea recalcula su neto desde el importe base.
+  const updateItemDiscount = (index: number, discount: string) => {
+    setItems((prev) =>
+      prev.map((item, i) =>
+        i === index
+          ? { ...item, discount_pct: discount, amount: netFromDiscount(item.base_amount, discount) }
+          : item
+      )
+    );
+  };
+
+  // Descuento global: setea el % en todas las líneas y recalcula cada neto.
+  const applyGlobalDiscount = (discount: string) => {
+    setGlobalDiscount(discount);
+    setItems((prev) =>
+      prev.map((item) => ({
+        ...item,
+        discount_pct: discount,
+        amount: netFromDiscount(item.base_amount, discount),
+      }))
+    );
   };
 
   const selectedRemainingTotal = useMemo(() => {
@@ -637,6 +710,7 @@ export function NewPaymentOrderForm({
           invoice_id: i.invoice_id,
           expense_id: i.expense_id,
           amount: i.amount.trim(),
+          discount_pct: parseFloat(i.discount_pct) || 0,
         })),
         payments: payments.map((p) => ({
           payment_method: p.payment_method,
@@ -909,10 +983,23 @@ export function NewPaymentOrderForm({
             <CardTitle>{paymentTarget === 'expense' ? 'Gastos' : 'Facturas'} ({items.length})</CardTitle>
             <CardDescription>Importes a pagar — total: ${itemsTotal.toFixed(2)}</CardDescription>
           </div>
-          <Button size="sm" variant="outline" onClick={addFreeItem}>
-            <Plus className="size-4 mr-1" />
-            Ítem sin factura
-          </Button>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs whitespace-nowrap">Descuento global %</Label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
+              value={globalDiscount}
+              onChange={(e) => applyGlobalDiscount(e.target.value)}
+              className="w-20 h-8 text-right font-mono"
+              disabled={items.length === 0}
+            />
+            <Button size="sm" variant="outline" onClick={addFreeItem}>
+              <Plus className="size-4 mr-1" />
+              Ítem sin factura
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {items.length === 0 ? (
@@ -925,7 +1012,8 @@ export function NewPaymentOrderForm({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Documento</TableHead>
-                    <TableHead className="text-right w-[180px]">Monto</TableHead>
+                    <TableHead className="text-right w-[110px]">Desc. %</TableHead>
+                    <TableHead className="text-right w-[170px]">Monto</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -943,10 +1031,26 @@ export function NewPaymentOrderForm({
                         <Input
                           type="number"
                           step="0.01"
+                          min="0"
+                          max="100"
+                          value={item.discount_pct}
+                          onChange={(e) => updateItemDiscount(idx, e.target.value)}
+                          className="text-right font-mono"
+                        />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Input
+                          type="number"
+                          step="0.01"
                           value={item.amount}
                           onChange={(e) => updateItemAmount(idx, e.target.value)}
                           className="text-right font-mono"
                         />
+                        {(parseFloat(item.discount_pct) || 0) > 0 && (
+                          <p className="text-[11px] text-muted-foreground mt-1">
+                            sobre ${(parseFloat(item.base_amount) || 0).toFixed(2)}
+                          </p>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Button
@@ -1284,6 +1388,20 @@ export function NewPaymentOrderForm({
         <CardContent className="p-4 flex items-center justify-between">
           <div className="text-sm">
             <div className="flex flex-wrap gap-x-6 gap-y-1">
+              {discountTotal > 0 && (
+                <div>
+                  <span className="text-muted-foreground">Subtotal (sin desc.):</span>{' '}
+                  <span className="font-mono font-semibold">${grossItemsTotal.toFixed(2)}</span>
+                </div>
+              )}
+              {discountTotal > 0 && (
+                <div>
+                  <span className="text-muted-foreground">Descuento:</span>{' '}
+                  <span className="font-mono font-semibold text-amber-600">
+                    −${discountTotal.toFixed(2)}
+                  </span>
+                </div>
+              )}
               <div>
                 <span className="text-muted-foreground">Total {paymentTarget === 'expense' ? 'gastos' : 'facturas'}:</span>{' '}
                 <span className="font-mono font-semibold">${itemsTotal.toFixed(2)}</span>

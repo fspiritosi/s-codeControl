@@ -2490,6 +2490,7 @@ model payment_order_items {
   invoice_id       String? @db.Uuid
   expense_id       String? @db.Uuid
   amount           Decimal @db.Decimal(15, 2)
+  discount_pct     Decimal @default(0) @db.Decimal(5, 2)
 
   payment_order payment_orders     @relation(fields: [payment_order_id], references: [id], onDelete: Cascade)
   invoice       purchase_invoices? @relation(fields: [invoice_id], references: [id])

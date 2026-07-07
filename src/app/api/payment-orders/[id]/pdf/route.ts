@@ -152,6 +152,7 @@ export async function GET(
           issueDate: it.invoice!.issue_date,
           dueDate: it.invoice!.due_date,
           total: Number(it.invoice!.total),
+          discountPct: Number(it.discount_pct ?? 0),
           appliedAmount: Number(it.amount),
         })),
       expenses: order.items
@@ -162,6 +163,7 @@ export async function GET(
           date: it.expense!.date,
           dueDate: it.expense!.due_date,
           total: Number(it.expense!.amount),
+          discountPct: Number(it.discount_pct ?? 0),
           appliedAmount: Number(it.amount),
         })),
       payments: order.payments.map((p) => ({

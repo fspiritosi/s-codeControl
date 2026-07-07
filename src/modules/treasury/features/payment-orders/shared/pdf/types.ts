@@ -5,6 +5,7 @@ export interface PaymentOrderPDFInvoice {
   issueDate: Date | string | null;
   dueDate: Date | string | null;
   total: number;
+  discountPct: number;
   appliedAmount: number;
 }
 
@@ -14,6 +15,7 @@ export interface PaymentOrderPDFExpense {
   date: Date | string | null;
   dueDate: Date | string | null;
   total: number;
+  discountPct: number;
   appliedAmount: number;
 }
 
