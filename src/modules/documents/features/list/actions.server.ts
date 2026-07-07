@@ -960,10 +960,11 @@ function buildEmployeeDocumentsWhere(
     }
   }
 
-  // 5. Filter by documentName (name on document_type relation — substring match)
+  // 5. Filter by documentName (name on document_type relation — exact match por opciones)
   const docNameFilter = state.filters.documentName;
   if (docNameFilter?.length) {
-    (baseWhere.document_type as any).is.name = { contains: docNameFilter[0], mode: 'insensitive' };
+    (baseWhere.document_type as any).is.name =
+      docNameFilter.length === 1 ? docNameFilter[0] : { in: docNameFilter };
   }
 
   // 6. Filter by resource (employee lastname + firstname — substring match)
@@ -1271,10 +1272,11 @@ function buildEquipmentDocumentsWhere(
     }
   }
 
-  // Filter by documentName (name on document_type relation — substring match)
+  // Filter by documentName (name on document_type relation — exact match por opciones)
   const docNameFilter = state.filters.documentName;
   if (docNameFilter?.length) {
-    (baseWhere.document_type as any).is.name = { contains: docNameFilter[0], mode: 'insensitive' };
+    (baseWhere.document_type as any).is.name =
+      docNameFilter.length === 1 ? docNameFilter[0] : { in: docNameFilter };
   }
 
   // Filter by resource (vehicle domain — substring match)

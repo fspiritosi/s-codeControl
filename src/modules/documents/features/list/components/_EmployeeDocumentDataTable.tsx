@@ -26,7 +26,7 @@ const FILTER_DEFINITIONS: { columnId: string; title: string; type: 'faceted' | '
   { columnId: 'state', title: 'Estado', type: 'faceted' },
   { columnId: 'mandatory', title: 'Obligatorio', type: 'faceted' },
   { columnId: 'resource', title: 'Empleado', type: 'text' },
-  { columnId: 'documentName', title: 'Documento', type: 'text' },
+  { columnId: 'documentName', title: 'Documento', type: 'faceted' },
   { columnId: 'allocated_to', title: 'Afectado a', type: 'text' },
   { columnId: 'validity', title: 'Vencimiento', type: 'dateRange' },
 ];
