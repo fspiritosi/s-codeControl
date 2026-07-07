@@ -37,4 +37,39 @@ Material de referencia provisto por Transporte SP SRL que se usa como **fuente d
 
 > A medida que se implementa cada fase, dejar acá las interpretaciones no triviales hechas al pasar de Excel a código (ej. "la planilla redondea por concepto antes de sumar; replicamos ese comportamiento en `calcular-mod.ts:42`").
 
-_(vacío hasta que arranque Fase 1)_
+### Fase 4 (E-4) — Composición de costos y outputs
+
+Las planillas `.xls/.xlsx` se leyeron con SheetJS (`node -e "require('xlsx')..."`, ya es dependencia del proyecto). Hojas: `Resumen`, `MOD`, `OCP`, `Equipos`, `Combustible`.
+
+**Fórmula de composición (hoja "Resumen", confirmada en PECOM y AESA):** márgenes por **divisor**, no en cascada.
+
+```
+total_directo      = MOD + OCP + Equipos + Combustible
+suma_margenes      = iibb + debcred + estructura + ganancia
+total_con_margenes = total_directo / (1 − suma_margenes)
+licencia           = total_con_margenes × licencia_ordenanza   (Ordenanza 2008/18 = 8,4/1000 = 0,0084)
+precio_mensual     = total_con_margenes + licencia
+```
+
+Márgenes comerciales en ambos servicios: débitos/créditos 1%, IIBB 3%, estructura 5%, ganancia (margen) 10% → suma 19%.
+
+Golden verificados en `calcular-composicion.test.ts`:
+- **PECOM Jun25:** directo 18.924.708,03 → precio mensual **23.560.093,31** (planilla C17).
+- **AESA Abr26:** directo 21.835.329,90 → precio mensual **27.183.637,86** (planilla C19).
+
+**Ingeniería inversa de outputs** (extraída de las fórmulas de celda). Los outputs NO siempre derivan del precio mensual; hay que modelar la base y el divisor. Tipos implementados en `calcular-outputs.ts`:
+
+| Servicio | Output | Fórmula de celda | Modelo `FormulaOutput` | Valor |
+|---|---|---|---|---|
+| PECOM | Km excedente | `(precio/2500)*50%` | `precio_div_kms_x_factor` {kms_base 2500, factor 0.5} | 4.712,02 |
+| PECOM | Día feriado/sáb/dom | `precio_con_descuento/22` = `(precio×0.93)/22` | `base_div_divisor` {base precio_mensual, factor_previo 0.93, divisor 22} | 995.949,40 |
+| PECOM | Hora excedente | `MOD/341` | `base_div_divisor` {base mod, divisor 341} | 17.360,86 |
+| PECOM | Descuento comercial | `precio×(1−0.07)` | `pct_sobre_precio` {porcentaje 0.07, modo descuento} | 21.910.886,78 |
+| AESA | Km excedente | `(precio/5800)*51.45%` | `precio_div_kms_x_factor` {kms_base 5800, factor 0.5145} | 2.411,38 |
+| AESA | Día stand by | `(precio/30)*(propMOD + propEquipos/2)` | `precio_ponderado_div_divisor` {divisor 30, [mod×1, equipos×0.5]} | 538.089,52 |
+
+Notas:
+- **Día feriado (PECOM)** usa el precio *con descuento del 7%*, no el precio mensual. Se modeló con `factor_previo: 0.93` para no acoplar dos outputs entre sí.
+- **Hora excedente (PECOM)** deriva del **MOD**, no del precio.
+- **Día stand by (AESA)** pondera por la participación de MOD y Equipos sobre el costo directo (`proporción(base) = base / total_directo`).
+- Los subtotales del golden se transcriben en **precisión completa** (p. ej. MOD PECOM `5920054.312596719`) para reproducir el centavo exacto de la planilla; los motores de producción redondean a 2 decimales en la frontera cliente.

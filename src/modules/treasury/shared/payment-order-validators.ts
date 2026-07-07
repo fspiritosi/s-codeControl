@@ -9,6 +9,12 @@ export const paymentOrderItemSchema = z.object({
   invoice_id: z.string().uuid().optional().nullable(),
   expense_id: z.string().uuid().optional().nullable(),
   amount: amountString.refine((v) => parseFloat(v) > 0, 'Debe ser mayor a 0'),
+  discount_pct: z.coerce
+    .number()
+    .min(0, 'El descuento no puede ser negativo')
+    .max(100, 'El descuento no puede superar 100%')
+    .optional()
+    .default(0),
 });
 export type PaymentOrderItemFormData = z.infer<typeof paymentOrderItemSchema>;
 

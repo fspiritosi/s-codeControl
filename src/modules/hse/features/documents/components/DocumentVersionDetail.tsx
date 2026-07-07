@@ -169,7 +169,7 @@ export default function DocumentVersionDetail({ id, version }: DocumentVersionDe
 
         if (!doc) {
           console.error('Documento no encontrado');
-          router.push('/dashboard/hse/documents');
+          router.push('/dashboard/hse');
           return;
         }
 

@@ -122,6 +122,7 @@ export function PaymentOrderTemplate({ data }: { data: PaymentOrderPDFData }) {
                 <Text style={styles.invVoucher}>Comprobante</Text>
                 <Text style={styles.invCurrency}>Moneda</Text>
                 <Text style={styles.invTotal}>Total documento</Text>
+                <Text style={styles.invDiscount}>Desc.</Text>
                 <Text style={styles.invApplied}>Importe aplicado</Text>
               </View>
               {invoices.map((inv, i) => (
@@ -131,6 +132,7 @@ export function PaymentOrderTemplate({ data }: { data: PaymentOrderPDFData }) {
                   <Text style={styles.invVoucher}>{inv.fullNumber}</Text>
                   <Text style={styles.invCurrency}>ARS</Text>
                   <Text style={styles.invTotal}>{fmtAmount(inv.total)}</Text>
+                  <Text style={styles.invDiscount}>{inv.discountPct > 0 ? `${inv.discountPct}%` : '-'}</Text>
                   <Text style={styles.invApplied}>{fmtAmount(inv.appliedAmount)}</Text>
                 </View>
               ))}
@@ -148,6 +150,7 @@ export function PaymentOrderTemplate({ data }: { data: PaymentOrderPDFData }) {
                 <Text style={styles.invVoucher}>Comprobante</Text>
                 <Text style={styles.invCurrency}>Descripción</Text>
                 <Text style={styles.invTotal}>Total</Text>
+                <Text style={styles.invDiscount}>Desc.</Text>
                 <Text style={styles.invApplied}>Importe aplicado</Text>
               </View>
               {expenses.map((exp, i) => (
@@ -157,6 +160,7 @@ export function PaymentOrderTemplate({ data }: { data: PaymentOrderPDFData }) {
                   <Text style={styles.invVoucher}>{exp.fullNumber}</Text>
                   <Text style={styles.invCurrency}>{exp.description}</Text>
                   <Text style={styles.invTotal}>{fmtAmount(exp.total)}</Text>
+                  <Text style={styles.invDiscount}>{exp.discountPct > 0 ? `${exp.discountPct}%` : '-'}</Text>
                   <Text style={styles.invApplied}>{fmtAmount(exp.appliedAmount)}</Text>
                 </View>
               ))}

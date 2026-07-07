@@ -192,7 +192,7 @@ export async function imputeInvoicesToOrder(orderId: string, invoiceIds: string[
     await recalcInvoicingStatus(orderId);
 
     revalidatePath('/dashboard/purchasing');
-    revalidatePath(`/dashboard/purchasing/purchase-orders/${orderId}`);
+    revalidatePath(`/dashboard/purchasing/orders/${orderId}`);
     const summary = await getOrderImputationSummary(orderId);
     return { error: null, summary };
   } catch (error: any) {
@@ -217,7 +217,7 @@ export async function removeInvoiceFromOrder(orderId: string, invoiceId: string)
     await recalcInvoicingStatus(orderId);
 
     revalidatePath('/dashboard/purchasing');
-    revalidatePath(`/dashboard/purchasing/purchase-orders/${orderId}`);
+    revalidatePath(`/dashboard/purchasing/orders/${orderId}`);
     return { error: null };
   } catch (error: any) {
     console.error('Error desimputando factura de OC:', error);
@@ -251,7 +251,7 @@ export async function imputeExpensesToOrder(orderId: string, expenseIds: string[
     });
 
     revalidatePath('/dashboard/purchasing');
-    revalidatePath(`/dashboard/purchasing/purchase-orders/${orderId}`);
+    revalidatePath(`/dashboard/purchasing/orders/${orderId}`);
     const summary = await getOrderImputationSummary(orderId);
     return { error: null, summary };
   } catch (error: any) {
@@ -274,7 +274,7 @@ export async function removeExpenseFromOrder(orderId: string, expenseId: string)
     });
 
     revalidatePath('/dashboard/purchasing');
-    revalidatePath(`/dashboard/purchasing/purchase-orders/${orderId}`);
+    revalidatePath(`/dashboard/purchasing/orders/${orderId}`);
     return { error: null };
   } catch (error: any) {
     console.error('Error desimputando gasto de OC:', error);
@@ -360,7 +360,7 @@ export async function confirmPurchaseOrderAttachmentUpload(input: {
       },
     });
 
-    revalidatePath(`/dashboard/purchasing/purchase-orders/${orderId}`);
+    revalidatePath(`/dashboard/purchasing/orders/${orderId}`);
     return { error: null };
   } catch (error: any) {
     console.error('Error confirmando adjunto de OC:', error);
@@ -405,7 +405,7 @@ export async function deletePurchaseOrderAttachment(attachmentId: string) {
 
     await prisma.purchase_order_attachments.delete({ where: { id: attachmentId } });
 
-    revalidatePath(`/dashboard/purchasing/purchase-orders/${attachment.purchase_order_id}`);
+    revalidatePath(`/dashboard/purchasing/orders/${attachment.purchase_order_id}`);
     return { error: null };
   } catch (error: any) {
     console.error('Error eliminando adjunto de OC:', error);

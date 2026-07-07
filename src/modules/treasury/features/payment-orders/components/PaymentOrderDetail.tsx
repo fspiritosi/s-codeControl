@@ -102,6 +102,7 @@ export async function PaymentOrderDetail({ id }: { id: string }) {
                 <TableHead>Factura</TableHead>
                 <TableHead>Fecha emisión</TableHead>
                 <TableHead>Total factura</TableHead>
+                <TableHead className="text-right">Desc.</TableHead>
                 <TableHead className="text-right">Importe imputado</TableHead>
               </TableRow>
             </TableHeader>
@@ -129,6 +130,9 @@ export async function PaymentOrderDetail({ id }: { id: string }) {
                       : item.expense
                         ? `$${item.expense.amount.toFixed(2)}`
                         : '-'}
+                  </TableCell>
+                  <TableCell className="text-right font-mono text-sm">
+                    {item.discount_pct > 0 ? `${item.discount_pct}%` : '-'}
                   </TableCell>
                   <TableCell className="text-right font-mono font-semibold">
                     ${item.amount.toFixed(2)}

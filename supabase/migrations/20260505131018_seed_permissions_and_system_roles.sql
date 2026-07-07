@@ -240,7 +240,7 @@ INSERT INTO "notification_types" ("code", "title_template", "description_templat
     'La OC {{number}} de {{supplier}} está pendiente de aprobación.',
     'advertencia',
     'compras.approve',
-    '/dashboard/purchasing/purchase-orders/{{purchaseOrderId}}',
+    '/dashboard/purchasing/orders/{{purchaseOrderId}}',
     true
   ),
   (

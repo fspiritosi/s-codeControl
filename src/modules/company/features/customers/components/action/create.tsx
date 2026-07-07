@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 export async function createdCustomer(formData: FormData) {
   try {
-    revalidatePath('/dashboard/company/customers');
+    revalidatePath('/dashboard/company/actualCompany/customers');
 
     const form = Object.fromEntries(formData.entries());
 
