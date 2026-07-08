@@ -28,35 +28,57 @@ export function DataTableDateRangeFilter({
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const [, startTransition] = React.useTransition();
 
   const fromKey = `${columnId}_from`;
   const toKey = `${columnId}_to`;
 
-  const fromValue = searchParams.get(fromKey);
-  const toValue = searchParams.get(toKey);
+  const urlFrom = searchParams.get(fromKey);
+  const urlTo = searchParams.get(toKey);
+
+  // Estado optimista: el calendario, el badge y el borde reaccionan al instante
+  // al elegir una fecha, sin esperar el round-trip al servidor (el filtro real
+  // viaja por la URL). Se re-sincroniza cuando el servidor confirma el cambio.
+  const [fromValue, setFromValue] = React.useState<string | null>(urlFrom);
+  const [toValue, setToValue] = React.useState<string | null>(urlTo);
+  React.useEffect(() => {
+    setFromValue(urlFrom);
+    setToValue(urlTo);
+  }, [urlFrom, urlTo]);
 
   const fromDate = fromValue ? new Date(fromValue) : undefined;
   const toDate = toValue ? new Date(toValue) : undefined;
 
   const hasValue = !!(fromValue || toValue);
 
+  const pushParams = (params: URLSearchParams) => {
+    params.set('page', '1');
+    // La navegación no bloquea la UI; el estado optimista ya reflejó la selección.
+    startTransition(() => {
+      router.replace(`${pathname}?${params.toString()}`);
+    });
+  };
+
   const updateParam = (key: string, value: string | null) => {
+    // Reflejo visual inmediato antes del round-trip.
+    if (key === fromKey) setFromValue(value);
+    if (key === toKey) setToValue(value);
     const params = new URLSearchParams(searchParams.toString());
     if (value) {
       params.set(key, value);
     } else {
       params.delete(key);
     }
-    params.set('page', '1');
-    router.replace(`${pathname}?${params.toString()}`);
+    pushParams(params);
   };
 
   const clearFilter = () => {
+    setFromValue(null);
+    setToValue(null);
     const params = new URLSearchParams(searchParams.toString());
     params.delete(fromKey);
     params.delete(toKey);
-    params.set('page', '1');
-    router.replace(`${pathname}?${params.toString()}`);
+    pushParams(params);
   };
 
   return (
