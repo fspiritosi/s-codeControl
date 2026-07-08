@@ -160,6 +160,13 @@ enum expense_status {
   CANCELLED
 }
 
+enum vtv_appointment_status {
+  pendiente
+  orden_solicitada
+  realizada
+  cancelada
+}
+
 enum type_of_maintenance_ENUM {
   Correctivo
   Preventivo
@@ -414,6 +421,9 @@ model company {
   costo_equipos         costo_equipo[]
   servicios_contrato    servicio_contrato[]
   liquidaciones_sueldos liquidacion_sueldo[]
+
+  // VTV
+  vtv_appointments vtv_appointments[]
 }
 
 model pdf_settings {
@@ -636,6 +646,7 @@ model vehicles {
   dailyreportequipmentrelations dailyreportequipmentrelations[]
   repair_solicitudes            repair_solicitudes[]
   withdrawal_orders             withdrawal_orders[]
+  vtv_appointments              vtv_appointments[]
 
   // Costos
   costo_equipo          costo_equipo?
@@ -684,6 +695,7 @@ model document_types {
   is_it_montlhy Boolean?
   down_document Boolean?
   conditions    Json[]
+  is_vtv        Boolean?         @default(false)
 
   company             company?              @relation(fields: [company_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
   documents_employees documents_employees[]
@@ -737,7 +749,33 @@ model documents_equipment {
   vehicle       vehicles?       @relation(fields: [applies], references: [id], onUpdate: Cascade, onDelete: Cascade)
   user          profile?        @relation("documents_equipment_user", fields: [user_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
 
-  logs documents_equipment_logs[]
+  logs             documents_equipment_logs[]
+  vtv_appointments vtv_appointments[]
+}
+
+model vtv_appointments {
+  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id            String                 @db.Uuid
+  vehicle_id            String                 @db.Uuid
+  document_equipment_id String?                @db.Uuid
+  appointment_date      DateTime               @db.Date
+  document_validity     DateTime?              @db.Date
+  status                vtv_appointment_status @default(pendiente)
+  notes                 String?
+  created_by            String?
+  is_active             Boolean                @default(true)
+  created_at            DateTime               @default(now()) @db.Timestamptz
+  updated_at            DateTime               @default(now()) @db.Timestamptz
+
+  company             company              @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  vehicle             vehicles             @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
+  documents_equipment documents_equipment? @relation(fields: [document_equipment_id], references: [id], onDelete: SetNull)
+
+  @@index([company_id])
+  @@index([vehicle_id])
+  @@index([document_equipment_id])
+  @@index([status])
+  @@index([appointment_date])
 }
 
 model documents_equipment_logs {

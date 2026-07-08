@@ -58,6 +58,7 @@ const documentTypeSchema = z.object({
   down_document: z.boolean(),
   multiresource: z.boolean(),
   special: z.boolean(),
+  is_vtv: z.boolean(),
   description: z.string().optional(),
 });
 
@@ -97,6 +98,12 @@ const checkboxFields = [
     id: 'multiresource' as const,
     label: 'Multi recurso',
     tooltip: 'Un solo documento aplica a todos los recursos',
+  },
+  {
+    id: 'is_vtv' as const,
+    label: 'Es VTV (verificación técnica vehicular)',
+    tooltip:
+      'Marcar si este tipo de documento representa la VTV; habilita el calendario de vencimientos de VTV.',
   },
 ];
 
@@ -139,6 +146,7 @@ export function DocumentTypeFormModal({
       down_document: false,
       multiresource: false,
       special: false,
+      is_vtv: false,
       description: '',
     },
   });
@@ -175,6 +183,7 @@ export function DocumentTypeFormModal({
             down_document: docType.down_document ?? false,
             multiresource: docType.multiresource,
             special: docType.special,
+            is_vtv: docType.is_vtv ?? false,
             description: docType.description ?? '',
           });
           // Parse conditions from DB (stored as Json[])
@@ -200,6 +209,7 @@ export function DocumentTypeFormModal({
         down_document: false,
         multiresource: false,
         special: false,
+        is_vtv: false,
         description: '',
       });
       setConditions([]);
@@ -211,6 +221,10 @@ export function DocumentTypeFormModal({
     if (applies === 'Empresa') {
       setValue('multiresource', false);
       setValue('down_document', false);
+    }
+    // VTV only applies to equipment/vehicles.
+    if (applies !== 'Equipos') {
+      setValue('is_vtv', false);
     }
   }, [applies, setValue]);
 
@@ -274,6 +288,10 @@ export function DocumentTypeFormModal({
   // Determine which checkboxes are hidden or disabled
   function isHidden(fieldId: string) {
     if (applies === 'Empresa' && (fieldId === 'multiresource' || fieldId === 'down_document')) {
+      return true;
+    }
+    // VTV only applies to equipment/vehicles.
+    if (fieldId === 'is_vtv' && applies !== 'Equipos') {
       return true;
     }
     return false;

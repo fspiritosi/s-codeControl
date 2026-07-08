@@ -132,7 +132,7 @@ export async function createNotification(input: CreateNotificationInput): Promis
  * Devuelve los profile_ids de los usuarios de una empresa que tienen el
  * permiso indicado, considerando user_roles + fallback legacy y al owner.
  */
-async function resolveProfilesByPermission(
+export async function resolveProfilesByPermission(
   companyId: string,
   permissionCode: string
 ): Promise<string[]> {
@@ -190,6 +190,30 @@ async function resolveProfilesByPermission(
   }
 
   return Array.from(result);
+}
+
+/**
+ * Resuelve los emails de los destinatarios de una empresa que tienen el
+ * permiso indicado. Reutiliza resolveProfilesByPermission para los profile_ids
+ * y luego busca su email en `profile`. Filtra nulos y duplicados.
+ */
+export async function resolveRecipientEmails(
+  companyId: string,
+  permissionCode: string
+): Promise<string[]> {
+  const profileIds = await resolveProfilesByPermission(companyId, permissionCode);
+  if (profileIds.length === 0) return [];
+
+  const profiles = await prisma.profile.findMany({
+    where: { id: { in: profileIds }, email: { not: null } },
+    select: { email: true },
+  });
+
+  const emails = new Set<string>();
+  for (const p of profiles) {
+    if (p.email) emails.add(p.email);
+  }
+  return Array.from(emails);
 }
 
 // ============================================================
