@@ -129,8 +129,13 @@ components), 1.3 (waterfalls) y 4.1 (dedup libs)** son el camino directo a mejor
 
 ## 4. Track 1 — Performance / UX *(guiado por el ranking de Fase 0)*
 
-- [ ] **1.1 Code-splitting de librerías pesadas.** `next/dynamic` (con `ssr:false` donde aplique) para:
-  `@react-pdf/renderer` (20 archivos), `jspdf` + `jspdf-autotable`, `exceljs`/`xlsx`, `recharts`, `framer-motion`, `html-to-image`, `react-qr-code`, `swiper`. Se cargan al abrir el diálogo/exportar, no en el bundle de la ruta. **Máximo impacto / menor riesgo → primero.**
+- [~] **1.1 Code-splitting de librerías pesadas.** `next/dynamic` (con `ssr:false` donde aplique). **En progreso:**
+  - [x] **recharts**: `PantallaFormula` (fórmula polinómica) y tab de estadísticas de capacitación (extraído a `TrainingStatisticsTab`). Los otros 2 consumidores (`FormCard`, admin panel) ya eran dynamic. Verificado: el chart carga async tras el paint.
+  - [x] **@react-pdf/renderer (~478KB)**: `ChecklistSergio`, `VehicleInspectionChecklist`, `DynamicChecklistForm` → dynamic `ssr:false`. Solo el checklist HSE lo usa en cliente; el resto (payment/purchase/withdrawal/composición) ya es server-side (`renderToBuffer`).
+  - [ ] **xlsx / exceljs (~387KB)**: consolidar (Track 4.1) + cargar on-demand al exportar.
+  - [ ] **jspdf, framer-motion, html-to-image, react-qr-code, swiper**: revisar consumidores estáticos.
+
+  > **Aprendizaje de método:** el code-splitting **no reduce el JS total emitido** (de hecho sube levemente por los wrappers) — mueve los chunks pesados fuera del *load inicial de cada ruta*. Por eso `measure-bundles.mjs` (mide total) **no** sirve para validar 1.1: la validación correcta es **runtime per-route** (network + trazas). Los chunks de react-pdf/recharts **no** están en el baseline compartido ni en las rutas medidas como lentas (treasury/document/costos-index); 1.1 mejora rutas de **charts/PDF** (fórmula, capacitación, checklist, forms). Las rutas más lentas medidas se atacan con **Track 1.2/1.3** (menos client components + waterfalls), que es el siguiente paso de mayor impacto ahí.
 - [ ] **1.2 Reducir client components.** Convertir a RSC lo que no tiene interactividad real (patrón *Server Component + Client Island*). Foco en rutas del top del ranking; medir antes/después. Objetivo dirigido por presupuesto, no por porcentaje arbitrario.
 - [ ] **1.3 Eliminar waterfalls cliente.** Los 38 componentes que fetchean en `useEffect`: mover la carga inicial al RSC (prefetch + `HydrationBoundary`) o a react-query con prefetch. **Alto impacto en lentitud percibida → junto con 1.1.**
 - [ ] **1.4 Streaming y percepción.** `loading.tsx` + `Suspense` boundaries por ruta, skeletons consistentes, optimistic UI donde aplique (ya hay precedente en TKT 445).
