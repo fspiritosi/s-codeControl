@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
-import { createNotification } from '@/shared/services/notifications';
+import { createNotification, resolveRecipientEmails } from '@/shared/services/notifications';
+import { sendEmail } from '@/shared/actions/email';
+
+/** Umbral fijo de urgencia para VTV por vencer (días). */
+const VTV_EXPIRING_DAYS = 7;
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -41,6 +45,9 @@ async function handleCron(req: NextRequest) {
   const in5Days = new Date(today);
   in5Days.setDate(in5Days.getDate() + 5);
   const in5Str = in5Days.toISOString().slice(0, 10);
+  const inVtvDays = new Date(today);
+  inVtvDays.setDate(inVtvDays.getDate() + VTV_EXPIRING_DAYS);
+  const inVtvStr = inVtvDays.toISOString().slice(0, 10);
 
   const summary: Record<string, { created: number; skipped: number }> = {};
   const bump = (key: string, skipped: boolean) => {
@@ -112,6 +119,27 @@ async function handleCron(req: NextRequest) {
           dedupeKey: `payment_orders.pending_confirmation:${op.id}:${todayStr}`,
         });
         bump('payment_orders.pending_confirmation', !!r.skipped);
+      }
+
+      // 5. VTV por vencer en los próximos VTV_EXPIRING_DAYS (7) días.
+      //    In-app (createNotification, idempotente por dedupeKey diario) + email.
+      const vtvExpiring = await countExpiringVtv(c.id, todayStr, inVtvStr);
+      if (vtvExpiring > 0) {
+        const r = await createNotification({
+          typeCode: 'vtv.expiring_soon',
+          companyId: c.id,
+          metadata: { count: vtvExpiring, days: VTV_EXPIRING_DAYS },
+          dedupeKey: `vtv.expiring_soon:${todayStr}`,
+        });
+        bump('vtv.expiring_soon', !!r.skipped);
+
+        // Email atado a la misma idempotencia del in-app: solo si NO fue skipped.
+        if (!r.skipped) {
+          const emails = await resolveRecipientEmails(c.id, 'equipos.view');
+          if (emails.length) {
+            await sendVtvExpiringEmail(emails, vtvExpiring, VTV_EXPIRING_DAYS);
+          }
+        }
       }
     }
 
@@ -195,4 +223,46 @@ async function countExpiringSoonDocuments(
     }),
   ]);
   return emp + eq + comp;
+}
+
+/**
+ * Cuenta documentos de equipos de tipo VTV (document_type.is_vtv = true) cuya
+ * validity está entre [todayStr, inNStr] (ambos inclusive). Scope por empresa
+ * vía la relación al vehículo. validity es String (YYYY-MM-DD) → comparación
+ * lexicográfica. Excluye estados 'vencido'/'rechazado'.
+ */
+async function countExpiringVtv(
+  companyId: string,
+  todayStr: string,
+  inNStr: string
+): Promise<number> {
+  return prisma.documents_equipment.count({
+    where: {
+      is_active: true,
+      state: { notIn: ['vencido' as const, 'rechazado' as const] },
+      validity: { gte: todayStr, lte: inNStr },
+      vehicle: { company_id: companyId },
+      document_type: { is: { is_vtv: true } },
+    },
+  });
+}
+
+/**
+ * Envía el email de urgencia de VTV por vencer a los destinatarios resueltos
+ * por permiso. Safe-to-fail: un error de email NO debe tumbar el cron (log y
+ * seguir), coherente con el patrón de createNotification. nodemailer acepta
+ * lista de destinatarios separada por coma.
+ */
+async function sendVtvExpiringEmail(to: string[], count: number, days: number): Promise<void> {
+  try {
+    const url = `${process.env.NEXT_PUBLIC_PROJECT_URL ?? ''}/dashboard/vtv`;
+    await sendEmail({
+      to: to.join(','),
+      subject: `CodeControl — ${count} VTV por vencer`,
+      html: `<p>Tenés <strong>${count}</strong> VTV que vence(n) en los próximos ${days} días.</p>
+             <p><a href="${url}">Ver calendario de VTV</a></p>`,
+    });
+  } catch (error) {
+    console.error('sendVtvExpiringEmail error:', error);
+  }
 }

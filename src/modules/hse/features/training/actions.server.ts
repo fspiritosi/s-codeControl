@@ -1,5 +1,6 @@
 'use server';
 
+import { fetchCurrentUser } from '@/shared/actions/auth';
 import { storageServer } from '@/shared/lib/storage-server';
 // TODO: Phase 8 — migrate .from() queries to Prisma server actions and .auth to NextAuth
 import { supabaseServer } from '@/shared/lib/supabase/server';
@@ -12,7 +13,7 @@ import { cookies } from 'next/headers';
 export const createTraining = async (data: { title: string; description: string; passing_score?: number }) => {
   try {
     const supabase = (await supabaseServer()) as any;
-    const user = await supabase.auth.getUser();
+    const user = await fetchCurrentUser();
     const cookiesStore = await cookies();
     const company_id = cookiesStore.get('actualComp')?.value;
 
@@ -22,7 +23,7 @@ export const createTraining = async (data: { title: string; description: string;
       return { success: false, error: 'No se ha seleccionado una empresa' };
     }
 
-    if (!user.data.user) {
+    if (!user) {
       console.error('No hay usuario autenticado');
       return { success: false, error: 'No se ha iniciado sesión' };
     }
@@ -1420,8 +1421,14 @@ export const deleteTraining = async (trainingId: string) => {
       return { success: false, error: 'Error al eliminar materiales de la capacitación' };
     }
 
-    const documentsUrl = materials.map((material: any) => material.file_url);
-    await storageServer.remove('documents', documentsUrl);
+    const documentsUrl = materials
+      .map((material: any) => material.file_url)
+      .filter((url: string | null): url is string => Boolean(url));
+    // Supabase Storage rechaza un array vacío (body/prefixes must NOT have fewer
+    // than 1 items), así que solo intentamos borrar si hay archivos.
+    if (documentsUrl.length > 0) {
+      await storageServer.remove('documents', documentsUrl);
+    }
     await supabase.from('training_materials').delete().eq('training_id', trainingId);
 
     // 5. Finalmente eliminar la capacitación

@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { FiTool, FiTruck } from 'react-icons/fi';
 import {
   MdCalendarMonth,
+  MdEventAvailable,
   MdHelpOutline,
   MdListAlt,
   MdOutlineCorporateFare,
@@ -47,6 +48,11 @@ const Allinks = [
     name: 'Equipos',
     href: '/dashboard/equipment',
     icon: <FiTruck size={sizeIcons} />,
+  },
+  {
+    name: 'VTV',
+    href: '/dashboard/vtv',
+    icon: <MdEventAvailable size={sizeIcons} />,
   },
   {
     name: 'Documentación',
@@ -120,9 +126,15 @@ export default function SideLinks({ expanded }: { expanded: boolean }) {
     !administrador && owner_id !== actualCompany
       ? Allinks.filter(
           (link) =>
-            link.name !== 'Empresa' && (role !== 'Invitado' || (link.name !== 'Dashboard' && link.name !== 'Ayuda'))
+            link.name !== 'Empresa' &&
+            (role !== 'Invitado' ||
+              (link.name !== 'Dashboard' && link.name !== 'Ayuda' && link.name !== 'VTV'))
         )
-      : Allinks.filter((link) => role !== 'Invitado' || (link.name !== 'Dashboard' && link.name !== 'Ayuda'));
+      : Allinks.filter(
+          (link) =>
+            role !== 'Invitado' ||
+            (link.name !== 'Dashboard' && link.name !== 'Ayuda' && link.name !== 'VTV')
+        );
 
   if (isAuditor) {
     return null;

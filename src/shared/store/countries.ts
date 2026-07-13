@@ -86,7 +86,7 @@ const documentTypes = async (id: string | undefined) => {
       return acc;
     }, {}) as MandatoryDocuments;
 
-  useCountriesStore.setState({ companyDocumentTypes: document_types as Equipo });
+  useCountriesStore.setState({ companyDocumentTypes: document_types as unknown as Equipo });
   useCountriesStore.setState({ mandatoryDocuments: groupedData });
 };
 

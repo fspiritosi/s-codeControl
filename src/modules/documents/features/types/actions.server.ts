@@ -25,6 +25,7 @@ export interface CreateDocumentTypeInput {
   down_document: boolean;
   multiresource: boolean;
   special: boolean;
+  is_vtv: boolean;
   description?: string;
   conditions?: { field: string; values: string[]; type: 'enum' | 'relation' }[];
 }
@@ -265,6 +266,9 @@ export async function createDocumentType(input: CreateDocumentTypeInput) {
     const multiresource = input.applies === 'Empresa' ? false : input.multiresource;
     const down_document = input.applies === 'Empresa' ? false : input.down_document;
 
+    // VTV only applies to equipment/vehicles.
+    const is_vtv = input.applies === 'Equipos' ? input.is_vtv : false;
+
     // If not conditional, force conditions to empty
     const conditions = input.special ? (input.conditions ?? []) : [];
 
@@ -282,6 +286,7 @@ export async function createDocumentType(input: CreateDocumentTypeInput) {
         is_it_montlhy: input.is_it_montlhy,
         down_document,
         multiresource,
+        is_vtv,
         conditions,
       },
     });
@@ -330,6 +335,9 @@ export async function updateDocumentType(
     const multiresource = input.applies === 'Empresa' ? false : input.multiresource;
     const down_document = input.applies === 'Empresa' ? false : input.down_document;
 
+    // VTV only applies to equipment/vehicles.
+    const is_vtv = input.applies === 'Equipos' ? input.is_vtv : false;
+
     // If not conditional, force conditions to empty
     const conditions = input.special ? (input.conditions ?? []) : [];
 
@@ -346,6 +354,7 @@ export async function updateDocumentType(
         is_it_montlhy: input.is_it_montlhy,
         down_document,
         multiresource,
+        is_vtv,
         conditions,
       },
     });
