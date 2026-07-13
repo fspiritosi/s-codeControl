@@ -44,6 +44,8 @@ async function fetchVtvAppointments(
       is_active: true,
       status: { in: CALENDAR_STATUSES },
       appointment_date: { gte: from, lte: to },
+      // Excluir vehículos dados de baja / inactivos.
+      vehicle: { is: { is_active: true } },
     },
     select: {
       id: true,
@@ -127,7 +129,8 @@ export async function getExpiringVtvDocuments(
       is_active: true,
       state: { notIn: ['vencido', 'rechazado'] },
       validity: { gte: todayStr, lte: untilStr },
-      vehicle: { is: { company_id: companyId } },
+      // Excluir vehículos dados de baja / inactivos.
+      vehicle: { is: { company_id: companyId, is_active: true } },
       document_type: { is: { is_vtv: true } },
     },
     select: {
@@ -398,6 +401,8 @@ async function fetchVtvListRaw(companyId: string): Promise<VtvListItem[]> {
       company_id: companyId,
       is_active: true,
       status: { not: 'cancelada' },
+      // Excluir turnos de vehículos dados de baja / inactivos (incluye huérfanos).
+      vehicle: { is: { is_active: true } },
     },
     select: {
       id: true,
