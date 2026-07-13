@@ -20,7 +20,15 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import BackButton from '@/shared/components/common/BackButton';
-import { TransporteSPANAYCHKHYS03 } from '@/modules/hse/features/checklist/components/pdf/generators/TransporteSPANAYCHKHYS03';
+import dynamic from 'next/dynamic';
+// Carga diferida: react-pdf (~478KB) solo se descarga al previsualizar/generar el PDF.
+const TransporteSPANAYCHKHYS03 = dynamic(
+  () =>
+    import('@/modules/hse/features/checklist/components/pdf/generators/TransporteSPANAYCHKHYS03').then(
+      (m) => m.TransporteSPANAYCHKHYS03
+    ),
+  { ssr: false }
+);
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/shared/components/ui/command';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
