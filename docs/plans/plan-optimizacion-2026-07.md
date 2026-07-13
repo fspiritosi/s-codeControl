@@ -91,21 +91,39 @@ En **Next 16 el build usa Turbopack**, y esto cambia la instrumentación:
 
 > Conclusión medida: el "First Load JS" global es sano; la lentitud de navegación viene de **rutas concretas** que arrastran ~0.5–1 MB gzip de librerías que deberían cargarse bajo demanda. Esto valida y prioriza los Tracks 1.1 y 4.1 con datos duros.
 
-### 3.3 — Pendiente: métricas de runtime (requiere tu input)
+### 3.3 — Resultados de runtime (medido 2026-07-13)
 
-Para completar LCP/INP/waterfalls por ruta de dashboard hace falta una **sesión autenticada**. Opciones:
-1. Credencial de prueba (usuario/empresa de staging) para que la medición corra con Chrome DevTools sobre `next start`.
-2. O que corras vos Lighthouse/trazas sobre las rutas top y pegues los números.
+Medición con Chrome DevTools sobre `next start` (build de producción), autenticado,
+con throttling **4× CPU + Fast 4G** (perfil de usuario real promedio). Nota: la empresa
+de prueba estaba **vacía** (contadores en 0), así que el costo de *data-fetching* de
+tablas está **subestimado** — con datos reales estos números empeoran.
 
-Las rutas públicas (`/login`, landing, `/maintenance`, `/hse/training`) sí se pueden medir sin auth para validar el baseline compartido.
+| Ruta | LCP | Render delay (JS) | TTFB | First Load JS |
+|------|-----|-------------------|------|---------------|
+| `/dashboard` (sin throttling) | 697 ms | 543 ms | 154 ms | — |
+| `/dashboard/treasury` | 1163 ms | **1102 ms (95%)** | 60 ms | **562 KB gzip / 35 chunks** |
+| `/dashboard/costos` | 1175 ms | **1112 ms (95%)** | 62 ms | — |
+| `/dashboard/document` | **1865 ms** | **1747 ms (94%)** | 118 ms | — |
+
+**Hallazgo raíz (con evidencia):** el **render delay (ejecución + hidratación de JS)
+es el 94-95% del LCP**; el TTFB (server/DB) es mínimo (60-120 ms). **La lentitud de
+navegación es de JS cliente, no de backend.** `/dashboard/treasury` transfiere **562 KB
+gzip** de JS (2,25× el presupuesto de 250 KB) sin siquiera cargar react-pdf.
+
+→ Confirma con datos duros la prioridad: **Track 1.1 (code-splitting), 1.2 (menos client
+components), 1.3 (waterfalls) y 4.1 (dedup libs)** son el camino directo a mejorar la UX.
 
 **Entregables de la fase:**
-1. ✅ Baseline de bundles (arriba) + medidor reproducible.
-2. ⏳ Tabla runtime (ruta → LCP, INP, nº requests) — pendiente de credencial.
-3. **Presupuesto de performance** (propuesta, a ratificar con runtime):
-   - First Load JS por ruta de dashboard: **≤ 250 KB** gzip (hoy varias rutas lo superan por react-pdf/recharts/xlsx).
-   - LCP en rutas top: **≤ 2.5 s** (red rápida).
-   - INP: **≤ 200 ms**.
+1. ✅ Baseline de bundles + medidor reproducible (`scripts/measure-bundles.mjs`).
+2. ✅ Tabla runtime (LCP / render delay / TTFB / First Load JS) — arriba.
+3. **Presupuesto de performance (ratificado con datos):**
+   - First Load JS por ruta de dashboard: **≤ 250 KB** gzip *(hoy treasury = 562 KB → objetivo −55%)*.
+   - LCP en rutas top con 4×/4G: **≤ 1.2 s** *(hoy document = 1.87 s)*.
+   - Render delay: **≤ 600 ms** *(hoy 1.1–1.75 s)*.
+   - INP: **≤ 200 ms** (a medir en interacción de tablas).
+
+> **Fase 0 COMPLETADA.** Con este baseline se puede arrancar el Track 1.1 y re-medir con
+> `npm run analyze:routes` + trazas para validar cada mejora contra estos números.
 
 ---
 
