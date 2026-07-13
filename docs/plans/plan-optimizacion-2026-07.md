@@ -89,7 +89,22 @@ En **Next 16 el build usa Turbopack**, y esto cambia la instrumentación:
 | **~465 KB** | `recharts` **duplicado en ~5 chunks** (98+98+98+97+74) | Track 1.1 — dynamic + chunk compartido |
 | **82 KB** | `moment` (6 archivos que aún lo importan) | Track 4.1 — terminar migración y desinstalar |
 
-> Conclusión medida: el "First Load JS" global es sano; la lentitud de navegación viene de **rutas concretas** que arrastran ~0.5–1 MB gzip de librerías que deberían cargarse bajo demanda. Esto valida y prioriza los Tracks 1.1 y 4.1 con datos duros.
+> Conclusión medida: el "First Load JS" global es sano; la lentitud de navegación viene de **rutas concretas** con ~0.5 MB gzip de JS.
+
+> **⚠️ CORRECCIÓN (verificada al implementar Track 1.1, 2026-07-13).** `measure-bundles.mjs`
+> mide **JS total emitido**, que **incluye chunks lazy**. Al inspeccionar el código y la red
+> per-route resultó que **las librerías pesadas ya estaban mayormente code-splitteadas**:
+> `xlsx` (`await import('xlsx')` en sus 4 usos), `exceljs` (`await import('exceljs')` en
+> `excel-export.ts`) y gran parte de `react-pdf` (server-side `renderToBuffer`, o `PDFViewer`
+> dinámico). **Esos chunks no están en el load inicial de ninguna ruta** — solo cargan al
+> exportar/generar PDF. Por lo tanto la tabla de arriba **sobre-representa** el problema.
+>
+> **First Load JS real de una ruta lenta** (treasury/document ≈ **560 KB gzip en ~51 chunks**)
+> es **código de la app + framework + DataTable/columnas**, NO librerías pesadas. El render
+> delay (1.7–1.9 s con 4×/4G) es **parsear + hidratar ese JS de app**. → La palanca real para
+> las rutas lentas es **Track 1.2 (reducir/aligerar client components y el árbol de DataTable)**,
+> no el code-splitting de librerías (Track 1.1), que sí ayuda a rutas de charts/PDF pero no a
+> treasury/document.
 
 ### 3.3 — Resultados de runtime (medido 2026-07-13)
 
