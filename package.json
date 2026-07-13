@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
+    "analyze": "next experimental-analyze",
+    "analyze:routes": "node scripts/measure-bundles.mjs",
     "start": "next start",
     "lint": "next lint",
     "format": "npx prettier --write .",
