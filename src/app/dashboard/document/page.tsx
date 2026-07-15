@@ -48,7 +48,7 @@ export default async function DocumentPage({
 
   return (
     <Suspense fallback={<PageTableSkeleton />}>
-      <UrlTabs value={currentTab} paramName="tab" baseUrl="/dashboard/document">
+      <UrlTabs value={currentTab} paramName="tab" baseUrl="/dashboard/document" resetParams={['page', 'subtab']}>
         <UrlTabsList>
           <UrlTabsTrigger value="employees">Documentos de empleados</UrlTabsTrigger>
           <UrlTabsTrigger value="equipment">Documentos de equipos</UrlTabsTrigger>
