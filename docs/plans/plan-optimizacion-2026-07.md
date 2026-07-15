@@ -99,12 +99,44 @@ En **Next 16 el build usa Turbopack**, y esto cambia la instrumentación:
 > dinámico). **Esos chunks no están en el load inicial de ninguna ruta** — solo cargan al
 > exportar/generar PDF. Por lo tanto la tabla de arriba **sobre-representa** el problema.
 >
-> **First Load JS real de una ruta lenta** (treasury/document ≈ **560 KB gzip en ~51 chunks**)
+> **First Load JS real de una ruta lenta** (treasury/document ≈ **560–577 KB gzip**)
 > es **código de la app + framework + DataTable/columnas**, NO librerías pesadas. El render
 > delay (1.7–1.9 s con 4×/4G) es **parsear + hidratar ese JS de app**. → La palanca real para
 > las rutas lentas es **Track 1.2 (reducir/aligerar client components y el árbol de DataTable)**,
 > no el code-splitting de librerías (Track 1.1), que sí ayuda a rutas de charts/PDF pero no a
 > treasury/document.
+
+### 3.4 — Realidad de Track 1.2 en /dashboard/document (medido 2026-07-13)
+
+Se probaron dos intervenciones y se midió:
+- **Renderizar solo el tab activo + evitar over-fetch** (commit `538fed14`): reduce trabajo
+  de servidor y payload RSC (importante con datos reales), pero **no mueve el render delay
+  del cliente** (LCP osciló 1865→2064→2373 ms entre corridas — **±25% de ruido de medición**).
+- **Lazy-load de formularios de carga en columnas** (commit `ee69f5ee`): chunks del load
+  inicial **51 → 37**, pero el **total gzip NO baja de forma clara (~577 KB)** porque esos
+  forms comparten dependencias (react-hook-form, radix, zod) con código que sí está en el
+  load inicial. El código *único* diferido es chico frente al bundle total.
+
+**Conclusión honesta (importante para planificar):** las rutas de tabla son pesadas por
+**código cliente esencial y compartido** (framework + Radix + TanStack DataTable + celdas
+interactivas por fila), no por piezas fácilmente separables. **No hay un "quick win" de
+code-splitting** que mueva su render delay de forma notable. Mejorarlas de verdad requiere
+uno de estos caminos **más grandes** (con trade-offs de UX y esfuerzo):
+
+1. **Consolidar las 2 DataTable** (72 usos `common/DataTable` + 38 `data-table`) en una sola,
+   más liviana. Reduce código y mantenimiento; beneficio de bundle por ruta moderado. Migración grande.
+2. **Render server-first de la tabla inicial** (HTML/RSC estático) e hidratar solo los
+   controles interactivos. Mejor potencial de performance; **mayor esfuerzo/riesgo** (TanStack
+   Table es client-only → requiere otro enfoque para la vista inicial).
+3. **Reducir interactividad/DOM por fila** (menos dropdowns/diálogos montados por fila,
+   virtualización de filas). Esfuerzo medio.
+4. **Aceptar** que estas rutas son inherentemente pesadas y concentrar el esfuerzo en las
+   ganancias ciertas (Track 4.1 dedup, cerrar 1.1) y en las rutas donde el splitting sí paga.
+
+> Nota de medición: para detectar mejoras <10% en render delay hace falta **mediana de varias
+> corridas** (una sola traza tiene ±25% de ruido) o comparar **bytes determinísticos** del load
+> inicial (cuidado: Turbopack re-hashea/re-bundlea en cada build, así que comparar por hash de
+> chunk entre builds es poco fiable; comparar totales).
 
 ### 3.3 — Resultados de runtime (medido 2026-07-13)
 
