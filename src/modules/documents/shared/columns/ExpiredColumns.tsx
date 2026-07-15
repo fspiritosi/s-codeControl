@@ -1,6 +1,11 @@
 'use client';
 
-import SimpleDocument from '@/modules/documents/features/upload/components/SimpleDocument';
+import dynamic from 'next/dynamic';
+// Carga diferida: el formulario de carga (~768 LOC + react-hook-form) sale del bundle
+// inicial de la tabla; solo se descarga al abrir el diálogo "Subir documento".
+const SimpleDocument = dynamic(() => import('@/modules/documents/features/upload/components/SimpleDocument'), {
+  ssr: false,
+});
 import {
   AlertDialog,
   AlertDialogAction,
