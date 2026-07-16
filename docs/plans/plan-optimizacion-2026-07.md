@@ -138,6 +138,29 @@ uno de estos caminos **más grandes** (con trade-offs de UX y esfuerzo):
 > inicial (cuidado: Turbopack re-hashea/re-bundlea en cada build, así que comparar por hash de
 > chunk entre builds es poco fiable; comparar totales).
 
+### 3.4bis — Patrón "renderizar solo el tab/sub-tab activo" (implementado, transversal)
+
+Se eligió y ejecutó el camino **3 (reducir DOM/render por ruta)** en su variante de bajo
+riesgo: en las rutas multi-tabla, renderizar en el servidor **solo el tab activo** (y
+sub-tabs por URL con `UrlTabs`), en vez de todas las pestañas a la vez.
+
+**Rutas cubiertas:** document (4 tabs + sub-tabs empleado/equipo por URL), employee (5 tabs
++ activos/inactivos), equipment (4 tabs + activos/inactivos), treasury (6), purchasing (5),
+warehouse (4), company (2), actualCompany (8). (maintenance ya estaba guardado.)
+
+**Qué reduce (real):** cada carga ejecuta **solo el fetch del tab activo** (antes 4-8 por
+carga) y serializa **solo su markup** en el payload RSC.
+
+**Qué NO reduce (medido):** el **render delay del cliente no cambia** en local, por dos
+razones: (a) la empresa de prueba tiene datos mínimos → el payload RSC de tabs inactivos es
+chico; (b) **el bundle JS es idéntico** (los componentes siguen importados estáticamente; el
+cambio es de *render*, no de *import*). treasury: 1163→1160 ms (ruido); document: sin cambio.
+
+**Conclusión:** es una mejora correcta de **carga de servidor + payload RSC** que **escala
+con el volumen de datos y la concurrencia de producción** — exactamente el dolor reportado
+(lentitud en prod), aunque **no medible en el sandbox con datos casi vacíos**. Para
+cuantificarla hay que medir contra **datos de producción** (ver §Próximos pasos).
+
 ### 3.3 — Resultados de runtime (medido 2026-07-13)
 
 Medición con Chrome DevTools sobre `next start` (build de producción), autenticado,
