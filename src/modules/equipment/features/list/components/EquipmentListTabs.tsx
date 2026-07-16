@@ -1,33 +1,37 @@
 import { CardContent } from '@/shared/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { UrlTabs, UrlTabsContent, UrlTabsList, UrlTabsTrigger } from '@/shared/components/ui/url-tabs';
 import { getRole } from '@/shared/lib/utils/getRole';
 import { EquipmentList } from './EquipmentList';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
 
+/**
+ * Sub-tabs activos/inactivos por URL (paramName="subtab").
+ * Renderiza en el servidor solo la lista activa en vez de ambas: evita 1 fetch extra
+ * y ~2x el payload RSC por carga (escala con el volumen de equipos).
+ */
 async function EquipmentListTabs({
   searchParams = {},
 }: {
-  searchParams?: DataTableSearchParams;
+  searchParams?: DataTableSearchParams & { subtab?: string };
 }) {
   const role = await getRole();
+  const currentSub = searchParams.subtab === 'inactive' ? 'inactive' : 'active';
 
   return (
-    <Tabs defaultValue="active">
+    <UrlTabs value={currentSub} paramName="subtab" resetParams={['page']}>
       <CardContent>
-        <TabsList>
-          <TabsTrigger value="active">Equipos activos</TabsTrigger>
-          {role !== 'Invitado' && (
-            <TabsTrigger value="inactive">Equipos inactivos</TabsTrigger>
-          )}
-        </TabsList>
+        <UrlTabsList>
+          <UrlTabsTrigger value="active">Equipos activos</UrlTabsTrigger>
+          {role !== 'Invitado' && <UrlTabsTrigger value="inactive">Equipos inactivos</UrlTabsTrigger>}
+        </UrlTabsList>
       </CardContent>
-      <TabsContent value="active">
-        <EquipmentList searchParams={searchParams} />
-      </TabsContent>
-      <TabsContent value="inactive">
-        <EquipmentList searchParams={searchParams} showInactive />
-      </TabsContent>
-    </Tabs>
+      <UrlTabsContent value="active">
+        {currentSub === 'active' && <EquipmentList searchParams={searchParams} />}
+      </UrlTabsContent>
+      <UrlTabsContent value="inactive">
+        {currentSub === 'inactive' && <EquipmentList searchParams={searchParams} showInactive />}
+      </UrlTabsContent>
+    </UrlTabs>
   );
 }
 

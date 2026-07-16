@@ -1,9 +1,14 @@
 import { CardContent } from '@/shared/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { UrlTabs, UrlTabsContent, UrlTabsList, UrlTabsTrigger } from '@/shared/components/ui/url-tabs';
 import { getRole } from '@/shared/lib/utils/getRole';
 import { EmployeeList } from '@/modules/employees/features/list/components/EmployeeList';
 import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
 
+/**
+ * Sub-tabs activos/inactivos por URL (paramName="subtab").
+ * Renderiza en el servidor solo la lista activa en vez de ambas: evita 1 fetch extra
+ * y ~2x el payload RSC por carga (escala con el volumen de empleados).
+ */
 async function EmployeeListTabs({
   inactives,
   actives,
@@ -11,27 +16,26 @@ async function EmployeeListTabs({
 }: {
   inactives?: boolean;
   actives?: boolean;
-  searchParams?: DataTableSearchParams;
+  searchParams?: DataTableSearchParams & { subtab?: string };
 }) {
   const role = await getRole();
+  const currentSub = searchParams.subtab === 'inactivos' ? 'inactivos' : 'activos';
 
   return (
-    <Tabs defaultValue="Empleados activos">
+    <UrlTabs value={currentSub} paramName="subtab" resetParams={['page']}>
       <CardContent>
-        <TabsList>
-          {actives && <TabsTrigger value="Empleados activos">Empleados activos</TabsTrigger>}
-          {inactives && role !== 'Invitado' && (
-            <TabsTrigger value="Empleados inactivos">Empleados inactivos</TabsTrigger>
-          )}
-        </TabsList>
+        <UrlTabsList>
+          {actives && <UrlTabsTrigger value="activos">Empleados activos</UrlTabsTrigger>}
+          {inactives && role !== 'Invitado' && <UrlTabsTrigger value="inactivos">Empleados inactivos</UrlTabsTrigger>}
+        </UrlTabsList>
       </CardContent>
-      <TabsContent value="Empleados activos">
-        <EmployeeList searchParams={searchParams} />
-      </TabsContent>
-      <TabsContent value="Empleados inactivos">
-        <EmployeeList searchParams={searchParams} showInactive />
-      </TabsContent>
-    </Tabs>
+      <UrlTabsContent value="activos">
+        {currentSub === 'activos' && <EmployeeList searchParams={searchParams} />}
+      </UrlTabsContent>
+      <UrlTabsContent value="inactivos">
+        {currentSub === 'inactivos' && <EmployeeList searchParams={searchParams} showInactive />}
+      </UrlTabsContent>
+    </UrlTabs>
   );
 }
 

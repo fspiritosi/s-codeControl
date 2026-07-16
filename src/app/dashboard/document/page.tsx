@@ -26,29 +26,29 @@ export default async function DocumentPage({
     ? (resolved.tab as DocumentTab)
     : 'employees';
 
-  // Parallel: session + company documents
-  const [session, documentsRaw] = await Promise.all([
-    getSession(),
-    fetchCompanyDocuments(),
-  ]);
-
-  const documents = documentsRaw.map((doc: any) => ({
-    ...doc,
-    id_document_types: doc.document_type,
-    user_id: doc.user,
-  }));
-
-  const typedData = documents as unknown as CompanyDocumentsType[] | null;
-  const companyData = session.role === 'Invitado'
-    ? typedData?.filter((e) => !e.id_document_types.private)
-    : typedData;
+  const session = await getSession();
 
   // Solo roles administrativos (no Invitado) pueden disparar la auditoría manual
   const canAudit = !!session.role && session.role !== 'Invitado';
 
+  // Los documentos de empresa solo se usan en el tab "company": se evita el fetch
+  // (y su serialización al cliente) cuando el usuario está en cualquier otro tab.
+  let companyData: CompanyDocumentsType[] | null | undefined = null;
+  if (currentTab === 'company') {
+    const documentsRaw = await fetchCompanyDocuments();
+    const documents = documentsRaw.map((doc: any) => ({
+      ...doc,
+      id_document_types: doc.document_type,
+      user_id: doc.user,
+    }));
+    const typedData = documents as unknown as CompanyDocumentsType[] | null;
+    companyData =
+      session.role === 'Invitado' ? typedData?.filter((e) => !e.id_document_types.private) : typedData;
+  }
+
   return (
     <Suspense fallback={<PageTableSkeleton />}>
-      <UrlTabs value={currentTab} paramName="tab" baseUrl="/dashboard/document">
+      <UrlTabs value={currentTab} paramName="tab" baseUrl="/dashboard/document" resetParams={['page', 'subtab']}>
         <UrlTabsList>
           <UrlTabsTrigger value="employees">Documentos de empleados</UrlTabsTrigger>
           <UrlTabsTrigger value="equipment">Documentos de equipos</UrlTabsTrigger>
@@ -57,66 +57,74 @@ export default async function DocumentPage({
         </UrlTabsList>
 
         <UrlTabsContent value="employees">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Documentos cargados</CardTitle>
-                <CardDescription>Aquí encontrarás todos los documentos de tus empleados</CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                {canAudit && <AuditAlertsButton kind="employees" />}
-                <DocumentNav onlyEmployees onlyEquipment />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <EmployeeDocumentsTabs searchParams={resolved} />
-            </CardContent>
-          </Card>
+          {currentTab === 'employees' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Documentos cargados</CardTitle>
+                  <CardDescription>Aquí encontrarás todos los documentos de tus empleados</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  {canAudit && <AuditAlertsButton kind="employees" />}
+                  <DocumentNav onlyEmployees onlyEquipment />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <EmployeeDocumentsTabs searchParams={resolved} />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="equipment">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Documentos cargados</CardTitle>
-                <CardDescription>Aquí encontrarás todos los documentos de tus equipos</CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                {canAudit && <AuditAlertsButton kind="equipment" />}
-                <DocumentNav onlyEmployees onlyEquipment />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <EquipmentTabs searchParams={resolved} />
-            </CardContent>
-          </Card>
+          {currentTab === 'equipment' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Documentos cargados</CardTitle>
+                  <CardDescription>Aquí encontrarás todos los documentos de tus equipos</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  {canAudit && <AuditAlertsButton kind="equipment" />}
+                  <DocumentNav onlyEmployees onlyEquipment />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <EquipmentTabs searchParams={resolved} />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="company">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Documentos cargados</CardTitle>
-                <CardDescription>Aquí encontrarás todos los documentos de tu empresa</CardDescription>
-              </div>
-              <DocumentNav onlyEmployees onlyEquipment />
-            </CardHeader>
-            <CardContent>
-              <CompanyTabs companyData={companyData as any} />
-            </CardContent>
-          </Card>
+          {currentTab === 'company' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Documentos cargados</CardTitle>
+                  <CardDescription>Aquí encontrarás todos los documentos de tu empresa</CardDescription>
+                </div>
+                <DocumentNav onlyEmployees onlyEquipment />
+              </CardHeader>
+              <CardContent>
+                <CompanyTabs companyData={companyData as any} />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="types">
-          <Card>
-            <CardHeader>
-              <CardTitle>Tipos de documentos</CardTitle>
-              <CardDescription>Tipos de documentos auditables</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <TypesDocumentsView equipos empresa personas searchParams={resolved} />
-            </CardContent>
-          </Card>
+          {currentTab === 'types' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Tipos de documentos</CardTitle>
+                <CardDescription>Tipos de documentos auditables</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TypesDocumentsView equipos empresa personas searchParams={resolved} />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
       </UrlTabs>
     </Suspense>

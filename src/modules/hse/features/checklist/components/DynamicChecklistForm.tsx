@@ -3,7 +3,15 @@
 import { UpdateVehicle } from '@/modules/equipment/features/create/actions.server';
 import { CreateNewFormAnswer } from '@/modules/forms/features/answers/actions.server';
 import { PDFPreviewDialog } from '@/shared/components/pdf/PDFPreviewDialog';
-import { TransporteSPANAYCHKHYS04 } from '@/modules/hse/features/checklist/components/pdf/generators/TransporteSPANAYCHKHYS04';
+import dynamic from 'next/dynamic';
+// Carga diferida: react-pdf (~478KB) solo se descarga al previsualizar/generar el PDF.
+const TransporteSPANAYCHKHYS04 = dynamic(
+  () =>
+    import('@/modules/hse/features/checklist/components/pdf/generators/TransporteSPANAYCHKHYS04').then(
+      (m) => m.TransporteSPANAYCHKHYS04
+    ),
+  { ssr: false }
+);
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';

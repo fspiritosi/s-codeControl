@@ -2,8 +2,8 @@
 
 import { Card } from '@/shared/components/ui/card';
 import { Clock, Tag } from 'lucide-react';
-import moment from 'moment';
-import 'moment/locale/es';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 import type { TicketWithUnread } from '@/shared/lib/taskapp/types';
 import { parseCategoryFromTitle } from '../constants/categories';
 import { statusFor } from '../constants/ticket-status';
@@ -108,7 +108,7 @@ export function TicketCard({ ticket, onClick, isActive }: Props) {
             dateTime={ticket.created_at}
           >
             <Clock className="h-3 w-3" />
-            {moment(ticket.created_at).locale('es').fromNow()}
+            {formatDistanceToNow(new Date(ticket.created_at), { locale: es, addSuffix: true })}
           </time>
         </div>
       </div>

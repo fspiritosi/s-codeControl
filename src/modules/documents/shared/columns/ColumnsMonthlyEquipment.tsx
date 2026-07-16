@@ -1,5 +1,9 @@
 'use client';
-import SimpleDocument from '@/modules/documents/features/upload/components/SimpleDocument';
+import dynamic from 'next/dynamic';
+// Carga diferida: el formulario de carga sale del bundle inicial de la tabla.
+const SimpleDocument = dynamic(() => import('@/modules/documents/features/upload/components/SimpleDocument'), {
+  ssr: false,
+});
 import {
   AlertDialog,
   AlertDialogAction,

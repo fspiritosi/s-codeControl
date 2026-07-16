@@ -20,7 +20,15 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import BackButton from '@/shared/components/common/BackButton';
 import { PDFPreviewDialog } from '@/shared/components/pdf/PDFPreviewDialog';
-import { TransporteSPANAYCHKHYS01 } from '@/modules/hse/features/checklist/components/pdf/generators/TransporteSPANAYCHKHYS01';
+import dynamic from 'next/dynamic';
+// Carga diferida: react-pdf (~478KB) solo se descarga al previsualizar/generar el PDF.
+const TransporteSPANAYCHKHYS01 = dynamic(
+  () =>
+    import('@/modules/hse/features/checklist/components/pdf/generators/TransporteSPANAYCHKHYS01').then(
+      (m) => m.TransporteSPANAYCHKHYS01
+    ),
+  { ssr: false }
+);
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/shared/components/ui/command';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';

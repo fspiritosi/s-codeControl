@@ -26,7 +26,7 @@ export default async function Equipment({
 
   return (
     <Suspense fallback={<PageTableSkeleton />}>
-      <UrlTabs value={currentTab} paramName="tab" baseUrl="/dashboard/equipment">
+      <UrlTabs value={currentTab} paramName="tab" baseUrl="/dashboard/equipment" resetParams={['page', 'subtab']}>
         <UrlTabsList>
           <UrlTabsTrigger value="equipos">Equipos</UrlTabsTrigger>
           <UrlTabsTrigger value="documents">Documentos de equipos</UrlTabsTrigger>
@@ -35,67 +35,75 @@ export default async function Equipment({
         </UrlTabsList>
 
         <UrlTabsContent value="equipos">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Equipos totales</CardTitle>
-                <CardDescription>Todos los equipos</CardDescription>
-              </div>
-              <Link
-                href="/dashboard/equipment/action?action=new"
-                className={buttonVariants({ variant: 'default' })}
-              >
-                Agregar nuevo equipo
-              </Link>
-            </CardHeader>
-            <CardContent>
-              <EquipmentListTabs searchParams={resolved} />
-            </CardContent>
-          </Card>
+          {currentTab === 'equipos' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Equipos totales</CardTitle>
+                  <CardDescription>Todos los equipos</CardDescription>
+                </div>
+                <Link
+                  href="/dashboard/equipment/action?action=new"
+                  className={buttonVariants({ variant: 'default' })}
+                >
+                  Agregar nuevo equipo
+                </Link>
+              </CardHeader>
+              <CardContent>
+                <EquipmentListTabs searchParams={resolved} />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="documents">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Documentos cargados</CardTitle>
-                <CardDescription>Aquí encontrarás todos los documentos de tus equipos</CardDescription>
-              </div>
-              <DocumentNav onlyEquipment />
-            </CardHeader>
-            <CardContent>
-              <EquipmentTabs searchParams={resolved} />
-            </CardContent>
-          </Card>
+          {currentTab === 'documents' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Documentos cargados</CardTitle>
+                  <CardDescription>Aquí encontrarás todos los documentos de tus equipos</CardDescription>
+                </div>
+                <DocumentNav onlyEquipment />
+              </CardHeader>
+              <CardContent>
+                <EquipmentTabs searchParams={resolved} />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="types">
-          <Card>
-            <CardHeader>
-              <CardTitle>Tipos de documentos</CardTitle>
-              <CardDescription>Tipos de documentos auditables</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <TypesDocumentsView equipos searchParams={resolved} />
-            </CardContent>
-          </Card>
+          {currentTab === 'types' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Tipos de documentos</CardTitle>
+                <CardDescription>Tipos de documentos auditables</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TypesDocumentsView equipos searchParams={resolved} />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="maintenance">
-          <Card>
-            <CardHeader>
-              <CardTitle>Mantenimiento de unidades</CardTitle>
-              <CardDescription>Genera solicitudes de mantenimiento para tus equipos</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RepairTypes
-                type_of_repair_new_entry
-                created_solicitudes
-                defaultValue="created_solicitudes"
-                searchParams={resolved}
-              />
-            </CardContent>
-          </Card>
+          {currentTab === 'maintenance' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Mantenimiento de unidades</CardTitle>
+                <CardDescription>Genera solicitudes de mantenimiento para tus equipos</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RepairTypes
+                  type_of_repair_new_entry
+                  created_solicitudes
+                  defaultValue="created_solicitudes"
+                  searchParams={resolved}
+                />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
       </UrlTabs>
     </Suspense>

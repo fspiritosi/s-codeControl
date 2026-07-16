@@ -35,19 +35,21 @@ export default async function CompanyPage({
         </UrlTabsList>
 
         <UrlTabsContent value="companies">
-          <Card>
-            <CardHeader>
-              <CardTitle>Todas las Compañías</CardTitle>
-              <CardDescription>Aquí se verán todas las compañías</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CompaniesListView />
-            </CardContent>
-          </Card>
+          {currentTab === 'companies' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Todas las Compañías</CardTitle>
+                <CardDescription>Aquí se verán todas las compañías</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CompaniesListView />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="groups">
-          <CompanyGroupsView groups={groups} allCompanies={allCompanies} />
+          {currentTab === 'groups' && <CompanyGroupsView groups={groups} allCompanies={allCompanies} />}
         </UrlTabsContent>
       </UrlTabs>
     </Suspense>

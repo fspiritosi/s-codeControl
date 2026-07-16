@@ -7,7 +7,16 @@ import { Button } from '@/shared/components/ui/button';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { DocumentRowActions } from './DocumentRowActions';
-import { UploadPendingDocumentDialog } from '@/modules/documents/features/manage/components/UploadPendingDocumentDialog';
+import dynamic from 'next/dynamic';
+// Carga diferida: el diálogo de carga de documento pendiente (~867 LOC + form) sale
+// del bundle inicial de la tabla; se descarga al renderizar la fila pendiente.
+const UploadPendingDocumentDialog = dynamic(
+  () =>
+    import('@/modules/documents/features/manage/components/UploadPendingDocumentDialog').then(
+      (m) => m.UploadPendingDocumentDialog
+    ),
+  { ssr: false, loading: () => <Button variant="default" size="sm" disabled>Subir</Button> }
+);
 
 const stateVariantMap: Record<
   string,

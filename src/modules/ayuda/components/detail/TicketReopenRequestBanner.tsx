@@ -3,8 +3,8 @@
 import { Button } from '@/shared/components/ui/button';
 import type { Ticket } from '@/shared/lib/taskapp/types';
 import { Clock, RotateCcw } from 'lucide-react';
-import moment from 'moment';
-import 'moment/locale/es';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { useState } from 'react';
 import { TicketReopenRequestDialog } from './TicketReopenRequestDialog';
 
@@ -29,7 +29,7 @@ export function TicketReopenRequestBanner({ ticket, currentUserEmail }: Props) {
           <div>
             <p className="text-sm font-medium">Solicitud de reapertura enviada</p>
             <p className="text-xs text-muted-foreground">
-              {moment(ticket.reopen_requested_at).locale('es').fromNow()} — un agente la va a
+              {formatDistanceToNow(new Date(ticket.reopen_requested_at), { locale: es, addSuffix: true })} — un agente la va a
               revisar y te avisamos.
             </p>
           </div>
