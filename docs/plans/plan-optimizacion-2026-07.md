@@ -384,3 +384,38 @@ quedan aquí anotadas con guía para retomarlas de forma controlada.
 1. **Validar con datos de producción** las ganancias ya hechas (tab-activo / payload / bundle).
 2. Elegir el próximo track diferido y ejecutarlo **incremental**, con el gate build+types+prueba
    funcional tras cada cambio, respetando "no romper la app".
+
+---
+
+# VALIDACIÓN CON DATOS REALES (dev.codecontrol.com.ar, 2026-07-16)
+
+Medición **read-only** sobre el entorno desplegado **con la rama ya pusheada** (los cambios
+de este plan activos) y la empresa real **Transporte SP SRL**. Throttling 4× CPU + Fast 4G
+(comparable con el baseline local). **No se tocó ningún dato.**
+
+## Verificación funcional — todo OK con datos reales ✅
+- **document**: 713 registros (paginación server-side, 72 páginas); tabs + sub-tabs por URL
+  (`?subtab=mensuales` → 378 registros); **solo el tab activo en el DOM**; diálogos lazy de
+  carga presentes y funcionales.
+- **treasury**: solo el tab "Cajas" renderizado (datos reales); los otros 5 tabs solo triggers.
+- **Centro de Ayuda**: 17 tickets reales con fechas date-fns correctas ("hace 1 día",
+  "hace 9 días") — migración de moment verificada en prod.
+- Login, navegación y páginas sin errores.
+
+## Números reales (con optimizaciones activas)
+
+| Ruta | LCP (4×/4G) | TTFB | Render delay | Nota |
+|------|------------|------|--------------|------|
+| document (713 regs) | 5546 ms | **335 ms** | **5211 ms** | Insights: ForcedReflow + DOMSize |
+| treasury | 2452 ms | **88 ms** | 2364 ms | TTFB mínimo = 1 query (antes 6 por carga) |
+
+**Lectura:**
+1. **El servidor quedó sano**: TTFB 88–335 ms con datos reales — el patrón tab-activo eliminó
+   el trabajo de tabs inactivos (treasury pasó de 6 queries por carga a 1; document de
+   4 tabs × 3 sub-tabs a 1).
+2. **El cuello restante es 100% cliente**: render delay 2.4–5.2 s (throttled ≈ 0.6–1.3 s en
+   hardware rápido) = parsear/hidratar el JS del DataTable + celdas interactivas. El insight
+   **ForcedReflow** en document apunta a layout thrashing durante la hidratación de la tabla.
+3. Esto **confirma la prioridad del trabajo diferido**: la mejora grande que queda es la
+   arquitectura de tabla (consolidar/aligerar DataTable, reducir interactividad por fila,
+   server-first) — ver sección "DIFERIDO".
