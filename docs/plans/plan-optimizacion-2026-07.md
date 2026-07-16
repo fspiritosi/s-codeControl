@@ -419,3 +419,63 @@ de este plan activos) y la empresa real **Transporte SP SRL**. Throttling 4× CP
 3. Esto **confirma la prioridad del trabajo diferido**: la mejora grande que queda es la
    arquitectura de tabla (consolidar/aligerar DataTable, reducir interactividad por fila,
    server-first) — ver sección "DIFERIDO".
+
+---
+
+# PROGRAMA a+b+c — Mejora profunda de rutas de tabla (2026-07-16)
+
+Orden acordado: (a) reflow + celdas → (b) consolidar DataTable → (c) server-first.
+Regla: preservar el 100% de la funcionalidad (filtros, export, acciones, preferencias).
+
+## (a) ✅ EJECUTADO — Forced reflow de Radix Presence en tabs
+
+**Diagnóstico (evidencia):** trace en dev.codecontrol.com.ar mostró 445 ms de forced
+reflow en `usePresence` (Radix). Instrumentando `getComputedStyle` en dev local: las
+llamadas eran sobre los panes de tabs (`UrlTabsContent`, data-state=inactive/active).
+Radix Tabs monta TODOS los panes ocultos y Presence mide cada uno → 7 panes en
+/dashboard/document × recálculo de estilo sobre DOM grande.
+
+**Fix (commit `af46fe21`):** `UrlTabs` provee su `value` por context; `UrlTabsContent`
+devuelve `null` si no es el pane activo. Un solo punto, aplica a todas las rutas.
+**Verificado:** getComputedStyle de Presence 7→2; panes inactivos en DOM 5→0; tabla,
+filtros y switch de tabs/sub-tabs idénticos. **Falta:** push + re-medir en dev env.
+
+## (b) 🔬 AUDITADO Y DES-RIESGADO — Consolidación de las 2 DataTable (receta lista)
+
+**Hallazgo central:** NINGUNA es superset de la otra:
+- `common/DataTable` (71 consumidores, server-only) es la **más evolucionada en UX**:
+  filtros facetados **optimistas** (TKT-445), `preserveParams` en useDataTable (default
+  `['tab']` — mantiene el tab al limpiar filtros), FilterOptions/ViewOptions con
+  Command+Popover y persistencia vía `@/shared/actions/table-preferences`.
+- `data-table` (38 consumidores) aporta **dual-mode** (client+server por
+  `totalRows !== undefined`), props extra (`onRowClick`, `rowClassName`,
+  `initialColumnFilters`) y su propio `table-preferences` local.
+
+**Compatibilidad verificada:** props de la nueva = superset estricto (21 iguales + 3);
+helpers funcionalmente idénticos SALVO el guard `if (columnId === 'tab') return;` de
+`buildFiltersWhere` (solo en la vieja); nadie importa excel-utils desde la vieja;
+DataTableColumnHeader idéntico (0 diff funcional).
+
+**Receta de merge (dirección: `data-table` como única, portando features de la vieja):**
+1. Portar a `data-table`: FacetedFilter optimista, FilterOptions y ViewOptions
+   (Command+Popover + persistencia — unificar con `@/shared/actions/table-preferences`,
+   resolver el duplicado con `data-table/table-preferences.ts`), `preserveParams` de
+   useDataTable (default `['tab', 'subtab']`).
+2. Portar guard de `buildFiltersWhere`: ignorar `tab` **y `subtab`** (params de navegación).
+3. Rewire de imports de los 71 consumidores: `components/common/DataTable` →
+   `components/data-table` (drop-in una vez hecho 1-2).
+4. Verificación funcional por módulo (checklist): paginación, búsqueda, filtros facetados
+   (optimistas), rango de fechas, filtro de texto, toggle de columnas persistente,
+   export Excel, selección de filas, preservación de tab/subtab al filtrar/limpiar.
+5. Eliminar `common/DataTable/` al llegar a 0 consumidores.
+
+**Riesgo:** medio (toca el corazón de 100+ tablas). Hacer 1-2 en una sesión dedicada,
+luego 3-4 módulo por módulo (empezar por suppliers/products, pequeños; terminar en
+document/treasury). **No ejecutado en esta pasada por la regla de no romper.**
+
+## (c) 📋 ANOTADO — Server-first tables (el "definitivo")
+
+Sin cambios respecto a lo anotado en DIFERIDO: render inicial de la tabla como HTML/RSC,
+hidratar solo controles, virtualización. Encarar DESPUÉS de (b) (con una sola DataTable,
+el server-first se implementa una vez). Estimación de mejora combinada a+b+c: **60-70%**
+del render delay de rutas de tabla (document 5.5s → ~1.6-2s con 4×/4G).
