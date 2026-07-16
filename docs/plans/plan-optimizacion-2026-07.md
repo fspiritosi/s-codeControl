@@ -294,3 +294,93 @@ components), 1.3 (waterfalls) y 4.1 (dedup libs)** son el camino directo a mejor
 ## 11. Próximos pasos
 
 Con este documento aprobado, el siguiente paso es generar el **plan de implementación detallado por track** (fase por fase, con archivos concretos y criterios de verificación), empezando por Fase 0 para obtener el baseline que ordena todo lo demás.
+
+---
+
+# RESUMEN FINAL — Estado del plan y tareas diferidas
+
+**Actualizado:** 2026-07-15 · **Rama:** `refactor/optimizacion-2026-07`
+
+Este bloque cierra el plan. Distingue lo **ejecutado y verificado** (cambios seguros, sin
+romper la app) de lo **diferido**: tareas que implican **cambios de lógica / flujo de datos
+/ riesgo de regresión** y que, por decisión explícita, **NO se ejecutaron** en esta pasada —
+quedan aquí anotadas con guía para retomarlas de forma controlada.
+
+## ✅ Ejecutado y verificado (seguro)
+
+| Ítem | Detalle |
+|------|---------|
+| **Fase 0 — Medición** | Instrumentación, baseline de bundles (`scripts/measure-bundles.mjs`), runtime (LCP/render delay), presupuesto |
+| **1.1 Code-splitting** | recharts (fórmula polinómica + estadísticas de capacitación) y react-pdf checklist a `next/dynamic`; xlsx/exceljs/jspdf ya eran lazy |
+| **1.2 Menos client (tab-activo)** | Render solo del tab activo + sub-tabs por URL en document, employee, equipment, treasury, purchasing, warehouse, company, actualCompany |
+| **1.4 Streaming** | 16 `loading.tsx` (skeleton instantáneo al navegar) |
+| **document — over-fetch** | `fetchCompanyDocuments` solo en el tab empresa; dialogs de carga (SimpleDocument/UploadPendingDocumentDialog) lazy |
+| **4.1 Deps muertas** | `jotai`, `swiper`, `moment` (migrado a date-fns) desinstalados |
+| **3.4 / 4.3 Limpieza** | Borrado junk raíz (check.js, comment-logs.js, PDF suelto); CLAUDE.md actualizado a Next 16/React 19/Prisma |
+
+> **Impacto medido:** el render delay local **no se mueve** con estos cambios (empresa de
+> prueba con datos mínimos + bundle JS de app inalterado). El valor real —menos fetches y
+> menor payload RSC por carga (tab-activo), menos bundle (moment fuera), skeleton instantáneo
+> (loading.tsx)— **escala con el volumen y la concurrencia de producción**. → **Validar con
+> datos reales** antes de dar por cerrada la ganancia (paso final acordado con el usuario).
+
+## ⚠️ DIFERIDO — requiere cambios de lógica / testeo cuidadoso (NO ejecutado)
+
+> Regla aplicada: "lo principal es no romper la app". Todo lo de abajo cambia comportamiento,
+> flujo de datos o tipos a escala, y necesita testeo por caso. Hacerlo **incremental**, con
+> `npm run build` + `check-types` + prueba funcional de la ruta afectada tras **cada** cambio.
+
+### Track 1 (resto)
+- **1.3 — Eliminar waterfalls cliente (los que quedan).** ~38 componentes con fetch en
+  `useEffect`; muchos ya quedaron diferidos por el patrón tab-activo (solo montan en su tab).
+  Faltan los que fetchean en **carga inicial real**. **Riesgo:** cambia el flujo de datos
+  (mover fetch a RSC/`HydrationBoundary` o react-query). **Guía:** uno por uno, empezando por
+  los de rutas calientes; verificar que la data y la interactividad no se rompan.
+- **1.5 — Assets.** Auditar `<img>`→`next/image`, fuentes→`next/font`. **Riesgo:** layout
+  shift / dimensiones. **Guía:** por imagen, con verificación visual.
+- **1.6 — Caching/revalidación.** Cachear catálogos estables (roles, tipos de documento,
+  geografía) con `unstable_cache`/`revalidateTag`. **Riesgo:** datos stale si la invalidación
+  no acompaña las mutaciones. **Guía:** solo catálogos realmente estáticos + invalidar en su ABM.
+- **1.2 (más allá de tab-activo)** — Convertir a RSC componentes client sin interactividad
+  real (sigue en ~62% client). **Riesgo:** perder interactividad si se clasifica mal. **Guía:**
+  patrón Server Component + Client Island, por componente.
+
+### Track 2 — Data layer consistente (completo diferido)
+- Estándar único **RSC + server actions + react-query** (queryKeys centralizadas) y migrar
+  los `fetch()` directos / `supabaseBrowser` dispersos. **Riesgo:** alto (reescribe cómo carga
+  datos media app). **Guía:** por dominio, con react-query DevTools; no hacer en bloque.
+
+### Track 3 — Deuda técnica (completo diferido)
+- **3.1 — Campaña de `any` (1824 → <100).** Type-level, pero a escala destapa errores que
+  obligan a tocar código; un `any` puede estar tapando un bug real. **Guía:** incremental por
+  carpeta, gate `check-types`, empezar por server actions/API con tipos Prisma. Activar
+  `@typescript-eslint/no-explicit-any: warn` y subir a `error` por carpeta saneada.
+- **3.2 — Cerrar 22 `TODO: Phase` / `@deprecated`.** Cada uno es trabajo real pendiente
+  (mayormente migración de Supabase). Revisar caso por caso.
+- **3.3 — Sacar Supabase de auth y queries (MANTENER Storage).** **Riesgo ALTO (auth).**
+  Quitar el fallback `signInWithPassword` de `src/auth.ts` solo cuando **todos** los usuarios
+  activos tengan `password_hash`; migrar los ~10 componentes con `supabaseBrowser`. **Guía:**
+  rama de respaldo `legacy/supabase-auth` + checklist de regresión de auth. **Dejar para el final.**
+- **3.4 (resto)** — `notas_analisis/` y `.kombai/` NO se borraron (posible valor del usuario).
+  Decisión del usuario si se eliminan.
+
+### Track 4 — Consolidación + archivos gigantes (diferido)
+- **4.1 (resto, opcional)** — `react-modal`→Radix Dialog (3 archivos; cambio de UI/behavior).
+  `xlsx`↔`exceljs`: ya lazy, consolidar no baja First Load JS (esfuerzo medio, valor bajo).
+  `react-icons`↔`lucide`: 86 archivos, no vale.
+- **4.2 — Refactor de 36 archivos > 600 LOC.** Mover lógica a hooks / dividir `actions.server.ts`
+  gigantes por sub-dominio. **Riesgo:** mover lógica puede introducir regresiones. **Guía:**
+  refactor mecánico + `check-types` + prueba de la ruta; priorizar los de rutas lentas.
+  Candidatos: `hse/.../documents/actions.server.ts` (1746), `hse/.../training/actions.server.ts`
+  (1502), `documents/.../list/actions.server.ts` (1487), `NewPaymentOrderForm.tsx` (1450),
+  `DocumentDetail.tsx` (1297), `PurchaseInvoiceForm.tsx` (1204), `FormCustom.tsx`/`Inputs.tsx`.
+
+### Consolidación de DataTable (del análisis de Track 1.2)
+- Existen **2 implementaciones** activas: `shared/components/data-table/` (38 usos) y
+  `shared/components/common/DataTable/` (72 usos). Unificar en una reduce código/mantenimiento.
+  **Riesgo:** migración grande, 72 usos. Diferido; hacer por módulo.
+
+## Cómo retomar
+1. **Validar con datos de producción** las ganancias ya hechas (tab-activo / payload / bundle).
+2. Elegir el próximo track diferido y ejecutarlo **incremental**, con el gate build+types+prueba
+   funcional tras cada cambio, respetando "no romper la app".
