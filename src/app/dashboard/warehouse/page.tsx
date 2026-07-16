@@ -34,66 +34,74 @@ export default async function WarehousePage({
         </UrlTabsList>
 
         <UrlTabsContent value="warehouses">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Almacenes</CardTitle>
-                <CardDescription>Gestión de almacenes y depósitos</CardDescription>
-              </div>
-              <Link href="/dashboard/warehouse/new" className={buttonVariants({ variant: 'default' })}>
-                Nuevo almacén
-              </Link>
-            </CardHeader>
-            <CardContent>
-              <WarehousesList searchParams={resolved} />
-            </CardContent>
-          </Card>
+          {currentTab === 'warehouses' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Almacenes</CardTitle>
+                  <CardDescription>Gestión de almacenes y depósitos</CardDescription>
+                </div>
+                <Link href="/dashboard/warehouse/new" className={buttonVariants({ variant: 'default' })}>
+                  Nuevo almacén
+                </Link>
+              </CardHeader>
+              <CardContent>
+                <WarehousesList searchParams={resolved} />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="products">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Productos</CardTitle>
-                <CardDescription>Catálogo de productos, servicios y materiales</CardDescription>
-              </div>
-              <Link href="/dashboard/products/new" className={buttonVariants({ variant: 'default' })}>
-                Nuevo producto
-              </Link>
-            </CardHeader>
-            <CardContent>
-              <ProductsList searchParams={resolved} />
-            </CardContent>
-          </Card>
+          {currentTab === 'products' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Productos</CardTitle>
+                  <CardDescription>Catálogo de productos, servicios y materiales</CardDescription>
+                </div>
+                <Link href="/dashboard/products/new" className={buttonVariants({ variant: 'default' })}>
+                  Nuevo producto
+                </Link>
+              </CardHeader>
+              <CardContent>
+                <ProductsList searchParams={resolved} />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="withdrawals">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Órdenes de retiro</CardTitle>
-                <CardDescription>Retiro de materiales del almacén</CardDescription>
-              </div>
-              <Link href="/dashboard/warehouse/withdrawals/new" className={buttonVariants({ variant: 'default' })}>
-                Nueva orden de retiro
-              </Link>
-            </CardHeader>
-            <CardContent>
-              <WithdrawalsList searchParams={resolved} />
-            </CardContent>
-          </Card>
+          {currentTab === 'withdrawals' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Órdenes de retiro</CardTitle>
+                  <CardDescription>Retiro de materiales del almacén</CardDescription>
+                </div>
+                <Link href="/dashboard/warehouse/withdrawals/new" className={buttonVariants({ variant: 'default' })}>
+                  Nueva orden de retiro
+                </Link>
+              </CardHeader>
+              <CardContent>
+                <WithdrawalsList searchParams={resolved} />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="movements">
-          <Card>
-            <CardHeader>
-              <CardTitle>Movimientos de stock</CardTitle>
-              <CardDescription>Historial de todos los movimientos de inventario</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <MovementsList searchParams={resolved} />
-            </CardContent>
-          </Card>
+          {currentTab === 'movements' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Movimientos de stock</CardTitle>
+                <CardDescription>Historial de todos los movimientos de inventario</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <MovementsList searchParams={resolved} />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
       </UrlTabs>
     </Suspense>

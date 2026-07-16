@@ -62,67 +62,75 @@ export default async function TreasuryPage({
         </UrlTabsList>
 
         <UrlTabsContent value="cash-registers">
-          <Card>
-            <CardHeader>
-              <CardTitle>Cajas físicas</CardTitle>
-              <CardDescription>
-                Gestioná las cajas de la empresa, sus sesiones y movimientos diarios.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Suspense fallback={<PageTableSkeleton />}>
-                <CashRegistersList />
-              </Suspense>
-            </CardContent>
-          </Card>
+          {tab === 'cash-registers' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Cajas físicas</CardTitle>
+                <CardDescription>
+                  Gestioná las cajas de la empresa, sus sesiones y movimientos diarios.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Suspense fallback={<PageTableSkeleton />}>
+                  <CashRegistersList />
+                </Suspense>
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="bank-accounts">
-          <Card>
-            <CardHeader>
-              <CardTitle>Cuentas bancarias</CardTitle>
-              <CardDescription>
-                Cuentas bancarias, movimientos y conciliación con extracto.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Suspense fallback={<PageTableSkeleton />}>
-                <BankAccountsList />
-              </Suspense>
-            </CardContent>
-          </Card>
+          {tab === 'bank-accounts' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Cuentas bancarias</CardTitle>
+                <CardDescription>
+                  Cuentas bancarias, movimientos y conciliación con extracto.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Suspense fallback={<PageTableSkeleton />}>
+                  <BankAccountsList />
+                </Suspense>
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="checks">
-          <Card>
-            <CardHeader>
-              <CardTitle>Cheques</CardTitle>
-              <CardDescription>
-                Cheques propios emitidos y de terceros recibidos con máquina de estados.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Suspense fallback={<PageTableSkeleton />}>
-                <ChecksList />
-              </Suspense>
-            </CardContent>
-          </Card>
+          {tab === 'checks' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Cheques</CardTitle>
+                <CardDescription>
+                  Cheques propios emitidos y de terceros recibidos con máquina de estados.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Suspense fallback={<PageTableSkeleton />}>
+                  <ChecksList />
+                </Suspense>
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="payment-orders">
-          <Card>
-            <CardHeader>
-              <CardTitle>Órdenes de pago</CardTitle>
-              <CardDescription>
-                Pagos a proveedores con imputación a facturas de compra y múltiples métodos.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Suspense fallback={<PageTableSkeleton />}>
-                <PaymentOrdersList searchParams={poSearchParams} />
-              </Suspense>
-            </CardContent>
-          </Card>
+          {tab === 'payment-orders' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Órdenes de pago</CardTitle>
+                <CardDescription>
+                  Pagos a proveedores con imputación a facturas de compra y múltiples métodos.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Suspense fallback={<PageTableSkeleton />}>
+                  <PaymentOrdersList searchParams={poSearchParams} />
+                </Suspense>
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="retentions">

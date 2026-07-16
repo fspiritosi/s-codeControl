@@ -48,122 +48,138 @@ export default async function CompanyPage({
         </UrlTabsList>
 
         <UrlTabsContent value="general">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Datos generales de la empresa</CardTitle>
-                <CardDescription>Información de la empresa</CardDescription>
-              </div>
-              <EditCompanyButton companyId={company_id?.toString() ?? ''} />
-            </CardHeader>
-            <CardContent>
-              <CompanyComponent />
-              <DangerZoneComponent />
-            </CardContent>
-          </Card>
+          {currentTab === 'general' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Datos generales de la empresa</CardTitle>
+                  <CardDescription>Información de la empresa</CardDescription>
+                </div>
+                <EditCompanyButton companyId={company_id?.toString() ?? ''} />
+              </CardHeader>
+              <CardContent>
+                <CompanyComponent />
+                <DangerZoneComponent />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="documentacion">
-          <Card>
-            <CardHeader>
-              <CardTitle>Documentos de la empresa</CardTitle>
-              <CardDescription>Lista de documentos a nombre de la empresa</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <DocumentTabComponent />
-            </CardContent>
-          </Card>
+          {currentTab === 'documentacion' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Documentos de la empresa</CardTitle>
+                <CardDescription>Lista de documentos a nombre de la empresa</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DocumentTabComponent />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="users">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Usuarios de la empresa</CardTitle>
-                <CardDescription>Lista de usuarios de la empresa</CardDescription>
-              </div>
-              <RegisterWithRole />
-            </CardHeader>
-            <CardContent>
-              <UsersTabComponent />
-            </CardContent>
-          </Card>
+          {currentTab === 'users' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Usuarios de la empresa</CardTitle>
+                  <CardDescription>Lista de usuarios de la empresa</CardDescription>
+                </div>
+                <RegisterWithRole />
+              </CardHeader>
+              <CardContent>
+                <UsersTabComponent />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="customers">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Clientes de la empresa</CardTitle>
-                <CardDescription>Lista de clientes de la empresa</CardDescription>
-              </div>
-              <Link
-                href="/dashboard/company/actualCompany/customers/action?action=new"
-                className={buttonVariants({ variant: 'default' })}
-              >
-                Registrar Cliente
-              </Link>
-            </CardHeader>
-            <CardContent>
-              <Customers />
-            </CardContent>
-          </Card>
+          {currentTab === 'customers' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Clientes de la empresa</CardTitle>
+                  <CardDescription>Lista de clientes de la empresa</CardDescription>
+                </div>
+                <Link
+                  href="/dashboard/company/actualCompany/customers/action?action=new"
+                  className={buttonVariants({ variant: 'default' })}
+                >
+                  Registrar Cliente
+                </Link>
+              </CardHeader>
+              <CardContent>
+                <Customers />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="contacts">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Contactos de la empresa</CardTitle>
-                <CardDescription>Lista de contactos de la empresa</CardDescription>
-              </div>
-              <Link
-                href="/dashboard/company/contact/action?action=new"
-                className={buttonVariants({ variant: 'default' })}
-              >
-                Registrar Contacto
-              </Link>
-            </CardHeader>
-            <CardContent>
-              <Contacts />
-            </CardContent>
-          </Card>
+          {currentTab === 'contacts' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Contactos de la empresa</CardTitle>
+                  <CardDescription>Lista de contactos de la empresa</CardDescription>
+                </div>
+                <Link
+                  href="/dashboard/company/contact/action?action=new"
+                  className={buttonVariants({ variant: 'default' })}
+                >
+                  Registrar Contacto
+                </Link>
+              </CardHeader>
+              <CardContent>
+                <Contacts />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="covenant">
-          <Card>
-            <CardHeader>
-              <CardTitle>Convenios colectivos de trabajo</CardTitle>
-              <CardDescription>Lista de Convenios colectivos de trabajo</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CovenantTreeFile />
-            </CardContent>
-          </Card>
+          {currentTab === 'covenant' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Convenios colectivos de trabajo</CardTitle>
+                <CardDescription>Lista de Convenios colectivos de trabajo</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CovenantTreeFile />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="service">
-          <Card>
-            <CardHeader>
-              <CardTitle>Servicios de la empresa</CardTitle>
-              <CardDescription>Crear y ver servicios de la empresa</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ServiceComponent />
-            </CardContent>
-          </Card>
+          {currentTab === 'service' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Servicios de la empresa</CardTitle>
+                <CardDescription>Crear y ver servicios de la empresa</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ServiceComponent />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="portal_employee">
-          <Card>
-            <CardHeader>
-              <CardTitle>Portal de Empleados</CardTitle>
-              <CardDescription>Configuración del portal de empleados</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PortalEmployeeWrapper />
-            </CardContent>
-          </Card>
+          {currentTab === 'portal_employee' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Portal de Empleados</CardTitle>
+                <CardDescription>Configuración del portal de empleados</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PortalEmployeeWrapper />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
       </UrlTabs>
     </Suspense>
