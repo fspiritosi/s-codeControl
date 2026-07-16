@@ -208,7 +208,7 @@ components), 1.3 (waterfalls) y 4.1 (dedup libs)** son el camino directo a mejor
   > **Aprendizaje de método:** el code-splitting **no reduce el JS total emitido** (de hecho sube levemente por los wrappers) — mueve los chunks pesados fuera del *load inicial de cada ruta*. Por eso `measure-bundles.mjs` (mide total) **no** sirve para validar 1.1: la validación correcta es **runtime per-route** (network + trazas). Los chunks de react-pdf/recharts **no** están en el baseline compartido ni en las rutas medidas como lentas (treasury/document/costos-index); 1.1 mejora rutas de **charts/PDF** (fórmula, capacitación, checklist, forms). Las rutas más lentas medidas se atacan con **Track 1.2/1.3** (menos client components + waterfalls), que es el siguiente paso de mayor impacto ahí.
 - [ ] **1.2 Reducir client components.** Convertir a RSC lo que no tiene interactividad real (patrón *Server Component + Client Island*). Foco en rutas del top del ranking; medir antes/después. Objetivo dirigido por presupuesto, no por porcentaje arbitrario.
 - [ ] **1.3 Eliminar waterfalls cliente.** Los 38 componentes que fetchean en `useEffect`: mover la carga inicial al RSC (prefetch + `HydrationBoundary`) o a react-query con prefetch. **Alto impacto en lentitud percibida → junto con 1.1.**
-- [ ] **1.4 Streaming y percepción.** `loading.tsx` + `Suspense` boundaries por ruta, skeletons consistentes, optimistic UI donde aplique (ya hay precedente en TKT 445).
+- [x] **1.4 Streaming y percepción.** ✅ 16 `loading.tsx` agregados (rutas top de dashboard + home) → skeleton instantáneo al navegar vía streaming de Next. Antes solo costos tenía. (Suspense boundaries internos ya existían.)
 - [ ] **1.5 Assets.** Auditar `next/image`, `next/font`, íconos e imágenes sin optimizar.
 - [ ] **1.6 Caching/revalidación.** Revisar `unstable_cache`/`revalidateTag`; evitar refetch de catálogos estables (roles, tipos de documento, geografía) en cada navegación.
 - [ ] **1.7 Re-medir** cada cambio contra el presupuesto (gate de "hecho").
@@ -235,14 +235,14 @@ components), 1.3 (waterfalls) y 4.1 (dedup libs)** son el camino directo a mejor
 
 ## 7. Track 4 — Consolidación de deps + archivos gigantes
 
-- [ ] **4.1 Eliminar deps muertas/duplicadas** (cada una reduce bundle):
-  - `jotai` — 0 usos → desinstalar.
-  - `moment` — terminar los 6 archivos con `date-fns` y desinstalar.
-  - `xlsx` vs `exceljs` — consolidar en una.
-  - `swiper` vs `embla-carousel-react` — elegir una.
-  - `react-modal` vs Radix Dialog — migrar a Radix.
-  - `react-icons` vs `lucide-react` — estandarizar en una.
-  - `jspdf` vs `@react-pdf/renderer` — evaluar consolidación.
+- [~] **4.1 Eliminar deps muertas/duplicadas** (cada una reduce bundle):
+  - [x] `jotai` — 0 usos → **desinstalado**.
+  - [x] `swiper` — 0 usos (no era vs embla; simplemente sin uso) → **desinstalado**.
+  - [x] `moment` — 6 archivos del módulo ayuda migrados a `date-fns` (`formatDistanceToNow`/`format`, salida idéntica) → **desinstalado** (~82KB gzip fuera).
+  - [ ] `xlsx` vs `exceljs` — **evaluado: baja prioridad.** Ambos ya son `await import()` (lazy) → consolidar NO baja First Load JS; solo quita 1 dep con esfuerzo medio.
+  - [ ] `react-modal` vs Radix Dialog — solo 3 usos; migrar a Radix (cleanup opcional, riesgo visual bajo).
+  - [ ] `react-icons` vs `lucide-react` — **evaluado: no vale.** 86 vs 239 usos; consolidar = 86 archivos con mapeo de íconos. Ambos tree-shakeados (`optimizePackageImports`).
+  - [ ] `jspdf` vs `@react-pdf/renderer` — jspdf 1 archivo dinámico, caso de uso distinto → no vale.
 - [ ] **4.2 Refactor de los 36 archivos > 600 LOC.** Separar lógica (hooks) de presentación; dividir `actions.server.ts` gigantes por sub-dominio. **Priorizar los que caen en rutas lentas del ranking de Fase 0** (sinergia con Track 1). Candidatos principales:
   - `modules/hse/features/documents/actions.server.ts` (1746)
   - `modules/hse/features/training/actions.server.ts` (1502)
