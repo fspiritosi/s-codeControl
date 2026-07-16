@@ -5,8 +5,8 @@ import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { useQueryClient } from '@tanstack/react-query';
 import { Clock, Loader2, ShieldCheck, Tag, User } from 'lucide-react';
-import moment from 'moment';
-import 'moment/locale/es';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import type { Ticket } from '@/shared/lib/taskapp/types';
 import { parseCategoryFromTitle } from '../constants/categories';
@@ -127,7 +127,7 @@ function ApproverRow({ ticket, onSelect }: { ticket: Ticket; onSelect?: (id: num
           )}
           <span className="inline-flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            {moment(ticket.created_at).locale('es').fromNow()}
+            {formatDistanceToNow(new Date(ticket.created_at), { locale: es, addSuffix: true })}
           </span>
           {ticket.estimated_hours != null && (
             <span className="inline-flex items-center gap-1 font-medium text-amber-700 dark:text-amber-400">

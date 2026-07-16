@@ -3,8 +3,8 @@
 import { Badge } from '@/shared/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Clock, ListChecks, User } from 'lucide-react';
-import moment from 'moment';
-import 'moment/locale/es';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
 import { parseCategoryFromTitle } from '../constants/categories';
 import { statusFor } from '../constants/ticket-status';
@@ -100,7 +100,7 @@ export function ApproverAllTickets({ onSelect }: Props) {
                   {categoryLabel && <span>{categoryLabel}</span>}
                   <span className="inline-flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    {moment(ticket.created_at).locale('es').fromNow()}
+                    {formatDistanceToNow(new Date(ticket.created_at), { locale: es, addSuffix: true })}
                   </span>
                 </div>
               </div>
