@@ -1,7 +1,7 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { DataTableColumnHeader } from '@/shared/components/common/DataTable';
+import { DataTableColumnHeader } from '@/shared/components/data-table';
 import { Badge } from '@/shared/components/ui/badge';
 import { format } from 'date-fns';
 import Link from 'next/link';

@@ -11,7 +11,7 @@ import EmployeeDocumentsTabs from '@/modules/documents/features/list/components/
 import EquipmentTabs from '@/modules/documents/features/list/components/EquipmentTabs';
 import TypesDocumentsView from '@/modules/documents/features/types/components/TypesDocumentsView';
 import { AuditAlertsButton } from '@/modules/documents/features/audit/components/AuditAlertsButton';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
+import type { DataTableSearchParams } from '@/shared/components/data-table';
 
 const VALID_TABS = ['employees', 'equipment', 'company', 'types'] as const;
 type DocumentTab = (typeof VALID_TABS)[number];

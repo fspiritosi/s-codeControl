@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { DataTable } from '@/shared/components/common/DataTable';
-import type { DataTableFacetedFilterConfig } from '@/shared/components/common/DataTable/types';
+import { DataTable } from '@/shared/components/data-table';
+import type { DataTableFacetedFilterConfig } from '@/shared/components/data-table/types';
 import { paymentOrderColumns } from './columns';
 import { getPaymentOrderFacets, getAllPaymentOrdersForExport } from '../actions.server';
 import { PAYMENT_ORDER_STATUS_LABELS } from '../../../shared/validators';

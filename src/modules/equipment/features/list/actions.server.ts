@@ -2,14 +2,14 @@
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
 import { getSession } from '@/shared/lib/session';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 import {
   parseSearchParams,
   stateToPrismaParams,
   buildSearchWhere,
   buildFiltersWhere,
   buildTextFiltersWhere,
-} from '@/shared/components/common/DataTable/helpers';
+} from '@/shared/components/data-table/helpers';
 
 // Vehicle/Equipment-related queries
 

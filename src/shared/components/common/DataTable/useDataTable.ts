@@ -97,7 +97,7 @@ export function useDataTable(options: UseDataTableOptions = {}): UseDataTableRet
   const {
     defaultPageSize = DEFAULT_PAGE_SIZE,
     filterableColumns = [],
-    preserveParams = ['tab'],
+    preserveParams = ['tab', 'subtab'],
   } = options;
 
   const router = useRouter();

@@ -183,7 +183,7 @@ export function buildFiltersWhere(
     // Ignorar los params _from/_to aquí: se procesan con buildDateRangeFiltersWhere
     if (columnId.endsWith('_from') || columnId.endsWith('_to')) return;
     // Ignorar params de navegación que no son filtros de DB
-    if (columnId === 'tab') return;
+    if (columnId === 'tab' || columnId === 'subtab') return;
     // Ignorar columnas excluidas (ej. columnas de texto que se procesan con buildTextFiltersWhere)
     if (excluded.has(columnId)) return;
     // Si hay columnMap definido, tratarlo como allowlist: ignorar columnas no mapeadas

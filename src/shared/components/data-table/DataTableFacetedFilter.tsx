@@ -24,9 +24,6 @@ import { Separator } from '@/shared/components/ui/separator';
 
 import type { DataTableFacetedFilterProps } from './types';
 
-/**
- * Filtro faceteado multi-select para columnas del DataTable
- */
 export function DataTableFacetedFilter<TData, TValue>({
   column,
   title,
@@ -34,7 +31,40 @@ export function DataTableFacetedFilter<TData, TValue>({
   externalCounts,
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const facets = externalCounts ?? column?.getFacetedUniqueValues();
-  const selectedValues = new Set(column?.getFilterValue() as string[]);
+  const [search, setSearch] = React.useState('');
+
+  // Estado optimista: el checkbox reacciona al instante al clickear, sin esperar
+  // el round-trip al servidor (el filtro real viaja por la URL). Se re-sincroniza
+  // cuando el servidor confirma el cambio y la URL/columna se actualiza.
+  const urlValue = (column?.getFilterValue() as string[] | undefined) ?? [];
+  const urlKey = urlValue.join(',');
+  const [optimisticValues, setOptimisticValues] = React.useState<string[]>(urlValue);
+  React.useEffect(() => {
+    setOptimisticValues(urlValue);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlKey]);
+  const selectedValues = new Set(optimisticValues);
+
+  const applySelection = (values: string[]) => {
+    setOptimisticValues(values);
+    column?.setFilterValue(values.length ? values : undefined);
+  };
+
+  // Filter options: by externalCounts (if provided) and by local search
+  const visibleOptions = React.useMemo(() => {
+    let filtered = externalCounts
+      ? options.filter((opt) => (externalCounts.get(opt.value) ?? 0) > 0)
+      : options;
+
+    if (search) {
+      const q = search.toLowerCase();
+      filtered = filtered.filter(
+        (opt) => opt.label.toLowerCase().includes(q) || opt.value.toLowerCase().includes(q)
+      );
+    }
+
+    return filtered;
+  }, [options, externalCounts, search]);
 
   return (
     <Popover>
@@ -83,29 +113,31 @@ export function DataTableFacetedFilter<TData, TValue>({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0" align="start">
-        <Command>
-          <CommandInput placeholder={`Buscar ${title.toLowerCase()}...`} />
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder={`Buscar ${title.toLowerCase()}...`}
+            value={search}
+            onValueChange={setSearch}
+          />
           <CommandList>
-            <CommandEmpty>Sin resultados.</CommandEmpty>
+            {visibleOptions.length === 0 && (
+              <CommandEmpty>Sin resultados.</CommandEmpty>
+            )}
             <CommandGroup>
-              {(externalCounts
-                ? options.filter((opt) => (externalCounts.get(opt.value) ?? 0) > 0)
-                : options
-              ).map((option) => {
+              {visibleOptions.map((option) => {
                 const isSelected = selectedValues.has(option.value);
                 return (
                   <CommandItem
                     key={option.value}
+                    value={option.value}
                     onSelect={() => {
+                      const next = new Set(selectedValues);
                       if (isSelected) {
-                        selectedValues.delete(option.value);
+                        next.delete(option.value);
                       } else {
-                        selectedValues.add(option.value);
+                        next.add(option.value);
                       }
-                      const filterValues = Array.from(selectedValues);
-                      column?.setFilterValue(
-                        filterValues.length ? filterValues : undefined
-                      );
+                      applySelection(Array.from(next));
                     }}
                     data-testid={`filter-option-${option.value}`}
                   >
@@ -137,7 +169,8 @@ export function DataTableFacetedFilter<TData, TValue>({
                 <CommandSeparator />
                 <CommandGroup>
                   <CommandItem
-                    onSelect={() => column?.setFilterValue(undefined)}
+                    value="__clear__"
+                    onSelect={() => applySelection([])}
                     className="justify-center text-center"
                     data-testid={`filter-clear-${column?.id}`}
                   >

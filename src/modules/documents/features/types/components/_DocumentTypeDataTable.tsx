@@ -5,7 +5,7 @@ import {
   DataTable,
   type DataTableFacetedFilterConfig,
   type DataTableSearchParams,
-} from '@/shared/components/common/DataTable';
+} from '@/shared/components/data-table';
 import { Button } from '@/shared/components/ui/button';
 import { getDocumentTypeColumns } from './document-type-columns';
 import { getDocumentTypeFacets, getAllDocumentTypesForExport } from '../actions.server';

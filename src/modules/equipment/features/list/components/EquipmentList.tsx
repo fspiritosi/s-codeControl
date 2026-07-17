@@ -1,6 +1,6 @@
 import { getEquipmentPaginated } from '@/modules/equipment/features/list/actions.server';
 import { _EquipmentDataTable } from './_EquipmentDataTable';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
+import type { DataTableSearchParams } from '@/shared/components/data-table';
 
 interface Props {
   searchParams: DataTableSearchParams;

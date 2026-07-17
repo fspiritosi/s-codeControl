@@ -5,14 +5,14 @@ import { getActionContext } from '@/shared/lib/server-action-context';
 import { fetchCurrentUser } from '@/shared/actions/auth';
 import { syncSupplierPaymentMethodsTx } from '@/modules/suppliers/features/payment-methods/sync';
 import { supplierPaymentMethodsArraySchema } from '@/modules/suppliers/shared/validators';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 import {
   parseSearchParams,
   stateToPrismaParams,
   buildSearchWhere,
   buildFiltersWhere,
   buildTextFiltersWhere,
-} from '@/shared/components/common/DataTable/helpers';
+} from '@/shared/components/data-table/helpers';
 import { revalidatePath } from 'next/cache';
 
 const supplierSearchFields = ['business_name', 'trade_name', 'tax_id'];

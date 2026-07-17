@@ -3,12 +3,12 @@
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
 import { fetchCurrentUser } from '@/shared/actions/auth';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 import {
   parseSearchParams,
   stateToPrismaParams,
   buildFiltersWhere,
-} from '@/shared/components/common/DataTable/helpers';
+} from '@/shared/components/data-table/helpers';
 import { revalidatePath } from 'next/cache';
 import { cashRegisterSchema, type CashRegisterFormData } from '../../shared/validators';
 

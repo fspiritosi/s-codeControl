@@ -14,7 +14,7 @@ import {
   UrlTabsList,
   UrlTabsTrigger,
 } from '@/shared/components/ui/url-tabs';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 import { Suspense } from 'react';
 
 async function MantenimientoPage({
