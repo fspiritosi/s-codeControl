@@ -440,7 +440,7 @@ devuelve `null` si no es el pane activo. Un solo punto, aplica a todas las rutas
 **Verificado:** getComputedStyle de Presence 7→2; panes inactivos en DOM 5→0; tabla,
 filtros y switch de tabs/sub-tabs idénticos. **Falta:** push + re-medir en dev env.
 
-## (b) 🔬 AUDITADO Y DES-RIESGADO — Consolidación de las 2 DataTable (receta lista)
+## (b) ✅ EJECUTADO — Consolidación de las 2 DataTable (commit b45237ab)
 
 **Hallazgo central:** NINGUNA es superset de la otra:
 - `common/DataTable` (71 consumidores, server-only) es la **más evolucionada en UX**:
@@ -479,3 +479,20 @@ Sin cambios respecto a lo anotado en DIFERIDO: render inicial de la tabla como H
 hidratar solo controles, virtualización. Encarar DESPUÉS de (b) (con una sola DataTable,
 el server-first se implementa una vez). Estimación de mejora combinada a+b+c: **60-70%**
 del render delay de rutas de tabla (document 5.5s → ~1.6-2s con 4×/4G).
+
+## Actualización 2026-07-16 (tarde) — (a) y (b) EJECUTADOS
+
+- **(a) commit `af46fe21`**: fix de forced reflow (panes de tabs inactivos no se montan).
+- **(b) commit `b45237ab`**: DataTable unificada en `data-table`; 71 consumidores
+  rewireados; `common/DataTable` eliminada; funcionalidad verificada (filtro facetado
+  server-side, subtab+filtro sin romper query, paginación, tabs). Build + tipos OK.
+- **Pendiente:** push a dev + re-medir en el entorno real (los commits nuevos NO están
+  pusheados). Recién ahí se cuantifica la mejora de (a)+(b) con los 713 registros.
+
+### (c) server-first — decisión de alcance
+Es el rework grande (TanStack es client-only; la DataTable es un client component único
+usado por 100+ tablas). Un rewrite completo en una pasada viola "no romper la app".
+**Recomendación:** hacerlo **medido y por ruta**, como PROOF en `/dashboard/document`
+primero (server-render del `<table>` + hidratar solo controles/acciones), verificar
+paridad total de funcionalidad, y solo entonces generalizar. Requiere primero re-medir
+(a)+(b) en prod para dimensionar el remanente real antes de invertir en (c).
