@@ -1,13 +1,13 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   DataTable,
   type DataTableFacetedFilterConfig,
   type DataTableSearchParams,
 } from '@/shared/components/data-table';
 import { permanentDocumentColumns, monthlyDocumentColumns } from './document-columns';
-import { getAllEmployeeDocumentsForExport } from '../actions.server';
+import { getEmployeeDocumentFacets, getAllEmployeeDocumentsForExport } from '../actions.server';
 
 interface FacetEntry {
   value: string;
@@ -17,8 +17,6 @@ interface FacetEntry {
 interface Props {
   data: any[];
   totalRows: number;
-  /** Facets pre-calculados en el servidor (evita el server-action POST en cliente). */
-  facets: Record<string, FacetEntry[]>;
   searchParams: DataTableSearchParams;
   monthly?: boolean;
   downDocument?: boolean;
@@ -35,13 +33,20 @@ const FILTER_DEFINITIONS: { columnId: string; title: string; type: 'faceted' | '
 
 const DEFAULT_VISIBLE_FILTERS = new Set(['state', 'resource', 'documentName']);
 
-export function _EmployeeDocumentDataTable({ data, totalRows, facets, searchParams, monthly, downDocument }: Props) {
+export function _EmployeeDocumentDataTable({ data, totalRows, searchParams, monthly, downDocument }: Props) {
+  const [facets, setFacets] = useState<Record<string, FacetEntry[]> | null>(null);
   const columns = monthly ? monthlyDocumentColumns : permanentDocumentColumns;
   const tableId = downDocument
     ? 'employee-docs-baja'
     : monthly
       ? 'employee-docs-monthly'
       : 'employee-docs-permanent';
+
+  // Facets en cliente (no bloquean el render de la tabla). Se usa startTransition-like:
+  // la tabla ya se ve con la data SSR; las opciones de filtro se completan al llegar.
+  useEffect(() => {
+    getEmployeeDocumentFacets({ monthly, downDocument }).then(setFacets).catch(console.error);
+  }, [monthly, downDocument]);
 
   const buildFacetConfig = (entries: FacetEntry[] | undefined) => {
     if (!entries || entries.length === 0) return { options: [], externalCounts: new Map<string, number>() };
