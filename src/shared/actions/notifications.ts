@@ -21,6 +21,20 @@ export async function getMyUnreadCount(companyId?: string) {
   return unreadNotificationsCountForCurrentUser(companyId);
 }
 
+/**
+ * Lista + contador de no leídos en un solo server action. Next serializa los
+ * server actions, así que llamar getMyNotifications y getMyUnreadCount por
+ * separado desde el cliente genera 2 POST secuenciales; esto los une en 1
+ * (Promise.all server-side). Se usa en el badge del NavBar, presente en toda página.
+ */
+export async function getMyNotificationsWithCount(companyId?: string, onlyUnread = false) {
+  const [list, count] = await Promise.all([
+    listNotificationsForCurrentUser({ companyId, onlyUnread }),
+    unreadNotificationsCountForCurrentUser(companyId),
+  ]);
+  return { list, count };
+}
+
 export async function markAsRead(notificationId: string) {
   return markNotificationAsRead(notificationId);
 }
