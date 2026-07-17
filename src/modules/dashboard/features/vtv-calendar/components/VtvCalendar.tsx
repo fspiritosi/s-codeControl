@@ -16,6 +16,7 @@ import {
 } from '@/shared/components/ui/select';
 import { cn } from '@/shared/lib/utils';
 import type { VtvCalendarItem } from '../types';
+import { deriveDisplayKey } from './vtvStatusMeta';
 
 interface Props {
   items: VtvCalendarItem[];
@@ -55,26 +56,36 @@ export function VtvCalendar({ items, selectedDay, onSelectDay }: Props) {
       byDay.set(item.appointmentDate, list);
     }
 
-    const pendiente: Date[] = [];
-    const ordenSolicitada: Date[] = [];
+    const sinGestionar: Date[] = [];
+    const incompleta: Date[] = [];
+    const completa: Date[] = [];
     const realizada: Date[] = [];
     const countMap = new Map<string, number>();
 
     for (const [key, list] of byDay) {
       countMap.set(key, list.length);
       const date = parseDayKey(key);
-      // Prioridad de color del día: pendiente > orden_solicitada > realizada.
-      if (list.some((i) => i.status === 'pendiente')) {
-        pendiente.push(date);
-      } else if (list.some((i) => i.status === 'orden_solicitada')) {
-        ordenSolicitada.push(date);
+      const keys = list.map((i) =>
+        deriveDisplayKey(i.status, {
+          hasOrder: i.hasOrder,
+          hasAppointment: i.hasAppointment,
+        })
+      );
+      // Prioridad de color del día: resaltar lo que falta gestionar.
+      // rojo (sin gestionar) > amarillo (incompleta) > verde (completa) > realizada.
+      if (keys.includes('red')) {
+        sinGestionar.push(date);
+      } else if (keys.includes('amber')) {
+        incompleta.push(date);
+      } else if (keys.includes('green')) {
+        completa.push(date);
       } else {
         realizada.push(date);
       }
     }
 
     return {
-      modifiers: { pendiente, ordenSolicitada, realizada },
+      modifiers: { sinGestionar, incompleta, completa, realizada },
       counts: countMap,
     };
   }, [items]);
@@ -173,8 +184,9 @@ export function VtvCalendar({ items, selectedDay, onSelectDay }: Props) {
         onDayClick={(date) => onSelectDay(format(date, 'yyyy-MM-dd'))}
         modifiers={modifiers}
         modifiersClassNames={{
-          pendiente: 'bg-red-500/20 text-red-700 font-semibold rounded-md',
-          ordenSolicitada: 'bg-green-500/20 text-green-700 rounded-md',
+          sinGestionar: 'bg-red-500/20 text-red-700 font-semibold rounded-md',
+          incompleta: 'bg-yellow-500/20 text-yellow-700 font-semibold rounded-md',
+          completa: 'bg-green-500/20 text-green-700 rounded-md',
           realizada: 'bg-muted text-muted-foreground rounded-md',
         }}
         classNames={{ month_caption: 'hidden' }}

@@ -776,6 +776,8 @@ model vtv_appointments {
   appointment_date      DateTime               @db.Date
   document_validity     DateTime?              @db.Date
   status                vtv_appointment_status @default(pendiente)
+  has_verification_order       Boolean         @default(false)
+  has_verification_appointment Boolean         @default(false)
   notes                 String?
   created_by            String?
   is_active             Boolean                @default(true)

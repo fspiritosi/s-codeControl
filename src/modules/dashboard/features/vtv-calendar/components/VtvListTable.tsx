@@ -1,15 +1,29 @@
 'use client';
 
+import { Check, X } from 'lucide-react';
 import { DataTable, DataTableColumnHeader } from '@/shared/components/data-table';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import type { ColumnDef } from '@tanstack/react-table';
 import type { VtvListItem } from '../types';
-import { STATUS_META } from './vtvStatusMeta';
+import { DISPLAY_META, deriveDisplayKey } from './vtvStatusMeta';
 
 interface Props {
   items: VtvListItem[];
   onManage: (item: VtvListItem) => void;
+}
+
+// Indicador Sí/No de un flag (Orden o Turno).
+function IndicatorCell({ on }: { on: boolean }) {
+  return on ? (
+    <span className="inline-flex items-center gap-1 text-green-600">
+      <Check className="size-4" /> Sí
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1 text-muted-foreground">
+      <X className="size-4" /> No
+    </span>
+  );
 }
 
 function getColumns(
@@ -59,11 +73,35 @@ function getColumns(
       enableColumnFilter: true,
     },
     {
+      id: 'Orden',
+      accessorFn: (row) => (row.hasOrder ? 'si' : 'no'),
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Orden" />,
+      cell: ({ row }) => <IndicatorCell on={row.original.hasOrder} />,
+      filterFn: (row, id, value: string[]) => value.includes(row.getValue(id)),
+      enableColumnFilter: true,
+    },
+    {
+      id: 'Turno',
+      accessorFn: (row) => (row.hasAppointment ? 'si' : 'no'),
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Turno" />,
+      cell: ({ row }) => <IndicatorCell on={row.original.hasAppointment} />,
+      filterFn: (row, id, value: string[]) => value.includes(row.getValue(id)),
+      enableColumnFilter: true,
+    },
+    {
       id: 'Estado',
-      accessorKey: 'status',
+      accessorFn: (row) =>
+        deriveDisplayKey(row.status, {
+          hasOrder: row.hasOrder,
+          hasAppointment: row.hasAppointment,
+        }),
       header: ({ column }) => <DataTableColumnHeader column={column} title="Estado" />,
       cell: ({ row }) => {
-        const meta = STATUS_META[row.original.status];
+        const key = deriveDisplayKey(row.original.status, {
+          hasOrder: row.original.hasOrder,
+          hasAppointment: row.original.hasAppointment,
+        });
+        const meta = DISPLAY_META[key];
         return <Badge variant={meta.variant}>{meta.label}</Badge>;
       },
       filterFn: (row, id, value: string[]) => value.includes(row.getValue(id)),
@@ -71,15 +109,11 @@ function getColumns(
     },
     {
       id: 'Fecha turno',
-      // Solo hay fecha de turno si está programado; 'sin_programar' no tiene turno real
-      // (su appointment_date es solo un placeholder = vencimiento).
-      accessorFn: (row) =>
-        row.status === 'sin_programar' ? '' : (row.appointmentDate ?? ''),
+      // Solo hay fecha de turno relevante si el vehículo ya tiene el Turno.
+      accessorFn: (row) => (row.hasAppointment ? (row.appointmentDate ?? '') : ''),
       header: ({ column }) => <DataTableColumnHeader column={column} title="Fecha turno" />,
       cell: ({ row }) =>
-        row.original.status === 'sin_programar'
-          ? '—'
-          : row.original.appointmentDate || '—',
+        row.original.hasAppointment ? (row.original.appointmentDate || '—') : '—',
       filterFn: 'includesString',
       enableColumnFilter: true,
     },
@@ -124,11 +158,28 @@ export function VtvListTable({ items, onManage }: Props) {
           placeholder: 'Ej: 2026-07',
         },
         {
+          columnId: 'Orden',
+          title: 'Orden',
+          options: [
+            { value: 'si', label: 'Con orden' },
+            { value: 'no', label: 'Sin orden' },
+          ],
+        },
+        {
+          columnId: 'Turno',
+          title: 'Turno',
+          options: [
+            { value: 'si', label: 'Con turno' },
+            { value: 'no', label: 'Sin turno' },
+          ],
+        },
+        {
           columnId: 'Estado',
           title: 'Estado',
           options: [
-            { value: 'sin_programar', label: 'Sin programar' },
-            { value: 'orden_solicitada', label: 'Orden solicitada' },
+            { value: 'red', label: 'Sin gestionar' },
+            { value: 'amber', label: 'Incompleta' },
+            { value: 'green', label: 'Completa' },
             { value: 'realizada', label: 'Realizada' },
           ],
         },

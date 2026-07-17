@@ -44,6 +44,7 @@ import {
 } from '../actions.server';
 import { PAYMENT_METHOD_LABELS } from '../../../shared/validators';
 import { CheckPaymentField } from './CheckPaymentField';
+import { formatCbu } from './CopyableCbu';
 
 interface Supplier {
   id: string;
@@ -162,7 +163,7 @@ function describeSupplierMethod(m: SupplierPaymentMethodOpt): string {
   const accType = m.account_type ? ACCOUNT_TYPE_SHORT[m.account_type] ?? m.account_type : '';
   const parts = [m.bank_name ?? 'Cuenta bancaria', accType, m.currency].filter(Boolean);
   const tail = m.cbu
-    ? `CBU ${m.cbu.slice(-4).padStart(m.cbu.length, '•')}`
+    ? `CBU ${formatCbu(m.cbu)}`
     : m.alias
       ? `Alias ${m.alias}`
       : '';

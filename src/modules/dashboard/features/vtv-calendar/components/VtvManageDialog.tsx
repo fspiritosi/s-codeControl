@@ -14,15 +14,15 @@ import {
   DialogTitle,
 } from '@/shared/components/ui/dialog';
 import { EnhancedDatePicker } from '@/shared/components/ui/enhanced-datepicket';
+import { Label } from '@/shared/components/ui/label';
+import { Switch } from '@/shared/components/ui/switch';
 import {
   cancelAppointment,
-  createVtvAppointment,
   markCompleted,
-  programAppointment,
-  rescheduleAppointment,
+  setVtvIndicators,
 } from '../actions.server';
 import type { VtvManageTarget } from '../types';
-import { STATUS_META } from './vtvStatusMeta';
+import { SEMAPHORE_META, STATUS_META, deriveSemaphore } from './vtvStatusMeta';
 
 interface Props {
   target: VtvManageTarget | null;
@@ -31,32 +31,43 @@ interface Props {
   onDone: () => void;
 }
 
-// Modo del datepicker embebido: programar (sin turno / pendiente) o reprogramar.
-type PickerMode = 'programar' | 'reprogramar' | null;
+// 'YYYY-MM-DD' -> Date local (evita corrimiento por zona horaria).
+function parseDayKey(key: string): Date {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
 
 export function VtvManageDialog({ target, open, onOpenChange, onDone }: Props) {
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
-  const [pickerMode, setPickerMode] = useState<PickerMode>(null);
+  const [order, setOrder] = useState(false);
+  const [appointment, setAppointment] = useState(false);
   const [pickedDate, setPickedDate] = useState<Date | undefined>(undefined);
 
-  // Resetea el estado interno al abrir/cerrar o cambiar de objetivo.
+  // Hidrata el estado local de los indicadores al abrir o cambiar de objetivo.
   useEffect(() => {
-    if (!open) {
-      setPickerMode(null);
-      setPickedDate(undefined);
+    if (open && target) {
+      setOrder(target.hasOrder);
+      setAppointment(target.hasAppointment);
+      setPickedDate(
+        target.appointmentDate ? parseDayKey(target.appointmentDate) : undefined
+      );
       setLoadingAction(null);
     }
-  }, [open]);
+  }, [open, target]);
 
   if (!target) return null;
 
-  const meta = STATUS_META[target.status];
   const isReadOnly = target.status === 'realizada' || target.status === 'cancelada';
-  const canProgram = target.status === 'sin_programar' || target.status === 'pendiente';
-  const isRequested = target.status === 'orden_solicitada';
+  // Semáforo en vivo según lo que el usuario está tildando.
+  const semaphore = deriveSemaphore({ hasOrder: order, hasAppointment: appointment });
+  const meta = isReadOnly ? STATUS_META[target.status] : SEMAPHORE_META[semaphore];
   const busy = loadingAction !== null;
+  const dirty =
+    order !== target.hasOrder ||
+    appointment !== target.hasAppointment ||
+    (pickedDate ? format(pickedDate, 'yyyy-MM-dd') : null) !==
+      target.appointmentDate;
 
-  // Ejecuta una acción que devuelve { error } o { id, error }.
   const run = async (
     key: string,
     action: () => Promise<{ error?: string | null; id?: string }>,
@@ -78,47 +89,19 @@ export function VtvManageDialog({ target, open, onOpenChange, onDone }: Props) {
     }
   };
 
-  const handleProgramConfirm = () => {
-    if (!pickedDate) {
-      toast.error('Seleccioná la fecha del turno');
-      return;
-    }
-    const fecha = format(pickedDate, 'yyyy-MM-dd');
-    // Con turno existente (placeholder pendiente) → programAppointment.
-    // Sin turno → alta manual con createVtvAppointment.
-    if (target.appointmentId) {
-      run(
-        'program',
-        () => programAppointment(target.appointmentId as string, fecha),
-        'Turno programado'
-      );
-    } else {
-      run(
-        'program',
-        () =>
-          createVtvAppointment({
-            vehicleId: target.vehicleId,
-            documentEquipmentId: target.documentEquipmentId,
-            appointmentDate: fecha,
-          }),
-        'Turno programado'
-      );
-    }
-  };
-
-  const handleRescheduleConfirm = () => {
-    if (!pickedDate) {
-      toast.error('Seleccioná la fecha nueva');
-      return;
-    }
+  const handleSave = () => {
     run(
-      'reschedule',
+      'save',
       () =>
-        rescheduleAppointment(
-          target.appointmentId as string,
-          format(pickedDate, 'yyyy-MM-dd')
-        ),
-      'Turno reprogramado'
+        setVtvIndicators({
+          appointmentId: target.appointmentId,
+          vehicleId: target.vehicleId,
+          documentEquipmentId: target.documentEquipmentId,
+          hasOrder: order,
+          hasAppointment: appointment,
+          appointmentDate: pickedDate ? format(pickedDate, 'yyyy-MM-dd') : null,
+        }),
+      'Indicadores actualizados'
     );
   };
 
@@ -151,115 +134,98 @@ export function VtvManageDialog({ target, open, onOpenChange, onDone }: Props) {
               {target.validity}
             </p>
           )}
-          {target.appointmentDate && (
-            <p>
-              <span className="text-muted-foreground">Fecha del turno: </span>
-              {target.appointmentDate}
-            </p>
-          )}
         </div>
-
-        {pickerMode && (
-          <div className="flex flex-col gap-2 rounded-md border p-3">
-            <span className="text-sm font-medium">
-              {pickerMode === 'programar'
-                ? 'Fecha del turno'
-                : 'Nueva fecha del turno'}
-            </span>
-            <EnhancedDatePicker date={pickedDate} setDate={setPickedDate} />
-          </div>
-        )}
 
         {isReadOnly ? (
           <p className="text-sm text-muted-foreground">
-            Este turno está {meta.label.toLowerCase()} y es de solo lectura.
+            Esta VTV está {meta.label.toLowerCase()} y es de solo lectura.
           </p>
         ) : (
-          <DialogFooter className="flex-wrap gap-2">
-            {/* Programar: sin_programar | pendiente */}
-            {canProgram &&
-              (pickerMode === 'programar' ? (
-                <Button
-                  variant="success"
+          <>
+            {/* Dos indicadores independientes (tkt-480). Sin orden ni bloqueo. */}
+            <div className="space-y-3 rounded-md border p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <Label htmlFor="vtv-order" className="text-sm font-medium">
+                    Orden de Verificación
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Marcala cuando esté solicitada.
+                  </p>
+                </div>
+                <Switch
+                  id="vtv-order"
+                  checked={order}
+                  onCheckedChange={setOrder}
                   disabled={busy}
-                  onClick={handleProgramConfirm}
-                >
-                  {loadingAction === 'program' ? 'Guardando...' : 'Confirmar fecha'}
-                </Button>
-              ) : (
-                <Button
-                  variant="success"
+                />
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <Label htmlFor="vtv-appointment" className="text-sm font-medium">
+                    Turno de Verificación
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Marcalo cuando tengas el turno.
+                  </p>
+                </div>
+                <Switch
+                  id="vtv-appointment"
+                  checked={appointment}
+                  onCheckedChange={setAppointment}
                   disabled={busy}
-                  onClick={() => {
-                    setPickerMode('programar');
-                    setPickedDate(undefined);
-                  }}
-                >
-                  Programar turno
-                </Button>
-              ))}
+                />
+              </div>
+            </div>
 
-            {/* Orden solicitada: marcar realizada */}
-            {isRequested && (
-              <Button
-                variant="success"
-                disabled={busy}
-                onClick={() =>
-                  run(
-                    'completed',
-                    () => markCompleted(target.appointmentId as string),
-                    'VTV marcada como realizada'
-                  )
-                }
-              >
-                {loadingAction === 'completed'
-                  ? 'Guardando...'
-                  : 'Marcar realizada'}
+            {/* Fecha del turno (opcional): alimenta el calendario. */}
+            <div className="flex flex-col gap-2">
+              <Label className="text-sm">Fecha del turno (opcional)</Label>
+              <EnhancedDatePicker date={pickedDate} setDate={setPickedDate} />
+            </div>
+
+            <DialogFooter className="flex-wrap gap-2">
+              <Button disabled={busy || !dirty} onClick={handleSave}>
+                {loadingAction === 'save' ? 'Guardando...' : 'Guardar'}
               </Button>
-            )}
 
-            {/* Orden solicitada: reprogramar */}
-            {isRequested &&
-              (pickerMode === 'reprogramar' ? (
+              {/* Marcar realizada: requiere un turno existente. */}
+              {target.appointmentId && (
                 <Button
-                  variant="default"
+                  variant="success"
                   disabled={busy}
-                  onClick={handleRescheduleConfirm}
+                  onClick={() =>
+                    run(
+                      'completed',
+                      () => markCompleted(target.appointmentId as string),
+                      'VTV marcada como realizada'
+                    )
+                  }
                 >
-                  {loadingAction === 'reschedule'
+                  {loadingAction === 'completed'
                     ? 'Guardando...'
-                    : 'Confirmar fecha'}
+                    : 'Marcar realizada'}
                 </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() => {
-                    setPickerMode('reprogramar');
-                    setPickedDate(undefined);
-                  }}
-                >
-                  Reprogramar
-                </Button>
-              ))}
+              )}
 
-            {/* Cancelar turno: solo si hay turno activo */}
-            {target.appointmentId && (
-              <Button
-                variant="destructive"
-                disabled={busy}
-                onClick={() =>
-                  run(
-                    'cancel',
-                    () => cancelAppointment(target.appointmentId as string),
-                    'Turno cancelado'
-                  )
-                }
-              >
-                {loadingAction === 'cancel' ? 'Cancelando...' : 'Cancelar turno'}
-              </Button>
-            )}
-          </DialogFooter>
+              {/* Cancelar turno: solo si hay turno activo. */}
+              {target.appointmentId && (
+                <Button
+                  variant="destructive"
+                  disabled={busy}
+                  onClick={() =>
+                    run(
+                      'cancel',
+                      () => cancelAppointment(target.appointmentId as string),
+                      'Turno cancelado'
+                    )
+                  }
+                >
+                  {loadingAction === 'cancel' ? 'Cancelando...' : 'Cancelar turno'}
+                </Button>
+              )}
+            </DialogFooter>
+          </>
         )}
       </DialogContent>
     </Dialog>

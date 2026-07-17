@@ -52,6 +52,8 @@ async function fetchVtvAppointments(
       vehicle_id: true,
       appointment_date: true,
       status: true,
+      has_verification_order: true,
+      has_verification_appointment: true,
       notes: true,
       document_equipment_id: true,
       vehicle: {
@@ -81,6 +83,8 @@ async function fetchVtvAppointments(
       : null,
     documentEquipmentId: a.document_equipment_id ?? null,
     status: a.status as VtvAppointmentStatus,
+    hasOrder: a.has_verification_order,
+    hasAppointment: a.has_verification_appointment,
     notes: a.notes ?? null,
   }));
 }
@@ -217,13 +221,17 @@ export async function ensureVtvAppointments(): Promise<{ created: number }> {
 // ============================================================
 
 /**
- * Alta manual de un turno (botón "Agendar turno").
+ * Alta manual de un turno (botón "Agendar turno"). tkt-480: registrar una fecha de
+ * turno implica que el vehículo ya tiene el Turno de Verificación, así que se marca
+ * ese indicador por defecto (los indicadores pueden ajustarse luego desde "Gestionar").
  */
 export async function createVtvAppointment(input: {
   vehicleId: string;
   documentEquipmentId?: string | null;
   appointmentDate: string; // YYYY-MM-DD
   notes?: string | null;
+  hasOrder?: boolean;
+  hasAppointment?: boolean;
 }): Promise<{ id?: string; error?: string }> {
   const { companyId } = await getActionContext();
   if (!companyId) return { error: NO_COMPANY };
@@ -258,8 +266,11 @@ export async function createVtvAppointment(input: {
         document_equipment_id: input.documentEquipmentId ?? null,
         appointment_date: new Date(input.appointmentDate),
         document_validity: documentValidity,
-        // Alta manual = el usuario ya programó el turno para esa fecha.
-        status: 'orden_solicitada',
+        // El turno queda "en gestión"; el estado visible sale del semáforo.
+        status: 'pendiente',
+        has_verification_order: input.hasOrder ?? false,
+        // Agendó una fecha de turno => por defecto ya tiene el Turno de Verificación.
+        has_verification_appointment: input.hasAppointment ?? true,
         notes: input.notes ?? null,
         created_by: createdBy,
       },
@@ -310,18 +321,98 @@ async function transition(
 }
 
 /**
- * Programar turno (tkt-461): al solicitar la orden se define la FECHA del turno.
- * pendiente | orden_solicitada → orden_solicitada con appointment_date = fecha elegida.
+ * Setea los dos indicadores independientes de la VTV (tkt-480): Orden de Verificación
+ * y Turno de Verificación. El semáforo (rojo/amarillo/verde) se deriva de ambos.
+ * - Si el turno ya existe (placeholder 'pendiente' u otro activo) actualiza los flags.
+ * - Si no existe, crea el turno en estado 'pendiente' con los flags indicados.
+ * No aplica sobre turnos terminales (realizada/cancelada).
  */
-export async function programAppointment(
-  appointmentId: string,
-  appointmentDate: string // YYYY-MM-DD
-): Promise<ActionResult> {
-  if (!appointmentDate) return { error: 'Falta la fecha del turno' };
-  return transition(appointmentId, ['pendiente', 'orden_solicitada'], {
-    status: 'orden_solicitada',
-    appointment_date: new Date(appointmentDate),
+export async function setVtvIndicators(input: {
+  appointmentId?: string | null;
+  vehicleId: string;
+  documentEquipmentId?: string | null;
+  hasOrder: boolean;
+  hasAppointment: boolean;
+  appointmentDate?: string | null; // YYYY-MM-DD (fecha del turno, opcional)
+}): Promise<ActionResult> {
+  const { companyId } = await getActionContext();
+  if (!companyId) return { error: NO_COMPANY };
+
+  // Turno existente: actualizar flags (y fecha si vino).
+  if (input.appointmentId) {
+    const appointment = await prisma.vtv_appointments.findFirst({
+      where: { id: input.appointmentId, company_id: companyId },
+      select: { id: true, status: true },
+    });
+    if (!appointment) return { error: NOT_FOUND };
+    if (FINAL_STATUSES.includes(appointment.status as VtvAppointmentStatus)) {
+      return { error: 'La VTV ya está realizada o cancelada' };
+    }
+
+    await prisma.vtv_appointments.update({
+      where: { id: input.appointmentId },
+      data: {
+        has_verification_order: input.hasOrder,
+        has_verification_appointment: input.hasAppointment,
+        ...(input.appointmentDate
+          ? { appointment_date: new Date(input.appointmentDate) }
+          : {}),
+        updated_at: new Date(),
+      },
+    });
+    return { error: null };
+  }
+
+  // Sin turno todavía: crearlo con los indicadores. La fecha del turno es opcional;
+  // si no vino se usa el vencimiento del documento (o hoy) como placeholder.
+  const vehicle = await prisma.vehicles.findFirst({
+    where: { id: input.vehicleId, company_id: companyId },
+    select: { id: true },
   });
+  if (!vehicle) return { error: 'Vehículo no encontrado' };
+
+  const user = await fetchCurrentUser();
+  const createdBy = user?.id ?? null;
+
+  let documentValidity: Date | null = null;
+  if (input.documentEquipmentId) {
+    const doc = await prisma.documents_equipment.findUnique({
+      where: { id: input.documentEquipmentId },
+      select: { validity: true },
+    });
+    if (doc?.validity) {
+      documentValidity = new Date((doc.validity as unknown as string).slice(0, 10));
+    }
+  }
+
+  const appointmentDate = input.appointmentDate
+    ? new Date(input.appointmentDate)
+    : (documentValidity ?? new Date());
+
+  try {
+    await prisma.vtv_appointments.create({
+      data: {
+        company_id: companyId,
+        vehicle_id: input.vehicleId,
+        document_equipment_id: input.documentEquipmentId ?? null,
+        appointment_date: appointmentDate,
+        document_validity: documentValidity,
+        status: 'pendiente',
+        has_verification_order: input.hasOrder,
+        has_verification_appointment: input.hasAppointment,
+        created_by: createdBy,
+      },
+    });
+    return { error: null };
+  } catch (error: any) {
+    if (error?.code === 'P2002') {
+      return {
+        error:
+          'Este vehículo ya tiene un turno activo para su VTV. Actualizá desde el listado.',
+      };
+    }
+    return { error: 'No se pudieron guardar los indicadores' };
+  }
 }
 
 /** pendiente | orden_solicitada → realizada (NO toca documents_equipment) */
@@ -410,6 +501,8 @@ async function fetchVtvListRaw(companyId: string): Promise<VtvListItem[]> {
       vehicle_id: true,
       appointment_date: true,
       status: true,
+      has_verification_order: true,
+      has_verification_appointment: true,
       notes: true,
       vehicle: {
         select: {
@@ -446,16 +539,22 @@ async function fetchVtvListRaw(companyId: string): Promise<VtvListItem[]> {
     let status: VtvListItem['status'];
     let appointmentId: string | null = null;
     let appointmentDate: string | null = null;
+    let hasOrder = false;
+    let hasAppointment = false;
 
     if (active) {
       appointmentId = active.id;
       appointmentDate = active.appointment_date.toISOString().slice(0, 10);
-      // 'pendiente' = placeholder autogenerado → aún sin programar.
-      status = active.status === 'orden_solicitada' ? 'orden_solicitada' : 'sin_programar';
+      // Turno en gestión: el estado visible sale del semáforo (flags), no del enum.
+      status = active.status;
+      hasOrder = active.has_verification_order;
+      hasAppointment = active.has_verification_appointment;
     } else if (done) {
       appointmentId = done.id;
       appointmentDate = done.appointment_date.toISOString().slice(0, 10);
       status = 'realizada';
+      hasOrder = done.has_verification_order;
+      hasAppointment = done.has_verification_appointment;
     } else {
       status = 'sin_programar';
     }
@@ -471,6 +570,8 @@ async function fetchVtvListRaw(companyId: string): Promise<VtvListItem[]> {
       appointmentId,
       appointmentDate,
       status,
+      hasOrder,
+      hasAppointment,
       isExpired: validity < todayStr,
     };
   });
@@ -489,12 +590,9 @@ async function fetchVtvListRaw(companyId: string): Promise<VtvListItem[]> {
       validity: null, // sin documento vinculado → sin vencimiento
       appointmentId: a.id,
       appointmentDate: a.appointment_date.toISOString().slice(0, 10),
-      status:
-        a.status === 'orden_solicitada'
-          ? 'orden_solicitada'
-          : a.status === 'realizada'
-            ? 'realizada'
-            : 'sin_programar',
+      status: a.status === 'realizada' ? 'realizada' : a.status,
+      hasOrder: a.has_verification_order,
+      hasAppointment: a.has_verification_appointment,
       isExpired: false,
     });
   }
@@ -512,40 +610,43 @@ export async function getVtvList(): Promise<VtvListItem[]> {
   return fetchVtvListRaw(companyId);
 }
 
-/** Métricas del resumen (tkt-461). */
+/** Métricas del resumen (tkt-480: basadas en el semáforo de dos indicadores). */
 export async function getVtvMetrics(): Promise<VtvMetrics> {
   const { companyId } = await getActionContext();
   if (!companyId)
     return {
-      sinProgramarMes: 0,
-      solicitadosMes: 0,
-      realizadasMes: 0,
-      vencidasSinGestionar: 0,
+      sinGestionarMes: 0,
+      incompletasMes: 0,
+      completasMes: 0,
+      vencidasSinCompletar: 0,
     };
 
   const list = await fetchVtvListRaw(companyId);
   const monthPrefix = format(new Date(), 'yyyy-MM');
 
-  let sinProgramarMes = 0;
-  let solicitadosMes = 0;
-  let realizadasMes = 0;
-  let vencidasSinGestionar = 0;
+  let sinGestionarMes = 0;
+  let incompletasMes = 0;
+  let completasMes = 0;
+  let vencidasSinCompletar = 0;
 
   for (const it of list) {
+    if (it.status === 'cancelada') continue;
     const venceEsteMes = it.validity?.startsWith(monthPrefix) ?? false;
-    const turnoEsteMes = it.appointmentDate?.startsWith(monthPrefix) ?? false;
+    // 'Completa' = ambos indicadores o VTV ya realizada.
+    const completa = it.status === 'realizada' || (it.hasOrder && it.hasAppointment);
+    const incompleta = !completa && (it.hasOrder || it.hasAppointment);
+    const sinGestionar = !completa && !incompleta;
 
-    if (it.status === 'sin_programar') {
-      if (venceEsteMes) sinProgramarMes += 1;
-      if (it.isExpired) vencidasSinGestionar += 1;
-    } else if (it.status === 'orden_solicitada' && turnoEsteMes) {
-      solicitadosMes += 1;
-    } else if (it.status === 'realizada' && turnoEsteMes) {
-      realizadasMes += 1;
+    if (venceEsteMes) {
+      if (completa) completasMes += 1;
+      else if (incompleta) incompletasMes += 1;
+      else sinGestionarMes += 1;
     }
+    // Vencidas sin completar: ya pasó el vencimiento y no está completa.
+    if (it.isExpired && !completa) vencidasSinCompletar += 1;
   }
 
-  return { sinProgramarMes, solicitadosMes, realizadasMes, vencidasSinGestionar };
+  return { sinGestionarMes, incompletasMes, completasMes, vencidasSinCompletar };
 }
 
 /** Vehículos de la empresa (con su documento VTV, si existe) para el alta manual. */
