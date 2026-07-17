@@ -11,6 +11,7 @@ import WarehouseCards, {
 import SupplierCards, {
   SupplierCardsSkeleton,
 } from '@/modules/dashboard/features/overview/components/SupplierCards';
+import { CriticalAlertsPanel, CriticalAlertsSkeleton } from '@/modules/dashboard/features/alerts';
 import { getSessionPermissions } from '@/shared/lib/permissions';
 import { Suspense } from 'react';
 
@@ -38,6 +39,10 @@ export default async function DashboardComponent() {
 
   return (
     <section className="space-y-6">
+      <Suspense fallback={<CriticalAlertsSkeleton />}>
+        <CriticalAlertsPanel />
+      </Suspense>
+
       {showPeopleEquip && (
         <div>
           <h3 className="text-lg font-semibold mb-3">Empleados y Equipos</h3>

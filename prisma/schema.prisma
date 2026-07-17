@@ -324,6 +324,7 @@ model profile {
   user_roles                  user_roles[]              @relation("user_roles_profile")
   user_roles_created          user_roles[]              @relation("user_roles_created_by")
   notification_recipients     notification_recipients[]
+  alert_acknowledgements      alert_acknowledgements[]  @relation("alert_ack_reviewer")
 }
 
 model company {
@@ -407,6 +408,9 @@ model company {
   // Roles y permisos
   roles      roles[]
   user_roles user_roles[]
+
+  // Alertas
+  alert_acknowledgements alert_acknowledgements[]
 
   // Retenciones y percepciones
   tax_types                       tax_types[]
@@ -793,6 +797,23 @@ model vtv_appointments {
   @@index([document_equipment_id])
   @@index([status])
   @@index([appointment_date])
+}
+
+model alert_acknowledgements {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id  String   @db.Uuid
+  alert_key   String
+  alert_type  String
+  label       String?
+  reviewed_by String   @db.Uuid
+  reviewed_at DateTime @default(now()) @db.Timestamptz
+  created_at  DateTime @default(now()) @db.Timestamptz
+
+  company  company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  reviewer profile @relation("alert_ack_reviewer", fields: [reviewed_by], references: [id])
+
+  @@unique([company_id, alert_key])
+  @@index([company_id])
 }
 
 model documents_equipment_logs {
