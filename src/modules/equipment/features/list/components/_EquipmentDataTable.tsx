@@ -18,10 +18,10 @@ interface Props {
 }
 
 const FILTER_DEFINITIONS: { columnId: string; title: string; type: 'faceted' | 'text' }[] = [
+  { columnId: 'intern_number', title: 'Nro. interno', type: 'text' },
+  { columnId: 'domain', title: 'Dominio', type: 'text' },
   { columnId: 'status', title: 'Estado', type: 'faceted' },
   { columnId: 'condition', title: 'Condición', type: 'faceted' },
-  { columnId: 'domain', title: 'Dominio', type: 'text' },
-  { columnId: 'intern_number', title: 'Nro. interno', type: 'text' },
   { columnId: 'chassis', title: 'Chassis', type: 'text' },
   { columnId: 'engine', title: 'Motor', type: 'text' },
   { columnId: 'serie', title: 'Serie', type: 'text' },
@@ -30,7 +30,8 @@ const FILTER_DEFINITIONS: { columnId: string; title: string; type: 'faceted' | '
   { columnId: 'year', title: 'Año', type: 'text' },
 ];
 
-const DEFAULT_VISIBLE_FILTERS = new Set(['status', 'condition']);
+// Interno y Patente primero, que es lo que más se busca en el día a día (tsk-433).
+const DEFAULT_VISIBLE_FILTERS = new Set(['intern_number', 'domain', 'status', 'condition']);
 
 export function _EquipmentDataTable({ data, totalRows, searchParams }: Props) {
   const [facets, setFacets] = useState<Record<string, FacetEntry[]> | null>(null);
