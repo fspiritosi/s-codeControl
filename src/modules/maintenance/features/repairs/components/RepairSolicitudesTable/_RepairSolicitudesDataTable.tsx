@@ -5,7 +5,7 @@ import {
   DataTable,
   type DataTableFacetedFilterConfig,
   type DataTableSearchParams,
-} from '@/shared/components/common/DataTable';
+} from '@/shared/components/data-table';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   getRepairSolicitudFacets,

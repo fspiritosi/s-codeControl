@@ -1,24 +1,40 @@
 import { CardContent } from '@/shared/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { UrlTabs, UrlTabsContent, UrlTabsList, UrlTabsTrigger } from '@/shared/components/ui/url-tabs';
 import { EquipmentDocumentList } from './EquipmentDocumentList';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
+import type { DataTableSearchParams } from '@/shared/components/data-table';
 
-async function EquipmentTabs({ searchParams = {} }: { searchParams?: DataTableSearchParams }) {
+const VALID_SUBTABS = ['permanentes', 'mensuales'] as const;
+type SubTab = (typeof VALID_SUBTABS)[number];
+
+/**
+ * Sub-tabs de documentos de equipo por URL (paramName="subtab").
+ * Renderiza en el servidor solo el sub-tab activo en vez de las 2 tablas a la vez:
+ * evita 1 fetch extra y ~2x el payload RSC por carga (escala con datos reales).
+ */
+async function EquipmentTabs({
+  searchParams = {},
+}: {
+  searchParams?: DataTableSearchParams & { subtab?: string };
+}) {
+  const currentSub: SubTab = VALID_SUBTABS.includes(searchParams.subtab as SubTab)
+    ? (searchParams.subtab as SubTab)
+    : 'permanentes';
+
   return (
-    <Tabs defaultValue="permanentes">
+    <UrlTabs value={currentSub} paramName="subtab" resetParams={['page']}>
       <CardContent>
-        <TabsList>
-          <TabsTrigger value="permanentes">Documentos permanentes</TabsTrigger>
-          <TabsTrigger value="mensuales">Documentos mensuales</TabsTrigger>
-        </TabsList>
+        <UrlTabsList>
+          <UrlTabsTrigger value="permanentes">Documentos permanentes</UrlTabsTrigger>
+          <UrlTabsTrigger value="mensuales">Documentos mensuales</UrlTabsTrigger>
+        </UrlTabsList>
       </CardContent>
-      <TabsContent value="permanentes">
-        <EquipmentDocumentList searchParams={searchParams} />
-      </TabsContent>
-      <TabsContent value="mensuales">
-        <EquipmentDocumentList searchParams={searchParams} monthly />
-      </TabsContent>
-    </Tabs>
+      <UrlTabsContent value="permanentes">
+        {currentSub === 'permanentes' && <EquipmentDocumentList searchParams={searchParams} />}
+      </UrlTabsContent>
+      <UrlTabsContent value="mensuales">
+        {currentSub === 'mensuales' && <EquipmentDocumentList searchParams={searchParams} monthly />}
+      </UrlTabsContent>
+    </UrlTabs>
   );
 }
 

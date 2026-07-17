@@ -5,7 +5,7 @@ import { TypeOfRepair } from '@/shared/types/types';
 import { cookies } from 'next/headers';
 import InfoComponent from '@/shared/components/common/InfoComponent';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 import RepairNewEntry from './RepairEntry';
 import RepairNewEntryMultiple from './RepairEntryMultiple';
 import RepairSolicitudes from './RepairSolicitudesTable/RepairSolicitudes';

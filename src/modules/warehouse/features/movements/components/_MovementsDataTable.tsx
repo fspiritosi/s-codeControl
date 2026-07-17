@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { DataTable } from '@/shared/components/common/DataTable';
-import type { DataTableFacetedFilterConfig } from '@/shared/components/common/DataTable/types';
+import { DataTable } from '@/shared/components/data-table';
+import type { DataTableFacetedFilterConfig } from '@/shared/components/data-table/types';
 import { buildMovementColumns } from './columns';
 import { getMovementTypeFacets } from '@/modules/warehouse/features/list/actions.server';
 import { STOCK_MOVEMENT_TYPE_LABELS } from '@/modules/warehouse/shared/types';

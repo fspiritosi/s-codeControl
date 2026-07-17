@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { DataTable } from '@/shared/components/common/DataTable';
-import type { DataTableFacetedFilterConfig } from '@/shared/components/common/DataTable/types';
+import { DataTable } from '@/shared/components/data-table';
+import type { DataTableFacetedFilterConfig } from '@/shared/components/data-table/types';
 import { purchaseOrderColumns } from './columns';
 import { getPurchaseOrderFacets } from '../actions.server';
 import { PO_STATUS_LABELS, PO_INVOICING_STATUS_LABELS } from '@/modules/purchasing/shared/types';

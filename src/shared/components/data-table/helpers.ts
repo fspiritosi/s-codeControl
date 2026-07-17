@@ -150,6 +150,8 @@ export function buildFiltersWhere(
 
   Object.entries(filters).forEach(([columnId, values]) => {
     if (columnId.endsWith('_from') || columnId.endsWith('_to')) return;
+    // Ignorar params de navegación (UrlTabs) que no son filtros de DB
+    if (columnId === 'tab' || columnId === 'subtab') return;
     if (excluded.has(columnId)) return;
     // Si hay columnMap definido, tratarlo como allowlist: ignorar columnas no mapeadas
     // para evitar que query params ajenos (ej. de otra tab) rompan la query de Prisma.

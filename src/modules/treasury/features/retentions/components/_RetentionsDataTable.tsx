@@ -1,7 +1,7 @@
 'use client';
 
-import { DataTable } from '@/shared/components/common/DataTable';
-import type { DataTableFacetedFilterConfig } from '@/shared/components/common/DataTable/types';
+import { DataTable } from '@/shared/components/data-table';
+import type { DataTableFacetedFilterConfig } from '@/shared/components/data-table/types';
 import { PAYMENT_ORDER_STATUS_LABELS } from '@/modules/treasury/shared/validators';
 import { retentionColumns } from './columns';
 import { getAllRetentionsForExport, type RetentionRow } from '../actions.server';

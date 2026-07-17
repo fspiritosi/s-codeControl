@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**CodeControl** — Multi-tenant SaaS for managing employees, equipment, documents, daily reports, HSE/training, repair requests, and organizational diagrams. Built with Next.js 14 (App Router) + Supabase + TypeScript.
+**CodeControl** — Multi-tenant SaaS for managing employees, equipment, documents, daily reports, HSE/training, repair requests, and organizational diagrams. Built with Next.js 16 (App Router, Turbopack) + React 19 + Prisma (PostgreSQL) + NextAuth + TypeScript. Supabase se conserva para Storage (y aún como fallback parcial de auth — ver plan de optimización).
 
 ## Git Rules
 

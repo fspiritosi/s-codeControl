@@ -1,7 +1,7 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { DataTableColumnHeader } from '@/shared/components/common/DataTable';
+import { DataTableColumnHeader } from '@/shared/components/data-table';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { format } from 'date-fns';
@@ -33,6 +33,7 @@ export const permanentEquipmentDocColumns: ColumnDef<any>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Equipo (Dominio)" />,
     cell: ({ row }) => (
       <Link
+        prefetch={false}
         href={`/dashboard/equipment/action?action=view&id=${row.original.vehicle_id}`}
         className="hover:underline font-medium"
       >
@@ -125,7 +126,7 @@ export const permanentEquipmentDocColumns: ColumnDef<any>[] = [
         );
       }
       return (
-        <Link href={`/dashboard/document/${row.original.id}?resource=${row.original.applies}`}>
+        <Link prefetch={false} href={`/dashboard/document/${row.original.id}?resource=${row.original.applies}`}>
           <Button variant="default" size="sm">
             Ver documento
           </Button>
@@ -148,6 +149,7 @@ export const monthlyEquipmentDocColumns: ColumnDef<any>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Equipo (Dominio)" />,
     cell: ({ row }) => (
       <Link
+        prefetch={false}
         href={`/dashboard/equipment/action?action=view&id=${row.original.vehicle_id}`}
         className="hover:underline font-medium"
       >
@@ -252,7 +254,7 @@ export const monthlyEquipmentDocColumns: ColumnDef<any>[] = [
         );
       }
       return (
-        <Link href={`/dashboard/document/${row.original.id}?resource=${row.original.applies}`}>
+        <Link prefetch={false} href={`/dashboard/document/${row.original.id}?resource=${row.original.applies}`}>
           <Button variant="default" size="sm">
             Ver documento
           </Button>

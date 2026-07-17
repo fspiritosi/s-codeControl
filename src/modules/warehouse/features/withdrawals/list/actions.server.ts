@@ -2,8 +2,8 @@
 
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
-import { parseSearchParams, stateToPrismaParams, buildFiltersWhere } from '@/shared/components/common/DataTable/helpers';
+import type { DataTableSearchParams } from '@/shared/components/data-table/types';
+import { parseSearchParams, stateToPrismaParams, buildFiltersWhere } from '@/shared/components/data-table/helpers';
 import { revalidatePath } from 'next/cache';
 
 const WO_STATUS_LABELS: Record<string, string> = {

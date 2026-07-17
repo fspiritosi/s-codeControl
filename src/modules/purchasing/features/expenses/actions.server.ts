@@ -5,14 +5,14 @@ import { getActionContext } from '@/shared/lib/server-action-context';
 import { requirePermission } from '@/shared/lib/permissions';
 import { fetchCurrentUser } from '@/shared/actions/auth';
 import { revalidatePath } from 'next/cache';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 import {
   parseSearchParams,
   stateToPrismaParams,
   buildFiltersWhere,
   buildTextFiltersWhere,
   buildDateRangeFiltersWhere,
-} from '@/shared/components/common/DataTable/helpers';
+} from '@/shared/components/data-table/helpers';
 import type { ExpenseFormInput, ExpenseCategoryFormInput } from './validators';
 
 // ============================================

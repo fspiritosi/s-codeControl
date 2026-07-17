@@ -10,7 +10,7 @@ import CovenantTreeFile from '@/modules/company/features/covenants/components/Co
 import EmployeeDocumentsTabs from '@/modules/documents/features/list/components/EmployeeDocumentsTabs';
 import EmployeeListTabs from '@/modules/documents/features/list/components/EmployeeListTabs';
 import TypesDocumentsView from '@/modules/documents/features/types/components/TypesDocumentsView';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
+import type { DataTableSearchParams } from '@/shared/components/data-table';
 
 const VALID_TABS = ['employees', 'documents', 'diagrams', 'types', 'covenant'] as const;
 type EmployeeTab = (typeof VALID_TABS)[number];
@@ -27,7 +27,7 @@ export default async function EmployeePage({
 
   return (
     <Suspense fallback={<PageTableSkeleton />}>
-      <UrlTabs value={currentTab} paramName="tab" baseUrl="/dashboard/employee">
+      <UrlTabs value={currentTab} paramName="tab" baseUrl="/dashboard/employee" resetParams={['page', 'subtab']}>
         <UrlTabsList>
           <UrlTabsTrigger value="employees">Empleados</UrlTabsTrigger>
           <UrlTabsTrigger value="documents">Documentos de empleados</UrlTabsTrigger>
@@ -37,74 +37,84 @@ export default async function EmployeePage({
         </UrlTabsList>
 
         <UrlTabsContent value="employees">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Empleados</CardTitle>
-                <CardDescription>Aquí encontrarás todos empleados</CardDescription>
-              </div>
-              <Link
-                href="/dashboard/employee/action?action=new"
-                className={buttonVariants({ variant: 'default' })}
-              >
-                Agregar nuevo empleado
-              </Link>
-            </CardHeader>
-            <CardContent>
-              <EmployeeListTabs actives inactives searchParams={resolved} />
-            </CardContent>
-          </Card>
+          {currentTab === 'employees' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Empleados</CardTitle>
+                  <CardDescription>Aquí encontrarás todos empleados</CardDescription>
+                </div>
+                <Link
+                  href="/dashboard/employee/action?action=new"
+                  className={buttonVariants({ variant: 'default' })}
+                >
+                  Agregar nuevo empleado
+                </Link>
+              </CardHeader>
+              <CardContent>
+                <EmployeeListTabs actives inactives searchParams={resolved} />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="documents">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Documentos cargados</CardTitle>
-                <CardDescription>Aquí encontrarás todos los documentos de tus empleados</CardDescription>
-              </div>
-              <DocumentNav onlyEmployees />
-            </CardHeader>
-            <CardContent>
-              <EmployeeDocumentsTabs searchParams={resolved} />
-            </CardContent>
-          </Card>
+          {currentTab === 'documents' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Documentos cargados</CardTitle>
+                  <CardDescription>Aquí encontrarás todos los documentos de tus empleados</CardDescription>
+                </div>
+                <DocumentNav onlyEmployees />
+              </CardHeader>
+              <CardContent>
+                <EmployeeDocumentsTabs searchParams={resolved} />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="diagrams">
-          <Card>
-            <CardHeader>
-              <CardTitle>Diagramas de personal</CardTitle>
-              <CardDescription>Carga de novedades de trabajo del personal</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <EmployesDiagram />
-            </CardContent>
-          </Card>
+          {currentTab === 'diagrams' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Diagramas de personal</CardTitle>
+                <CardDescription>Carga de novedades de trabajo del personal</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <EmployesDiagram />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="types">
-          <Card>
-            <CardHeader>
-              <CardTitle>Tipos de documentos</CardTitle>
-              <CardDescription>Tipos de documentos auditables</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <TypesDocumentsView personas searchParams={resolved} />
-            </CardContent>
-          </Card>
+          {currentTab === 'types' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Tipos de documentos</CardTitle>
+                <CardDescription>Tipos de documentos auditables</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TypesDocumentsView personas searchParams={resolved} />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="covenant">
-          <Card>
-            <CardHeader>
-              <CardTitle>Convenios colectivos de trabajo</CardTitle>
-              <CardDescription>Lista de Convenios colectivos de trabajo</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CovenantTreeFile />
-            </CardContent>
-          </Card>
+          {currentTab === 'covenant' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Convenios colectivos de trabajo</CardTitle>
+                <CardDescription>Lista de Convenios colectivos de trabajo</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CovenantTreeFile />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
       </UrlTabs>
     </Suspense>

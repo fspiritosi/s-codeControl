@@ -4,14 +4,14 @@ import { supabaseServer } from '@/shared/lib/supabase/server';
 import { getActionContext } from '@/shared/lib/server-action-context';
 import { fetchCurrentUser } from '@/shared/actions/auth';
 import type { status_type } from '@/generated/prisma/client';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 import {
   parseSearchParams,
   stateToPrismaParams,
   buildSearchWhere,
   buildFiltersWhere,
   buildTextFiltersWhere,
-} from '@/shared/components/common/DataTable/helpers';
+} from '@/shared/components/data-table/helpers';
 
 export const fetchAllEmployeesWithRelations = async () => {
   const { companyId } = await getActionContext();

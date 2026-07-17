@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { DataTable } from '@/shared/components/common/DataTable';
-import type { DataTableFacetedFilterConfig } from '@/shared/components/common/DataTable/types';
+import { DataTable } from '@/shared/components/data-table';
+import type { DataTableFacetedFilterConfig } from '@/shared/components/data-table/types';
 import { supplierColumns } from './columns';
 import { getSupplierFacets, getAllSuppliersForExport } from '../actions.server';
 import { TAX_CONDITION_LABELS, SUPPLIER_STATUS_LABELS } from '@/modules/suppliers/shared/types';

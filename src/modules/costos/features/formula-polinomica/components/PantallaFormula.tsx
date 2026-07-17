@@ -1,10 +1,15 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import dynamic from 'next/dynamic';
 import { ConfigFormulaPolinomica } from './ConfigFormulaPolinomica';
 import { TablaComponentes } from './TablaComponentes';
 import { TablaIndicesMensuales } from './TablaIndicesMensuales';
-import { GraficoEvolucionTarifa } from './GraficoEvolucionTarifa';
+// Carga diferida: recharts (~100KB) sale del bundle inicial de la ruta de fórmula polinómica.
+const GraficoEvolucionTarifa = dynamic(
+  () => import('./GraficoEvolucionTarifa').then((m) => m.GraficoEvolucionTarifa),
+  { ssr: false, loading: () => <div className="h-[300px] w-full animate-pulse rounded-md bg-muted" /> }
+);
 import { ResumenRetroactivos } from './ResumenRetroactivos';
 import { BotonInicializarPonderaciones } from './BotonInicializarPonderaciones';
 import type { FormulaConDetalle, PeriodoConValores } from '@/modules/costos/shared/types/formula-polinomica.types';

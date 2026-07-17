@@ -1,4 +1,4 @@
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
+import type { DataTableSearchParams } from '@/shared/components/data-table';
 import { getExpensesPaginated, getExpenseFacetCounts, getExpenseCategories } from '../actions.server';
 import { _ExpensesDataTable } from './components/_ExpensesDataTable';
 import { NoAccessView } from '@/shared/components/common/NoAccessView';

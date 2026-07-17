@@ -5,7 +5,7 @@ import {
   DataTable,
   type DataTableFacetedFilterConfig,
   type DataTableSearchParams,
-} from '@/shared/components/common/DataTable';
+} from '@/shared/components/data-table';
 import { permanentDocumentColumns, monthlyDocumentColumns } from './document-columns';
 import { getEmployeeDocumentFacets, getAllEmployeeDocumentsForExport } from '../actions.server';
 
@@ -42,6 +42,8 @@ export function _EmployeeDocumentDataTable({ data, totalRows, searchParams, mont
       ? 'employee-docs-monthly'
       : 'employee-docs-permanent';
 
+  // Facets en cliente (no bloquean el render de la tabla). Se usa startTransition-like:
+  // la tabla ya se ve con la data SSR; las opciones de filtro se completan al llegar.
   useEffect(() => {
     getEmployeeDocumentFacets({ monthly, downDocument }).then(setFacets).catch(console.error);
   }, [monthly, downDocument]);

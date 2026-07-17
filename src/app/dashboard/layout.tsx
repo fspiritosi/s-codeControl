@@ -1,12 +1,9 @@
-import { getMyTicketsWithUnread } from '@/modules/ayuda/actions/support-tickets';
-import { MY_TICKETS_WITH_UNREAD_QUERY_KEY } from '@/modules/ayuda/hooks/queryKeys';
 import NavBar from '@/shared/components/layout/NavBar';
 import NotificationsAlert from '@/shared/components/layout/NotificationsAlert';
 import SideBarContainer from '@/shared/components/layout/SideBarContainer';
 import TanstackQueryProvider from '@/shared/providers/TanstackQueryProvider';
 import { getRouteRule } from '@/shared/lib/route-permissions';
 import { getSession } from '@/shared/lib/session';
-import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
@@ -30,39 +27,31 @@ export default async function DashboardLayout({ children }: { children: React.Re
     }
   }
 
-  // Prefetch server-side de los tickets sin leer para que el badge del sidebar
-  // aparezca sin un fetch extra en cliente (se rehidrata vía HydrationBoundary).
-  const queryClient = new QueryClient();
-  try {
-    await queryClient.prefetchQuery({
-      queryKey: MY_TICKETS_WITH_UNREAD_QUERY_KEY,
-      queryFn: () => getMyTicketsWithUnread(),
-    });
-  } catch {
-    // Si el prefetch falla, el cliente reintenta vía useQuery
-  }
-  const dehydratedState = dehydrate(queryClient);
+  // NOTA: antes acá se hacía `await queryClient.prefetchQuery(getMyTicketsWithUnread)`
+  // para el badge del sidebar. Eso llamaba a la API EXTERNA de TaskApp (fetch) y
+  // BLOQUEABA el render del layout — y por ende de TODA página del dashboard — hasta
+  // que esa API respondiera (en local no se notaba porque TASKAPP_BASE_URL no está
+  // seteado y devolvía []). El badge no es crítico: el hook `useMyTicketsWithUnread`
+  // lo carga en cliente sin bloquear el render inicial.
 
   return (
     <TanstackQueryProvider>
-      <HydrationBoundary state={dehydratedState}>
-        <div className={`grid grid-rows-[auto,1fr] grid-cols-[auto,1fr] h-screen `}>
-          <div className="row-span-2 ">
-            <SideBarContainer />
-          </div>
-          <div className="border-r border-b border-muted/50">
-            <NavBar />
-          </div>
-          <div className="overflow-y-auto">
-            <div className="animate-fade-in px-6 pb-6 space-y-4">
-              <Suspense fallback={null}>
-                <NotificationsAlert />
-              </Suspense>
-              {children}
-            </div>
+      <div className={`grid grid-rows-[auto,1fr] grid-cols-[auto,1fr] h-screen `}>
+        <div className="row-span-2 ">
+          <SideBarContainer />
+        </div>
+        <div className="border-r border-b border-muted/50">
+          <NavBar />
+        </div>
+        <div className="overflow-y-auto">
+          <div className="animate-fade-in px-6 pb-6 space-y-4">
+            <Suspense fallback={null}>
+              <NotificationsAlert />
+            </Suspense>
+            {children}
           </div>
         </div>
-      </HydrationBoundary>
+      </div>
     </TanstackQueryProvider>
   );
 }

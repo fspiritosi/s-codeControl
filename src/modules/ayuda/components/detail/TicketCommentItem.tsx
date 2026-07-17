@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback } from '@/shared/components/ui/avatar';
 import { Wrench } from 'lucide-react';
-import moment from 'moment';
-import 'moment/locale/es';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 import type { Comment } from '@/shared/lib/taskapp/types';
 
 interface Props {
@@ -58,7 +58,7 @@ export function TicketCommentItem({ comment, currentUserEmail, currentUserName }
           <span>{displayName}</span>
           <span aria-hidden>·</span>
           <time dateTime={comment.created_at}>
-            {moment(comment.created_at).locale('es').fromNow()}
+            {formatDistanceToNow(new Date(comment.created_at), { locale: es, addSuffix: true })}
           </time>
         </div>
       </div>

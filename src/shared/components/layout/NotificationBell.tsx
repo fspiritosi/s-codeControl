@@ -18,8 +18,7 @@ import { Button } from '@/shared/components/ui/button';
 import { ScrollArea } from '@/shared/components/ui/scroll-area';
 import {
   dismiss,
-  getMyNotifications,
-  getMyUnreadCount,
+  getMyNotificationsWithCount,
   markAllAsRead,
   markAsRead,
 } from '@/shared/actions/notifications';
@@ -55,10 +54,9 @@ export function NotificationBell() {
 
   const refresh = useCallback(async () => {
     if (!companyId) return;
-    const [list, count] = await Promise.all([
-      getMyNotifications(companyId, false),
-      getMyUnreadCount(companyId),
-    ]);
+    // Un solo server action (lista + contador) en vez de dos: Next serializa los
+    // server actions, así que 2 llamadas = 2 POST secuenciales en el waterfall de carga.
+    const { list, count } = await getMyNotificationsWithCount(companyId, false);
     setItems(list as NotificationItem[]);
     setUnread(count);
   }, [companyId]);

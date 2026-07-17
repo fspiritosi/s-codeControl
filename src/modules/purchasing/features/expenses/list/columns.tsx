@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
-import { DataTableColumnHeader } from '@/shared/components/common/DataTable';
+import { DataTableColumnHeader } from '@/shared/components/data-table';
 import { EXPENSE_STATUS_LABELS } from '../validators';
 
 export type ExpenseListItem = {

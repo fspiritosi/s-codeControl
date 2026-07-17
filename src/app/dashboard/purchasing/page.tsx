@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/sha
 import { UrlTabs, UrlTabsContent, UrlTabsList, UrlTabsTrigger } from '@/shared/components/ui/url-tabs';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
+import type { DataTableSearchParams } from '@/shared/components/data-table';
 
 const VALID_TABS = ['orders', 'invoices', 'receiving', 'suppliers', 'expenses'] as const;
 type PurchasingTab = (typeof VALID_TABS)[number];
@@ -36,85 +36,95 @@ export default async function PurchasingPage({
         </UrlTabsList>
 
         <UrlTabsContent value="orders">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Órdenes de compra</CardTitle>
-                <CardDescription>Gestión de órdenes de compra a proveedores</CardDescription>
-              </div>
-              <Link href="/dashboard/purchasing/orders/new" className={buttonVariants({ variant: 'default' })}>
-                Nueva orden
-              </Link>
-            </CardHeader>
-            <CardContent>
-              <PurchaseOrdersList searchParams={resolved} />
-            </CardContent>
-          </Card>
+          {currentTab === 'orders' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Órdenes de compra</CardTitle>
+                  <CardDescription>Gestión de órdenes de compra a proveedores</CardDescription>
+                </div>
+                <Link href="/dashboard/purchasing/orders/new" className={buttonVariants({ variant: 'default' })}>
+                  Nueva orden
+                </Link>
+              </CardHeader>
+              <CardContent>
+                <PurchaseOrdersList searchParams={resolved} />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="invoices">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Facturas de compra</CardTitle>
-                <CardDescription>Registro de facturas de proveedores</CardDescription>
-              </div>
-              <Link href="/dashboard/purchasing/invoices/new" className={buttonVariants({ variant: 'default' })}>
-                Nueva factura
-              </Link>
-            </CardHeader>
-            <CardContent>
-              <InvoicesList searchParams={resolved} />
-            </CardContent>
-          </Card>
+          {currentTab === 'invoices' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Facturas de compra</CardTitle>
+                  <CardDescription>Registro de facturas de proveedores</CardDescription>
+                </div>
+                <Link href="/dashboard/purchasing/invoices/new" className={buttonVariants({ variant: 'default' })}>
+                  Nueva factura
+                </Link>
+              </CardHeader>
+              <CardContent>
+                <InvoicesList searchParams={resolved} />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="receiving">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Remitos de recepción</CardTitle>
-                <CardDescription>Recepción de materiales en almacén</CardDescription>
-              </div>
-              <Link href="/dashboard/purchasing/receiving/new" className={buttonVariants({ variant: 'default' })}>
-                Nuevo remito
-              </Link>
-            </CardHeader>
-            <CardContent>
-              <ReceivingNotesList searchParams={resolved} />
-            </CardContent>
-          </Card>
+          {currentTab === 'receiving' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Remitos de recepción</CardTitle>
+                  <CardDescription>Recepción de materiales en almacén</CardDescription>
+                </div>
+                <Link href="/dashboard/purchasing/receiving/new" className={buttonVariants({ variant: 'default' })}>
+                  Nuevo remito
+                </Link>
+              </CardHeader>
+              <CardContent>
+                <ReceivingNotesList searchParams={resolved} />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="suppliers">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Proveedores</CardTitle>
-                <CardDescription>Gestión de proveedores de la empresa</CardDescription>
-              </div>
-              <Link href="/dashboard/suppliers/new" className={buttonVariants({ variant: 'default' })}>
-                Nuevo proveedor
-              </Link>
-            </CardHeader>
-            <CardContent>
-              <SuppliersList searchParams={resolved} />
-            </CardContent>
-          </Card>
+          {currentTab === 'suppliers' && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Proveedores</CardTitle>
+                  <CardDescription>Gestión de proveedores de la empresa</CardDescription>
+                </div>
+                <Link href="/dashboard/suppliers/new" className={buttonVariants({ variant: 'default' })}>
+                  Nuevo proveedor
+                </Link>
+              </CardHeader>
+              <CardContent>
+                <SuppliersList searchParams={resolved} />
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
 
         <UrlTabsContent value="expenses">
-          <Card>
-            <CardHeader>
-              <CardTitle>Gastos</CardTitle>
-              <CardDescription>Gestión de gastos operativos de la empresa</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Suspense fallback={<PageTableSkeleton />}>
-                <ExpensesList searchParams={resolved} />
-              </Suspense>
-            </CardContent>
-          </Card>
+          {currentTab === 'expenses' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Gastos</CardTitle>
+                <CardDescription>Gestión de gastos operativos de la empresa</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Suspense fallback={<PageTableSkeleton />}>
+                  <ExpensesList searchParams={resolved} />
+                </Suspense>
+              </CardContent>
+            </Card>
+          )}
         </UrlTabsContent>
       </UrlTabs>
     </Suspense>

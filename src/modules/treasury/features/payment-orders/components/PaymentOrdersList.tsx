@@ -4,7 +4,7 @@ import { Plus } from 'lucide-react';
 import { getPaymentOrdersPaginated, getPaymentOrderTotalsByStatus } from '../actions.server';
 import { PaymentOrdersDataTable } from './_PaymentOrdersDataTable';
 import { PaymentOrderTotals } from './PaymentOrderTotals';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 
 interface Props {
   searchParams: Record<string, string | undefined>;

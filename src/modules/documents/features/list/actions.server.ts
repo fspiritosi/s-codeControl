@@ -5,14 +5,14 @@ import { getSession } from '@/shared/lib/session';
 import { formatEmployeeDocuments, formatVehiculesDocuments } from '@/shared/lib/utils';
 import { startOfDay, endOfDay, addMonths } from 'date-fns';
 import type { Prisma } from '@/generated/prisma/client';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 import {
   parseSearchParams,
   stateToPrismaParams,
   buildSearchWhere,
   buildFiltersWhere,
   buildDateRangeFiltersWhere,
-} from '@/shared/components/common/DataTable/helpers';
+} from '@/shared/components/data-table/helpers';
 
 // Document-related queries
 

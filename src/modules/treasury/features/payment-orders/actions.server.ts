@@ -6,14 +6,14 @@ import { fetchCurrentUser } from '@/shared/actions/auth';
 import { requirePermission } from '@/shared/lib/permissions';
 import { createNotification } from '@/shared/services/notifications';
 import { nextCertificateNumber } from './shared/retention-certificate/sequence';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 import {
   parseSearchParams,
   stateToPrismaParams,
   buildFiltersWhere,
   buildTextFiltersWhere,
   buildDateRangeFiltersWhere,
-} from '@/shared/components/common/DataTable/helpers';
+} from '@/shared/components/data-table/helpers';
 import { revalidatePath } from 'next/cache';
 import {
   paymentOrderSchema,

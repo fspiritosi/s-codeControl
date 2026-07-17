@@ -1,13 +1,22 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { DataTableColumnHeader } from '@/shared/components/common/DataTable';
+import { DataTableColumnHeader } from '@/shared/components/data-table';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { DocumentRowActions } from './DocumentRowActions';
-import { UploadPendingDocumentDialog } from '@/modules/documents/features/manage/components/UploadPendingDocumentDialog';
+import dynamic from 'next/dynamic';
+// Carga diferida: el diálogo de carga de documento pendiente (~867 LOC + form) sale
+// del bundle inicial de la tabla; se descarga al renderizar la fila pendiente.
+const UploadPendingDocumentDialog = dynamic(
+  () =>
+    import('@/modules/documents/features/manage/components/UploadPendingDocumentDialog').then(
+      (m) => m.UploadPendingDocumentDialog
+    ),
+  { ssr: false, loading: () => <Button variant="default" size="sm" disabled>Subir</Button> }
+);
 
 const stateVariantMap: Record<
   string,
@@ -33,6 +42,7 @@ export const permanentDocumentColumns: ColumnDef<any>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Empleado" />,
     cell: ({ row }) => (
       <Link
+        prefetch={false}
         href={`/dashboard/employee/action?action=view&employee_id=${row.original.employee_id}`}
         className="hover:underline font-medium"
       >
@@ -119,7 +129,7 @@ export const permanentDocumentColumns: ColumnDef<any>[] = [
         );
       }
       return (
-        <Link href={`/dashboard/document/${row.original.id}?resource=${row.original.applies}`}>
+        <Link prefetch={false} href={`/dashboard/document/${row.original.id}?resource=${row.original.applies}`}>
           <Button variant="default" size="sm">
             Ver documento
           </Button>
@@ -142,6 +152,7 @@ export const monthlyDocumentColumns: ColumnDef<any>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Empleado" />,
     cell: ({ row }) => (
       <Link
+        prefetch={false}
         href={`/dashboard/employee/action?action=view&employee_id=${row.original.employee_id}`}
         className="hover:underline font-medium"
       >
@@ -240,7 +251,7 @@ export const monthlyDocumentColumns: ColumnDef<any>[] = [
         );
       }
       return (
-        <Link href={`/dashboard/document/${row.original.id}?resource=${row.original.applies}`}>
+        <Link prefetch={false} href={`/dashboard/document/${row.original.id}?resource=${row.original.applies}`}>
           <Button variant="default" size="sm">
             Ver documento
           </Button>
