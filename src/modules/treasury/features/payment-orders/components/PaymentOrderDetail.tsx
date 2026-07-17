@@ -15,6 +15,7 @@ import {
 } from '@/shared/components/ui/table';
 import { getPaymentOrderById } from '../actions.server';
 import { PaymentOrderActions } from './PaymentOrderActions';
+import { CopyableCbu } from './CopyableCbu';
 import {
   PAYMENT_METHOD_LABELS,
   PAYMENT_ORDER_STATUS_LABELS,
@@ -162,19 +163,19 @@ export async function PaymentOrderDetail({ id }: { id: string }) {
             <TableBody>
               {order.payments.map((p) => {
                 const dest = p.supplier_payment_method;
-                let destLabel: string | null = null;
+                let destPrefix: string | null = null;
+                let destCbu: string | null = null;
+                let destAlias: string | null = null;
                 if (dest) {
                   if (dest.type === 'CHECK') {
-                    destLabel = 'Cheque al proveedor';
+                    destPrefix = 'Cheque al proveedor';
                   } else if (dest.type === 'ACCOUNT') {
-                    const cbuTail = dest.cbu
-                      ? ` · CBU ${dest.cbu.slice(-4).padStart(dest.cbu.length, '•')}`
-                      : dest.alias
-                        ? ` · Alias ${dest.alias}`
-                        : '';
-                    destLabel = `${dest.bank_name ?? 'Cuenta bancaria'}${cbuTail}`;
+                    destPrefix = dest.bank_name ?? 'Cuenta bancaria';
+                    destCbu = dest.cbu ?? null;
+                    destAlias = dest.cbu ? null : dest.alias ?? null;
                   }
                 }
+                const hasDest = destPrefix || destCbu || destAlias;
                 return (
                   <TableRow key={p.id}>
                     <TableCell>
@@ -192,9 +193,11 @@ export async function PaymentOrderDetail({ id }: { id: string }) {
                                 ? `•••• ${p.card_last4}`
                                 : '-'}
                       </div>
-                      {destLabel && (
+                      {hasDest && (
                         <div className="text-xs text-muted-foreground mt-0.5">
-                          Destino: {destLabel}
+                          <span>Destino: {destPrefix}</span>
+                          {destCbu && <span> · CBU <CopyableCbu cbu={destCbu} /></span>}
+                          {destAlias && <span> · Alias {destAlias}</span>}
                         </div>
                       )}
                     </TableCell>
