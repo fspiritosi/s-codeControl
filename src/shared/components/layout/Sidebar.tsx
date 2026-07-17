@@ -50,6 +50,12 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
             <Link
               key={link.name}
               href={link.href}
+              // Sin prefetch en viewport: las 17 rutas del sidebar son dinámicas y cada
+              // prefetch dispara un render RSC completo en el server. En cada carga eso
+              // generaba ~17 renders server-side simultáneos (storm) que saturaban el
+              // servidor y dejaban el main thread idle esperando. Next igual prefetchea
+              // al hacer hover, así que la navegación sigue siendo instantánea.
+              prefetch={false}
               className={cn(
                 'flex items-center p-4 cursor-pointer transition-all duration-500 rounded-s-full lisidebar relative',
                 link.name === activeLink
