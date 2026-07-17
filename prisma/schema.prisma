@@ -550,6 +550,12 @@ model employees {
   // Costos
   asignaciones_mod      asignacion_mod[]
   liquidaciones_sueldos liquidacion_sueldo[]
+
+  // Scope por empresa: casi todas las queries filtran employees por company_id
+  // (+ is_active). Sin índice, el join documents_employees→employees escaneaba toda
+  // la tabla en cada listado.
+  @@index([company_id])
+  @@index([company_id, is_active])
 }
 
 model companies_employees {
@@ -721,6 +727,15 @@ model documents_employees {
   employee      employees?      @relation(fields: [applies], references: [id], onUpdate: Cascade, onDelete: Cascade)
 
   logs documents_employees_logs[]
+
+  // Índices para las queries de listado de documentos: se filtra por empresa vía el
+  // join a employees (applies) + document_types (id_document_types) y por state, con
+  // orden por created_at. Postgres NO indexa las FK automáticamente → sin estos, cada
+  // carga hacía full scan (medido: ~4.5s de render RSC en prod).
+  @@index([applies])
+  @@index([id_document_types])
+  @@index([state])
+  @@index([created_at])
 }
 
 model documents_employees_logs {
@@ -1991,42 +2006,42 @@ model purchase_order_installments {
 // ============================================================
 
 model purchase_invoices {
-  id                  String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  company_id          String                            @db.Uuid
-  supplier_id         String                            @db.Uuid
-  voucher_type        voucher_type
-  point_of_sale       String
-  number              String
-  full_number         String
-  issue_date          DateTime                          @db.Timestamptz
-  due_date            DateTime?                         @db.Timestamptz
-  cae                 String?
-  currency            String                            @default("ARS")
-  exchange_rate       Decimal                           @default(1) @db.Decimal(12, 4)
-  subtotal            Decimal                           @default(0) @db.Decimal(12, 2)
-  vat_amount          Decimal                           @default(0) @db.Decimal(12, 2)
-  other_taxes         Decimal                           @default(0) @db.Decimal(12, 2)
-  total               Decimal                           @default(0) @db.Decimal(12, 2)
-  notes               String?
-  status              purchase_invoice_status           @default(DRAFT)
-  receiving_status    purchase_invoice_receiving_status @default(NOT_RECEIVED)
-  document_url        String?
-  document_key        String?
-  original_invoice_id String?                           @db.Uuid
-  purchase_order_id   String?                           @db.Uuid
-  global_discount_type   discount_type?
-  global_discount_value  Decimal?                         @db.Decimal(12, 2)
-  discount_amount        Decimal                          @default(0) @db.Decimal(12, 2)
-  other_charges          Decimal                          @default(0) @db.Decimal(12, 2)
-  created_by          String?
-  created_at          DateTime                          @default(now()) @db.Timestamptz
-  updated_at          DateTime                          @default(now()) @updatedAt @db.Timestamptz
+  id                    String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id            String                            @db.Uuid
+  supplier_id           String                            @db.Uuid
+  voucher_type          voucher_type
+  point_of_sale         String
+  number                String
+  full_number           String
+  issue_date            DateTime                          @db.Timestamptz
+  due_date              DateTime?                         @db.Timestamptz
+  cae                   String?
+  currency              String                            @default("ARS")
+  exchange_rate         Decimal                           @default(1) @db.Decimal(12, 4)
+  subtotal              Decimal                           @default(0) @db.Decimal(12, 2)
+  vat_amount            Decimal                           @default(0) @db.Decimal(12, 2)
+  other_taxes           Decimal                           @default(0) @db.Decimal(12, 2)
+  total                 Decimal                           @default(0) @db.Decimal(12, 2)
+  notes                 String?
+  status                purchase_invoice_status           @default(DRAFT)
+  receiving_status      purchase_invoice_receiving_status @default(NOT_RECEIVED)
+  document_url          String?
+  document_key          String?
+  original_invoice_id   String?                           @db.Uuid
+  purchase_order_id     String?                           @db.Uuid
+  global_discount_type  discount_type?
+  global_discount_value Decimal?                          @db.Decimal(12, 2)
+  discount_amount       Decimal                           @default(0) @db.Decimal(12, 2)
+  other_charges         Decimal                           @default(0) @db.Decimal(12, 2)
+  created_by            String?
+  created_at            DateTime                          @default(now()) @db.Timestamptz
+  updated_at            DateTime                          @default(now()) @updatedAt @db.Timestamptz
 
-  company             company                        @relation(fields: [company_id], references: [id])
-  supplier            suppliers                      @relation(fields: [supplier_id], references: [id])
-  purchase_order      purchase_orders?               @relation(fields: [purchase_order_id], references: [id])
-  original_invoice    purchase_invoices?             @relation("purchase_invoice_credit_notes", fields: [original_invoice_id], references: [id])
-  credit_notes        purchase_invoices[]            @relation("purchase_invoice_credit_notes")
+  company             company                          @relation(fields: [company_id], references: [id])
+  supplier            suppliers                        @relation(fields: [supplier_id], references: [id])
+  purchase_order      purchase_orders?                 @relation(fields: [purchase_order_id], references: [id])
+  original_invoice    purchase_invoices?               @relation("purchase_invoice_credit_notes", fields: [original_invoice_id], references: [id])
+  credit_notes        purchase_invoices[]              @relation("purchase_invoice_credit_notes")
   lines               purchase_invoice_lines[]
   installments        purchase_order_installments[]
   receiving_notes     receiving_notes[]
@@ -2052,16 +2067,16 @@ model purchase_invoice_other_charges {
 }
 
 model purchase_invoice_lines {
-  id                     String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  invoice_id             String  @db.Uuid
-  product_id             String? @db.Uuid
+  id                     String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoice_id             String         @db.Uuid
+  product_id             String?        @db.Uuid
   description            String
-  quantity               Decimal @db.Decimal(12, 3)
-  unit_cost              Decimal @db.Decimal(12, 3)
-  vat_rate               Decimal @db.Decimal(5, 2)
-  vat_amount             Decimal @db.Decimal(12, 3)
-  subtotal               Decimal @db.Decimal(12, 3)
-  total                  Decimal @db.Decimal(12, 3)
+  quantity               Decimal        @db.Decimal(12, 3)
+  unit_cost              Decimal        @db.Decimal(12, 3)
+  vat_rate               Decimal        @db.Decimal(5, 2)
+  vat_amount             Decimal        @db.Decimal(12, 3)
+  subtotal               Decimal        @db.Decimal(12, 3)
+  total                  Decimal        @db.Decimal(12, 3)
   purchase_order_line_id String?        @db.Uuid
   received_qty           Decimal        @default(0) @db.Decimal(12, 3)
   discount_type          discount_type?
@@ -2466,7 +2481,7 @@ model tax_types {
   created_at         DateTime             @default(now()) @db.Timestamptz
   updated_at         DateTime             @default(now()) @updatedAt @db.Timestamptz
 
-  company             company                          @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  company             company                           @relation(fields: [company_id], references: [id], onDelete: Cascade)
   invoice_perceptions purchase_invoice_perceptions[]
   order_retentions    payment_order_retentions[]
   certificate_seq     retention_certificate_sequences[]
@@ -2600,12 +2615,12 @@ model checks {
   created_at               DateTime     @default(now()) @db.Timestamptz
   updated_at               DateTime     @default(now()) @updatedAt @db.Timestamptz
 
-  company               company                 @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  customer              customers?              @relation(fields: [customer_id], references: [id])
-  supplier              suppliers?              @relation(fields: [supplier_id], references: [id])
-  bank_account          bank_accounts?          @relation(fields: [bank_account_id], references: [id])
-  bank_movement         bank_movements?         @relation(fields: [bank_movement_id], references: [id])
-  payment_order_payment payment_order_payments? @relation("CheckConfirmedPayment", fields: [payment_order_payment_id], references: [id])
+  company               company                  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  customer              customers?               @relation(fields: [customer_id], references: [id])
+  supplier              suppliers?               @relation(fields: [supplier_id], references: [id])
+  bank_account          bank_accounts?           @relation(fields: [bank_account_id], references: [id])
+  bank_movement         bank_movements?          @relation(fields: [bank_movement_id], references: [id])
+  payment_order_payment payment_order_payments?  @relation("CheckConfirmedPayment", fields: [payment_order_payment_id], references: [id])
   selected_in_payments  payment_order_payments[] @relation("SelectedCheckForPayment")
 
   @@index([company_id, type, status])
@@ -2633,27 +2648,27 @@ model expense_categories {
 }
 
 model expenses {
-  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  company_id  String         @db.Uuid
-  number      Int
-  full_number String
-  description String
-  amount      Decimal        @db.Decimal(15, 2)
-  date        DateTime       @db.Date
-  due_date    DateTime?      @db.Date
-  status      expense_status @default(DRAFT)
-  notes       String?
-  category_id String         @db.Uuid
-  supplier_id String?        @db.Uuid
-  purchase_order_id String?  @db.Uuid
-  created_by  String
-  created_at  DateTime       @default(now()) @db.Timestamptz
-  updated_at  DateTime       @default(now()) @updatedAt @db.Timestamptz
+  id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id        String         @db.Uuid
+  number            Int
+  full_number       String
+  description       String
+  amount            Decimal        @db.Decimal(15, 2)
+  date              DateTime       @db.Date
+  due_date          DateTime?      @db.Date
+  status            expense_status @default(DRAFT)
+  notes             String?
+  category_id       String         @db.Uuid
+  supplier_id       String?        @db.Uuid
+  purchase_order_id String?        @db.Uuid
+  created_by        String
+  created_at        DateTime       @default(now()) @db.Timestamptz
+  updated_at        DateTime       @default(now()) @updatedAt @db.Timestamptz
 
-  company             company              @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  category            expense_categories   @relation(fields: [category_id], references: [id])
-  supplier            suppliers?           @relation(fields: [supplier_id], references: [id])
-  purchase_order      purchase_orders?     @relation(fields: [purchase_order_id], references: [id])
+  company             company               @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  category            expense_categories    @relation(fields: [category_id], references: [id])
+  supplier            suppliers?            @relation(fields: [supplier_id], references: [id])
+  purchase_order      purchase_orders?      @relation(fields: [purchase_order_id], references: [id])
   expense_attachments expense_attachments[]
   payment_order_items payment_order_items[]
 
@@ -2666,8 +2681,8 @@ model expenses {
 }
 
 model expense_attachments {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  expense_id String  @db.Uuid
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  expense_id String   @db.Uuid
   file_name  String
   file_key   String
   file_size  Int?
@@ -2760,18 +2775,18 @@ model categoria_cct {
 
 // Definición de cada concepto del CCT
 model concepto_cct {
-  id             String                  @id @default(uuid()) @db.Uuid
-  config_cct_id  String                  @db.Uuid
-  codigo         String
-  nombre         String
-  tipo           tipo_concepto_cct
-  aplica_en      ambito_concepto_cct[]
-  clase_calculo  clase_calculo_concepto
-  parametros     Json
-  orden          Int                     @default(0)
-  is_active      Boolean                 @default(true)
+  id            String                 @id @default(uuid()) @db.Uuid
+  config_cct_id String                 @db.Uuid
+  codigo        String
+  nombre        String
+  tipo          tipo_concepto_cct
+  aplica_en     ambito_concepto_cct[]
+  clase_calculo clase_calculo_concepto
+  parametros    Json
+  orden         Int                    @default(0)
+  is_active     Boolean                @default(true)
 
-  config_cct config_cct               @relation(fields: [config_cct_id], references: [id])
+  config_cct config_cct                 @relation(fields: [config_cct_id], references: [id])
   valores    valor_concepto_categoria[]
 
   @@unique([config_cct_id, codigo])
@@ -2832,22 +2847,22 @@ model item_mantenimiento {
 
 // Servicio/contrato: agrupador maestro de todos los módulos de costo
 model servicio_contrato {
-  id                  String   @id @default(uuid()) @db.Uuid
-  created_at          DateTime @default(now()) @db.Timestamptz(6)
-  company_id          String   @db.Uuid
-  customer_id         String   @db.Uuid
-  config_cct_id       String   @db.Uuid
-  nombre              String   @db.VarChar(160)
-  descripcion         String?
-  fecha_inicio        String   @db.VarChar(10)
-  fecha_fin           String?  @db.VarChar(10)
-  is_active           Boolean  @default(true)
-  margen_iibb         Decimal  @db.Decimal(5, 4) @default(0)
-  margen_debcred      Decimal  @db.Decimal(5, 4) @default(0)
-  margen_estructura   Decimal  @db.Decimal(5, 4) @default(0)
-  margen_ganancia     Decimal  @db.Decimal(5, 4) @default(0)
-  licencia_ordenanza  Decimal  @db.Decimal(5, 4) @default(0)
-  config_servicio     Json?
+  id                 String   @id @default(uuid()) @db.Uuid
+  created_at         DateTime @default(now()) @db.Timestamptz(6)
+  company_id         String   @db.Uuid
+  customer_id        String   @db.Uuid
+  config_cct_id      String   @db.Uuid
+  nombre             String   @db.VarChar(160)
+  descripcion        String?
+  fecha_inicio       String   @db.VarChar(10)
+  fecha_fin          String?  @db.VarChar(10)
+  is_active          Boolean  @default(true)
+  margen_iibb        Decimal  @default(0) @db.Decimal(5, 4)
+  margen_debcred     Decimal  @default(0) @db.Decimal(5, 4)
+  margen_estructura  Decimal  @default(0) @db.Decimal(5, 4)
+  margen_ganancia    Decimal  @default(0) @db.Decimal(5, 4)
+  licencia_ordenanza Decimal  @default(0) @db.Decimal(5, 4)
+  config_servicio    Json?
 
   company    company    @relation(fields: [company_id], references: [id])
   customer   customers  @relation(fields: [customer_id], references: [id])
@@ -2865,13 +2880,13 @@ model servicio_contrato {
 
 // Asignación de choferes a un servicio con % de afectación
 model asignacion_mod {
-  id               String  @id @default(uuid()) @db.Uuid
-  servicio_id      String  @db.Uuid
-  employee_id      String  @db.Uuid
-  categoria_cct_id String  @db.Uuid
-  afectacion_pct   Decimal @db.Decimal(5, 4)
-  antiguedad_anios Int     @default(0)
-  is_active        Boolean @default(true)
+  id                String  @id @default(uuid()) @db.Uuid
+  servicio_id       String  @db.Uuid
+  employee_id       String  @db.Uuid
+  categoria_cct_id  String  @db.Uuid
+  afectacion_pct    Decimal @db.Decimal(5, 4)
+  antiguedad_anios  Int     @default(0)
+  is_active         Boolean @default(true)
   overrides_calculo Json?
 
   servicio  servicio_contrato @relation(fields: [servicio_id], references: [id], onDelete: Cascade)
@@ -2915,8 +2930,8 @@ model registro_combustible {
   periodo          String  @db.VarChar(7)
   litros_mensuales Decimal @db.Decimal(10, 2)
   precio_gasoil_lt Decimal @db.Decimal(15, 2)
-  litros_urea      Decimal @db.Decimal(10, 2) @default(0)
-  precio_urea_lt   Decimal @db.Decimal(15, 2) @default(0)
+  litros_urea      Decimal @default(0) @db.Decimal(10, 2)
+  precio_urea_lt   Decimal @default(0) @db.Decimal(15, 2)
 
   servicio servicio_contrato @relation(fields: [servicio_id], references: [id], onDelete: Cascade)
   vehicle  vehicles          @relation(fields: [vehicle_id], references: [id])
@@ -2926,20 +2941,20 @@ model registro_combustible {
 
 // Snapshot de la composición completa de costos para un período
 model composicion_costo {
-  id                    String   @id @default(uuid()) @db.Uuid
-  created_at            DateTime @default(now()) @db.Timestamptz(6)
-  servicio_id           String   @db.Uuid
-  periodo               String   @db.VarChar(7)
-  config_cct_id         String   @db.Uuid
-  subtotal_mod          Decimal  @db.Decimal(15, 2)
-  subtotal_equipos      Decimal  @db.Decimal(15, 2)
-  subtotal_combustible  Decimal  @db.Decimal(15, 2)
-  subtotal_ocp          Decimal  @db.Decimal(15, 2)
-  total_costo_directo   Decimal  @db.Decimal(15, 2)
-  total_con_margenes    Decimal  @db.Decimal(15, 2)
-  precio_mensual        Decimal  @db.Decimal(15, 2)
-  detalle_json          Json
-  pdf_path              String?  @db.VarChar(500)
+  id                   String   @id @default(uuid()) @db.Uuid
+  created_at           DateTime @default(now()) @db.Timestamptz(6)
+  servicio_id          String   @db.Uuid
+  periodo              String   @db.VarChar(7)
+  config_cct_id        String   @db.Uuid
+  subtotal_mod         Decimal  @db.Decimal(15, 2)
+  subtotal_equipos     Decimal  @db.Decimal(15, 2)
+  subtotal_combustible Decimal  @db.Decimal(15, 2)
+  subtotal_ocp         Decimal  @db.Decimal(15, 2)
+  total_costo_directo  Decimal  @db.Decimal(15, 2)
+  total_con_margenes   Decimal  @db.Decimal(15, 2)
+  precio_mensual       Decimal  @db.Decimal(15, 2)
+  detalle_json         Json
+  pdf_path             String?  @db.VarChar(500)
 
   servicio   servicio_contrato    @relation(fields: [servicio_id], references: [id])
   config_cct config_cct           @relation(fields: [config_cct_id], references: [id])
@@ -2972,7 +2987,7 @@ model tipo_output_servicio {
   orden       Int     @default(0)
   is_active   Boolean @default(true)
 
-  servicio servicio_contrato  @relation(fields: [servicio_id], references: [id], onDelete: Cascade)
+  servicio servicio_contrato    @relation(fields: [servicio_id], references: [id], onDelete: Cascade)
   outputs  output_composicion[]
 
   @@unique([servicio_id, codigo])
@@ -2993,14 +3008,14 @@ model formula_polinomica {
 
 // Componentes de la fórmula con su ponderación e índice asociado
 model componente_formula {
-  id                String                @id @default(uuid()) @db.Uuid
-  formula_id        String                @db.Uuid
-  codigo            String                @db.VarChar(20)
-  nombre            String                @db.VarChar(120)
+  id                String                 @id @default(uuid()) @db.Uuid
+  formula_id        String                 @db.Uuid
+  codigo            String                 @db.VarChar(20)
+  nombre            String                 @db.VarChar(120)
   tipo_indice       tipo_indice_polinomico
-  ponderacion       Decimal               @db.Decimal(5, 4)
-  valor_indice_base Decimal               @db.Decimal(15, 4)
-  fuente_indice     String?               @db.VarChar(160)
+  ponderacion       Decimal                @db.Decimal(5, 4)
+  valor_indice_base Decimal                @db.Decimal(15, 4)
+  fuente_indice     String?                @db.VarChar(160)
 
   formula         formula_polinomica         @relation(fields: [formula_id], references: [id], onDelete: Cascade)
   valores_periodo valor_componente_periodo[]
@@ -3044,29 +3059,29 @@ model valor_componente_periodo {
 
 // Liquidación de sueldos
 model liquidacion_sueldo {
-  id                  String             @id @default(uuid()) @db.Uuid
-  created_at          DateTime           @default(now()) @db.Timestamptz(6)
-  company_id          String             @db.Uuid
-  employee_id         String             @db.Uuid
-  config_cct_id       String             @db.Uuid
-  categoria_cct_id    String             @db.Uuid
-  periodo             String             @db.VarChar(7)
-  estado              estado_liquidacion @default(borrador)
-  dias_trabajados     Int                @default(30)
-  inasistencias_dias  Int                @default(0)
-  hs_nocturnas        Decimal            @default(0) @db.Decimal(8, 2)
-  hs_extras_50        Decimal            @default(0) @db.Decimal(8, 2)
-  hs_extras_100       Decimal            @default(0) @db.Decimal(8, 2)
-  dias_feriado        Int                @default(0)
-  dias_desarraigo     Int                @default(0)
-  inputs_extra        Json?
-  total_remunerativo  Decimal            @db.Decimal(15, 2)
-  total_no_remun      Decimal            @db.Decimal(15, 2)
-  total_descuentos    Decimal            @db.Decimal(15, 2)
-  total_sac           Decimal            @default(0) @db.Decimal(15, 2)
-  neto_a_pagar        Decimal            @db.Decimal(15, 2)
-  conceptos_json      Json
-  pdf_path            String?
+  id                 String             @id @default(uuid()) @db.Uuid
+  created_at         DateTime           @default(now()) @db.Timestamptz(6)
+  company_id         String             @db.Uuid
+  employee_id        String             @db.Uuid
+  config_cct_id      String             @db.Uuid
+  categoria_cct_id   String             @db.Uuid
+  periodo            String             @db.VarChar(7)
+  estado             estado_liquidacion @default(borrador)
+  dias_trabajados    Int                @default(30)
+  inasistencias_dias Int                @default(0)
+  hs_nocturnas       Decimal            @default(0) @db.Decimal(8, 2)
+  hs_extras_50       Decimal            @default(0) @db.Decimal(8, 2)
+  hs_extras_100      Decimal            @default(0) @db.Decimal(8, 2)
+  dias_feriado       Int                @default(0)
+  dias_desarraigo    Int                @default(0)
+  inputs_extra       Json?
+  total_remunerativo Decimal            @db.Decimal(15, 2)
+  total_no_remun     Decimal            @db.Decimal(15, 2)
+  total_descuentos   Decimal            @db.Decimal(15, 2)
+  total_sac          Decimal            @default(0) @db.Decimal(15, 2)
+  neto_a_pagar       Decimal            @db.Decimal(15, 2)
+  conceptos_json     Json
+  pdf_path           String?
 
   company    company       @relation(fields: [company_id], references: [id])
   employee   employees     @relation(fields: [employee_id], references: [id])
