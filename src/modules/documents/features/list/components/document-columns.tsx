@@ -42,6 +42,7 @@ export const permanentDocumentColumns: ColumnDef<any>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Empleado" />,
     cell: ({ row }) => (
       <Link
+        prefetch={false}
         href={`/dashboard/employee/action?action=view&employee_id=${row.original.employee_id}`}
         className="hover:underline font-medium"
       >
@@ -128,7 +129,7 @@ export const permanentDocumentColumns: ColumnDef<any>[] = [
         );
       }
       return (
-        <Link href={`/dashboard/document/${row.original.id}?resource=${row.original.applies}`}>
+        <Link prefetch={false} href={`/dashboard/document/${row.original.id}?resource=${row.original.applies}`}>
           <Button variant="default" size="sm">
             Ver documento
           </Button>
@@ -151,6 +152,7 @@ export const monthlyDocumentColumns: ColumnDef<any>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Empleado" />,
     cell: ({ row }) => (
       <Link
+        prefetch={false}
         href={`/dashboard/employee/action?action=view&employee_id=${row.original.employee_id}`}
         className="hover:underline font-medium"
       >
@@ -249,7 +251,7 @@ export const monthlyDocumentColumns: ColumnDef<any>[] = [
         );
       }
       return (
-        <Link href={`/dashboard/document/${row.original.id}?resource=${row.original.applies}`}>
+        <Link prefetch={false} href={`/dashboard/document/${row.original.id}?resource=${row.original.applies}`}>
           <Button variant="default" size="sm">
             Ver documento
           </Button>

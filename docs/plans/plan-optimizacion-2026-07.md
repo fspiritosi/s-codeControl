@@ -496,3 +496,36 @@ usado por 100+ tablas). Un rewrite completo en una pasada viola "no romper la ap
 primero (server-render del `<table>` + hidratar solo controles/acciones), verificar
 paridad total de funcionalidad, y solo entonces generalizar. Requiere primero re-medir
 (a)+(b) en prod para dimensionar el remanente real antes de invertir en (c).
+
+---
+
+# 🔑 HALLAZGO CLAVE (2026-07-16, medición en prod post a+b) — Prefetch storm
+
+Al re-medir document en **prod con datos reales (713 registros)** tras pushear a+b:
+- LCP ~5.5-6.2 s (4×/4G) — **sin mejora vs. antes**. a+b (server/payload/reflow) NO
+  movieron el render delay del cliente.
+- **La causa NO es CPU, bundle ni red.** El CPU profile mostró el main thread **IDLE 5.3s**
+  (esperando), no computando. Parse de JS ~235ms, hidratación ~1.6s(4×), pero sobre todo
+  **idle**.
+- El waterfall de red reveló ~**37 requests `_rsc` de prefetch** de Next `<Link>`: uno por
+  cada una de las **17 rutas del sidebar** (todas dinámicas → cada prefetch = render RSC
+  COMPLETO server-side con sus queries) **+ 2 por cada fila de la tabla** (link a empleado/
+  equipo + link a documento). En un solo servidor, esos ~37 renders server-side simultáneos
+  **saturan el servidor y bloquean la carga real** → main thread idle esperando.
+
+**Reencuadre:** buena parte de la "lentitud de navegación" reportada era este **storm de
+prefetch**, no la hidratación del DataTable. Es un problema de configuración de `<Link>`,
+no arquitectónico.
+
+**Fix (seguro, no cambia funcionalidad — Next igual prefetchea en hover):**
+- [x] `prefetch={false}` en los 17 links del sidebar (`Sidebar.tsx`, commit `578ba56f`).
+- [x] `prefetch={false}` en los links de fila de document (document-columns / -equipment).
+- [ ] **Rollout pendiente:** mismo `prefetch={false}` en los links de fila del resto de las
+  tablas (employee, equipment, treasury, purchasing, warehouse, suppliers, etc.) — patrón
+  idéntico en los archivos `*-columns.tsx` / celdas con `<Link href="/dashboard/...">`.
+- [ ] **Re-medir en prod tras push** para cuantificar (esperado: caída grande del render
+  delay al eliminar el storm).
+
+> Esto **reordena la prioridad de (c)**: antes de cualquier rework server-first, hay que
+> confirmar cuánto queda del render delay una vez eliminado el prefetch storm. Es probable
+> que (c) ya no sea necesario, o quede muy reducido.
