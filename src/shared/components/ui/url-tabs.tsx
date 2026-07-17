@@ -91,6 +91,16 @@ interface UrlTabsProps extends Omit<React.ComponentProps<typeof TabsPrimitive.Ro
  * }
  * ```
  */
+/**
+ * Context con el tab activo. UrlTabsContent lo usa para NO montar los panes
+ * inactivos: Radix Tabs monta todos los Content ocultos (data-state=inactive)
+ * y su Presence fuerza un getComputedStyle por pane al montar — con DOM grande
+ * eso genera forced reflows (~445ms medidos en prod en /dashboard/document).
+ * Como UrlTabs navega por URL (el pane activo cambia con la navegación), los
+ * panes inactivos nunca se muestran y es seguro no montarlos.
+ */
+const UrlTabsValueContext = React.createContext<string | undefined>(undefined);
+
 function UrlTabs({
   paramName = 'tab',
   preserveParams = [],
@@ -156,7 +166,9 @@ function UrlTabs({
       onValueChange={handleValueChange}
       {...props}
     >
-      {children}
+      <UrlTabsValueContext.Provider value={typeof props.value === 'string' ? props.value : undefined}>
+        {children}
+      </UrlTabsValueContext.Provider>
     </TabsPrimitive.Root>
   );
 }
@@ -197,6 +209,14 @@ function UrlTabsTrigger({ className, ...props }: React.ComponentProps<typeof Tab
 }
 
 function UrlTabsContent({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Content>) {
+  const activeValue = React.useContext(UrlTabsValueContext);
+
+  // No montar panes inactivos (ver comentario en UrlTabsValueContext).
+  // Si el UrlTabs es no-controlado (sin `value`), se conserva el comportamiento Radix.
+  if (activeValue !== undefined && props.value !== activeValue) {
+    return null;
+  }
+
   return (
     <TabsPrimitive.Content data-slot="url-tabs-content" className={cn('flex-1 outline-none', className)} {...props} />
   );

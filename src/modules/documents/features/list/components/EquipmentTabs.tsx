@@ -1,7 +1,7 @@
 import { CardContent } from '@/shared/components/ui/card';
 import { UrlTabs, UrlTabsContent, UrlTabsList, UrlTabsTrigger } from '@/shared/components/ui/url-tabs';
 import { EquipmentDocumentList } from './EquipmentDocumentList';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
+import type { DataTableSearchParams } from '@/shared/components/data-table';
 
 const VALID_SUBTABS = ['permanentes', 'mensuales'] as const;
 type SubTab = (typeof VALID_SUBTABS)[number];

@@ -1,5 +1,5 @@
 import { DocumentTypeList } from './DocumentTypeList';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
+import type { DataTableSearchParams } from '@/shared/components/data-table';
 
 interface Props {
   searchParams?: DataTableSearchParams;

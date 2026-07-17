@@ -2,7 +2,7 @@ import { CardContent } from '@/shared/components/ui/card';
 import { UrlTabs, UrlTabsContent, UrlTabsList, UrlTabsTrigger } from '@/shared/components/ui/url-tabs';
 import { getRole } from '@/shared/lib/utils/getRole';
 import { EmployeeList } from '@/modules/employees/features/list/components/EmployeeList';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
+import type { DataTableSearchParams } from '@/shared/components/data-table';
 
 /**
  * Sub-tabs activos/inactivos por URL (paramName="subtab").

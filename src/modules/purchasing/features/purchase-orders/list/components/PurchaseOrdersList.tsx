@@ -1,6 +1,6 @@
 import { getPurchaseOrdersPaginated } from '../actions.server';
 import { PurchaseOrdersDataTable } from './_PurchaseOrdersDataTable';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 
 interface Props {
   searchParams: DataTableSearchParams;

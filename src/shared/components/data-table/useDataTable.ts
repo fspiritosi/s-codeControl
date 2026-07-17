@@ -2,24 +2,21 @@
 
 import type { ColumnFiltersState, PaginationState, SortingState } from '@tanstack/react-table';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useTransition } from 'react';
 
 import { DEFAULT_PAGE_SIZE, parseSearchParams, stateToSearchParams } from './helpers';
 import type { DataTableSearchParams, DataTableState } from './types';
 
-// Re-export helpers para conveniencia
+// Re-export helpers para conveniencia (pero los server actions deben importar de ./helpers directamente)
 export {
   buildDateRangeFiltersWhere,
   buildFiltersWhere,
   buildSearchWhere,
-  buildTextFiltersWhere,
   DEFAULT_PAGE,
   DEFAULT_PAGE_SIZE,
   parseSearchParams,
-  stateToPaginationParams,
   stateToPrismaParams,
   stateToSearchParams,
-  stateToSupabaseRange,
 } from './helpers';
 
 // ============================================================================
@@ -27,36 +24,86 @@ export {
 // ============================================================================
 
 interface UseDataTableOptions {
+  /** Tamaño de página por defecto */
   defaultPageSize?: number;
+  /** Columnas que se pueden filtrar via URL */
   filterableColumns?: string[];
+  /**
+   * Params externos al DataTable que se preservan en cambios de filtros y reset.
+   * Útil para mantener pestañas (`tab`) u otros params de navegación al limpiar
+   * filtros. Default: `['tab']`.
+   */
+  preserveParams?: string[];
 }
 
 interface UseDataTableReturn {
+  /** Estado actual parseado */
   state: DataTableState;
+  /** Estado de paginación para TanStack Table */
   pagination: PaginationState;
+  /** Estado de sorting para TanStack Table */
   sorting: SortingState;
+  /** Estado de filtros para TanStack Table */
   columnFilters: ColumnFiltersState;
+  /** Callback cuando cambia la paginación */
   onPaginationChange: (
     updater: PaginationState | ((old: PaginationState) => PaginationState)
   ) => void;
+  /** Callback cuando cambia el sorting */
   onSortingChange: (updater: SortingState | ((old: SortingState) => SortingState)) => void;
+  /** Callback cuando cambian los filtros */
   onColumnFiltersChange: (
     updater: ColumnFiltersState | ((old: ColumnFiltersState) => ColumnFiltersState)
   ) => void;
+  /** Callback para búsqueda global */
   onGlobalFilterChange: (value: string) => void;
+  /** Resetear todos los filtros */
   resetFilters: () => void;
+  /** `true` mientras la navegación (sort/filtro/paginación) se está procesando en el servidor */
+  isPending: boolean;
 }
 
 /**
- * Hook para manejar el estado del DataTable sincronizado con la URL.
- * Solo se invoca en modo server-side (cuando totalRows esta presente).
+ * Hook para manejar el estado del DataTable sincronizado con la URL
+ *
+ * @example
+ * ```tsx
+ * const {
+ *   state,
+ *   pagination,
+ *   sorting,
+ *   columnFilters,
+ *   onPaginationChange,
+ *   onSortingChange,
+ *   onColumnFiltersChange,
+ * } = useDataTable({
+ *   defaultPageSize: 20,
+ *   filterableColumns: ['status', 'priority'],
+ * });
+ *
+ * const table = useReactTable({
+ *   manualPagination: true,
+ *   manualSorting: true,
+ *   manualFiltering: true,
+ *   state: { pagination, sorting, columnFilters },
+ *   onPaginationChange,
+ *   onSortingChange,
+ *   onColumnFiltersChange,
+ *   // ...
+ * });
+ * ```
  */
 export function useDataTable(options: UseDataTableOptions = {}): UseDataTableReturn {
-  const { defaultPageSize = DEFAULT_PAGE_SIZE, filterableColumns = [] } = options;
+  const {
+    defaultPageSize = DEFAULT_PAGE_SIZE,
+    filterableColumns = [],
+    preserveParams = ['tab', 'subtab'],
+  } = options;
 
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   // Parsear estado actual de la URL
   const state = useMemo(() => {
@@ -65,6 +112,7 @@ export function useDataTable(options: UseDataTableOptions = {}): UseDataTableRet
       params[key] = value;
     });
     const parsed = parseSearchParams(params);
+    // Aplicar defaultPageSize si no hay pageSize en URL
     if (!searchParams.has('pageSize')) {
       parsed.pageSize = defaultPageSize;
     }
@@ -88,10 +136,12 @@ export function useDataTable(options: UseDataTableOptions = {}): UseDataTableRet
   const columnFilters: ColumnFiltersState = useMemo(() => {
     const filters: ColumnFiltersState = [];
 
+    // Filtro de búsqueda global (si existe)
     if (state.search) {
       filters.push({ id: 'global', value: state.search });
     }
 
+    // Filtros de columnas
     Object.entries(state.filters).forEach(([columnId, values]) => {
       if (filterableColumns.length === 0 || filterableColumns.includes(columnId)) {
         filters.push({ id: columnId, value: values });
@@ -101,14 +151,17 @@ export function useDataTable(options: UseDataTableOptions = {}): UseDataTableRet
     return filters;
   }, [state.search, state.filters, filterableColumns]);
 
-  // Funcion helper para actualizar URL
+  // Función helper para actualizar URL
   const updateURL = useCallback(
     (newState: Partial<DataTableState>) => {
       const merged = { ...state, ...newState };
       const params = stateToSearchParams(merged);
       const queryString = params.toString();
-      router.push(queryString ? `${pathname}?${queryString}` : pathname, {
-        scroll: false,
+      // Transición: la navegación no bloquea la UI y exponemos `isPending` para el loader.
+      startTransition(() => {
+        router.push(queryString ? `${pathname}?${queryString}` : pathname, {
+          scroll: false,
+        });
       });
     },
     [state, pathname, router]
@@ -133,7 +186,7 @@ export function useDataTable(options: UseDataTableOptions = {}): UseDataTableRet
         updateURL({
           sortBy: newSorting[0].id,
           sortOrder: newSorting[0].desc ? 'desc' : 'asc',
-          page: 0,
+          page: 0, // Reset to first page on sort change
         });
       } else {
         updateURL({
@@ -150,8 +203,15 @@ export function useDataTable(options: UseDataTableOptions = {}): UseDataTableRet
     (updater: ColumnFiltersState | ((old: ColumnFiltersState) => ColumnFiltersState)) => {
       const newFilters = typeof updater === 'function' ? updater(columnFilters) : updater;
 
+      // Convertir de ColumnFiltersState a nuestro formato de filters
       const filters: Record<string, string[]> = {};
       let search = '';
+
+      // Preservar params externos al DataTable (ej. tab) que están en state.filters
+      // pero que TanStack no tracking — se perderían si solo copiáramos newFilters.
+      preserveParams.forEach((key) => {
+        if (state.filters[key]) filters[key] = state.filters[key];
+      });
 
       newFilters.forEach((filter) => {
         if (filter.id === 'global') {
@@ -165,10 +225,10 @@ export function useDataTable(options: UseDataTableOptions = {}): UseDataTableRet
       updateURL({
         filters,
         search,
-        page: 0,
+        page: 0, // Reset to first page on filter change
       });
     },
-    [columnFilters, updateURL]
+    [columnFilters, state.filters, updateURL, preserveParams]
   );
 
   const onGlobalFilterChange = useCallback(
@@ -182,8 +242,17 @@ export function useDataTable(options: UseDataTableOptions = {}): UseDataTableRet
   );
 
   const resetFilters = useCallback(() => {
-    router.push(pathname, { scroll: false });
-  }, [pathname, router]);
+    // Preservar params externos al DataTable (ej. tab) al limpiar filtros
+    const newParams = new URLSearchParams();
+    preserveParams.forEach((key) => {
+      const value = searchParams.get(key);
+      if (value) newParams.set(key, value);
+    });
+    const queryString = newParams.toString();
+    startTransition(() => {
+      router.push(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
+    });
+  }, [pathname, router, searchParams, preserveParams]);
 
   return {
     state,
@@ -195,5 +264,6 @@ export function useDataTable(options: UseDataTableOptions = {}): UseDataTableRet
     onColumnFiltersChange,
     onGlobalFilterChange,
     resetFilters,
+    isPending,
   };
 }

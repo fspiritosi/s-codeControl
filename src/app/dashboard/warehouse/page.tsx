@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/sha
 import { UrlTabs, UrlTabsContent, UrlTabsList, UrlTabsTrigger } from '@/shared/components/ui/url-tabs';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
+import type { DataTableSearchParams } from '@/shared/components/data-table';
 
 const VALID_TABS = ['warehouses', 'products', 'withdrawals', 'movements'] as const;
 type WarehouseTab = (typeof VALID_TABS)[number];

@@ -1,6 +1,6 @@
 import { getDocumentTypesPaginated } from '@/modules/documents/features/types/actions.server';
 import { _DocumentTypeDataTable } from './_DocumentTypeDataTable';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
+import type { DataTableSearchParams } from '@/shared/components/data-table';
 
 interface Props {
   searchParams: DataTableSearchParams;

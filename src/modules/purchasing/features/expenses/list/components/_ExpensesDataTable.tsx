@@ -8,7 +8,7 @@ import {
   DataTable,
   type DataTableSearchParams,
   type DataTableFacetedFilterConfig,
-} from '@/shared/components/common/DataTable';
+} from '@/shared/components/data-table';
 import {
   AlertDialog,
   AlertDialogAction,

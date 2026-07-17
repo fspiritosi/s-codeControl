@@ -2,14 +2,14 @@
 
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 import {
   parseSearchParams,
   stateToPrismaParams,
   buildFiltersWhere,
   buildTextFiltersWhere,
   buildDateRangeFiltersWhere,
-} from '@/shared/components/common/DataTable/helpers';
+} from '@/shared/components/data-table/helpers';
 import { revalidatePath } from 'next/cache';
 import { updatePurchaseOrderStatus } from '@/modules/purchasing/features/purchase-orders/list/actions.server';
 import { updatePurchaseInvoiceReceivingStatus } from '@/modules/purchasing/features/invoices/list/actions.server';

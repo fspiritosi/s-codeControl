@@ -10,7 +10,7 @@ import CovenantTreeFile from '@/modules/company/features/covenants/components/Co
 import EmployeeDocumentsTabs from '@/modules/documents/features/list/components/EmployeeDocumentsTabs';
 import EmployeeListTabs from '@/modules/documents/features/list/components/EmployeeListTabs';
 import TypesDocumentsView from '@/modules/documents/features/types/components/TypesDocumentsView';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
+import type { DataTableSearchParams } from '@/shared/components/data-table';
 
 const VALID_TABS = ['employees', 'documents', 'diagrams', 'types', 'covenant'] as const;
 type EmployeeTab = (typeof VALID_TABS)[number];

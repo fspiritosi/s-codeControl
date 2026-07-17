@@ -1,6 +1,6 @@
 import { getEmployeeDocumentsPaginated } from '@/modules/documents/features/list/actions.server';
 import { _EmployeeDocumentDataTable } from './_EmployeeDocumentDataTable';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
+import type { DataTableSearchParams } from '@/shared/components/data-table';
 
 interface Props {
   searchParams: DataTableSearchParams;

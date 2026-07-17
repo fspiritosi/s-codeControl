@@ -9,7 +9,7 @@ import { Suspense } from 'react';
 import EquipmentTabs from '@/modules/documents/features/list/components/EquipmentTabs';
 import TypesDocumentsView from '@/modules/documents/features/types/components/TypesDocumentsView';
 import EquipmentListTabs from '@/modules/equipment/features/list/components/EquipmentListTabs';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
+import type { DataTableSearchParams } from '@/shared/components/data-table';
 
 const VALID_TABS = ['equipos', 'documents', 'types', 'maintenance'] as const;
 type EquipmentTab = (typeof VALID_TABS)[number];

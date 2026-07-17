@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { ColumnDef } from '@tanstack/react-table';
-import { DataTableColumnHeader } from '@/shared/components/common/DataTable';
+import { DataTableColumnHeader } from '@/shared/components/data-table';
 import { Badge } from '@/shared/components/ui/badge';
 import Link from 'next/link';
 import { AlertTriangle, CheckCircle, XCircle } from 'lucide-react';

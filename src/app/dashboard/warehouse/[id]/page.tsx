@@ -8,7 +8,7 @@ import {
 import { getProductsByCompany } from '@/modules/products/features/list/actions.server';
 import { getCompanyScope } from '@/shared/lib/company-scope';
 import { notFound } from 'next/navigation';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable';
+import type { DataTableSearchParams } from '@/shared/components/data-table';
 
 export default async function WarehouseDetailPage({
   params,

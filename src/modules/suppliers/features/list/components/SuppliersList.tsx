@@ -1,6 +1,6 @@
 import { getSuppliersPaginated } from '../actions.server';
 import { SuppliersDataTable } from './_SuppliersDataTable';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 
 interface Props {
   searchParams: DataTableSearchParams;

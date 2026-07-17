@@ -1,6 +1,6 @@
 import { getReceivingNotesPaginated } from '../actions.server';
 import { ReceivingNotesDataTable } from './_ReceivingNotesDataTable';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 
 interface Props { searchParams: DataTableSearchParams; }
 

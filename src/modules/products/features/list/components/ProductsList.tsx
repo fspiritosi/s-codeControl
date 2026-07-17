@@ -1,6 +1,6 @@
 import { getProductsPaginated } from '../actions.server';
 import { ProductsDataTable } from './_ProductsDataTable';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 import { getCompanyScope } from '@/shared/lib/company-scope';
 
 interface Props {

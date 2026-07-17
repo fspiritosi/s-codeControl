@@ -1,6 +1,6 @@
 import { getStockMovementsPaginated } from '@/modules/warehouse/features/list/actions.server';
 import { MovementsDataTable } from './_MovementsDataTable';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 import { getCompanyScope } from '@/shared/lib/company-scope';
 
 interface Props {

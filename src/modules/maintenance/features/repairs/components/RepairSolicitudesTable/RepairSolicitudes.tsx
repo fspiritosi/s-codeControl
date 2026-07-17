@@ -1,4 +1,4 @@
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 import { getRepairSolicitudesPaginated } from '@/modules/maintenance/features/repairs/actions.server';
 import { repairSolicitudesColums } from './components/columns';
 import { mechanicColums } from './components/mechanicColumns';

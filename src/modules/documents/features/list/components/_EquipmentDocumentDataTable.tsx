@@ -5,7 +5,7 @@ import {
   DataTable,
   type DataTableFacetedFilterConfig,
   type DataTableSearchParams,
-} from '@/shared/components/common/DataTable';
+} from '@/shared/components/data-table';
 import { permanentEquipmentDocColumns, monthlyEquipmentDocColumns } from './document-columns-equipment';
 import { getEquipmentDocumentFacets, getAllEquipmentDocumentsForExport } from '../actions.server';
 

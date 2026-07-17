@@ -1,7 +1,7 @@
 import { getPurchaseInvoicesPaginated } from '../actions.server';
 import { InvoicesDataTable } from './_InvoicesDataTable';
 import { isActiveUserOwner } from '@/shared/lib/permissions';
-import type { DataTableSearchParams } from '@/shared/components/common/DataTable/types';
+import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 
 interface Props { searchParams: DataTableSearchParams; }
 
