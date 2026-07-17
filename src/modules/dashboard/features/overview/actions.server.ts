@@ -183,6 +183,127 @@ export async function getDashboardCounts() {
 }
 
 // ============================================================
+// Próximo documento a vencer (detalle de tarjeta - tsk-430)
+// ============================================================
+
+export type NextExpiringDoc = {
+  docType: string;
+  holder: string;
+  validity: string; // ISO string
+};
+
+export type NextExpiringDocs = {
+  employee: NextExpiringDoc | null;
+  equipment: NextExpiringDoc | null;
+};
+
+const EMPTY_NEXT_EXPIRING: NextExpiringDocs = { employee: null, equipment: null };
+
+async function fetchNextExpiringDocs(companyId: string): Promise<NextExpiringDocs> {
+  const today = startOfDay(new Date());
+  const nextMonth = endOfDay(addMonths(new Date(), 1));
+  const expiringValidity = { not: null, gte: today.toISOString(), lte: nextMonth.toISOString() };
+
+  const documentTypeFilter = {
+    is_active: true,
+    NOT: { is_it_montlhy: true } as const,
+    name: { not: '' },
+  };
+
+  const [empDocs, eqDocs] = await Promise.all([
+    prisma.documents_employees.findMany({
+      where: {
+        employee: { is: { company_id: companyId, is_active: true } },
+        document_type: { is: documentTypeFilter },
+        validity: expiringValidity,
+      },
+      orderBy: { validity: 'asc' },
+      take: 20,
+      select: {
+        validity: true,
+        document_type: { select: { name: true, conditions: true, special: true } },
+        employee: {
+          select: {
+            firstname: true,
+            lastname: true,
+            gender: true,
+            type_of_contract: true,
+            hierarchical_position: true,
+            category_id: true,
+            covenants_id: true,
+            guild_id: true,
+          },
+        },
+      },
+    }),
+    prisma.documents_equipment.findMany({
+      where: {
+        vehicle: { is: { company_id: companyId, is_active: true } },
+        document_type: { is: documentTypeFilter },
+        validity: expiringValidity,
+      },
+      orderBy: { validity: 'asc' },
+      take: 20,
+      select: {
+        validity: true,
+        document_type: { select: { name: true, conditions: true, special: true } },
+        vehicle: { select: { intern_number: true, domain: true, brand: true, type_of_vehicle: true } },
+      },
+    }),
+  ]);
+
+  const empMatch = empDocs.find((doc) =>
+    checkDocumentAppliesToEmployee(
+      (doc.document_type?.conditions ?? []) as unknown as DocumentCondition[],
+      doc.document_type?.special ?? false,
+      doc.employee ?? {}
+    )
+  );
+
+  const eqMatch = eqDocs.find((doc) =>
+    checkDocumentAppliesToEquipment(
+      (doc.document_type?.conditions ?? []) as unknown as DocumentCondition[],
+      doc.document_type?.special ?? false,
+      doc.vehicle ?? {}
+    )
+  );
+
+  return {
+    employee:
+      empMatch && empMatch.validity
+        ? {
+            docType: empMatch.document_type?.name ?? 'Documento',
+            holder: `${empMatch.employee?.lastname ?? ''} ${empMatch.employee?.firstname ?? ''}`.trim(),
+            validity: empMatch.validity,
+          }
+        : null,
+    equipment:
+      eqMatch && eqMatch.validity
+        ? {
+            docType: eqMatch.document_type?.name ?? 'Documento',
+            holder: eqMatch.vehicle?.intern_number
+              ? `Interno ${eqMatch.vehicle.intern_number}${eqMatch.vehicle.domain ? ` · ${eqMatch.vehicle.domain}` : ''}`
+              : eqMatch.vehicle?.domain ?? 'Equipo',
+            validity: eqMatch.validity,
+          }
+        : null,
+  };
+}
+
+const getCachedNextExpiring = (companyId: string) =>
+  unstable_cache(
+    () => fetchNextExpiringDocs(companyId),
+    [`dashboard-next-expiring-${companyId}`],
+    { revalidate: 60, tags: [`dashboard-${companyId}`] }
+  );
+
+export async function getNextExpiringDocuments(): Promise<NextExpiringDocs> {
+  const { companyId } = await getActionContext();
+  if (!companyId) return EMPTY_NEXT_EXPIRING;
+  return getCachedNextExpiring(companyId)();
+}
+
+// ============================================================
 // Purchasing Dashboard Counts
 // ============================================================
 
