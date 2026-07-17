@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/shared/components/ui/button';
+import { DocumentHistoryDialog } from '@/modules/documents/shared/components/DocumentHistoryDialog';
 import {
   Dialog,
   DialogContent,
@@ -70,37 +71,11 @@ export function EquipmentDocumentRowActions({ row }: EquipmentDocumentRowActions
   return (
     <DropdownMenu>
       {viewModal && (
-        <Dialog defaultOpen onOpenChange={() => setViewModal(false)}>
-          <DialogContent>
-            <DialogTitle>Historial de Modificaciones</DialogTitle>
-            <DialogDescription>
-              Aqui se muestra quien modifico el documento y cuando
-            </DialogDescription>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableCell className="text-center">Usuario</TableCell>
-                  <TableCell className="text-center">Fecha de modificacion</TableCell>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {documentHistory?.map((entry: any) => (
-                  <TableRow key={crypto.randomUUID()}>
-                    <TableCell className="text-center">
-                      {entry.documents_equipment.user_id.email}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {formatRelative(new Date(entry.updated_at), new Date(), { locale: es })}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <DialogFooter>
-              <Button onClick={() => setViewModal(false)}>Cerrar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <DocumentHistoryDialog
+          open={viewModal}
+          onOpenChange={setViewModal}
+          entries={documentHistory ?? []}
+        />
       )}
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-8 w-8 p-0">

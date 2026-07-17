@@ -663,36 +663,65 @@ export const fetchDocumentTypesByCompanyIncludingInactive = async (companyId: st
   }
 };
 
-export const fetchDocumentEmployeesLogs = async (documentId: string) => {
+// Historial de modificaciones normalizado (tsk-438). Resuelve el modified_by
+// REAL de cada log (antes se mostraba siempre el uploader actual del documento)
+// y expone el vencimiento vigente del documento.
+export type DocumentLogEntry = {
+  id: number;
+  modifierEmail: string | null;
+  modifierName: string | null;
+  updatedAt: string; // ISO
+  validity: string | null; // vencimiento vigente del documento
+};
+
+async function resolveModifiers(ids: string[]) {
+  const uniqueIds = [...new Set(ids.filter(Boolean))];
+  if (uniqueIds.length === 0) return new Map<string, { email: string | null; fullname: string | null }>();
+  const profiles = await prisma.profile.findMany({
+    where: { id: { in: uniqueIds } },
+    select: { id: true, email: true, fullname: true },
+  });
+  return new Map(profiles.map((p) => [p.id, { email: p.email, fullname: p.fullname }]));
+}
+
+export const fetchDocumentEmployeesLogs = async (documentId: string): Promise<DocumentLogEntry[]> => {
   if (!documentId) return [];
   try {
-    const data = await prisma.documents_employees_logs.findMany({
+    const logs = await prisma.documents_employees_logs.findMany({
       where: { documents_employees_id: documentId },
-      include: {
-        documents_employees: {
-          include: { user: { select: { email: true } } },
-        },
-      },
+      orderBy: { updated_at: 'desc' },
+      include: { documents_employees: { select: { validity: true } } },
     });
-    return data ?? [];
+    const modifiers = await resolveModifiers(logs.map((l) => l.modified_by));
+    return logs.map((l) => ({
+      id: l.id,
+      modifierEmail: modifiers.get(l.modified_by)?.email ?? null,
+      modifierName: modifiers.get(l.modified_by)?.fullname ?? null,
+      updatedAt: l.updated_at.toISOString(),
+      validity: l.documents_employees?.validity ?? null,
+    }));
   } catch (error) {
     console.error('Error fetching document employees logs:', error);
     return [];
   }
 };
 
-export const fetchDocumentEquipmentLogs = async (documentId: string) => {
+export const fetchDocumentEquipmentLogs = async (documentId: string): Promise<DocumentLogEntry[]> => {
   if (!documentId) return [];
   try {
-    const data = await prisma.documents_equipment_logs.findMany({
+    const logs = await prisma.documents_equipment_logs.findMany({
       where: { documents_equipment_id: documentId },
-      include: {
-        documents_equipment: {
-          include: { user: { select: { email: true } } },
-        },
-      },
+      orderBy: { updated_at: 'desc' },
+      include: { documents_equipment: { select: { validity: true } } },
     });
-    return data ?? [];
+    const modifiers = await resolveModifiers(logs.map((l) => l.modified_by));
+    return logs.map((l) => ({
+      id: l.id,
+      modifierEmail: modifiers.get(l.modified_by)?.email ?? null,
+      modifierName: modifiers.get(l.modified_by)?.fullname ?? null,
+      updatedAt: l.updated_at.toISOString(),
+      validity: l.documents_equipment?.validity ?? null,
+    }));
   } catch (error) {
     console.error('Error fetching document equipment logs:', error);
     return [];

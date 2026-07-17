@@ -3,6 +3,7 @@
  */
 
 'use client';
+import { DocumentHistoryDialog } from '@/modules/documents/shared/components/DocumentHistoryDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -92,7 +93,7 @@ export const columns: ColumnDef<Colum>[] = [
       const [integerModal, setIntegerModal] = useState(false);
       const [viewModal, setViewModal] = useState(false);
       const [domain, setDomain] = useState('');
-      const [documentHistory, setDocumentHistory] = useState<DocumentHistory[]>([]);
+      const [documentHistory, setDocumentHistory] = useState<any[]>([]);
       const [showInactive, setShowInactive] = useState<boolean>(false);
       const [showDeletedEquipment, setShowDeletedEquipment] = useState(false);
       const equipment = row.original;
@@ -312,31 +313,11 @@ export const columns: ColumnDef<Colum>[] = [
             </Dialog>
           )}
           {viewModal && (
-            <Dialog defaultOpen onOpenChange={() => setViewModal(!viewModal)}>
-              <DialogContent>
-                <DialogTitle>Historial de Modificaciones</DialogTitle>
-                <DialogDescription>Aquí se muestra quién modificó el documento y cuándo</DialogDescription>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableCell>Usuario</TableCell>
-                      <TableCell>Fecha de modificación</TableCell>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {documentHistory?.map((entry: any) => (
-                      <TableRow key={entry.documents_employees_id}>
-                        <TableCell>{entry.documents_equipment.user_id.email}</TableCell>
-                        <TableCell>{entry.updated_at}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                <DialogFooter>
-                  <Button onClick={() => setViewModal(false)}>Cerrar</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <DocumentHistoryDialog
+              open={viewModal}
+              onOpenChange={setViewModal}
+              entries={documentHistory ?? []}
+            />
           )}
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">

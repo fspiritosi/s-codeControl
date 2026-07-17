@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { DocumentHistoryDialog } from '@/modules/documents/shared/components/DocumentHistoryDialog';
 // Carga diferida: el formulario de carga (~768 LOC + react-hook-form) sale del bundle
 // inicial de la tabla; solo se descarga al abrir el diálogo "Subir documento".
 const SimpleDocument = dynamic(() => import('@/modules/documents/features/upload/components/SimpleDocument'), {
@@ -160,7 +161,7 @@ export const ExpiredColums: ColumnDef<any>[] = [
       const [integerModal, setIntegerModal] = useState(false);
       const [viewModal, setViewModal] = useState(false);
       const [domain, setDomain] = useState('');
-      const [documentHistory, setDocumentHistory] = useState<DocumentHistory[]>([]);
+      const [documentHistory, setDocumentHistory] = useState<any[]>([]);
       //const user = row.original
       const [showInactive, setShowInactive] = useState<boolean>(false);
       const [showDeletedEquipment, setShowDeletedEquipment] = useState(false);
@@ -450,34 +451,11 @@ export const ExpiredColums: ColumnDef<any>[] = [
             </Dialog>
           )}
           {viewModal && (
-            <Dialog defaultOpen onOpenChange={() => setViewModal(!viewModal)}>
-              <DialogContent>
-                <DialogTitle>Historial de Modificaciones</DialogTitle>
-                <DialogDescription>Aquí se muestra quién modificó el documento y cuándo</DialogDescription>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableCell className="text-center">Usuario</TableCell>
-                      <TableCell className="text-center">Fecha de modificación</TableCell>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {documentHistory?.map((entry: any, index: number) => (
-                      <TableRow key={crypto.randomUUID()}>
-                        <TableCell className="text-center">{entry.documents_employees.user_id.email}</TableCell>
-
-                        <TableCell className="text-center">
-                          {formatRelative(new Date(entry.updated_at), new Date(), { locale: es })}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                <DialogFooter>
-                  <Button onClick={() => setViewModal(false)}>Cerrar</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <DocumentHistoryDialog
+              open={viewModal}
+              onOpenChange={setViewModal}
+              entries={documentHistory ?? []}
+            />
           )}
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
