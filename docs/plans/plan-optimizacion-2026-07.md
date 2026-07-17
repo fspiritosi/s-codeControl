@@ -529,3 +529,38 @@ no arquitectónico.
 > Esto **reordena la prioridad de (c)**: antes de cualquier rework server-first, hay que
 > confirmar cuánto queda del render delay una vez eliminado el prefetch storm. Es probable
 > que (c) ya no sea necesario, o quede muy reducido.
+
+---
+
+# 🎯 CAUSA RAÍZ DE LA LENTITUD — Índices de DB faltantes (2026-07-17)
+
+Tras descartar frontend (bundle, prefetch, waterfall, TaskApp) con mediciones, los
+**logs de servidor de Vercel** (con `durationMs` por request) dieron la respuesta:
+
+| Request | durationMs (server) |
+|---------|--------------------|
+| `GET /dashboard/document.rsc` | **4580 ms** |
+| `POST /dashboard/document` (facets) | 2923 / 2669 ms |
+| Otros POST de document | ~900 ms |
+
+**El cuello es el tiempo de query en el servidor**, no el cliente (TTFB era 98 ms; el
+main thread estaba idle esperando el stream RSC de la tabla).
+
+**Causa:** `documents_employees` y `employees.company_id` **no tenían NINGÚN índice**.
+La query de listado hace `documents_employees JOIN employees WHERE company_id=X JOIN
+document_types`, y Postgres **no indexa las FK automáticamente** → **full table scan +
+hash join** en cada carga. 4.5 s para devolver 10 filas.
+
+**Fix (seguro, no cambia comportamiento — solo velocidad):**
+- `@@index` agregados a `prisma/schema.prisma`: `documents_employees(applies)`,
+  `(id_document_types)`, `(state)`, `(created_at)`; `employees(company_id)` y
+  `(company_id, is_active)`.
+- SQL para aplicar sin lockear: `prisma/manual-sql/2026-07-17-indices-documentos.sql`
+  (`CREATE INDEX CONCURRENTLY`). **Debe aplicarse en la DB de prod** (Supabase SQL editor
+  o migración) — sin esto, el schema declara los índices pero la DB no los tiene.
+- **Esperado:** el listado baja de ~4.5 s a decenas de ms. **Aplica a TODAS las tablas
+  con el mismo patrón** (equipos, tesorería, etc. probablemente tengan el mismo problema
+  de índices faltantes → revisar sus queries/joins y agregar índices análogos).
+
+**Los wins de frontend previos (prefetch storm, waterfall, TaskApp) siguen siendo válidos**
+(bajan carga de servidor y concurrencia), pero **este índice es el que va a mover el LCP**.
