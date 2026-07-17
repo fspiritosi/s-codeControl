@@ -86,6 +86,11 @@ export function VtvDayPanel({ date, items, onManage, onAddNew }: Props) {
                       </span>
                     )}
                     <Badge variant={meta.variant}>{meta.label}</Badge>
+                    {item.documentTypeName && (
+                      <Badge variant="outline" className="font-normal">
+                        {item.documentTypeName}
+                      </Badge>
+                    )}
                   </div>
                   {!isTerminal && (
                     <div className="flex flex-wrap items-center gap-3">

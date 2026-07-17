@@ -48,6 +48,21 @@ function getColumns(
       enableColumnFilter: true,
     },
     {
+      id: 'Tipo VTV',
+      accessorFn: (row) => row.documentTypeName ?? '',
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Tipo VTV" />,
+      cell: ({ row }) =>
+        row.original.documentTypeName ? (
+          <Badge variant="outline" className="font-normal">
+            {row.original.documentTypeName}
+          </Badge>
+        ) : (
+          '—'
+        ),
+      filterFn: 'includesString',
+      enableColumnFilter: true,
+    },
+    {
       id: 'Marca/Modelo',
       accessorFn: (row) => [row.brand, row.model].filter(Boolean).join(' '),
       header: ({ column }) => <DataTableColumnHeader column={column} title="Marca/Modelo" />,
@@ -156,6 +171,12 @@ export function VtvListTable({ items, onManage }: Props) {
           title: 'Vencimiento',
           type: 'text',
           placeholder: 'Ej: 2026-07',
+        },
+        {
+          columnId: 'Tipo VTV',
+          title: 'Tipo VTV',
+          type: 'text',
+          placeholder: 'Ej: Nacional / Provincial',
         },
         {
           columnId: 'Orden',

@@ -25,6 +25,7 @@ export interface VtvCalendarItem extends VtvIndicators {
   appointmentDate: string; // YYYY-MM-DD (fecha del TURNO)
   documentValidity: string | null; // validity real del doc VTV (informativo, no editable acá)
   documentEquipmentId: string | null;
+  documentTypeName: string | null; // nombre del tipo de doc VTV (ej. "VTV Nacional" / "VTV Provincial") - tsk-439
   status: VtvAppointmentStatus;
   notes: string | null;
 }
@@ -45,6 +46,7 @@ export interface VtvListItem extends VtvIndicators {
   brand: string | null;
   model: string | null;
   validity: string | null; // vencimiento del documento YYYY-MM-DD (null si sin documento)
+  documentTypeName: string | null; // nombre del tipo de doc VTV (ej. "VTV Nacional" / "VTV Provincial") - tsk-439
   appointmentId: string | null; // turno activo si existe
   appointmentDate: string | null; // fecha del turno programado YYYY-MM-DD
   status: VtvAppointmentStatus | 'sin_programar';

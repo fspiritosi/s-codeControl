@@ -64,7 +64,9 @@ async function fetchVtvAppointments(
           model_rel: { select: { name: true } },
         },
       },
-      documents_equipment: { select: { validity: true } },
+      documents_equipment: {
+        select: { validity: true, document_type: { select: { name: true } } },
+      },
     },
     orderBy: { appointment_date: 'asc' },
   });
@@ -82,6 +84,7 @@ async function fetchVtvAppointments(
       ? a.documents_equipment.validity.slice(0, 10)
       : null,
     documentEquipmentId: a.document_equipment_id ?? null,
+    documentTypeName: a.documents_equipment?.document_type?.name ?? null,
     status: a.status as VtvAppointmentStatus,
     hasOrder: a.has_verification_order,
     hasAppointment: a.has_verification_appointment,
@@ -471,6 +474,7 @@ async function fetchVtvListRaw(companyId: string): Promise<VtvListItem[]> {
       id: true,
       applies: true, // FK al vehículo
       validity: true,
+      document_type: { select: { name: true } },
       vehicle: {
         select: {
           domain: true,
@@ -567,6 +571,7 @@ async function fetchVtvListRaw(companyId: string): Promise<VtvListItem[]> {
       brand: d.vehicle?.brand_rel?.name ?? null,
       model: d.vehicle?.model_rel?.name ?? null,
       validity,
+      documentTypeName: d.document_type?.name ?? null,
       appointmentId,
       appointmentDate,
       status,
@@ -588,6 +593,7 @@ async function fetchVtvListRaw(companyId: string): Promise<VtvListItem[]> {
       brand: a.vehicle?.brand_rel?.name ?? null,
       model: a.vehicle?.model_rel?.name ?? null,
       validity: null, // sin documento vinculado → sin vencimiento
+      documentTypeName: null,
       appointmentId: a.id,
       appointmentDate: a.appointment_date.toISOString().slice(0, 10),
       status: a.status === 'realizada' ? 'realizada' : a.status,
