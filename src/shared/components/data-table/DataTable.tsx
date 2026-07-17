@@ -194,9 +194,16 @@ function DataTableServerSide<TData extends Record<string, unknown>, TValue = unk
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
-  // Persist column visibility with debounce
+  // Persist column visibility with debounce. Se omite el primer run (montaje):
+  // antes disparaba un server-action POST de escritura en CADA carga de tabla, sin
+  // que el usuario hubiese cambiado nada, sumándose al waterfall de server actions.
+  const skipFirstVisibilitySave = React.useRef(true);
   React.useEffect(() => {
     if (!tableId) return;
+    if (skipFirstVisibilitySave.current) {
+      skipFirstVisibilitySave.current = false;
+      return;
+    }
 
     const timer = setTimeout(() => {
       saveTableColumnVisibility(tableId, columnVisibility);
@@ -325,9 +332,15 @@ function DataTableClientSide<TData extends Record<string, unknown>, TValue = unk
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
-  // Persist column visibility with debounce
+  // Persist column visibility con debounce; se omite el primer run (montaje) para no
+  // disparar un server-action POST de escritura innecesario en cada carga de tabla.
+  const skipFirstVisibilitySave = React.useRef(true);
   React.useEffect(() => {
     if (!tableId) return;
+    if (skipFirstVisibilitySave.current) {
+      skipFirstVisibilitySave.current = false;
+      return;
+    }
 
     const timer = setTimeout(() => {
       saveTableColumnVisibility(tableId, columnVisibility);

@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
   DataTable,
   type DataTableFacetedFilterConfig,
   type DataTableSearchParams,
 } from '@/shared/components/data-table';
 import { permanentDocumentColumns, monthlyDocumentColumns } from './document-columns';
-import { getEmployeeDocumentFacets, getAllEmployeeDocumentsForExport } from '../actions.server';
+import { getAllEmployeeDocumentsForExport } from '../actions.server';
 
 interface FacetEntry {
   value: string;
@@ -17,6 +17,8 @@ interface FacetEntry {
 interface Props {
   data: any[];
   totalRows: number;
+  /** Facets pre-calculados en el servidor (evita el server-action POST en cliente). */
+  facets: Record<string, FacetEntry[]>;
   searchParams: DataTableSearchParams;
   monthly?: boolean;
   downDocument?: boolean;
@@ -33,18 +35,13 @@ const FILTER_DEFINITIONS: { columnId: string; title: string; type: 'faceted' | '
 
 const DEFAULT_VISIBLE_FILTERS = new Set(['state', 'resource', 'documentName']);
 
-export function _EmployeeDocumentDataTable({ data, totalRows, searchParams, monthly, downDocument }: Props) {
-  const [facets, setFacets] = useState<Record<string, FacetEntry[]> | null>(null);
+export function _EmployeeDocumentDataTable({ data, totalRows, facets, searchParams, monthly, downDocument }: Props) {
   const columns = monthly ? monthlyDocumentColumns : permanentDocumentColumns;
   const tableId = downDocument
     ? 'employee-docs-baja'
     : monthly
       ? 'employee-docs-monthly'
       : 'employee-docs-permanent';
-
-  useEffect(() => {
-    getEmployeeDocumentFacets({ monthly, downDocument }).then(setFacets).catch(console.error);
-  }, [monthly, downDocument]);
 
   const buildFacetConfig = (entries: FacetEntry[] | undefined) => {
     if (!entries || entries.length === 0) return { options: [], externalCounts: new Map<string, number>() };
