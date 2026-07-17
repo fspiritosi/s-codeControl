@@ -8,7 +8,14 @@ export type VtvAppointmentStatus =
 // 'sin_programar' (VTV con vencimiento pero sin turno programado).
 export type VtvStatusKey = VtvAppointmentStatus | 'sin_programar';
 
-export interface VtvCalendarItem {
+// Indicadores independientes de gestión de la VTV (tkt-480). El usuario indica
+// cada uno por separado; el semáforo (rojo/amarillo/verde) se deriva de ambos.
+export interface VtvIndicators {
+  hasOrder: boolean; // Orden de Verificación solicitada
+  hasAppointment: boolean; // Turno de Verificación obtenido
+}
+
+export interface VtvCalendarItem extends VtvIndicators {
   appointmentId: string;
   vehicleId: string;
   domain: string | null; // patente
@@ -30,7 +37,7 @@ export interface ExpiringVtvDoc {
 
 // Fila del listado (tab "Listado"): un documento VTV + su turno (si existe).
 // status 'sin_programar' = VTV con vencimiento pero sin turno activo.
-export interface VtvListItem {
+export interface VtvListItem extends VtvIndicators {
   documentEquipmentId: string | null; // null = turno sin documento VTV vinculado
   vehicleId: string;
   domain: string | null;
@@ -44,12 +51,12 @@ export interface VtvListItem {
   isExpired: boolean; // el vencimiento ya pasó
 }
 
-// Métricas del resumen (tkt-461).
+// Métricas del resumen (tkt-461, actualizado tkt-480 al semáforo de dos indicadores).
 export interface VtvMetrics {
-  sinProgramarMes: number; // VTV que vencen este mes sin turno programado
-  solicitadosMes: number; // turnos solicitados con fecha en este mes
-  realizadasMes: number; // VTV realizadas este mes
-  vencidasSinGestionar: number; // vencimiento pasado y sin turno solicitado/realizado
+  sinGestionarMes: number; // VTV que vencen este mes en rojo (ningún indicador)
+  incompletasMes: number; // VTV que vencen este mes en amarillo (un solo indicador)
+  completasMes: number; // VTV que vencen este mes en verde (ambos) o realizadas
+  vencidasSinCompletar: number; // vencimiento pasado sin ambos indicadores ni realizada
 }
 
 // Opción de vehículo para el alta manual de turno.
@@ -66,7 +73,7 @@ export type ActionResult = { error: string | null };
 
 // Objetivo común del diálogo de gestión (tkt-461). Unifica la fila del listado
 // y el turno del calendario para que "programar con fecha" sea consistente.
-export interface VtvManageTarget {
+export interface VtvManageTarget extends VtvIndicators {
   appointmentId: string | null;
   vehicleId: string;
   documentEquipmentId: string | null;

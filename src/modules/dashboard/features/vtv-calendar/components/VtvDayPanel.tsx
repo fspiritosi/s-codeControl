@@ -2,10 +2,24 @@
 
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Check, X } from 'lucide-react';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import type { VtvCalendarItem } from '../types';
-import { STATUS_META } from './vtvStatusMeta';
+import { DISPLAY_META, deriveDisplayKey } from './vtvStatusMeta';
+
+function MiniIndicator({ on, label }: { on: boolean; label: string }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-0.5 text-xs ${
+        on ? 'text-green-600' : 'text-muted-foreground'
+      }`}
+    >
+      {on ? <Check className="size-3" /> : <X className="size-3" />}
+      {label}
+    </span>
+  );
+}
 
 interface Props {
   date: string | null;
@@ -50,7 +64,12 @@ export function VtvDayPanel({ date, items, onManage, onAddNew }: Props) {
       ) : (
         <ul className="space-y-2">
           {items.map((item) => {
-            const meta = STATUS_META[item.status];
+            const key = deriveDisplayKey(item.status, {
+              hasOrder: item.hasOrder,
+              hasAppointment: item.hasAppointment,
+            });
+            const meta = DISPLAY_META[key];
+            const isTerminal = key === 'realizada' || key === 'cancelada';
             return (
               <li
                 key={item.appointmentId}
@@ -68,6 +87,12 @@ export function VtvDayPanel({ date, items, onManage, onAddNew }: Props) {
                     )}
                     <Badge variant={meta.variant}>{meta.label}</Badge>
                   </div>
+                  {!isTerminal && (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <MiniIndicator on={item.hasOrder} label="Orden" />
+                      <MiniIndicator on={item.hasAppointment} label="Turno" />
+                    </div>
+                  )}
                   <p className="text-xs text-muted-foreground">
                     {[item.brand, item.model].filter(Boolean).join(' ') ||
                       'Sin marca/modelo'}

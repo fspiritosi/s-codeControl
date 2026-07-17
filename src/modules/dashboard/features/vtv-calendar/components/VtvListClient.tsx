@@ -26,6 +26,8 @@ function toTarget(item: VtvListItem): VtvManageTarget {
     status: item.status,
     validity: item.validity,
     appointmentDate: item.appointmentDate,
+    hasOrder: item.hasOrder,
+    hasAppointment: item.hasAppointment,
   };
 }
 

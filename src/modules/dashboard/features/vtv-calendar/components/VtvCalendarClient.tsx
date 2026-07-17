@@ -26,6 +26,8 @@ function toTarget(item: VtvCalendarItem): VtvManageTarget {
     status: item.status,
     validity: item.documentValidity,
     appointmentDate: item.appointmentDate,
+    hasOrder: item.hasOrder,
+    hasAppointment: item.hasAppointment,
   };
 }
 
