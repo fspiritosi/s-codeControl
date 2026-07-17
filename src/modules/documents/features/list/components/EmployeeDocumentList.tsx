@@ -12,7 +12,10 @@ export async function EmployeeDocumentList({ searchParams, monthly, downDocument
   // Solo la data paginada bloquea el render de la tabla. Los facets (opciones de filtro)
   // se cargan en el cliente sin bloquear (ver _EmployeeDocumentDataTable): moverlos al
   // servidor metía su query lenta en el path del stream RSC y retrasaba el LCP de la tabla.
+  // [PERF][TEMP] instrumentación para medir el tiempo de la query en prod (Vercel logs).
+  const __t0 = Date.now();
   const { data, total } = await getEmployeeDocumentsPaginated(searchParams, { monthly, downDocument });
+  console.log(`[PERF] getEmployeeDocumentsPaginated ${Date.now() - __t0}ms (monthly=${!!monthly} down=${!!downDocument} rows=${data.length} total=${total})`);
 
   return (
     <_EmployeeDocumentDataTable
