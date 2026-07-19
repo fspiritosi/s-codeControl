@@ -1,38 +1,54 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { format } from 'date-fns';
-import { Card, CardContent } from '@/shared/components/ui/card';
-import { GeneralCalendar } from './GeneralCalendar';
-import { CalendarDayPanel } from './CalendarDayPanel';
-import type { CalendarEvent } from '../types';
+import { useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { Card } from '@/shared/components/ui/card';
+import { MonthCalendar, type MonthCalendarEvent } from '@/shared/components/calendar/MonthCalendar';
+import type { CalendarEvent, CalendarEventSeverity } from '../types';
+
+const DOT_BY_SEVERITY: Record<CalendarEventSeverity, string> = {
+  expired: 'bg-red-500',
+  soon: 'bg-orange-500',
+  upcoming: 'bg-yellow-500',
+  maintenance: 'bg-blue-500',
+};
 
 export function GeneralCalendarClient({ events }: { events: CalendarEvent[] }) {
-  const [selectedDay, setSelectedDay] = useState<string | null>(() =>
-    format(new Date(), 'yyyy-MM-dd')
-  );
+  const router = useRouter();
 
-  const dayEvents = useMemo(
-    () => events.filter((e) => e.date === selectedDay),
-    [events, selectedDay]
+  const calendarEvents: MonthCalendarEvent[] = useMemo(
+    () =>
+      events.map((ev) => ({
+        id: ev.id,
+        date: ev.date,
+        label: `${ev.title} · ${ev.subtitle}`,
+        dotClassName: DOT_BY_SEVERITY[ev.severity],
+        onClick: () => router.push(ev.href),
+      })),
+    [events, router]
   );
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-      <Card>
-        <CardContent className="p-4">
-          <GeneralCalendar
-            events={events}
-            selectedDay={selectedDay}
-            onSelectDay={setSelectedDay}
-          />
-        </CardContent>
+    <div className="space-y-3">
+      <Card className="p-3">
+        <MonthCalendar events={calendarEvents} maxPerDay={3} />
       </Card>
-      <Card>
-        <CardContent className="p-4">
-          <CalendarDayPanel date={selectedDay} events={dayEvents} />
-        </CardContent>
-      </Card>
+
+      {/* Referencia de colores */}
+      <div className="flex flex-wrap gap-3 px-1 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <span className="size-2.5 rounded-full bg-red-500/70" /> Vencido
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-2.5 rounded-full bg-orange-500/70" /> ≤ 7 días
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-2.5 rounded-full bg-yellow-500/70" /> Por vencer
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-2.5 rounded-full bg-blue-500/70" /> Mantenimiento
+        </span>
+      </div>
     </div>
   );
 }
