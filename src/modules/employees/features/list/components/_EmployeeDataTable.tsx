@@ -23,6 +23,8 @@ interface Props {
 
 // All available filters — faceted ones get server counts, text ones use contains
 const FILTER_DEFINITIONS: { columnId: string; title: string; type: 'faceted' | 'text' | 'dateRange' }[] = [
+  { columnId: 'lastname', title: 'Apellido', type: 'text' },
+  { columnId: 'firstname', title: 'Nombre', type: 'text' },
   { columnId: 'status', title: 'Estado', type: 'faceted' },
   { columnId: 'type_of_contract', title: 'Tipo de contrato', type: 'faceted' },
   { columnId: 'document_type', title: 'Tipo de documento', type: 'faceted' },
@@ -40,8 +42,6 @@ const FILTER_DEFINITIONS: { columnId: string; title: string; type: 'faceted' | '
   { columnId: 'cuil', title: 'CUIL', type: 'text' },
   { columnId: 'document_number', title: 'Nro. documento', type: 'text' },
   { columnId: 'email', title: 'Email', type: 'text' },
-  { columnId: 'lastname', title: 'Apellido', type: 'text' },
-  { columnId: 'firstname', title: 'Nombre', type: 'text' },
   { columnId: 'phone', title: 'Teléfono', type: 'text' },
   { columnId: 'street', title: 'Calle', type: 'text' },
   { columnId: 'file', title: 'Legajo', type: 'text' },
@@ -54,13 +54,13 @@ const FILTER_DEFINITIONS: { columnId: string; title: string; type: 'faceted' | '
   { columnId: 'date_of_admission', title: 'Fecha de ingreso', type: 'dateRange' },
 ];
 
-// Filters visible by default (the rest are available via the filter toggle)
+// Filters visible by default (the rest are available via the filter toggle).
+// Apellido y Nombre primero, que es lo que más se busca en el día a día (tsk-433).
 const DEFAULT_VISIBLE_FILTERS = new Set([
+  'lastname',
+  'firstname',
   'status',
   'type_of_contract',
-  'document_type',
-  'gender',
-  'nationality',
   'hierarchical_position',
 ]);
 
