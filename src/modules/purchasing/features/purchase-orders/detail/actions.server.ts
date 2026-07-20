@@ -10,6 +10,7 @@ import {
   PURCHASE_INVOICE_ATTACHMENT_ALLOWED_MIME,
   PURCHASE_INVOICE_ATTACHMENT_MAX_BYTES,
 } from '@/modules/purchasing/shared/validators';
+import { recalcInvoicingStatus } from '@/modules/purchasing/shared/recalc-invoicing-status';
 import { revalidatePath } from 'next/cache';
 
 const ALLOWED_MIME_SET = new Set<string>(PURCHASE_INVOICE_ATTACHMENT_ALLOWED_MIME as readonly string[]);
@@ -20,43 +21,6 @@ function getExtensionFromMime(mime: string): string {
   if (mime === 'image/png') return 'png';
   if (mime === 'application/pdf') return 'pdf';
   return 'bin';
-}
-
-/**
- * Recalcula invoicing_status de una OC en base a cantidades facturadas por línea
- * y al monto total facturado (facturas confirmadas vinculadas por FK o por línea).
- * Mismo criterio que el alta de facturas.
- */
-async function recalcInvoicingStatus(orderId: string) {
-  const [lines, order, invoicedAgg] = await Promise.all([
-    prisma.purchase_order_lines.findMany({ where: { order_id: orderId } }),
-    prisma.purchase_orders.findUnique({ where: { id: orderId }, select: { total: true } }),
-    prisma.purchase_invoices.aggregate({
-      where: {
-        status: 'CONFIRMED',
-        OR: [
-          { purchase_order_id: orderId },
-          { lines: { some: { purchase_order_line: { order_id: orderId } } } },
-        ],
-      },
-      _sum: { total: true },
-    }),
-  ]);
-
-  const orderTotal = Number(order?.total ?? 0);
-  const invoicedTotal = Number(invoicedAgg._sum.total ?? 0);
-  const allQtyInvoiced = lines.length > 0 && lines.every((l) => Number(l.invoiced_qty) >= Number(l.quantity));
-  const someInvoiced = lines.some((l) => Number(l.invoiced_qty) > 0);
-  const amountFullyCovered = orderTotal > 0 && invoicedTotal >= orderTotal;
-
-  const newStatus =
-    allQtyInvoiced && amountFullyCovered
-      ? 'FULLY_INVOICED'
-      : someInvoiced || invoicedTotal > 0
-        ? 'PARTIALLY_INVOICED'
-        : 'NOT_INVOICED';
-
-  await prisma.purchase_orders.update({ where: { id: orderId }, data: { invoicing_status: newStatus } });
 }
 
 async function getOrderOrThrow(orderId: string, companyId: string) {

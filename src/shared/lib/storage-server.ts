@@ -15,6 +15,8 @@ export type StorageBucket =
   | 'documents'
   | 'purchase_invoices'
   | 'purchase_orders'
+  | 'sales_invoices'
+  | 'receipts'
 
 export interface UploadOptions {
   cacheControl?: string

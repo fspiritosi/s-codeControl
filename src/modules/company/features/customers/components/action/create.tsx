@@ -6,6 +6,43 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
+const TAX_CONDITIONS = [
+  'RESPONSABLE_INSCRIPTO',
+  'MONOTRIBUTO',
+  'EXENTO',
+  'CONSUMIDOR_FINAL',
+  'NO_RESPONSABLE',
+] as const;
+
+/**
+ * Lee los datos fiscales opcionales del FormData y arma el objeto para prisma.
+ * Todos los campos son opcionales/nullable; los vacíos se guardan como null.
+ */
+function buildFiscalData(formData: FormData) {
+  const str = (key: string): string | null => {
+    const value = formData.get(key);
+    if (typeof value !== 'string') return null;
+    const trimmed = value.trim();
+    return trimmed === '' ? null : trimmed;
+  };
+
+  const rawTaxCondition = str('tax_condition');
+  const tax_condition =
+    rawTaxCondition && (TAX_CONDITIONS as readonly string[]).includes(rawTaxCondition)
+      ? (rawTaxCondition as (typeof TAX_CONDITIONS)[number])
+      : null;
+
+  return {
+    tax_condition,
+    document_type: str('document_type') ?? 'CUIT',
+    tax_id: str('tax_id'),
+    fiscal_address: str('fiscal_address'),
+    fiscal_city: str('fiscal_city'),
+    fiscal_province: str('fiscal_province'),
+    fiscal_zip_code: str('fiscal_zip_code'),
+  };
+}
+
 export async function createdCustomer(formData: FormData) {
   try {
     revalidatePath('/dashboard/company/actualCompany/customers');
@@ -21,6 +58,7 @@ export async function createdCustomer(formData: FormData) {
       client_phone: client.client_phone as unknown as number,
       address: client.address,
       company_id: formData.get('company_id') as string | null,
+      ...buildFiscalData(formData),
     };
 
     const existingClient = await prisma.customers.findFirst({
@@ -62,6 +100,7 @@ export async function updateCustomer(formData: FormData) {
     client_phone: formData.get('client_phone') as string | null,
     address: formData.get('address') as string | null,
     company_id: formData.get('company_id') as string | null,
+    ...buildFiscalData(formData),
   };
 
   try {

@@ -34,6 +34,31 @@ import { setEmployeesToShow } from '@/shared/lib/utils/utils';
 import cookie from 'js-cookie';
 import { format } from 'date-fns';
 import { Badge } from '@/shared/components/ui/badge';
+
+// Etiquetas de condición IVA (definidas localmente para no importar cross-module — regla CLAUDE.md).
+const CUSTOMER_TAX_CONDITION_LABELS: Record<string, string> = {
+  RESPONSABLE_INSCRIPTO: 'Responsable Inscripto',
+  MONOTRIBUTO: 'Monotributo',
+  EXENTO: 'Exento',
+  CONSUMIDOR_FINAL: 'Consumidor Final',
+  NO_RESPONSABLE: 'No Responsable',
+};
+
+// Esquema extendido con los datos fiscales opcionales (tsk-479).
+const customersFiscalSchema = customersSchema.extend({
+  tax_condition: z.string().optional(),
+  document_type: z.string().optional(),
+  tax_id: z.string().optional(),
+  fiscal_address: z.string().optional(),
+  fiscal_city: z.string().optional(),
+  fiscal_province: z.string().optional(),
+  fiscal_zip_code: z.string().optional(),
+});
+
+type CustomerFormValues = z.infer<typeof customersFiscalSchema>;
+
+const DOCUMENT_TYPE_OPTIONS = ['CUIT', 'CUIL', 'DNI', 'Pasaporte', 'CDI', 'LE', 'LC'] as const;
+
 interface Service {
   id: string;
   service_name: string;
@@ -133,14 +158,21 @@ export default function ClientRegister({ id, equipment }: { id: string; equipmen
     equipmentItem.contractor_equipment.some((e) => e.contractor_id.id === clientData?.id)
   );
 
-  const form = useForm<z.infer<typeof customersSchema>>({
-    resolver: zodResolver(customersSchema),
+  const form = useForm<CustomerFormValues>({
+    resolver: zodResolver(customersFiscalSchema),
     defaultValues: {
       company_name: '',
       client_cuit: '',
       client_email: '',
       client_phone: '',
       address: '',
+      tax_condition: '',
+      document_type: 'CUIT',
+      tax_id: '',
+      fiscal_address: '',
+      fiscal_city: '',
+      fiscal_province: '',
+      fiscal_zip_code: '',
     },
   });
 
@@ -148,8 +180,12 @@ export default function ClientRegister({ id, equipment }: { id: string; equipmen
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors: formErrors },
   } = form;
+
+  const taxCondition = watch('tax_condition');
+  const documentType = watch('document_type');
 
   useEffect(() => {
     if (action === 'view') {
@@ -169,6 +205,13 @@ export default function ClientRegister({ id, equipment }: { id: string; equipmen
           setValue('client_email', data?.client_email);
           setValue('client_phone', data?.client_phone?.toString());
           setValue('address', data?.address);
+          setValue('tax_condition', data?.tax_condition ?? '');
+          setValue('document_type', data?.document_type ?? 'CUIT');
+          setValue('tax_id', data?.tax_id ?? '');
+          setValue('fiscal_address', data?.fiscal_address ?? '');
+          setValue('fiscal_city', data?.fiscal_city ?? '');
+          setValue('fiscal_province', data?.fiscal_province ?? '');
+          setValue('fiscal_zip_code', data?.fiscal_zip_code ?? '');
         }
       } catch (error) {
         console.error('Error fetching customer data:', error);
@@ -180,7 +223,7 @@ export default function ClientRegister({ id, equipment }: { id: string; equipmen
     }
   }, [action, id, setValue]);
 
-  const onSubmit = async (formData: z.infer<typeof customersSchema>) => {
+  const onSubmit = async (formData: CustomerFormValues) => {
     const data = new FormData();
     data.append('id', id);
     data.append('company_name', formData.company_name);
@@ -188,6 +231,13 @@ export default function ClientRegister({ id, equipment }: { id: string; equipmen
     data.append('client_email', formData.client_email || '');
     data.append('client_phone', formData.client_phone);
     data.append('address', formData.address);
+    data.append('tax_condition', formData.tax_condition || '');
+    data.append('document_type', formData.document_type || 'CUIT');
+    data.append('tax_id', formData.tax_id || '');
+    data.append('fiscal_address', formData.fiscal_address || '');
+    data.append('fiscal_city', formData.fiscal_city || '');
+    data.append('fiscal_province', formData.fiscal_province || '');
+    data.append('fiscal_zip_code', formData.fiscal_zip_code || '');
     const company_id = actualCompany;
     data.append('company_id', company_id as string);
     toast.loading('Creando cliente');
@@ -302,6 +352,102 @@ export default function ClientRegister({ id, equipment }: { id: string; equipmen
               {formErrors.address && (
                 <CardDescription className="text-red-500">{formErrors.address.message}</CardDescription>
               )}
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <CardTitle className="text-xl mb-1">Datos fiscales</CardTitle>
+            <CardDescription>Información utilizada para la facturación electrónica (opcional).</CardDescription>
+          </div>
+
+          <div className="grid grid-cols-4 gap-4 w-full mt-4">
+            <div>
+              <Label htmlFor="tax_condition">Condición IVA</Label>
+              <Select
+                value={taxCondition || ''}
+                onValueChange={(value) => setValue('tax_condition', value)}
+                disabled={readOnly}
+              >
+                <SelectTrigger id="tax_condition" className="w-full">
+                  <SelectValue placeholder="Seleccionar condición" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(CUSTOMER_TAX_CONDITION_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="document_type">Tipo de documento</Label>
+              <Select
+                value={documentType || 'CUIT'}
+                onValueChange={(value) => setValue('document_type', value)}
+                disabled={readOnly}
+              >
+                <SelectTrigger id="document_type" className="w-full">
+                  <SelectValue placeholder="Seleccionar tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DOCUMENT_TYPE_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="tax_id">CUIT / Nº fiscal</Label>
+              <Input
+                id="tax_id"
+                {...register('tax_id')}
+                className="w-full"
+                placeholder="número fiscal"
+                readOnly={readOnly}
+              />
+            </div>
+            <div>
+              <Label htmlFor="fiscal_address">Dirección fiscal</Label>
+              <Input
+                id="fiscal_address"
+                {...register('fiscal_address')}
+                className="w-full"
+                placeholder="dirección fiscal"
+                readOnly={readOnly}
+              />
+            </div>
+            <div>
+              <Label htmlFor="fiscal_city">Ciudad</Label>
+              <Input
+                id="fiscal_city"
+                {...register('fiscal_city')}
+                className="w-full"
+                placeholder="ciudad"
+                readOnly={readOnly}
+              />
+            </div>
+            <div>
+              <Label htmlFor="fiscal_province">Provincia</Label>
+              <Input
+                id="fiscal_province"
+                {...register('fiscal_province')}
+                className="w-full"
+                placeholder="provincia"
+                readOnly={readOnly}
+              />
+            </div>
+            <div>
+              <Label htmlFor="fiscal_zip_code">Código postal</Label>
+              <Input
+                id="fiscal_zip_code"
+                {...register('fiscal_zip_code')}
+                className="w-full"
+                placeholder="código postal"
+                readOnly={readOnly}
+              />
             </div>
           </div>
 

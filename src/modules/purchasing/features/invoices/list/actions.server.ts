@@ -10,6 +10,7 @@ import {
   PURCHASE_INVOICE_ATTACHMENT_MAX_BYTES,
 } from '@/modules/purchasing/shared/validators';
 import { isCreditNoteVoucherType, CREDIT_NOTE_VOUCHER_TYPES } from '@/modules/purchasing/shared/types';
+import { recalcInvoicingStatusMany } from '@/modules/purchasing/shared/recalc-invoicing-status';
 import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 import {
   parseSearchParams,
@@ -575,7 +576,13 @@ export async function updatePurchaseInvoice(
     // DRAFT: editable por cualquiera con acceso. CONFIRMED: solo el owner de la empresa.
     const existing = await prisma.purchase_invoices.findFirst({
       where: { id: invoiceId, company_id: companyId },
-      select: { id: true, supplier_id: true, status: true },
+      select: {
+        id: true,
+        supplier_id: true,
+        status: true,
+        purchase_order_id: true,
+        lines: { select: { purchase_order_line: { select: { order_id: true } } } },
+      },
     });
     if (!existing) return { data: null, error: 'Factura no encontrada' };
     const editable =
@@ -742,6 +749,26 @@ export async function updatePurchaseInvoice(
       }),
     ]);
 
+    // Recalcular estado de OCs afectadas: las que estaban vinculadas ANTES del
+    // cambio (cabecera + líneas) y las que quedan AHORA. Editar una factura
+    // confirmada puede cambiar montos, líneas o la OC asignada (tsk-478).
+    const affectedOrderIds = new Set<string>();
+    if (existing.purchase_order_id) affectedOrderIds.add(existing.purchase_order_id);
+    for (const l of existing.lines) {
+      if (l.purchase_order_line?.order_id) affectedOrderIds.add(l.purchase_order_line.order_id);
+    }
+    if (primaryOrderId) affectedOrderIds.add(primaryOrderId);
+    for (const l of data.lines) {
+      if (l.purchase_order_line_id) {
+        const ol = await prisma.purchase_order_lines.findUnique({
+          where: { id: l.purchase_order_line_id },
+          select: { order_id: true },
+        });
+        if (ol?.order_id) affectedOrderIds.add(ol.order_id);
+      }
+    }
+    await recalcInvoicingStatusMany(affectedOrderIds);
+
     revalidatePath('/dashboard/purchasing');
     revalidatePath(`/dashboard/purchasing/invoices/${invoiceId}`);
     return { data: { id: invoiceId }, error: null };
@@ -775,8 +802,13 @@ export async function confirmPurchaseInvoice(id: string) {
       return { error: 'La factura no está en estado borrador' };
     }
 
-    // Derivar todas las OCs afectadas a partir de las líneas
+    // Derivar todas las OCs afectadas: por vínculo de CABECERA y por LÍNEA.
+    // (Antes solo se miraban las líneas, así una factura ligada solo por cabecera
+    //  no disparaba el recálculo y dejaba la OC en NOT_INVOICED — tsk-478.)
     const affectedOrderIds = new Set<string>();
+    if (invoice.purchase_order_id) {
+      affectedOrderIds.add(invoice.purchase_order_id);
+    }
     for (const l of invoice.lines) {
       if (l.purchase_order_line?.order_id) {
         affectedOrderIds.add(l.purchase_order_line.order_id);
@@ -819,61 +851,9 @@ export async function confirmPurchaseInvoice(id: string) {
 
     await prisma.$transaction(ops);
 
-    // Recalcular invoicing_status de todas las OCs afectadas
-    // Verifica cantidades por línea Y montos totales facturados vs OC.
-    if (affectedOrderIds.size > 0) {
-      const orderIds = Array.from(affectedOrderIds);
-      const [linesByOrder, orders, invoicedTotalsByOrder] = await Promise.all([
-        Promise.all(
-          orderIds.map((orderId) =>
-            prisma.purchase_order_lines.findMany({ where: { order_id: orderId } })
-          )
-        ),
-        Promise.all(
-          orderIds.map((orderId) =>
-            prisma.purchase_orders.findUnique({ where: { id: orderId }, select: { total: true } })
-          )
-        ),
-        Promise.all(
-          orderIds.map((orderId) =>
-            prisma.purchase_invoices.aggregate({
-              where: {
-                status: 'CONFIRMED',
-                OR: [
-                  { purchase_order_id: orderId },
-                  { lines: { some: { purchase_order_line: { order_id: orderId } } } },
-                ],
-              },
-              _sum: { total: true },
-            })
-          )
-        ),
-      ]);
-
-      const statusOps = orderIds.map((orderId, idx) => {
-        const updatedLines = linesByOrder[idx];
-        const orderTotal = Number(orders[idx]?.total ?? 0);
-        const invoicedTotal = Number(invoicedTotalsByOrder[idx]._sum.total ?? 0);
-
-        const allQtyInvoiced = updatedLines.every((l) => Number(l.invoiced_qty) >= Number(l.quantity));
-        const someInvoiced = updatedLines.some((l) => Number(l.invoiced_qty) > 0);
-        const amountFullyCovered = invoicedTotal >= orderTotal;
-
-        const newStatus =
-          allQtyInvoiced && amountFullyCovered
-            ? 'FULLY_INVOICED'
-            : someInvoiced || invoicedTotal > 0
-              ? 'PARTIALLY_INVOICED'
-              : 'NOT_INVOICED';
-
-        return prisma.purchase_orders.update({
-          where: { id: orderId },
-          data: { invoicing_status: newStatus },
-        });
-      });
-
-      await prisma.$transaction(statusOps);
-    }
+    // Recalcular invoicing_status de todas las OCs afectadas (cabecera + líneas)
+    // con el criterio unificado (verifica cantidades por línea y montos vs OC).
+    await recalcInvoicingStatusMany(affectedOrderIds);
 
     revalidatePath('/dashboard/purchasing');
     return { error: null };
@@ -1010,9 +990,22 @@ export async function deletePurchaseInvoice(id: string) {
   try {
     const invoice = await prisma.purchase_invoices.findFirst({
       where: { id, company_id: companyId },
-      select: { id: true, full_number: true },
+      select: {
+        id: true,
+        full_number: true,
+        status: true,
+        purchase_order_id: true,
+        lines: { select: { purchase_order_line: { select: { order_id: true } } } },
+      },
     });
     if (!invoice) return { error: 'Factura no encontrada' };
+
+    // OCs afectadas por el borrado (para recalcular su estado tras eliminar la factura).
+    const affectedOrderIds = new Set<string>();
+    if (invoice.purchase_order_id) affectedOrderIds.add(invoice.purchase_order_id);
+    for (const l of invoice.lines) {
+      if (l.purchase_order_line?.order_id) affectedOrderIds.add(l.purchase_order_line.order_id);
+    }
 
     // Bloqueo: pagos imputados (en OP no anulada) o movimientos de caja.
     const [activePayment, cashMovement] = await Promise.all([
@@ -1035,6 +1028,9 @@ export async function deletePurchaseInvoice(id: string) {
     }
 
     await prisma.purchase_invoices.delete({ where: { id } });
+
+    // Recalcular el estado de las OCs que estaban vinculadas a la factura borrada.
+    await recalcInvoicingStatusMany(affectedOrderIds);
 
     revalidatePath('/dashboard/purchasing');
     return { error: null };
