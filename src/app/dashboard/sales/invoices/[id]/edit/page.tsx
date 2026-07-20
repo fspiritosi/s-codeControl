@@ -37,7 +37,7 @@ export default async function EditSalesInvoicePage({ params }: { params: Promise
         ? Number(invoice.global_discount_value)
         : null,
     lines: invoice.lines.map((l) => ({
-      product_id: l.product_id ?? '',
+      service_item_id: l.service_item_id ?? '',
       description: l.description,
       quantity: Number(l.quantity),
       unit_price: Number(l.unit_price),
@@ -64,7 +64,6 @@ export default async function EditSalesInvoicePage({ params }: { params: Promise
       <EditSalesInvoice
         invoice={initialData}
         customers={formData.customers}
-        products={formData.products}
         pointsOfSale={formData.pointsOfSale}
         perceptionTypes={formData.perceptionTypes}
       />

@@ -993,10 +993,11 @@ model service_items {
   item_measure_units  Int
   is_active           Boolean? @default(true)
 
-  company          company           @relation(fields: [company_id], references: [id])
-  customer_service customer_services @relation(fields: [customer_service_id], references: [id])
-  measure_unit     measure_units     @relation(fields: [item_measure_units], references: [id])
-  dailyreportrows  dailyreportrows[]
+  company             company               @relation(fields: [company_id], references: [id])
+  customer_service    customer_services     @relation(fields: [customer_service_id], references: [id])
+  measure_unit        measure_units         @relation(fields: [item_measure_units], references: [id])
+  dailyreportrows     dailyreportrows[]
+  sales_invoice_lines sales_invoice_lines[]
 }
 
 model measure_units {
@@ -3289,6 +3290,7 @@ model sales_invoice_lines {
   id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   invoice_id      String         @db.Uuid
   product_id      String?        @db.Uuid
+  service_item_id String?        @db.Uuid
   description     String
   quantity        Decimal        @db.Decimal(12, 3)
   unit_price      Decimal        @db.Decimal(12, 3)
@@ -3300,10 +3302,12 @@ model sales_invoice_lines {
   discount_value  Decimal?       @db.Decimal(12, 3)
   discount_amount Decimal        @default(0) @db.Decimal(12, 3)
 
-  invoice sales_invoices @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
-  product products?      @relation(fields: [product_id], references: [id])
+  invoice      sales_invoices @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  product      products?      @relation(fields: [product_id], references: [id])
+  service_item service_items? @relation(fields: [service_item_id], references: [id])
 
   @@index([invoice_id])
+  @@index([service_item_id])
 }
 
 model sales_invoice_perceptions {

@@ -9,18 +9,13 @@ import { listTaxTypes } from '@/modules/settings/features/taxes/actions.server';
 export async function getSalesInvoiceFormData() {
   const { companyId } = await getActionContext();
   if (!companyId) {
-    return { customers: [], products: [], pointsOfSale: [], perceptionTypes: [] };
+    return { customers: [], pointsOfSale: [], perceptionTypes: [] };
   }
 
-  const [customers, products, pointsOfSale, perceptionTypes] = await Promise.all([
+  const [customers, pointsOfSale, perceptionTypes] = await Promise.all([
     prisma.customers.findMany({
       where: { company_id: companyId, is_active: true },
       select: { id: true, name: true, tax_id: true },
-      orderBy: { name: 'asc' },
-    }),
-    prisma.products.findMany({
-      where: { company_id: companyId, status: 'ACTIVE' },
-      select: { id: true, code: true, name: true, sale_price: true, vat_rate: true },
       orderBy: { name: 'asc' },
     }),
     getSalesPointsOfSale(),
@@ -29,13 +24,6 @@ export async function getSalesInvoiceFormData() {
 
   return {
     customers,
-    products: products.map((p) => ({
-      id: p.id,
-      code: p.code,
-      name: p.name,
-      sale_price: Number(p.sale_price),
-      vat_rate: Number(p.vat_rate),
-    })),
     pointsOfSale: pointsOfSale
       .filter((pos) => pos.is_active)
       .map((pos) => ({ id: pos.id, number: pos.number, name: pos.name })),
@@ -49,4 +37,44 @@ export async function getSalesInvoiceFormData() {
         calculation_base: t.calculation_base,
       })),
   };
+}
+
+/**
+ * Ítems de los servicios contratados por un cliente, para las líneas de la factura
+ * de venta. Cada ítem trae su descripción, precio y unidad de medida (tsk-479).
+ */
+export async function getCustomerServiceItems(customerId: string) {
+  const { companyId } = await getActionContext();
+  if (!companyId || !customerId) return [];
+
+  const services = await prisma.customer_services.findMany({
+    where: { customer_id: customerId, company_id: companyId, is_active: true },
+    select: {
+      id: true,
+      service_name: true,
+      service_items: {
+        where: { is_active: true },
+        select: {
+          id: true,
+          item_name: true,
+          item_description: true,
+          item_price: true,
+          measure_unit: { select: { unit: true, simbol: true } },
+        },
+        orderBy: { item_name: 'asc' },
+      },
+    },
+    orderBy: { service_name: 'asc' },
+  });
+
+  return services.flatMap((svc) =>
+    svc.service_items.map((it) => ({
+      id: it.id,
+      item_name: it.item_name,
+      item_description: it.item_description,
+      item_price: Number(it.item_price),
+      unit: it.measure_unit?.simbol || it.measure_unit?.unit || '',
+      service_name: svc.service_name || '',
+    }))
+  );
 }
