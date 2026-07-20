@@ -20,7 +20,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Contact from '@/modules/company/features/contacts/components/Contact';
-import Customers from '@/modules/company/features/customers/components/Customers';
+import Customers from '@/modules/commercial/features/customers/components/Customers';
 import { columns } from '@/modules/company/features/detail/components/columns';
 import { columnsGuests } from '@/modules/company/features/detail/components/columnsGuests';
 import { DataTable } from '@/shared/components/data-table';

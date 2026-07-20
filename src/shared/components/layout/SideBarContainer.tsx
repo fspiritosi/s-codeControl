@@ -14,6 +14,7 @@ import {
   ReceiptText,
   Settings,
   ShoppingCart,
+  Store,
   Truck,
   Users,
   Wallet,
@@ -33,11 +34,24 @@ interface SideLink {
   requiredPermission: string | null;
   /** Módulo contratado (hired_modules) requerido para mostrar el link. null = siempre visible. */
   requiredModule?: string | null;
+  /** Subitems anidados (menú colapsable). */
+  children?: SideLink[];
 }
 
 const ALL_LINKS: SideLink[] = [
   { name: 'Dashboard',     href: '/dashboard',                          icon: <LayoutDashboard size={sizeIcons} />, position: 1,  requiredPermission: null },
   { name: 'Empresa',       href: '/dashboard/company/actualCompany',    icon: <Building2 size={sizeIcons} />,       position: 2,  requiredPermission: 'empresa.view' },
+  {
+    name: 'Comercial',
+    href: '/dashboard/commercial',
+    icon: <Store size={sizeIcons} />,
+    position: 2.5,
+    requiredPermission: 'empresa.view',
+    children: [
+      { name: 'Clientes',     href: '/dashboard/commercial/customers', icon: <Users size={sizeIcons} />,    position: 1, requiredPermission: 'empresa.view' },
+      { name: 'Cotizaciones', href: '/dashboard/commercial/quotes',    icon: <FileText size={sizeIcons} />, position: 2, requiredPermission: 'empresa.view' },
+    ],
+  },
   { name: 'Empleados',     href: '/dashboard/employee',                 icon: <Users size={sizeIcons} />,           position: 3,  requiredPermission: 'empleados.view' },
   { name: 'Equipos',       href: '/dashboard/equipment',                icon: <Truck size={sizeIcons} />,           position: 4,  requiredPermission: 'equipos.view' },
   { name: 'VTV',           href: '/dashboard/vtv',                      icon: <CalendarCheck size={sizeIcons} />,   position: 4.5, requiredPermission: 'equipos.view' },
@@ -58,17 +72,21 @@ const ALL_LINKS: SideLink[] = [
 
 function filterLinks(role: string | null, permissions: string[], hiredModules: string[]): SideLink[] {
   const hired = new Set(hiredModules);
+  const isOwner = role === 'owner';
+  const granted = new Set(permissions);
 
   // owner: no restricción por permisos, pero sí filtra por módulos contratados.
-  if (role === 'owner') {
-    return ALL_LINKS.filter((link) => !link.requiredModule || hired.has(link.requiredModule));
-  }
+  const canShow = (link: SideLink): boolean =>
+    (isOwner || link.requiredPermission === null || granted.has(link.requiredPermission)) &&
+    (!link.requiredModule || hired.has(link.requiredModule));
 
-  const granted = new Set(permissions);
-  return ALL_LINKS.filter(
-    (link) =>
-      (link.requiredPermission === null || granted.has(link.requiredPermission)) &&
-      (!link.requiredModule || hired.has(link.requiredModule))
+  const filterChildren = (children?: SideLink[]): SideLink[] | undefined => {
+    if (!children) return undefined;
+    return children.filter(canShow).sort((a, b) => a.position - b.position);
+  };
+
+  return ALL_LINKS.filter(canShow).map((link) =>
+    link.children ? { ...link, children: filterChildren(link.children) } : link
   );
 }
 

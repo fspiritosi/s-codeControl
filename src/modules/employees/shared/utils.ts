@@ -1,7 +1,7 @@
 'use server';
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
-import { fetchCustomers } from '@/modules/company/features/customers/actions.server';
+import { fetchCustomers } from '@/modules/commercial/features/customers/actions.server';
 import { fetchProvinces } from '@/shared/actions/geography';
 import { fetchAllCategories as _fetchAllCategories } from '@/shared/actions/catalogs';
 
