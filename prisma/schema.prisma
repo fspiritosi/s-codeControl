@@ -416,6 +416,11 @@ model company {
   tax_types                       tax_types[]
   retention_certificate_sequences retention_certificate_sequences[]
 
+  // Ventas
+  sales_points_of_sale sales_points_of_sale[]
+  sales_invoices       sales_invoices[]
+  receipts             receipts[]
+
   // Gastos
   expense_categories expense_categories[]
   expenses           expenses[]
@@ -919,6 +924,15 @@ model customers {
   reason_for_termination String?
   termination_date       String?
 
+  // Datos fiscales para facturación de ventas (tsk-479)
+  tax_condition   customer_tax_condition?
+  document_type   String?                 @default("CUIT")
+  tax_id          String?
+  fiscal_address  String?
+  fiscal_city     String?
+  fiscal_province String?
+  fiscal_zip_code String?
+
   company              company                @relation(fields: [company_id], references: [id])
   contacts             contacts[]
   customer_services    customer_services[]
@@ -929,6 +943,10 @@ model customers {
 
   // Costos
   servicios_contrato servicio_contrato[]
+
+  // Ventas
+  sales_invoices sales_invoices[]
+  receipts       receipts[]
 }
 
 model contacts {
@@ -1790,6 +1808,7 @@ model products {
   purchase_invoice_lines purchase_invoice_lines[]
   receiving_note_lines   receiving_note_lines[]
   withdrawal_order_lines withdrawal_order_lines[]
+  sales_invoice_lines    sales_invoice_lines[]
 
   @@unique([company_id, code])
 }
@@ -2508,6 +2527,7 @@ model tax_types {
   invoice_perceptions purchase_invoice_perceptions[]
   order_retentions    payment_order_retentions[]
   certificate_seq     retention_certificate_sequences[]
+  sales_perceptions   sales_invoice_perceptions[]
 
   @@unique([company_id, code], map: "tax_types_company_code_unique")
 }
@@ -3142,4 +3162,248 @@ model ai_provider_config {
   is_active  Boolean  @default(false) // exactamente UNA fila true = proveedor en uso
   created_at DateTime @default(now()) @db.Timestamptz
   updated_at DateTime @default(now()) @updatedAt @db.Timestamptz
+}
+
+// ============================================================
+// MODELS — Ventas (facturas de venta + recibos de cobro) — tsk-479
+// ============================================================
+
+enum customer_tax_condition {
+  RESPONSABLE_INSCRIPTO
+  MONOTRIBUTO
+  EXENTO
+  CONSUMIDOR_FINAL
+  NO_RESPONSABLE
+}
+
+enum sales_invoice_status {
+  DRAFT
+  CONFIRMED
+  PARTIAL_PAID
+  PAID
+  CANCELLED
+}
+
+enum receipt_status {
+  DRAFT
+  CONFIRMED
+  CANCELLED
+}
+
+enum sales_payment_method {
+  CASH
+  CHECK
+  ECHEQ
+  TRANSFER
+  DEBIT_CARD
+  CREDIT_CARD
+  OTHER
+}
+
+enum withholding_tax_type {
+  IVA
+  GANANCIAS
+  IIBB
+  SUSS
+  OTHER
+}
+
+model sales_points_of_sale {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id String   @db.Uuid
+  number     Int
+  name       String
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  company        company                  @relation(fields: [company_id], references: [id])
+  sales_invoices sales_invoices[]
+  sequences      sales_number_sequences[]
+
+  @@unique([company_id, number])
+}
+
+model sales_number_sequences {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  point_of_sale_id String       @db.Uuid
+  voucher_type     voucher_type
+  next_number      Int          @default(1)
+  updated_at       DateTime     @default(now()) @updatedAt @db.Timestamptz
+
+  point_of_sale sales_points_of_sale @relation(fields: [point_of_sale_id], references: [id], onDelete: Cascade)
+
+  @@unique([point_of_sale_id, voucher_type])
+}
+
+model sales_invoices {
+  id                    String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id            String               @db.Uuid
+  customer_id           String               @db.Uuid
+  point_of_sale_id      String?              @db.Uuid
+  voucher_type          voucher_type
+  number                Int?
+  full_number           String?
+  issue_date            DateTime             @db.Timestamptz
+  due_date              DateTime?            @db.Timestamptz
+  cae                   String?
+  cae_expiry_date       DateTime?            @db.Timestamptz
+  currency              String               @default("ARS")
+  exchange_rate         Decimal              @default(1) @db.Decimal(12, 4)
+  subtotal              Decimal              @default(0) @db.Decimal(12, 2)
+  vat_amount            Decimal              @default(0) @db.Decimal(12, 2)
+  other_taxes           Decimal              @default(0) @db.Decimal(12, 2)
+  other_charges         Decimal              @default(0) @db.Decimal(12, 2)
+  discount_amount       Decimal              @default(0) @db.Decimal(12, 2)
+  total                 Decimal              @default(0) @db.Decimal(12, 2)
+  global_discount_type  discount_type?
+  global_discount_value Decimal?             @db.Decimal(12, 2)
+  notes                 String?
+  status                sales_invoice_status @default(DRAFT)
+  document_url          String?
+  document_key          String?
+  original_invoice_id   String?              @db.Uuid
+  created_by            String?
+  confirmed_by          String?
+  confirmed_at          DateTime?            @db.Timestamptz
+  created_at            DateTime             @default(now()) @db.Timestamptz
+  updated_at            DateTime             @default(now()) @updatedAt @db.Timestamptz
+
+  company             company                       @relation(fields: [company_id], references: [id])
+  customer            customers                     @relation(fields: [customer_id], references: [id])
+  point_of_sale_rel   sales_points_of_sale?         @relation(fields: [point_of_sale_id], references: [id])
+  original_invoice    sales_invoices?               @relation("sales_invoice_notes", fields: [original_invoice_id], references: [id])
+  credit_debit_notes  sales_invoices[]              @relation("sales_invoice_notes")
+  lines               sales_invoice_lines[]
+  perceptions         sales_invoice_perceptions[]
+  other_charges_items sales_invoice_other_charges[]
+  receipt_items       receipt_items[]
+
+  @@unique([point_of_sale_id, voucher_type, number])
+  @@index([company_id, status])
+  @@index([customer_id])
+  @@index([original_invoice_id])
+}
+
+model sales_invoice_lines {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoice_id      String         @db.Uuid
+  product_id      String?        @db.Uuid
+  description     String
+  quantity        Decimal        @db.Decimal(12, 3)
+  unit_price      Decimal        @db.Decimal(12, 3)
+  vat_rate        Decimal        @db.Decimal(5, 2)
+  vat_amount      Decimal        @db.Decimal(12, 3)
+  subtotal        Decimal        @db.Decimal(12, 3)
+  total           Decimal        @db.Decimal(12, 3)
+  discount_type   discount_type?
+  discount_value  Decimal?       @db.Decimal(12, 3)
+  discount_amount Decimal        @default(0) @db.Decimal(12, 3)
+
+  invoice sales_invoices @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  product products?      @relation(fields: [product_id], references: [id])
+
+  @@index([invoice_id])
+}
+
+model sales_invoice_perceptions {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoice_id  String   @db.Uuid
+  tax_type_id String   @db.Uuid
+  base_amount Decimal  @db.Decimal(15, 3)
+  rate        Decimal  @db.Decimal(8, 4)
+  amount      Decimal  @db.Decimal(15, 3)
+  notes       String?
+  created_at  DateTime @default(now()) @db.Timestamptz
+
+  invoice  sales_invoices @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  tax_type tax_types      @relation(fields: [tax_type_id], references: [id])
+
+  @@index([invoice_id])
+  @@index([tax_type_id])
+}
+
+model sales_invoice_other_charges {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoice_id  String   @db.Uuid
+  description String
+  amount      Decimal  @db.Decimal(12, 3)
+  created_at  DateTime @default(now()) @db.Timestamptz
+
+  invoice sales_invoices @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+
+  @@index([invoice_id])
+}
+
+model receipts {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id   String         @db.Uuid
+  customer_id  String         @db.Uuid
+  number       Int
+  full_number  String
+  date         DateTime       @db.Timestamptz
+  total_amount Decimal        @default(0) @db.Decimal(15, 2)
+  notes        String?
+  status       receipt_status @default(DRAFT)
+  document_url String?
+  document_key String?
+  created_by   String?
+  confirmed_by String?
+  confirmed_at DateTime?      @db.Timestamptz
+  created_at   DateTime       @default(now()) @db.Timestamptz
+  updated_at   DateTime       @default(now()) @updatedAt @db.Timestamptz
+
+  company      company               @relation(fields: [company_id], references: [id])
+  customer     customers             @relation(fields: [customer_id], references: [id])
+  items        receipt_items[]
+  payments     receipt_payments[]
+  withholdings receipt_withholdings[]
+
+  @@unique([company_id, number])
+  @@index([company_id, status])
+  @@index([customer_id])
+}
+
+model receipt_items {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  receipt_id String  @db.Uuid
+  invoice_id String  @db.Uuid
+  amount     Decimal @db.Decimal(15, 2)
+
+  receipt receipts       @relation(fields: [receipt_id], references: [id], onDelete: Cascade)
+  invoice sales_invoices @relation(fields: [invoice_id], references: [id])
+
+  @@index([receipt_id])
+  @@index([invoice_id])
+}
+
+model receipt_payments {
+  id             String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  receipt_id     String               @db.Uuid
+  payment_method sales_payment_method
+  amount         Decimal              @db.Decimal(15, 2)
+  reference      String?
+  check_number   String?
+  check_bank     String?
+  check_due_date DateTime?            @db.Timestamptz
+  notes          String?
+  created_at     DateTime             @default(now()) @db.Timestamptz
+
+  receipt receipts @relation(fields: [receipt_id], references: [id], onDelete: Cascade)
+
+  @@index([receipt_id])
+}
+
+model receipt_withholdings {
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  receipt_id         String               @db.Uuid
+  tax_type           withholding_tax_type
+  rate               Decimal?             @db.Decimal(8, 4)
+  amount             Decimal              @db.Decimal(15, 2)
+  certificate_number String?
+  created_at         DateTime             @default(now()) @db.Timestamptz
+
+  receipt receipts @relation(fields: [receipt_id], references: [id], onDelete: Cascade)
+
+  @@index([receipt_id])
 }
