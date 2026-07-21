@@ -10,6 +10,7 @@ import {
   updateSalesInvoice,
   getCustomerInvoicesForNote,
 } from '@/modules/sales/features/invoices/list/actions.server';
+import { getCustomerServiceItems } from '@/modules/sales/features/invoices/create/actions.server';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
@@ -25,13 +26,22 @@ import { useMemo, useState, useEffect } from 'react';
 type FormValues = z.infer<typeof salesInvoiceSchema>;
 
 type LineField = {
-  product_id?: string;
+  service_item_id?: string;
   description: string;
   quantity: number;
   unit_price: number;
   vat_rate: number;
   discount_type?: 'PERCENTAGE' | 'FIXED' | null;
   discount_value?: number | null;
+};
+
+type ServiceItemOpt = {
+  id: string;
+  item_name: string;
+  item_description: string;
+  item_price: number;
+  unit: string;
+  service_name: string;
 };
 
 interface PerceptionTypeOpt {
@@ -64,14 +74,13 @@ export type SalesInvoiceInitialData = {
 
 interface Props {
   customers: { id: string; name: string; tax_id?: string | null }[];
-  products: { id: string; code: string; name: string; sale_price: number; vat_rate: number }[];
   pointsOfSale: { id: string; number: number; name: string }[];
   perceptionTypes: PerceptionTypeOpt[];
   initialData?: SalesInvoiceInitialData;
 }
 
 const emptyLine: LineField = {
-  product_id: '',
+  service_item_id: '',
   description: '',
   quantity: 1,
   unit_price: 0,
@@ -80,7 +89,7 @@ const emptyLine: LineField = {
   discount_value: null,
 };
 
-export default function SalesInvoiceForm({ customers, products, pointsOfSale, perceptionTypes, initialData }: Props) {
+export default function SalesInvoiceForm({ customers, pointsOfSale, perceptionTypes, initialData }: Props) {
   const router = useRouter();
   const isEditMode = !!initialData;
 
@@ -160,6 +169,18 @@ export default function SalesInvoiceForm({ customers, products, pointsOfSale, pe
       setNoteInvoices([]);
     }
   }, [isNote, watchedCustomer]);
+
+  // Ítems de los servicios del cliente elegido, para las líneas de la factura.
+  const [serviceItems, setServiceItems] = useState<ServiceItemOpt[]>([]);
+  useEffect(() => {
+    if (watchedCustomer) {
+      getCustomerServiceItems(watchedCustomer)
+        .then((items) => setServiceItems(items as ServiceItemOpt[]))
+        .catch(() => setServiceItems([]));
+    } else {
+      setServiceItems([]);
+    }
+  }, [watchedCustomer]);
 
   const totals = useMemo(() => {
     const gType = globalDiscountType;
@@ -248,18 +269,20 @@ export default function SalesInvoiceForm({ customers, products, pointsOfSale, pe
     form.setValue(`perceptions.${index}.amount`, amount);
   };
 
-  const handleProductSelect = (index: number, productId: string) => {
-    const product = products.find((p) => p.id === productId);
-    if (product) {
-      form.setValue(`lines.${index}.description`, product.name);
-      form.setValue(`lines.${index}.unit_price`, product.sale_price);
-      form.setValue(`lines.${index}.vat_rate`, product.vat_rate);
+  const handleServiceItemSelect = (index: number, serviceItemId: string) => {
+    const item = serviceItems.find((s) => s.id === serviceItemId);
+    if (item) {
+      form.setValue(
+        `lines.${index}.description`,
+        item.item_description ? `${item.item_name} — ${item.item_description}` : item.item_name
+      );
+      form.setValue(`lines.${index}.unit_price`, item.item_price);
     }
   };
 
   const onSubmit = async (values: FormValues) => {
     const sanitizedLines = (values.lines as LineField[]).map((l) => ({
-      product_id: l.product_id || undefined,
+      service_item_id: l.service_item_id || undefined,
       description: l.description,
       quantity: l.quantity,
       unit_price: l.unit_price,
@@ -548,7 +571,7 @@ export default function SalesInvoiceForm({ customers, products, pointsOfSale, pe
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[200px]">Producto</TableHead>
+                  <TableHead className="w-[220px]">Servicio / Ítem</TableHead>
                   <TableHead>Descripción</TableHead>
                   <TableHead className="w-[90px]">Cant.</TableHead>
                   <TableHead className="w-[110px]">Precio</TableHead>
@@ -572,14 +595,17 @@ export default function SalesInvoiceForm({ customers, products, pointsOfSale, pe
                     <TableRow key={field.id}>
                       <TableCell>
                         <SearchableSelect
-                          options={products.map((p) => ({ value: p.id, label: `${p.name} (${p.code})` }))}
-                          value={form.watch(`lines.${index}.product_id`) || ''}
+                          options={serviceItems.map((s) => ({
+                            value: s.id,
+                            label: s.service_name ? `${s.item_name} (${s.service_name})` : s.item_name,
+                          }))}
+                          value={form.watch(`lines.${index}.service_item_id`) || ''}
                           onValueChange={(v) => {
-                            form.setValue(`lines.${index}.product_id`, v);
-                            handleProductSelect(index, v);
+                            form.setValue(`lines.${index}.service_item_id`, v);
+                            handleServiceItemSelect(index, v);
                           }}
-                          placeholder="Seleccionar"
-                          searchPlaceholder="Buscar producto..."
+                          placeholder={watchedCustomer ? 'Seleccionar ítem' : 'Elegí un cliente primero'}
+                          searchPlaceholder="Buscar ítem de servicio..."
                           className="h-8 text-xs"
                         />
                       </TableCell>

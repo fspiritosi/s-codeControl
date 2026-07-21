@@ -4,6 +4,7 @@
 
 export interface SalesLineInput {
   product_id?: string | null;
+  service_item_id?: string | null;
   description: string;
   quantity: number;
   unit_price: number;
@@ -50,6 +51,7 @@ export function computeSalesInvoiceTotals(input: {
     const vatAmount = r3(subtotal * (line.vat_rate / 100));
     return {
       product_id: line.product_id || null,
+      service_item_id: line.service_item_id || null,
       description: line.description,
       quantity: line.quantity,
       unit_price: line.unit_price,

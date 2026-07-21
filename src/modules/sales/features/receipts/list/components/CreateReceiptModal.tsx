@@ -43,7 +43,7 @@ import {
   VOUCHER_TYPE_LABELS,
 } from '@/modules/sales/shared/types';
 import { formatCurrencyARS, formatDateUTC } from '@/shared/lib/utils/formatters';
-import { fetchCustomers } from '@/modules/company/features/customers/actions.server';
+import { fetchCustomers } from '@/modules/commercial/features/customers/actions.server';
 import {
   createReceipt,
   updateReceipt,

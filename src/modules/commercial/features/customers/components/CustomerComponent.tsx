@@ -2,7 +2,7 @@
 
 import { columnsGuests } from '@/modules/company/features/detail/components/columnsGuests';
 import { DataTable as DataTableInvited } from '@/shared/components/data-table';
-import { createdCustomer, updateCustomer } from '@/modules/company/features/customers/components/action/create';
+import { createdCustomer, updateCustomer } from '@/modules/commercial/features/customers/components/action/create';
 import { EquipmentTable } from '@/modules/equipment/features/list/components/data-equipment';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/shared/components/ui/accordion';
 import { Button } from '@/shared/components/ui/button';
@@ -21,7 +21,7 @@ import { Toaster, toast } from 'sonner';
 import { z } from 'zod';
 // TODO: Phase 8+ — Remove supabase import once auth.getUser() is replaced with NextAuth session
 import { supabaseBrowser } from '@/shared/lib/supabase/browser';
-import { fetchCustomerById } from '@/modules/company/features/customers/actions.server';
+import { fetchCustomerById } from '@/modules/commercial/features/customers/actions.server';
 // import { columns } from '../app/dashboard/company/customers/action/columnsCustomers';
 import { EmployeesListColumns } from '@/modules/employees/features/list/components/columns';
 import { EmployeesTable } from '@/modules/employees/features/list/components/data-table';

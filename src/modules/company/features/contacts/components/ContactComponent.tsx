@@ -4,7 +4,7 @@ import { Card, CardDescription, CardTitle } from '@/shared/components/ui/card';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
-import { fetchCustomersByCompany } from '@/modules/company/features/customers/actions.server';
+import { fetchCustomersByCompany } from '@/modules/commercial/features/customers/actions.server';
 import { fetchContactById } from '@/modules/company/features/contacts/actions.server';
 import { cn } from '@/shared/lib/utils';
 import { useLoggedUserStore } from '@/shared/store/loggedUser';

@@ -30,6 +30,7 @@ export const salesSequenceConfigSchema = z.object({
 
 export const salesInvoiceLineSchema = z.object({
   product_id: z.string().uuid().optional().or(z.literal('')),
+  service_item_id: z.string().uuid().optional().or(z.literal('')),
   description: z.string().min(1, 'La descripción es requerida'),
   quantity: z.coerce.number().positive('Cantidad debe ser mayor a 0'),
   unit_price: z.coerce.number().min(0, 'Precio debe ser mayor o igual a 0'),

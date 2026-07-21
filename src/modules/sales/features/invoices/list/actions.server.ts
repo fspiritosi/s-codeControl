@@ -33,6 +33,7 @@ type SalesInvoiceInputData = {
   global_discount_value?: number | null;
   lines: {
     product_id?: string;
+    service_item_id?: string;
     description: string;
     quantity: number;
     unit_price: number;

@@ -1,7 +1,7 @@
 import { fetchAllEquipment } from '@/modules/equipment/features/list/actions.server';
 import { cn } from '@/shared/lib/utils';
 import BackButton from '@/shared/components/common/BackButton';
-import CustomerComponent from '@/modules/company/features/customers/components/CustomerComponent';
+import CustomerComponent from '@/modules/commercial/features/customers/components/CustomerComponent';
 
 export default async function CustomerFormAction({ searchParams }: { searchParams: Promise<any> }) {
   const resolvedSearchParams = await searchParams;

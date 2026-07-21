@@ -5,7 +5,6 @@ import SalesInvoiceForm, { type SalesInvoiceInitialData } from '../../create/com
 interface Props {
   invoice: SalesInvoiceInitialData;
   customers: { id: string; name: string; tax_id?: string | null }[];
-  products: { id: string; code: string; name: string; sale_price: number; vat_rate: number }[];
   pointsOfSale: { id: string; number: number; name: string }[];
   perceptionTypes: {
     id: string;

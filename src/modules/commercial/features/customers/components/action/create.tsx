@@ -45,7 +45,7 @@ function buildFiscalData(formData: FormData) {
 
 export async function createdCustomer(formData: FormData) {
   try {
-    revalidatePath('/dashboard/company/actualCompany/customers');
+    revalidatePath('/dashboard/commercial/customers');
 
     const form = Object.fromEntries(formData.entries());
 

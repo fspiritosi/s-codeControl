@@ -54,7 +54,7 @@ import {
   deactivateCustomer,
   deactivateContactsByCustomer,
   fetchCustomersByCompany,
-} from '@/modules/company/features/customers/actions.server';
+} from '@/modules/commercial/features/customers/actions.server';
 import { updateEmployeeAllocatedTo } from '@/modules/employees/features/create/actions.server';
 import { updateVehicleAllocatedTo } from '@/modules/equipment/features/create/actions.server';
 const formSchema = z.object({
@@ -341,13 +341,13 @@ export const columns: ColumnDef<Colum>[] = [
               Copiar cuit
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Link className="w-full" href={`/dashboard/company/actualCompany/customers/action?action=view&id=${customers?.id}`}>
+              <Link className="w-full" href={`/dashboard/commercial/customers/${customers?.id}`}>
                 Ver Cliente
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               {role !== 'Invitado' && (
-                <Link className="w-full" href={`/dashboard/company/actualCompany/customers/action?action=edit&id=${customers?.id}`}>
+                <Link className="w-full" href={`/dashboard/commercial/customers/action?action=edit&id=${customers?.id}`}>
                   Editar Cliente
                 </Link>
               )}
@@ -382,10 +382,26 @@ export const columns: ColumnDef<Colum>[] = [
         </Button>
       );
     },
+    cell: ({ row }: { row: any }) => (
+      <Link
+        href={`/dashboard/commercial/customers/${row.original.id}`}
+        className="font-medium text-primary hover:underline"
+      >
+        {row.getValue('cuit')}
+      </Link>
+    ),
   },
   {
     accessorKey: 'name',
     header: 'Nombre',
+    cell: ({ row }: { row: any }) => (
+      <Link
+        href={`/dashboard/commercial/customers/${row.original.id}`}
+        className="font-medium text-primary hover:underline"
+      >
+        {row.getValue('name')}
+      </Link>
+    ),
   },
   {
     accessorKey: 'client_email',

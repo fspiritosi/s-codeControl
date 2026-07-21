@@ -22,7 +22,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 // TODO: Phase 8+ — Remove supabase import once auth.admin.createUser() is replaced with server action
 import { supabaseBrowser } from '@/shared/lib/supabase/browser';
-import { fetchCustomersByCompany } from '@/modules/company/features/customers/actions.server';
+import { fetchCustomersByCompany } from '@/modules/commercial/features/customers/actions.server';
 import { fetchShareCompanyUsersByProfileAndCompany, insertShareCompanyUser } from '@/modules/company/features/users/actions.server';
 import { fetchRoles, fetchProfileByEmail, insertProfile } from '@/shared/actions/auth';
 import { Button } from '@/shared/components/ui/button';

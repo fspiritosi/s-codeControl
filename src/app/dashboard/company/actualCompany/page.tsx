@@ -15,7 +15,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import Contacts from '@/modules/company/features/contacts/components/Contact';
 import CovenantTreeFile from '@/modules/company/features/covenants/components/CovenantTreeFile';
-import Customers from '@/modules/company/features/customers/components/Customers';
+import Customers from '@/modules/commercial/features/customers/components/Customers';
 
 const VALID_TABS = ['general', 'documentacion', 'users', 'customers', 'contacts', 'covenant', 'service', 'portal_employee'] as const;
 type CompanyTab = (typeof VALID_TABS)[number];
