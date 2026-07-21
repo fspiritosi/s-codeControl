@@ -382,10 +382,26 @@ export const columns: ColumnDef<Colum>[] = [
         </Button>
       );
     },
+    cell: ({ row }: { row: any }) => (
+      <Link
+        href={`/dashboard/commercial/customers/${row.original.id}`}
+        className="font-medium text-primary hover:underline"
+      >
+        {row.getValue('cuit')}
+      </Link>
+    ),
   },
   {
     accessorKey: 'name',
     header: 'Nombre',
+    cell: ({ row }: { row: any }) => (
+      <Link
+        href={`/dashboard/commercial/customers/${row.original.id}`}
+        className="font-medium text-primary hover:underline"
+      >
+        {row.getValue('name')}
+      </Link>
+    ),
   },
   {
     accessorKey: 'client_email',

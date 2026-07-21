@@ -1,13 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { Mail, Phone, MapPin, Pencil, IdCard, Users, Wallet } from 'lucide-react';
+import { Mail, Phone, MapPin, Pencil, IdCard } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
-import { Button, buttonVariants } from '@/shared/components/ui/button';
+import { buttonVariants } from '@/shared/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import BackButton from '@/shared/components/common/BackButton';
 import CustomerServicesManager from './CustomerServicesManager';
+import CustomerContactsManager from './CustomerContactsManager';
+import CustomerAccountSummary from './CustomerAccountSummary';
 
 const TAX_CONDITION_LABELS: Record<string, string> = {
   RESPONSABLE_INSCRIPTO: 'Responsable Inscripto',
@@ -118,27 +120,11 @@ export default function CustomerDetailView({ customer }: { customer: CustomerDet
         </TabsContent>
 
         <TabsContent value="contactos" className="mt-4">
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center gap-2 py-12 text-center text-muted-foreground">
-              <Users className="h-8 w-8 opacity-40" />
-              <p className="text-sm">Los contactos del cliente se van a gestionar acá próximamente.</p>
-            </CardContent>
-          </Card>
+          <CustomerContactsManager customerId={customer.id} />
         </TabsContent>
 
         <TabsContent value="cuenta" className="mt-4">
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center text-muted-foreground">
-              <Wallet className="h-8 w-8 opacity-40" />
-              <p className="text-sm">Estado de cuenta y comprobantes del cliente.</p>
-              <Link
-                href={`/dashboard/sales/account-statement/${customer.id}`}
-                className={buttonVariants({ variant: 'outline', size: 'sm' })}
-              >
-                Ver estado de cuenta
-              </Link>
-            </CardContent>
-          </Card>
+          <CustomerAccountSummary customerId={customer.id} />
         </TabsContent>
       </Tabs>
     </div>

@@ -1,26 +1,40 @@
-import { fetchAllEquipment } from '@/modules/equipment/features/list/actions.server';
-import { cn } from '@/shared/lib/utils';
-import BackButton from '@/shared/components/common/BackButton';
-import CustomerComponent from '@/modules/commercial/features/customers/components/CustomerComponent';
+import { cookies } from 'next/headers';
+import { fetchCustomerById } from '@/modules/commercial/features/customers/actions.server';
+import CustomerDataForm, {
+  type CustomerDataInitial,
+} from '@/modules/commercial/features/customers/components/CustomerDataForm';
 
 export default async function CustomerFormAction({ searchParams }: { searchParams: Promise<any> }) {
-  const resolvedSearchParams = await searchParams;
-  const equipment = await fetchAllEquipment();
+  const resolved = await searchParams;
+  const cookieStore = await cookies();
+  const companyId = cookieStore.get('actualComp')?.value ?? '';
+  const id = resolved.id as string | undefined;
+
+  let initialData: CustomerDataInitial | undefined;
+  if (id && resolved.action !== 'new') {
+    const customer = await fetchCustomerById(id);
+    if (customer) {
+      initialData = {
+        id: customer.id,
+        company_name: customer.name,
+        client_cuit: customer.cuit != null ? String(customer.cuit) : '',
+        client_email: customer.client_email ?? '',
+        client_phone: customer.client_phone != null ? String(customer.client_phone) : '',
+        address: customer.address ?? '',
+        tax_condition: (customer as any).tax_condition ?? '',
+        document_type: (customer as any).document_type ?? 'CUIT',
+        tax_id: (customer as any).tax_id ?? '',
+        fiscal_address: (customer as any).fiscal_address ?? '',
+        fiscal_city: (customer as any).fiscal_city ?? '',
+        fiscal_province: (customer as any).fiscal_province ?? '',
+        fiscal_zip_code: (customer as any).fiscal_zip_code ?? '',
+      };
+    }
+  }
 
   return (
-    <section className="grid grid-cols-2 xl:grid-cols-2 gap-2 py-4 justify-start">
-      <div className="flex gap-2 col-start-2 justify-end mr-6">
-        <BackButton />
-      </div>
-
-      <div
-        className={cn(
-          'col-span-6 flex flex-col justify-between overflow-hidden',
-          resolvedSearchParams.action === 'new' && 'col-span-8'
-        )}
-      >
-        <CustomerComponent equipment={equipment as unknown as VehicleWithBrand[]} id={resolvedSearchParams.id} />
-      </div>
-    </section>
+    <div className="py-2">
+      <CustomerDataForm companyId={companyId} initialData={initialData} />
+    </div>
   );
 }
