@@ -2,13 +2,10 @@ import { fetchAllEquipment } from '@/modules/equipment/features/list/actions.ser
 import { cn } from '@/shared/lib/utils';
 import BackButton from '@/shared/components/common/BackButton';
 import CustomerComponent from '@/modules/commercial/features/customers/components/CustomerComponent';
-import CustomerServicesManager from '@/modules/commercial/features/customers/components/CustomerServicesManager';
 
 export default async function CustomerFormAction({ searchParams }: { searchParams: Promise<any> }) {
   const resolvedSearchParams = await searchParams;
   const equipment = await fetchAllEquipment();
-  const customerId = resolvedSearchParams.id as string | undefined;
-  const showServices = !!customerId && resolvedSearchParams.action !== 'new';
 
   return (
     <section className="grid grid-cols-2 xl:grid-cols-2 gap-2 py-4 justify-start">
@@ -24,12 +21,6 @@ export default async function CustomerFormAction({ searchParams }: { searchParam
       >
         <CustomerComponent equipment={equipment as unknown as VehicleWithBrand[]} id={resolvedSearchParams.id} />
       </div>
-
-      {showServices && (
-        <div className="col-span-2 mr-6">
-          <CustomerServicesManager customerId={customerId!} />
-        </div>
-      )}
     </section>
   );
 }

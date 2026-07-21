@@ -341,7 +341,7 @@ export const columns: ColumnDef<Colum>[] = [
               Copiar cuit
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Link className="w-full" href={`/dashboard/commercial/customers/action?action=view&id=${customers?.id}`}>
+              <Link className="w-full" href={`/dashboard/commercial/customers/${customers?.id}`}>
                 Ver Cliente
               </Link>
             </DropdownMenuItem>
