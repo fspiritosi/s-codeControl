@@ -2,6 +2,10 @@
 
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
+import {
+  buildSupplierAccountRows,
+  computePurchaseOutstanding,
+} from '@/shared/lib/purchase-invoice-balance';
 
 async function ensureSupplierInCompany(supplierId: string, companyId: string) {
   const supplier = await prisma.suppliers.findFirst({
@@ -14,6 +18,10 @@ async function ensureSupplierInCompany(supplierId: string, companyId: string) {
 export interface InvoicesSummary {
   totalDebt: number;
   totalAmount: number;
+  /** Facturas (no NC) con saldo > 0. No se deriva del estado: lo hace del saldo. */
+  pendingCount: number;
+  /** Crédito de NC todavía sin aplicar a ninguna factura (saldo a favor). */
+  unappliedCredit: number;
   countByStatus: Record<string, number>;
   total: number;
 }
@@ -32,10 +40,33 @@ export interface ReceivingNotesSummary {
 export interface PaymentOrdersSummary {
   totalPaid: number;
   totalScheduled: number;
+  /** Parte de `totalPaid` imputada a facturas del proveedor. */
+  paidToInvoices: number;
+  /** Parte de `totalPaid` imputada a gastos del proveedor. */
+  paidToExpenses: number;
+  /** Pagado sin imputar a ningún comprobante (pago a cuenta). */
+  paidUnallocated: number;
   countByStatus: Record<string, number>;
   total: number;
 }
 
+export interface ExpensesSummary {
+  totalDebt: number;
+  totalAmount: number;
+  pendingCount: number;
+  countByStatus: Record<string, number>;
+  total: number;
+}
+
+/**
+ * Comprobantes de compra del proveedor con su saldo real.
+ *
+ * Antes cada nota de crédito se listaba como una fila suelta con saldo negativo
+ * y la factura que corregía mostraba su saldo bruto: el neto cerraba pero por
+ * comprobante engañaba. Ahora la NC se imputa contra su factura original
+ * (`original_invoice_id`) y solo queda como crédito a favor lo que exceda el
+ * saldo de esa factura.
+ */
 export async function getSupplierInvoices(supplierId: string) {
   const { companyId } = await getActionContext();
   if (!companyId) return { rows: [], summary: null as InvoicesSummary | null };
@@ -54,6 +85,7 @@ export async function getSupplierInvoices(supplierId: string) {
         due_date: true,
         total: true,
         status: true,
+        original_invoice_id: true,
       },
       orderBy: { issue_date: 'desc' },
     }),
@@ -78,49 +110,21 @@ export async function getSupplierInvoices(supplierId: string) {
     }
   }
 
-  // Notas de crédito: restan saldo deudor (su saldo se computa en negativo).
-  const NC_TYPES = new Set(['NOTA_CREDITO_A', 'NOTA_CREDITO_B', 'NOTA_CREDITO_C']);
-
-  const rows = data.map((inv) => {
-    const total = Number(inv.total);
-    const paid = paidByInvoice.get(inv.id) ?? 0;
-    const isNC = NC_TYPES.has(inv.voucher_type as string);
-    const net = Math.round((total - paid) * 100) / 100;
-    // Factura/ND: deuda positiva. NC: crédito (negativo) que descuenta deuda.
-    const remaining = isNC ? -net : Math.max(0, net);
-    return {
+  const { rows, totals } = buildSupplierAccountRows(
+    data.map((inv) => ({
       id: inv.id,
       full_number: inv.full_number,
-      voucher_type: inv.voucher_type,
+      voucher_type: inv.voucher_type as string,
       issue_date: inv.issue_date,
       due_date: inv.due_date,
-      total,
-      paid: Math.round(paid * 100) / 100,
-      remaining,
+      total: Number(inv.total),
       status: inv.status as string,
-    };
-  });
+      original_invoice_id: inv.original_invoice_id,
+    })),
+    paidByInvoice
+  );
 
-  const countByStatus: Record<string, number> = {};
-  let totalAmount = 0;
-  let totalDebt = 0;
-  for (const r of rows) {
-    countByStatus[r.status] = (countByStatus[r.status] ?? 0) + 1;
-    if (r.status === 'CANCELLED') continue;
-    // "Monto facturado" = solo facturas/ND (las NC no son facturación).
-    if (!NC_TYPES.has(r.voucher_type as string)) totalAmount += r.total;
-    // Total adeudado neto: las NC restan (remaining negativo). Puede quedar a favor.
-    totalDebt += r.remaining;
-  }
-
-  const summary: InvoicesSummary = {
-    totalDebt: Math.round(totalDebt * 100) / 100,
-    totalAmount: Math.round(totalAmount * 100) / 100,
-    countByStatus,
-    total: rows.length,
-  };
-
-  return { rows, summary };
+  return { rows, summary: totals as InvoicesSummary };
 }
 
 export async function getSupplierPurchaseOrders(supplierId: string) {
@@ -216,6 +220,13 @@ export async function getSupplierReceivingNotes(supplierId: string) {
   return { rows, summary };
 }
 
+/**
+ * Órdenes de pago del proveedor.
+ *
+ * El total pagado se desglosa por destino de la imputación: una OP puede pagar
+ * facturas, gastos, o quedar sin imputar. Sin ese desglose el "Total pagado" no
+ * cerraba contra los saldos de las facturas y parecía un error de cálculo.
+ */
 export async function getSupplierPaymentOrders(supplierId: string) {
   const { companyId } = await getActionContext();
   if (!companyId) return { rows: [], summary: null as PaymentOrdersSummary | null };
@@ -232,31 +243,128 @@ export async function getSupplierPaymentOrders(supplierId: string) {
       scheduled_payment_date: true,
       total_amount: true,
       status: true,
+      items: { select: { amount: true, invoice_id: true, expense_id: true } },
     },
     orderBy: { date: 'desc' },
   });
 
-  const rows = data.map((po) => ({
-    id: po.id,
-    full_number: po.full_number,
-    date: po.date,
-    scheduled_payment_date: po.scheduled_payment_date,
-    total_amount: Number(po.total_amount),
-    status: po.status as string,
-  }));
+  const rows = data.map((po) => {
+    let toInvoices = 0;
+    let toExpenses = 0;
+    for (const item of po.items) {
+      const amount = Number(item.amount);
+      if (item.invoice_id) toInvoices += amount;
+      else if (item.expense_id) toExpenses += amount;
+    }
+    const total = Number(po.total_amount);
+    return {
+      id: po.id,
+      full_number: po.full_number,
+      date: po.date,
+      scheduled_payment_date: po.scheduled_payment_date,
+      total_amount: total,
+      applied_to_invoices: Math.round(toInvoices * 100) / 100,
+      applied_to_expenses: Math.round(toExpenses * 100) / 100,
+      unallocated: Math.round((total - toInvoices - toExpenses) * 100) / 100,
+      status: po.status as string,
+    };
+  });
 
   const countByStatus: Record<string, number> = {};
   let totalPaid = 0;
   let totalScheduled = 0;
+  let paidToInvoices = 0;
+  let paidToExpenses = 0;
+  let paidUnallocated = 0;
   for (const r of rows) {
     countByStatus[r.status] = (countByStatus[r.status] ?? 0) + 1;
-    if (r.status === 'PAID') totalPaid += r.total_amount;
-    else if (r.status === 'CONFIRMED' || r.status === 'DRAFT') totalScheduled += r.total_amount;
+    if (r.status === 'PAID') {
+      totalPaid += r.total_amount;
+      paidToInvoices += r.applied_to_invoices;
+      paidToExpenses += r.applied_to_expenses;
+      paidUnallocated += r.unallocated;
+    } else if (r.status === 'CONFIRMED' || r.status === 'DRAFT') {
+      totalScheduled += r.total_amount;
+    }
   }
 
+  const r2 = (n: number) => Math.round(n * 100) / 100;
   const summary: PaymentOrdersSummary = {
-    totalPaid: Math.round(totalPaid * 100) / 100,
-    totalScheduled: Math.round(totalScheduled * 100) / 100,
+    totalPaid: r2(totalPaid),
+    totalScheduled: r2(totalScheduled),
+    paidToInvoices: r2(paidToInvoices),
+    paidToExpenses: r2(paidToExpenses),
+    paidUnallocated: r2(paidUnallocated),
+    countByStatus,
+    total: rows.length,
+  };
+
+  return { rows, summary };
+}
+
+/**
+ * Gastos imputados al proveedor. Se pagan por OP igual que las facturas, así que
+ * sin esta sección el "Total pagado" de las OPs quedaba sin contrapartida.
+ */
+export async function getSupplierExpenses(supplierId: string) {
+  const { companyId } = await getActionContext();
+  if (!companyId) return { rows: [], summary: null as ExpensesSummary | null };
+  if (!(await ensureSupplierInCompany(supplierId, companyId))) {
+    return { rows: [], summary: null as ExpensesSummary | null };
+  }
+
+  const data = await prisma.expenses.findMany({
+    where: { company_id: companyId, supplier_id: supplierId },
+    select: {
+      id: true,
+      full_number: true,
+      description: true,
+      date: true,
+      due_date: true,
+      amount: true,
+      status: true,
+      category: { select: { name: true } },
+      payment_order_items: {
+        where: { payment_order: { status: 'PAID' } },
+        select: { amount: true },
+      },
+    },
+    orderBy: { date: 'desc' },
+  });
+
+  const rows = data.map((exp) => {
+    const total = Number(exp.amount);
+    const paid = exp.payment_order_items.reduce((acc, i) => acc + Number(i.amount), 0);
+    return {
+      id: exp.id,
+      full_number: exp.full_number,
+      description: exp.description,
+      category_name: exp.category?.name ?? '',
+      date: exp.date,
+      due_date: exp.due_date,
+      total,
+      paid: Math.round(paid * 100) / 100,
+      remaining: computePurchaseOutstanding({ total, paid, creditNotes: 0 }),
+      status: exp.status as string,
+    };
+  });
+
+  const countByStatus: Record<string, number> = {};
+  let totalAmount = 0;
+  let totalDebt = 0;
+  let pendingCount = 0;
+  for (const r of rows) {
+    countByStatus[r.status] = (countByStatus[r.status] ?? 0) + 1;
+    if (r.status === 'CANCELLED' || r.status === 'DRAFT') continue;
+    totalAmount += r.total;
+    totalDebt += r.remaining;
+    if (r.remaining > 0) pendingCount += 1;
+  }
+
+  const summary: ExpensesSummary = {
+    totalDebt: Math.round(totalDebt * 100) / 100,
+    totalAmount: Math.round(totalAmount * 100) / 100,
+    pendingCount,
     countByStatus,
     total: rows.length,
   };

@@ -18,13 +18,18 @@ interface Row {
   due_date: Date | string | null;
   total: number;
   paid: number;
+  credit_applied: number;
   remaining: number;
   status: string;
+  /** Solo en NC: número de la factura que corrige. */
+  applies_to: string | null;
 }
 
 interface Summary {
   totalDebt: number;
   totalAmount: number;
+  pendingCount: number;
+  unappliedCredit: number;
   countByStatus: Record<string, number>;
   total: number;
 }
@@ -59,14 +64,31 @@ export function InvoicesSection({ rows, summary }: { rows: Row[]; summary: Summa
   return (
     <div className="space-y-4 pt-2">
       <SummaryGrid>
-        <StatBlock label="Total adeudado" value={fmt(summary?.totalDebt ?? 0)} />
-        <StatBlock label="Monto total facturado" value={fmt(summary?.totalAmount ?? 0)} />
+        <StatBlock
+          label="Total adeudado"
+          value={fmt(summary?.totalDebt ?? 0)}
+          hint="Neto de pagos y notas de crédito"
+        />
+        <StatBlock
+          label="Monto total facturado"
+          value={fmt(summary?.totalAmount ?? 0)}
+          hint="No incluye notas de crédito"
+        />
         <StatBlock
           label="Pendientes"
-          value={(summary?.countByStatus['CONFIRMED'] ?? 0) + (summary?.countByStatus['PARTIAL_PAID'] ?? 0)}
+          value={summary?.pendingCount ?? 0}
+          hint="Facturas con saldo"
         />
         <StatBlock label="Pagadas" value={summary?.countByStatus['PAID'] ?? 0} />
-        <StatBlock label="Borradores" value={summary?.countByStatus['DRAFT'] ?? 0} />
+        {(summary?.unappliedCredit ?? 0) > 0 ? (
+          <StatBlock
+            label="Crédito a favor"
+            value={fmt(summary?.unappliedCredit ?? 0)}
+            hint="NC sin imputar"
+          />
+        ) : (
+          <StatBlock label="Borradores" value={summary?.countByStatus['DRAFT'] ?? 0} />
+        )}
       </SummaryGrid>
 
       <StatusFilterToolbar status={status} onStatusChange={(v) => { setStatus(v); setPage(0); }} options={statusOptions} />
@@ -80,7 +102,16 @@ export function InvoicesSection({ rows, summary }: { rows: Row[]; summary: Summa
         columns={[
           {
             header: 'Número',
-            cell: (r) => <span className="font-mono font-medium">{r.full_number}</span>,
+            cell: (r) => (
+              <div className="flex flex-col">
+                <span className="font-mono font-medium">{r.full_number}</span>
+                {r.applies_to && (
+                  <span className="text-xs text-muted-foreground">
+                    aplica a {r.applies_to}
+                  </span>
+                )}
+              </div>
+            ),
           },
           {
             header: 'Tipo',
@@ -104,8 +135,28 @@ export function InvoicesSection({ rows, summary }: { rows: Row[]; summary: Summa
             className: 'text-right',
           },
           {
+            header: 'Pagado',
+            cell: (r) => (
+              <span className="text-sm text-muted-foreground">{r.paid > 0 ? fmt(r.paid) : '-'}</span>
+            ),
+            className: 'text-right',
+          },
+          {
+            header: 'NC aplicada',
+            cell: (r) => (
+              <span className="text-sm text-muted-foreground">
+                {r.credit_applied > 0 ? fmt(r.credit_applied) : '-'}
+              </span>
+            ),
+            className: 'text-right',
+          },
+          {
             header: 'Saldo',
-            cell: (r) => <span className="font-medium">{fmt(r.remaining)}</span>,
+            cell: (r) => (
+              <span className={`font-medium ${r.remaining < 0 ? 'text-emerald-600 dark:text-emerald-400' : ''}`}>
+                {fmt(r.remaining)}
+              </span>
+            ),
             className: 'text-right',
           },
           {

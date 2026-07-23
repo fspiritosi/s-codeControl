@@ -2,6 +2,8 @@
 
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
+import { getCreditNoteAmountsByInvoice } from '@/shared/lib/purchase-invoice-status';
+import { CREDIT_NOTE_VOUCHER_TYPES } from '@/shared/lib/purchase-invoice-balance';
 
 export interface PendingBalancesFilters {
   supplier_id?: string | null;
@@ -52,12 +54,10 @@ export async function listPendingInvoices(
 
   // Las notas de crédito no son deuda a pagar: se excluyen del listado y
   // descuentan el saldo de su factura original.
-  const NC_TYPES = ['NOTA_CREDITO_A', 'NOTA_CREDITO_B', 'NOTA_CREDITO_C'];
-
   const where: Record<string, unknown> = {
     company_id: companyId,
     status: { in: ['CONFIRMED', 'PARTIAL_PAID'] },
-    voucher_type: { notIn: NC_TYPES as any },
+    voucher_type: { notIn: CREDIT_NOTE_VOUCHER_TYPES as any },
   };
   if (filters.supplier_id) where.supplier_id = filters.supplier_id;
   if (filters.search && filters.search.trim()) {
@@ -88,22 +88,7 @@ export async function listPendingInvoices(
   });
 
   // Crédito de notas de crédito (confirmadas) por factura original.
-  const creditByInvoice = new Map<string, number>();
-  if (invoices.length > 0) {
-    const ncGroups = await prisma.purchase_invoices.groupBy({
-      by: ['original_invoice_id'],
-      where: {
-        company_id: companyId,
-        voucher_type: { in: NC_TYPES as any },
-        status: { notIn: ['DRAFT', 'CANCELLED'] },
-        original_invoice_id: { in: invoices.map((i) => i.id) },
-      },
-      _sum: { total: true },
-    });
-    for (const g of ncGroups) {
-      if (g.original_invoice_id) creditByInvoice.set(g.original_invoice_id, Number(g._sum.total ?? 0));
-    }
-  }
+  const creditByInvoice = await getCreditNoteAmountsByInvoice(invoices.map((i) => i.id));
 
   const computed: PendingInvoiceRow[] = [];
   for (const inv of invoices) {

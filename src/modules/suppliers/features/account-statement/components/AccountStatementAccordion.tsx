@@ -6,15 +6,23 @@ import { InvoicesSection } from './sections/InvoicesSection';
 import { PurchaseOrdersSection } from './sections/PurchaseOrdersSection';
 import { ReceivingNotesSection } from './sections/ReceivingNotesSection';
 import { PaymentOrdersSection } from './sections/PaymentOrdersSection';
+import { ExpensesSection } from './sections/ExpensesSection';
 
 interface Props {
   invoices: { rows: any[]; summary: any };
   purchaseOrders: { rows: any[]; summary: any };
   receivingNotes: { rows: any[]; summary: any };
   paymentOrders: { rows: any[]; summary: any };
+  expenses: { rows: any[]; summary: any };
 }
 
-export function AccountStatementAccordion({ invoices, purchaseOrders, receivingNotes, paymentOrders }: Props) {
+export function AccountStatementAccordion({
+  invoices,
+  purchaseOrders,
+  receivingNotes,
+  paymentOrders,
+  expenses,
+}: Props) {
   return (
     <Accordion type="multiple" defaultValue={['invoices']} className="space-y-2">
       <AccordionItem value="invoices" className="border rounded-md px-4 bg-card shadow-sm">
@@ -26,6 +34,18 @@ export function AccountStatementAccordion({ invoices, purchaseOrders, receivingN
         </AccordionTrigger>
         <AccordionContent>
           <InvoicesSection rows={invoices.rows} summary={invoices.summary} />
+        </AccordionContent>
+      </AccordionItem>
+
+      <AccordionItem value="expenses" className="border rounded-md px-4 bg-card shadow-sm">
+        <AccordionTrigger className="hover:no-underline">
+          <div className="flex items-center gap-3">
+            <span className="font-medium">Gastos</span>
+            <Badge variant="secondary">{expenses.summary?.total ?? 0}</Badge>
+          </div>
+        </AccordionTrigger>
+        <AccordionContent>
+          <ExpensesSection rows={expenses.rows} summary={expenses.summary} />
         </AccordionContent>
       </AccordionItem>
 

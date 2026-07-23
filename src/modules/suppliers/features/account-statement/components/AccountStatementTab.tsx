@@ -3,6 +3,7 @@ import {
   getSupplierPurchaseOrders,
   getSupplierReceivingNotes,
   getSupplierPaymentOrders,
+  getSupplierExpenses,
 } from '../actions.server';
 import { AccountStatementAccordion } from './AccountStatementAccordion';
 
@@ -11,11 +12,12 @@ interface Props {
 }
 
 export default async function AccountStatementTab({ supplierId }: Props) {
-  const [invoices, purchaseOrders, receivingNotes, paymentOrders] = await Promise.all([
+  const [invoices, purchaseOrders, receivingNotes, paymentOrders, expenses] = await Promise.all([
     getSupplierInvoices(supplierId),
     getSupplierPurchaseOrders(supplierId),
     getSupplierReceivingNotes(supplierId),
     getSupplierPaymentOrders(supplierId),
+    getSupplierExpenses(supplierId),
   ]);
 
   return (
@@ -24,6 +26,7 @@ export default async function AccountStatementTab({ supplierId }: Props) {
       purchaseOrders={purchaseOrders}
       receivingNotes={receivingNotes}
       paymentOrders={paymentOrders}
+      expenses={expenses}
     />
   );
 }
