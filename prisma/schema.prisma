@@ -433,6 +433,10 @@ model company {
 
   // VTV
   vtv_appointments vtv_appointments[]
+
+  // Tablas auxiliares de cálculo (tsk-519)
+  exchange_rates exchange_rates[]
+  indices        indices[]
 }
 
 model pdf_settings {
@@ -2885,6 +2889,11 @@ model costo_equipo {
   vehicle_id         String   @unique @db.Uuid
   company_id         String   @db.Uuid
   valor_compra       Decimal  @db.Decimal(15, 2)
+  // Valor de compra en dólares y snapshot del tipo de cambio usado (tsk-518).
+  // moneda_compra indica en qué moneda cargó el usuario; el otro valor se calcula.
+  moneda_compra      String   @default("ARS")
+  valor_compra_usd   Decimal? @db.Decimal(15, 2)
+  tipo_cambio_compra Decimal? @db.Decimal(15, 4)
   valor_residual_pct Decimal  @db.Decimal(5, 4)
   anios_amortizacion Int
   km_anuales         Int      @default(0)
@@ -2894,6 +2903,56 @@ model costo_equipo {
   vehicle             vehicles             @relation(fields: [vehicle_id], references: [id])
   company             company              @relation(fields: [company_id], references: [id])
   items_mantenimiento item_mantenimiento[]
+}
+
+// Tipo de cambio por empresa: cotización de una moneda de origen a una de destino (tsk-519).
+// El legajo de equipos toma la última cotización de la empresa para convertir ARS<->USD.
+model exchange_rates {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id     String   @db.Uuid
+  moneda_origen  String   @default("USD")
+  moneda_destino String   @default("ARS")
+  valor          Decimal  @db.Decimal(15, 4)
+  fecha          DateTime @db.Date
+  fuente         String?
+  created_at     DateTime @default(now()) @db.Timestamptz
+  updated_at     DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  company company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+
+  @@index([company_id])
+  @@index([company_id, moneda_origen, moneda_destino, fecha])
+}
+
+// Catálogo de índices (solo nombres). Los valores viven en index_values (tsk-519).
+model indices {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id String   @db.Uuid
+  nombre     String
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  company company        @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  values  index_values[]
+
+  @@unique([company_id, nombre])
+  @@index([company_id])
+}
+
+// Valor mensual de un índice: % de variación por mes/año (tsk-519).
+model index_values {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  indice_id  String   @db.Uuid
+  mes        Int
+  anio       Int
+  variacion  Decimal  @db.Decimal(8, 4)
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  indice indices @relation(fields: [indice_id], references: [id], onDelete: Cascade)
+
+  @@unique([indice_id, anio, mes])
+  @@index([indice_id])
 }
 
 model item_mantenimiento {

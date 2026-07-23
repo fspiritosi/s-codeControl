@@ -5,6 +5,7 @@ import { ReactNode } from 'react';
 import { useVehicleForm } from './useVehicleForm';
 import { VehicleHeader } from './VehicleHeader';
 import { VehicleEquipmentForm } from './VehicleEquipmentForm';
+import { PurchaseValueTab } from './PurchaseValueTab';
 import { VehicleQRTab } from './VehicleQRTab';
 
 // Backward-compatible re-exports
@@ -42,6 +43,7 @@ export default function VehiclesForm2({
       <Tabs defaultValue="equipment" className="w-full ">
         <TabsList className="mx-3 py-2">
           <TabsTrigger value="equipment">Equipo</TabsTrigger>
+          {accion !== 'new' && <TabsTrigger value="purchase">Valor de compra</TabsTrigger>}
           {accion !== 'new' && <TabsTrigger value="documents">Documentos</TabsTrigger>}
           {accion !== 'new' && <TabsTrigger value="repairs">Reparaciones</TabsTrigger>}
           {accion !== 'new' && <TabsTrigger value="QR">QR</TabsTrigger>}
@@ -71,6 +73,11 @@ export default function VehiclesForm2({
             base64Image={base64Image}
           />
         </TabsContent>
+        {accion !== 'new' && vehicle?.id && (
+          <TabsContent value="purchase" className="px-3 py-2 pt-5">
+            <PurchaseValueTab vehicleId={vehicle.id} readOnly={readOnly} />
+          </TabsContent>
+        )}
         {children}
         <TabsContent value="QR" className="px-3 py-2 pt-5">
           <VehicleQRTab
