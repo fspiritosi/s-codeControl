@@ -26,13 +26,14 @@ import { PdfSettingsForm } from '@/modules/settings/features/pdf/components/PdfS
 import { PdfEmailSettingsForm } from '@/modules/settings/features/pdf/components/PdfEmailSettingsForm';
 import RolesAndPermissionsSection from '@/modules/settings/features/roles/components/RolesAndPermissionsSection';
 import TaxesSection from '@/modules/settings/features/taxes/components/TaxesSection';
+import CalculationsSection from '@/modules/settings/features/calculations/components/CalculationsSection';
 import { getAiProviderConfigs } from '@/modules/settings/features/ai/actions.server';
 import { AiProviderSettingsForm } from '@/modules/settings/features/ai/components/AiProviderSettingsForm';
 import { can } from '@/shared/lib/permissions';
 import { getSession } from '@/shared/lib/session';
 import { prisma } from '@/shared/lib/prisma';
 
-const VALID_SECTIONS = ['employees', 'pdf', 'roles', 'taxes', 'ai'] as const;
+const VALID_SECTIONS = ['employees', 'pdf', 'roles', 'taxes', 'ai', 'calculations'] as const;
 type Section = (typeof VALID_SECTIONS)[number];
 
 interface Props {
@@ -69,6 +70,7 @@ export default async function SettingsView({ currentSection }: Props) {
           <UrlTabsTrigger value="employees">Empleados</UrlTabsTrigger>
           <UrlTabsTrigger value="pdf">PDF</UrlTabsTrigger>
           {canManageTaxes && <UrlTabsTrigger value="taxes">Impuestos</UrlTabsTrigger>}
+          {canManageTaxes && <UrlTabsTrigger value="calculations">Cálculos</UrlTabsTrigger>}
           {canViewRoles && <UrlTabsTrigger value="roles">Roles y permisos</UrlTabsTrigger>}
           {canManageAi && <UrlTabsTrigger value="ai">IA / Proveedores</UrlTabsTrigger>}
         </UrlTabsList>
@@ -84,6 +86,12 @@ export default async function SettingsView({ currentSection }: Props) {
         {canManageTaxes && (
           <UrlTabsContent value="taxes">
             {section === 'taxes' && <TaxesSection />}
+          </UrlTabsContent>
+        )}
+
+        {canManageTaxes && (
+          <UrlTabsContent value="calculations">
+            {section === 'calculations' && <CalculationsSection />}
           </UrlTabsContent>
         )}
 
