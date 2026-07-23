@@ -133,9 +133,10 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
   const pathName = usePathname();
   const ayudaUnreadCount = useUnreadSupportTicketsCount();
 
-  // Aplanar parents + children para encontrar el match más específico por href.
+  // Solo las hojas participan del match por href: las secciones no tienen ruta
+  // propia (su href = 1er hijo) y robarían el estado activo al hijo real.
   const flatLinks = Allinks.flatMap((link: any) =>
-    link.children && link.children.length > 0 ? [link, ...link.children] : [link]
+    link.children && link.children.length > 0 ? link.children : [link]
   );
 
   // Find the most specific matching link for active state
