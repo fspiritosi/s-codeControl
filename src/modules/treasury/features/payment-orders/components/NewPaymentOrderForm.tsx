@@ -107,6 +107,8 @@ interface ItemDraft {
   base_amount: string;
   // % de descuento aplicado a esta línea (0-100). El amount ya es el neto.
   discount_pct: string;
+  // Pago a cuenta: sin comprobante, genera saldo a favor imputable después.
+  is_on_account: boolean;
 }
 
 interface PaymentDraft {
@@ -217,6 +219,7 @@ export interface PaymentOrderEditData {
     invoice_label: string | null;
     amount: string;
     discount_pct?: number;
+    is_on_account?: boolean;
   }>;
   payments: Array<{
     payment_method: PaymentMethod;
@@ -362,6 +365,7 @@ export function NewPaymentOrderForm({
         amount: i.amount,
         base_amount: (Math.round(base * 100) / 100).toFixed(2),
         discount_pct: disc ? String(disc) : '0',
+        is_on_account: i.is_on_account ?? false,
       };
     }) ?? []
   );
@@ -454,6 +458,7 @@ export function NewPaymentOrderForm({
         amount: amount.toFixed(2),
         base_amount: amount.toFixed(2),
         discount_pct: '0',
+        is_on_account: false,
       });
       totalAmount += amount;
       appliedCount += 1;
@@ -578,6 +583,7 @@ export function NewPaymentOrderForm({
         base_amount: base,
         discount_pct: globalDiscount,
         amount: netFromDiscount(base, globalDiscount),
+        is_on_account: false,
       },
     ]);
   };
@@ -597,14 +603,29 @@ export function NewPaymentOrderForm({
         base_amount: base,
         discount_pct: globalDiscount,
         amount: netFromDiscount(base, globalDiscount),
+        is_on_account: false,
       },
     ]);
   };
 
-  const addFreeItem = () => {
+  // Pago a cuenta: plata que se le paga al proveedor sin imputar a un
+  // comprobante. Queda como saldo a favor, imputable a una factura después.
+  const addOnAccountItem = () => {
+    if (!supplierId) {
+      toast.info('Seleccioná el proveedor antes de cargar un pago a cuenta');
+      return;
+    }
     setItems((prev) => [
       ...prev,
-      { invoice_id: null, expense_id: null, invoice_label: null, amount: '', base_amount: '', discount_pct: '0' },
+      {
+        invoice_id: null,
+        expense_id: null,
+        invoice_label: null,
+        amount: '',
+        base_amount: '',
+        discount_pct: '0',
+        is_on_account: true,
+      },
     ]);
   };
 
@@ -712,6 +733,7 @@ export function NewPaymentOrderForm({
           expense_id: i.expense_id,
           amount: i.amount.trim(),
           discount_pct: parseFloat(i.discount_pct) || 0,
+          is_on_account: i.is_on_account,
         })),
         payments: payments.map((p) => ({
           payment_method: p.payment_method,
@@ -996,9 +1018,9 @@ export function NewPaymentOrderForm({
               className="w-20 h-8 text-right font-mono"
               disabled={items.length === 0}
             />
-            <Button size="sm" variant="outline" onClick={addFreeItem}>
+            <Button size="sm" variant="outline" onClick={addOnAccountItem}>
               <Plus className="size-4 mr-1" />
-              Ítem sin factura
+              Pago a cuenta
             </Button>
           </div>
         </CardHeader>
@@ -1024,6 +1046,13 @@ export function NewPaymentOrderForm({
                       <TableCell className="font-mono">
                         {item.invoice_label ? (
                           <span>{item.invoice_label}{item.expense_id ? <Badge variant="secondary" className="ml-2 text-xs">Gasto</Badge> : null}</span>
+                        ) : item.is_on_account ? (
+                          <div className="flex flex-col gap-0.5">
+                            <Badge variant="default" className="w-fit">Pago a cuenta</Badge>
+                            <span className="font-sans text-xs text-muted-foreground">
+                              Queda como saldo a favor
+                            </span>
+                          </div>
                         ) : (
                           <Badge variant="outline">Sin documento</Badge>
                         )}

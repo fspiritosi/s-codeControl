@@ -7,21 +7,28 @@ import { PurchaseOrdersSection } from './sections/PurchaseOrdersSection';
 import { ReceivingNotesSection } from './sections/ReceivingNotesSection';
 import { PaymentOrdersSection } from './sections/PaymentOrdersSection';
 import { ExpensesSection } from './sections/ExpensesSection';
+import { CreditSection } from './sections/CreditSection';
 
 interface Props {
+  supplierId: string;
   invoices: { rows: any[]; summary: any };
   purchaseOrders: { rows: any[]; summary: any };
   receivingNotes: { rows: any[]; summary: any };
   paymentOrders: { rows: any[]; summary: any };
   expenses: { rows: any[]; summary: any };
+  creditBalance: any;
+  applicableInvoices: any[];
 }
 
 export function AccountStatementAccordion({
+  supplierId,
   invoices,
   purchaseOrders,
   receivingNotes,
   paymentOrders,
   expenses,
+  creditBalance,
+  applicableInvoices,
 }: Props) {
   return (
     <Accordion type="multiple" defaultValue={['invoices']} className="space-y-2">
@@ -34,6 +41,30 @@ export function AccountStatementAccordion({
         </AccordionTrigger>
         <AccordionContent>
           <InvoicesSection rows={invoices.rows} summary={invoices.summary} />
+        </AccordionContent>
+      </AccordionItem>
+
+      <AccordionItem value="credit" className="border rounded-md px-4 bg-card shadow-sm">
+        <AccordionTrigger className="hover:no-underline">
+          <div className="flex items-center gap-3">
+            <span className="font-medium">Saldo a favor</span>
+            {creditBalance?.available > 0 && (
+              <Badge variant="success">
+                $
+                {creditBalance.available.toLocaleString('es-AR', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </Badge>
+            )}
+          </div>
+        </AccordionTrigger>
+        <AccordionContent>
+          <CreditSection
+            supplierId={supplierId}
+            balance={creditBalance}
+            applicableInvoices={applicableInvoices}
+          />
         </AccordionContent>
       </AccordionItem>
 

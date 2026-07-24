@@ -44,7 +44,9 @@ export interface PaymentOrdersSummary {
   paidToInvoices: number;
   /** Parte de `totalPaid` imputada a gastos del proveedor. */
   paidToExpenses: number;
-  /** Pagado sin imputar a ningún comprobante (pago a cuenta). */
+  /** Parte de `totalPaid` cargada como pago a cuenta (genera saldo a favor). */
+  paidOnAccount: number;
+  /** Pagado que no es ni imputación ni pago a cuenta: descuadre a revisar. */
   paidUnallocated: number;
   countByStatus: Record<string, number>;
   total: number;
@@ -243,7 +245,9 @@ export async function getSupplierPaymentOrders(supplierId: string) {
       scheduled_payment_date: true,
       total_amount: true,
       status: true,
-      items: { select: { amount: true, invoice_id: true, expense_id: true } },
+      items: {
+        select: { amount: true, invoice_id: true, expense_id: true, is_on_account: true },
+      },
     },
     orderBy: { date: 'desc' },
   });
@@ -251,9 +255,11 @@ export async function getSupplierPaymentOrders(supplierId: string) {
   const rows = data.map((po) => {
     let toInvoices = 0;
     let toExpenses = 0;
+    let onAccount = 0;
     for (const item of po.items) {
       const amount = Number(item.amount);
-      if (item.invoice_id) toInvoices += amount;
+      if (item.is_on_account) onAccount += amount;
+      else if (item.invoice_id) toInvoices += amount;
       else if (item.expense_id) toExpenses += amount;
     }
     const total = Number(po.total_amount);
@@ -265,7 +271,8 @@ export async function getSupplierPaymentOrders(supplierId: string) {
       total_amount: total,
       applied_to_invoices: Math.round(toInvoices * 100) / 100,
       applied_to_expenses: Math.round(toExpenses * 100) / 100,
-      unallocated: Math.round((total - toInvoices - toExpenses) * 100) / 100,
+      on_account: Math.round(onAccount * 100) / 100,
+      unallocated: Math.round((total - toInvoices - toExpenses - onAccount) * 100) / 100,
       status: po.status as string,
     };
   });
@@ -275,6 +282,7 @@ export async function getSupplierPaymentOrders(supplierId: string) {
   let totalScheduled = 0;
   let paidToInvoices = 0;
   let paidToExpenses = 0;
+  let paidOnAccount = 0;
   let paidUnallocated = 0;
   for (const r of rows) {
     countByStatus[r.status] = (countByStatus[r.status] ?? 0) + 1;
@@ -282,6 +290,7 @@ export async function getSupplierPaymentOrders(supplierId: string) {
       totalPaid += r.total_amount;
       paidToInvoices += r.applied_to_invoices;
       paidToExpenses += r.applied_to_expenses;
+      paidOnAccount += r.on_account;
       paidUnallocated += r.unallocated;
     } else if (r.status === 'CONFIRMED' || r.status === 'DRAFT') {
       totalScheduled += r.total_amount;
@@ -294,6 +303,7 @@ export async function getSupplierPaymentOrders(supplierId: string) {
     totalScheduled: r2(totalScheduled),
     paidToInvoices: r2(paidToInvoices),
     paidToExpenses: r2(paidToExpenses),
+    paidOnAccount: r2(paidOnAccount),
     paidUnallocated: r2(paidUnallocated),
     countByStatus,
     total: rows.length,

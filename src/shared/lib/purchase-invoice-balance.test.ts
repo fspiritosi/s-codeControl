@@ -3,6 +3,7 @@ import {
   allocateCreditNotes,
   buildSupplierAccountRows,
   computePurchaseOutstanding,
+  computeSupplierCreditBalance,
   derivePurchaseInvoiceStatus,
   isCreditNoteVoucherType,
   isDebitNoteVoucherType,
@@ -113,6 +114,60 @@ describe('allocateCreditNotes', () => {
         creditNotes: aplicadoA.get('nc880')!,
       })
     ).toBe(0);
+  });
+});
+
+describe('computeSupplierCreditBalance', () => {
+  it('suma los pagos a cuenta y resta las aplicaciones activas', () => {
+    expect(computeSupplierCreditBalance({ onAccountPaid: 5000, creditApplied: 2000 })).toBe(3000);
+  });
+
+  it('devuelve 0 cuando el crédito quedó íntegramente aplicado', () => {
+    expect(computeSupplierCreditBalance({ onAccountPaid: 5000, creditApplied: 5000 })).toBe(0);
+  });
+
+  it('nunca devuelve negativo aunque los datos vengan inconsistentes', () => {
+    expect(computeSupplierCreditBalance({ onAccountPaid: 1000, creditApplied: 1500 })).toBe(0);
+  });
+
+  it('sin pagos a cuenta no hay saldo a favor', () => {
+    expect(computeSupplierCreditBalance({ onAccountPaid: 0, creditApplied: 0 })).toBe(0);
+  });
+
+  it('absorbe centavos por debajo de la tolerancia', () => {
+    expect(computeSupplierCreditBalance({ onAccountPaid: 1000, creditApplied: 999.995 })).toBe(0);
+  });
+});
+
+describe('cobertura con las tres fuentes (pagos + NC + crédito a cuenta)', () => {
+  it('llega a PAID combinando las tres', () => {
+    expect(
+      derivePurchaseInvoiceStatus({ total: 1000, paid: 400, creditNotes: 300, creditApplied: 300 })
+    ).toBe('PAID');
+  });
+
+  it('el crédito aplicado solo alcanza para PARTIAL_PAID', () => {
+    expect(
+      derivePurchaseInvoiceStatus({ total: 1000, paid: 0, creditNotes: 0, creditApplied: 250 })
+    ).toBe('PARTIAL_PAID');
+  });
+
+  it('marca PAID una factura cubierta solo con crédito a cuenta', () => {
+    expect(
+      derivePurchaseInvoiceStatus({ total: 1000, paid: 0, creditNotes: 0, creditApplied: 1000 })
+    ).toBe('PAID');
+  });
+
+  it('el saldo pendiente descuenta también el crédito aplicado', () => {
+    expect(
+      computePurchaseOutstanding({ total: 1000, paid: 200, creditNotes: 300, creditApplied: 100 })
+    ).toBe(400);
+  });
+
+  it('omitir creditApplied mantiene el comportamiento anterior', () => {
+    // Las llamadas existentes no pasan el tercer término: no deben cambiar.
+    expect(computePurchaseOutstanding({ total: 1000, paid: 200, creditNotes: 300 })).toBe(500);
+    expect(derivePurchaseInvoiceStatus({ total: 1000, paid: 1000, creditNotes: 0 })).toBe('PAID');
   });
 });
 

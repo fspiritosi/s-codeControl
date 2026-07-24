@@ -400,6 +400,7 @@ model company {
   bank_movements         bank_movements[]
   checks                 checks[]
   payment_orders         payment_orders[]
+  supplier_credit_applications supplier_credit_applications[]
 
   // Configuración
   pdf_settings       pdf_settings?
@@ -1874,9 +1875,34 @@ model suppliers {
   checks            checks[]
   payment_methods   supplier_payment_methods[]
   expenses          expenses[]
+  credit_applications supplier_credit_applications[]
 
   @@unique([company_id, code])
   @@unique([company_id, tax_id])
+}
+
+/// Imputación de saldo a favor del proveedor contra una factura de compra.
+/// El saldo a favor no se persiste: se deriva de los ítems a cuenta de OPs
+/// pagadas menos las aplicaciones activas. Ver .planes/pago-a-cuenta-proveedores.md
+model supplier_credit_applications {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id  String    @db.Uuid
+  supplier_id String    @db.Uuid
+  invoice_id  String    @db.Uuid
+  amount      Decimal   @db.Decimal(15, 2)
+  applied_at  DateTime  @default(now()) @db.Timestamptz
+  applied_by  String
+  reversed_at DateTime? @db.Timestamptz
+  reversed_by String?
+  notes       String?
+  created_at  DateTime  @default(now()) @db.Timestamptz
+
+  company  company           @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  supplier suppliers         @relation(fields: [supplier_id], references: [id])
+  invoice  purchase_invoices @relation(fields: [invoice_id], references: [id])
+
+  @@index([company_id, supplier_id])
+  @@index([invoice_id])
 }
 
 model supplier_payment_methods {
@@ -2114,6 +2140,7 @@ model purchase_invoices {
   cash_movements      cash_movements[]
   perceptions         purchase_invoice_perceptions[]
   other_charges_items purchase_invoice_other_charges[]
+  credit_applications supplier_credit_applications[]
 
   @@unique([company_id, supplier_id, full_number])
   @@index([purchase_order_id])
@@ -2610,6 +2637,8 @@ model payment_order_items {
   expense_id       String? @db.Uuid
   amount           Decimal @db.Decimal(15, 2)
   discount_pct     Decimal @default(0) @db.Decimal(5, 2)
+  /// Pago a cuenta: ítem sin comprobante que genera saldo a favor del proveedor.
+  is_on_account    Boolean @default(false)
 
   payment_order payment_orders     @relation(fields: [payment_order_id], references: [id], onDelete: Cascade)
   invoice       purchase_invoices? @relation(fields: [invoice_id], references: [id])

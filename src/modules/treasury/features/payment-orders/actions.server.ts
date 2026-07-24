@@ -555,6 +555,7 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
           create: parsed.data.items.map((i) => ({
             invoice_id: i.invoice_id || null,
             expense_id: i.expense_id || null,
+            is_on_account: i.is_on_account ?? false,
             amount: parseFloat(i.amount),
             discount_pct: Math.round((i.discount_pct ?? 0) * 100) / 100,
           })),
@@ -689,6 +690,7 @@ export async function updatePaymentOrder(id: string, data: PaymentOrderFormData)
             create: parsed.data.items.map((i) => ({
               invoice_id: i.invoice_id || null,
               expense_id: i.expense_id || null,
+              is_on_account: i.is_on_account ?? false,
               amount: parseFloat(i.amount),
             })),
           },
@@ -1104,6 +1106,8 @@ export async function cancelPaymentOrder(id: string) {
     });
     if (!order) return { error: 'Orden no encontrada' };
     if (order.status === 'CANCELLED') return { error: 'Ya está anulada' };
+    // Esto también cubre los pagos a cuenta: el saldo a favor solo nace de OPs
+    // pagadas, así que una OP cuyo crédito ya se imputó nunca llega hasta acá.
     if (order.status === 'PAID') return { error: 'No se puede anular una OP pagada' };
 
     const wasConfirmed = order.status === 'CONFIRMED';

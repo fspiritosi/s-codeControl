@@ -5,17 +5,39 @@ const amountString = z
   .min(1, 'El monto es requerido')
   .regex(/^\d+(\.\d{1,2})?$/, 'Monto inválido (máximo 2 decimales)');
 
-export const paymentOrderItemSchema = z.object({
-  invoice_id: z.string().uuid().optional().nullable(),
-  expense_id: z.string().uuid().optional().nullable(),
-  amount: amountString.refine((v) => parseFloat(v) > 0, 'Debe ser mayor a 0'),
-  discount_pct: z.coerce
-    .number()
-    .min(0, 'El descuento no puede ser negativo')
-    .max(100, 'El descuento no puede superar 100%')
-    .optional()
-    .default(0),
-});
+export const paymentOrderItemSchema = z
+  .object({
+    invoice_id: z.string().uuid().optional().nullable(),
+    expense_id: z.string().uuid().optional().nullable(),
+    amount: amountString.refine((v) => parseFloat(v) > 0, 'Debe ser mayor a 0'),
+    discount_pct: z.coerce
+      .number()
+      .min(0, 'El descuento no puede ser negativo')
+      .max(100, 'El descuento no puede superar 100%')
+      .optional()
+      .default(0),
+    /** Pago a cuenta: sin comprobante, genera saldo a favor del proveedor. */
+    is_on_account: z.boolean().optional().default(false),
+  })
+  .superRefine((data, ctx) => {
+    const hasVoucher = !!data.invoice_id || !!data.expense_id;
+    // Un ítem a cuenta no lleva comprobante, y uno con comprobante no es a cuenta:
+    // sin esta regla un ítem podría descontar una factura Y generar crédito.
+    if (data.is_on_account && hasVoucher) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['is_on_account'],
+        message: 'Un pago a cuenta no puede estar imputado a un comprobante',
+      });
+    }
+    if (!data.is_on_account && !hasVoucher) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['invoice_id'],
+        message: 'Seleccioná un comprobante o marcá el ítem como pago a cuenta',
+      });
+    }
+  });
 export type PaymentOrderItemFormData = z.infer<typeof paymentOrderItemSchema>;
 
 export const paymentOrderPaymentSchema = z
@@ -115,5 +137,16 @@ export const paymentOrderSchema = z
       message:
         'El total de ítems menos las retenciones debe coincidir con el total de pagos',
     }
-  );
+  )
+  .superRefine((data, ctx) => {
+    // El saldo a favor se lleva por proveedor: sin proveedor no hay a quién
+    // acreditarle el pago a cuenta.
+    if (data.items.some((i) => i.is_on_account) && !data.supplier_id) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['supplier_id'],
+        message: 'Un pago a cuenta requiere seleccionar el proveedor',
+      });
+    }
+  });
 export type PaymentOrderFormData = z.infer<typeof paymentOrderSchema>;

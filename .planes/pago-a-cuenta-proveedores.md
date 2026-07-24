@@ -90,12 +90,23 @@ El tercer término es nuevo y aditivo: no altera el comportamiento ya andando.
 
 ### Crear el pago a cuenta
 
-En el form de la OP, junto a "factura" y "gasto", una opción **"Pago a cuenta"**:
-agrega un ítem sin comprobante, solo con su monto. Requiere proveedor
-seleccionado — el crédito es por proveedor.
+En el form de la OP, el botón **"Pago a cuenta"** agrega un ítem sin comprobante,
+solo con su monto. Requiere proveedor seleccionado — el crédito es por proveedor.
 
 Para el detalle del concepto se usa el campo `notes` que la OP ya tiene; no se
 agrega una columna de descripción por ítem.
+
+**Hallazgo durante la implementación:** el form ya tenía un botón *"Ítem sin
+factura"* (`addFreeItem`) que creaba ítems sin `invoice_id` ni `expense_id`. Eso
+era, sin nombre ni consecuencia, un pago a cuenta — y explica el monto "sin
+imputar" que apareció en la cuenta corriente del proveedor `194dd099`. En vez de
+agregar una tercera opción se convirtió esa en el pago a cuenta explícito.
+
+Los ítems libres **históricos** quedan con `is_on_account = false` y siguen
+apareciendo como "Sin imputar — descuadre a revisar". No se migran a pago a
+cuenta: asumir esa intención sobre datos viejos sería inventar crédito que nadie
+registró. Si administración confirma que alguno era efectivamente un anticipo, se
+marca a mano.
 
 El resto del circuito no cambia: retenciones, pagos, y los movimientos de
 caja/banco/cheque que ya se generan al confirmar y pagar.
@@ -134,12 +145,16 @@ Extensión del núcleo compartido creado en el commit `f686505e`.
   `getCreditNoteAmountsByInvoice`.
 - `recalcPurchaseInvoiceStatus` incluye el crédito aplicado.
 
-### Server actions — `src/modules/treasury/features/supplier-credit/actions.server.ts`
+### Server actions — `src/modules/suppliers/features/credit/actions.server.ts`
 
 - `getSupplierCreditBalance(supplierId)` → saldo a favor + historial.
+- `getInvoicesForCreditApplication(supplierId)` → facturas con saldo imputable.
 - `applySupplierCredit({ supplierId, invoiceId, amount })` → valida y crea en
   transacción, recalcula la factura.
 - `reverseSupplierCreditApplication(id)` → revierte y recalcula.
+
+Viven en `suppliers` y no en `treasury` porque la UI que las consume es la cuenta
+corriente del proveedor, y los módulos no pueden importarse entre sí.
 
 ## Invariantes
 
@@ -151,10 +166,13 @@ Se validan en el servidor. La UI no es fuente de verdad.
 2. No se puede aplicar más que el saldo pendiente de la factura destino.
 3. La factura destino debe pertenecer al mismo proveedor y no ser NC, ni estar
    anulada, ni en borrador.
-4. Anular una OP con un ítem a cuenta ya aplicado falla con:
-   *"Este pago a cuenta ya fue imputado a facturas; revertí esas aplicaciones
-   antes de anular la OP."*
-   Mismo criterio que ya usa el sistema con facturas imputadas.
+4. No se puede anular una OP cuyo crédito ya fue imputado.
+
+   **Ya está garantizado por construcción, sin código nuevo:** el saldo a favor
+   solo nace de OPs en estado pagado, y `cancelPaymentOrder` ya rechaza anular
+   una OP pagada. No existe transición que devuelva una OP de pagada a otro
+   estado. Se documentó con un comentario en `cancelPaymentOrder` en vez de
+   agregar una validación inalcanzable.
 5. Revertir una aplicación ya revertida es un no-op explícito, no un error que
    duplique el crédito.
 

@@ -47,6 +47,26 @@ export async function getCreditNoteAmountsByInvoice(
   return result;
 }
 
+/** Saldo a favor del proveedor ya imputado a cada factura (aplicaciones activas). */
+export async function getAppliedCreditByInvoice(
+  invoiceIds: string[],
+  client: PrismaClientLike = prisma
+): Promise<Map<string, number>> {
+  const result = new Map<string, number>();
+  if (invoiceIds.length === 0) return result;
+
+  const groups = await client.supplier_credit_applications.groupBy({
+    by: ['invoice_id'],
+    where: { invoice_id: { in: invoiceIds }, reversed_at: null },
+    _sum: { amount: true },
+  });
+
+  for (const g of groups as { invoice_id: string; _sum: { amount: unknown } }[]) {
+    result.set(g.invoice_id, Number(g._sum.amount ?? 0));
+  }
+  return result;
+}
+
 /**
  * Recalcula y persiste el estado de una factura.
  * Solo actúa sobre facturas en CONFIRMED/PARTIAL_PAID/PAID (no DRAFT/CANCELLED)
@@ -64,18 +84,20 @@ export async function recalcPurchaseInvoiceStatus(
   if (!['CONFIRMED', 'PARTIAL_PAID', 'PAID'].includes(invoice.status)) return invoice.status;
   if (isCreditNoteVoucherType(invoice.voucher_type)) return invoice.status;
 
-  const [paidAgg, creditByInvoice] = await Promise.all([
+  const [paidAgg, creditByInvoice, appliedCreditByInvoice] = await Promise.all([
     client.payment_order_items.aggregate({
       where: { invoice_id: invoiceId, payment_order: { status: 'PAID' } },
       _sum: { amount: true },
     }),
     getCreditNoteAmountsByInvoice([invoiceId], client),
+    getAppliedCreditByInvoice([invoiceId], client),
   ]);
 
   const newStatus = derivePurchaseInvoiceStatus({
     total: Number(invoice.total),
     paid: Number(paidAgg._sum.amount ?? 0),
     creditNotes: creditByInvoice.get(invoiceId) ?? 0,
+    creditApplied: appliedCreditByInvoice.get(invoiceId) ?? 0,
   });
 
   if (newStatus !== invoice.status) {

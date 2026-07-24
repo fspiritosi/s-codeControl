@@ -44,35 +44,64 @@ export function isDebitNoteVoucherType(voucherType: string): boolean {
 export type PurchaseInvoicePaidStatus = 'CONFIRMED' | 'PARTIAL_PAID' | 'PAID';
 
 /**
+ * Cobertura de una factura de compra: todo lo que ya dejó de deberse.
+ *
+ *   pagos imputados por OP + NC aplicadas + crédito a cuenta aplicado
+ *
+ * `creditApplied` es opcional para no romper las llamadas que no manejan saldo
+ * a favor.
+ */
+interface PurchaseCoverageInput {
+  total: number;
+  paid: number;
+  creditNotes: number;
+  /** Saldo a favor del proveedor imputado a esta factura. */
+  creditApplied?: number;
+}
+
+const coverageOf = (i: PurchaseCoverageInput) => i.paid + i.creditNotes + (i.creditApplied ?? 0);
+
+/**
  * Estado de pago que le corresponde a una factura de compra.
  *
- *   cobertura = pagos imputados + NC aplicadas
- *   cargado   = total de la factura
+ *   cargado = total de la factura
+ *   PAID          si cargado > 0 y la cobertura lo alcanza (con tolerancia)
+ *   PARTIAL_PAID  si hay alguna cobertura
+ *   CONFIRMED     en otro caso
  *
  * Las ND no se suman al cargado: en compras se pagan como comprobante propio,
  * así que sumarlas acá las contaría dos veces.
  */
-export function derivePurchaseInvoiceStatus(input: {
-  total: number;
-  paid: number;
-  creditNotes: number;
-}): PurchaseInvoicePaidStatus {
-  const covered = input.paid + input.creditNotes;
+export function derivePurchaseInvoiceStatus(
+  input: PurchaseCoverageInput
+): PurchaseInvoicePaidStatus {
+  const covered = coverageOf(input);
   if (input.total > 0 && covered >= input.total - BALANCE_EPS) return 'PAID';
   return covered > 0 ? 'PARTIAL_PAID' : 'CONFIRMED';
 }
 
 /**
  * Saldo pendiente de una factura de compra.
- * pendiente = total - pagos imputados - NC aplicadas (nunca negativo).
+ * pendiente = total - cobertura (nunca negativo).
  */
-export function computePurchaseOutstanding(input: {
-  total: number;
-  paid: number;
-  creditNotes: number;
-}): number {
-  const pending = round2(input.total - input.paid - input.creditNotes);
+export function computePurchaseOutstanding(input: PurchaseCoverageInput): number {
+  const pending = round2(input.total - coverageOf(input));
   return pending < BALANCE_EPS ? 0 : pending;
+}
+
+/**
+ * Saldo a favor de un proveedor: la "bolsa" de crédito disponible.
+ *
+ * Nace de los ítems a cuenta de OPs ya pagadas y se consume al imputarlo a
+ * facturas. Nunca es negativo: si los datos vinieran inconsistentes, no hay
+ * crédito disponible antes que un número que rompa los cálculos aguas abajo.
+ */
+export function computeSupplierCreditBalance(input: {
+  onAccountPaid: number;
+  creditApplied: number;
+}): number {
+  const balance = round2(input.onAccountPaid - input.creditApplied);
+  return balance < BALANCE_EPS ? 0 : balance;
 }
 
 /**

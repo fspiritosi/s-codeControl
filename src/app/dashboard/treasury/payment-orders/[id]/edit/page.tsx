@@ -32,6 +32,7 @@ export default async function EditPaymentOrderPage({
       invoice_label: i.invoice?.full_number ?? i.expense?.full_number ?? null,
       amount: i.amount.toFixed(2),
       discount_pct: i.discount_pct,
+      is_on_account: i.is_on_account,
     })),
     payments: order.payments.map((p) => ({
       payment_method: p.payment_method,
