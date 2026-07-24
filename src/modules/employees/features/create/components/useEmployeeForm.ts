@@ -45,6 +45,38 @@ const reqId = (id: unknown): string | undefined => (id == null ? undefined : Str
  */
 const optId = (id: unknown): string | null => (id == null ? null : String(id));
 
+/**
+ * Extrae un mensaje legible de lo que rechaza `toast.promise`.
+ *
+ * Devolver el `Error` crudo hacía que sonner renderizara un toast rojo vacío
+ * ("un error que no dice nada"): espera string/ReactNode, no un objeto. Los
+ * errores de Prisma son multilínea y traen el detalle útil al final.
+ */
+const toastErrorMessage = (error: unknown): string => {
+  const raw = error instanceof Error ? error.message : String(error ?? '');
+  const lastLine = raw.split('\n').map((line) => line.trim()).filter(Boolean).at(-1);
+  const message = lastLine || 'Ocurrió un error inesperado al guardar';
+  return message.length > 200 ? `${message.slice(0, 200)}…` : message;
+};
+
+/**
+ * Normaliza una fecha del form a ISO-8601 completo.
+ *
+ * El detalle del empleado carga `date_of_admission` como string `yyyy-MM-dd`
+ * (ver `app/dashboard/employee/action/page.tsx`). Si el usuario edita cualquier
+ * otro campo sin tocar el datepicker, ese string llega tal cual a Prisma y el
+ * update falla con "Expected ISO-8601 DateTime", abortando todo el guardado.
+ */
+const toISODate = (value: unknown): string | undefined => {
+  if (!value) return undefined;
+  if (value instanceof Date) return isNaN(value.getTime()) ? undefined : value.toISOString();
+  if (typeof value === 'string') {
+    const parsed = new Date(value);
+    return isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
+  }
+  return undefined;
+};
+
 export function useEmployeeFormLogic(user: any, guild: any, covenants: any, categories: any) {
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
   const searchParams = useSearchParams();
@@ -190,10 +222,7 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
         const fileExtension = imageFile?.name.split('.').pop();
         const finalValues = {
           ...rest,
-          date_of_admission:
-            values.date_of_admission instanceof Date
-              ? values.date_of_admission.toISOString()
-              : values.date_of_admission,
+          date_of_admission: toISODate(values.date_of_admission),
           born_date:
             values.born_date instanceof Date
               ? values.born_date.toISOString()
@@ -264,9 +293,7 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
       {
         loading: 'Agregando empleado...',
         success: 'Empleado agregado correctamente',
-        error: (error) => {
-          return error;
-        },
+        error: (error) => toastErrorMessage(error),
       }
     );
   }
@@ -301,10 +328,7 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
         const { full_name, ...rest } = values;
         const finalValues = {
           ...rest,
-          date_of_admission:
-            values.date_of_admission instanceof Date
-              ? values.date_of_admission.toISOString()
-              : values.date_of_admission,
+          date_of_admission: toISODate(values.date_of_admission),
           born_date:
             values.born_date instanceof Date
               ? values.born_date.toISOString()
@@ -351,9 +375,7 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
       {
         loading: 'Actualizando empleado...',
         success: 'Empleado actualizado correctamente',
-        error: (error) => {
-          return error;
-        },
+        error: (error) => toastErrorMessage(error),
       }
     );
   }
