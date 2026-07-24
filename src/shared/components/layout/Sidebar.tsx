@@ -93,7 +93,11 @@ function CollapsibleGroup({
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         className={cn(
-          'w-full flex items-center p-4 cursor-pointer transition-all duration-500 rounded-s-full lisidebar relative ml-4',
+          // Sin `w-full`: con box-sizing border-box, w-full (100%) + ml-4 (1rem)
+          // empujaba el botón 1rem más allá del borde derecho y generaba scroll
+          // horizontal. El flex block-level ya llena el ancho disponible menos el
+          // margen, y el ml-auto del chevron sigue empujando a la derecha.
+          'flex items-center p-4 cursor-pointer transition-all duration-500 rounded-s-full lisidebar relative ml-4',
           parentActive
             ? 'bg-muted activesidebar before:shadow-custom-white after:shadow-custom-white-inverted'
             : 'hover:bg-muted/80'
@@ -165,7 +169,7 @@ export default function SideBar({ Allinks, role }: { Allinks: any; role: string 
         <CompanySwitcher collapsed={isActive} />
       </div>
 
-      <ul className="flex-1 overflow-y-auto mt-2">
+      <ul className="flex-1 overflow-y-auto overflow-x-hidden mt-2">
         {Allinks.map((link: any) =>
           link.children && link.children.length > 0 ? (
             <CollapsibleGroup
