@@ -5,25 +5,30 @@
  * `pagos >= total`. Una factura cubierta por una nota de crédito quedaba
  * "Confirmada" para siempre porque nunca existía una OP que la marcara.
  * Este script reprocesa las facturas ya existentes con el criterio correcto:
- * cobertura = pagos imputados + NC aplicadas.
+ * cobertura = pagos imputados + NC aplicadas + saldo a favor imputado.
  *
  * Uso (toma DATABASE_URL de .env, o de la variable de entorno si se pasa):
  *   npx tsx scripts/backfill-purchase-invoice-status.ts           # simulación
  *   npx tsx scripts/backfill-purchase-invoice-status.ts --apply   # escribe
  *
+ * Para correrlo contra producción, apuntar DATABASE_URL a esa base:
+ *   DATABASE_URL="postgresql://..." npx tsx scripts/backfill-...ts
+ *
  * Solo cambia la columna `status` de purchase_invoices. No borra ni crea nada.
+ * Es idempotente: correrlo dos veces seguidas no produce cambios la segunda vez.
  */
 import 'dotenv/config';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
+import {
+  ACTIVE_CREDIT_NOTE_STATUSES,
+  CREDIT_NOTE_VOUCHER_TYPES,
+  derivePurchaseInvoiceStatus,
+} from '../src/shared/lib/purchase-invoice-balance';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
-
-const EPS = 0.01;
-const CREDIT_NOTE_VOUCHER_TYPES = ['NOTA_CREDITO_A', 'NOTA_CREDITO_B', 'NOTA_CREDITO_C'];
-const ACTIVE_CREDIT_NOTE_STATUSES = ['CONFIRMED', 'PARTIAL_PAID', 'PAID'];
 
 async function main() {
   const apply = process.argv.includes('--apply');
@@ -50,7 +55,7 @@ async function main() {
 
   const ids = invoices.map((i: { id: string }) => i.id);
 
-  const [paidGroups, creditGroups] = await Promise.all([
+  const [paidGroups, creditGroups, appliedGroups] = await Promise.all([
     prisma.payment_order_items.groupBy({
       by: ['invoice_id'],
       where: { invoice_id: { in: ids }, payment_order: { status: 'PAID' } },
@@ -65,6 +70,13 @@ async function main() {
       },
       _sum: { total: true },
     }),
+    // Saldo a favor ya imputado. Sin este término el script bajaría de PAID a
+    // CONFIRMED cualquier factura cancelada con crédito a cuenta.
+    prisma.supplier_credit_applications.groupBy({
+      by: ['invoice_id'],
+      where: { invoice_id: { in: ids }, reversed_at: null },
+      _sum: { amount: true },
+    }),
   ]);
 
   const paidByInvoice = new Map<string, number>();
@@ -77,6 +89,10 @@ async function main() {
       creditByInvoice.set(g.original_invoice_id, Number(g._sum.total ?? 0));
     }
   }
+  const appliedByInvoice = new Map<string, number>();
+  for (const g of appliedGroups) {
+    appliedByInvoice.set(g.invoice_id, Number(g._sum.amount ?? 0));
+  }
 
   const changes: { id: string; label: string; from: string; to: string; detail: string }[] = [];
 
@@ -84,10 +100,16 @@ async function main() {
     const charged = Number(inv.total);
     const paid = paidByInvoice.get(inv.id) ?? 0;
     const credit = creditByInvoice.get(inv.id) ?? 0;
-    const covered = paid + credit;
+    const applied = appliedByInvoice.get(inv.id) ?? 0;
 
-    const next =
-      charged > 0 && covered >= charged - EPS ? 'PAID' : covered > 0 ? 'PARTIAL_PAID' : 'CONFIRMED';
+    // Se usa la MISMA función que el runtime: si la fórmula cambia, el script
+    // no puede quedar desincronizado. Ese desfasaje fue el bug original.
+    const next = derivePurchaseInvoiceStatus({
+      total: charged,
+      paid,
+      creditNotes: credit,
+      creditApplied: applied,
+    });
 
     if (next !== inv.status) {
       changes.push({
@@ -95,7 +117,7 @@ async function main() {
         label: `${inv.full_number} (${inv.supplier?.business_name ?? '?'})`,
         from: inv.status,
         to: next,
-        detail: `total ${charged} | pagado ${paid} | NC ${credit}`,
+        detail: `total ${charged} | pagado ${paid} | NC ${credit} | a cuenta ${applied}`,
       });
     }
   }
