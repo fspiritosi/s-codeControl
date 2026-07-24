@@ -97,10 +97,13 @@ function CollapsibleGroup({
           // empujaba el botón 1rem más allá del borde derecho y generaba scroll
           // horizontal. El flex block-level ya llena el ancho disponible menos el
           // margen, y el ml-auto del chevron sigue empujando a la derecha.
-          'flex items-center p-4 cursor-pointer transition-all duration-500 rounded-s-full lisidebar relative ml-4',
-          parentActive
-            ? 'bg-muted activesidebar before:shadow-custom-white after:shadow-custom-white-inverted'
-            : 'hover:bg-muted/80'
+          //
+          // El botón de sección NO usa el pill con muesca (`activesidebar`): ese
+          // tratamiento se reserva para la hoja realmente activa (el hijo). Cuando
+          // la sección está activa solo se resalta el texto en color primario; el
+          // pill del padre generaba una mancha blanca (la muesca) detrás del rótulo.
+          'flex items-center p-4 cursor-pointer transition-all duration-500 rounded-s-full relative ml-4',
+          'hover:bg-muted/80'
         )}
       >
         <div className={cn('flex items-center overflow-hidden min-w-0', parentActive ? 'text-primary' : 'text-foreground')}>
