@@ -13,12 +13,20 @@ interface Row {
   date: Date | string;
   scheduled_payment_date: Date | string | null;
   total_amount: number;
+  applied_to_invoices: number;
+  applied_to_expenses: number;
+  on_account: number;
+  unallocated: number;
   status: string;
 }
 
 interface Summary {
   totalPaid: number;
   totalScheduled: number;
+  paidToInvoices: number;
+  paidToExpenses: number;
+  paidOnAccount: number;
+  paidUnallocated: number;
   countByStatus: Record<string, number>;
   total: number;
 }
@@ -53,10 +61,32 @@ export function PaymentOrdersSection({ rows, summary }: { rows: Row[]; summary: 
     <div className="space-y-4 pt-2">
       <SummaryGrid>
         <StatBlock label="Total pagado" value={fmt(summary?.totalPaid ?? 0)} />
+        <StatBlock
+          label="Aplicado a facturas"
+          value={fmt(summary?.paidToInvoices ?? 0)}
+          hint="Descuenta saldo de facturas"
+        />
+        <StatBlock
+          label="Aplicado a gastos"
+          value={fmt(summary?.paidToExpenses ?? 0)}
+          hint="Descuenta saldo de gastos"
+        />
+        {(summary?.paidOnAccount ?? 0) > 0 ? (
+          <StatBlock
+            label="Pagado a cuenta"
+            value={fmt(summary?.paidOnAccount ?? 0)}
+            hint="Genera saldo a favor"
+          />
+        ) : (summary?.paidUnallocated ?? 0) !== 0 ? (
+          <StatBlock
+            label="Sin imputar"
+            value={fmt(summary?.paidUnallocated ?? 0)}
+            hint="Descuadre a revisar"
+          />
+        ) : (
+          <StatBlock label="Pagadas" value={summary?.countByStatus['PAID'] ?? 0} />
+        )}
         <StatBlock label="Total programado" value={fmt(summary?.totalScheduled ?? 0)} hint="Borradores + confirmadas" />
-        <StatBlock label="Pagadas" value={summary?.countByStatus['PAID'] ?? 0} />
-        <StatBlock label="Confirmadas" value={summary?.countByStatus['CONFIRMED'] ?? 0} />
-        <StatBlock label="Borradores" value={summary?.countByStatus['DRAFT'] ?? 0} />
       </SummaryGrid>
 
       <StatusFilterToolbar status={status} onStatusChange={(v) => { setStatus(v); setPage(0); }} options={statusOptions} />
@@ -87,6 +117,30 @@ export function PaymentOrdersSection({ rows, summary }: { rows: Row[]; summary: 
           {
             header: 'Total',
             cell: (r) => <span className="font-medium">{fmt(r.total_amount)}</span>,
+            className: 'text-right',
+          },
+          {
+            header: 'Imputación',
+            cell: (r) => (
+              <div className="flex flex-col text-xs text-muted-foreground">
+                {r.applied_to_invoices > 0 && <span>Facturas {fmt(r.applied_to_invoices)}</span>}
+                {r.applied_to_expenses > 0 && <span>Gastos {fmt(r.applied_to_expenses)}</span>}
+                {r.on_account > 0 && (
+                  <span className="text-sky-600 dark:text-sky-400">
+                    A cuenta {fmt(r.on_account)}
+                  </span>
+                )}
+                {r.unallocated !== 0 && (
+                  <span className="text-amber-600 dark:text-amber-400">
+                    Sin imputar {fmt(r.unallocated)}
+                  </span>
+                )}
+                {r.applied_to_invoices === 0 &&
+                  r.applied_to_expenses === 0 &&
+                  r.on_account === 0 &&
+                  r.unallocated === 0 && <span>-</span>}
+              </div>
+            ),
             className: 'text-right',
           },
           {

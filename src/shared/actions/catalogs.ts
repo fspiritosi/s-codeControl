@@ -124,6 +124,29 @@ export const fetchIndustryTypes = async () => {
 
 // --- From employees/queries.ts ---
 
+/**
+ * Colapsa catálogos que mezclan la semilla global (`company_id: null`) con las
+ * copias por empresa: cuando ambas comparten nombre queda solo la de la empresa.
+ *
+ * Sin esto el select del form de empleado renderiza dos opciones idénticas
+ * ("OperativoOperativo" en el trigger, porque Radix concatena los `ItemText` de
+ * items con el mismo value) y el `find(o => o.name === valor)` que resuelve el
+ * id puede quedarse con el registro equivocado.
+ */
+const dedupeCompanyCatalog = <T extends { name: string | null; company_id: string | null }>(
+  rows: T[]
+): T[] => {
+  const byName = new Map<string, T>();
+  for (const row of rows) {
+    const key = (row.name ?? '').trim().toLowerCase();
+    const current = byName.get(key);
+    if (!current || (!current.company_id && row.company_id)) {
+      byName.set(key, row);
+    }
+  }
+  return [...byName.values()];
+};
+
 export const fetchHierarchy = async () => {
   const { companyId } = await getActionContext();
   try {
@@ -132,7 +155,7 @@ export const fetchHierarchy = async () => {
         ? { OR: [{ company_id: companyId }, { company_id: null }] }
         : undefined,
     });
-    return data ?? [];
+    return dedupeCompanyCatalog(data ?? []);
   } catch (error) {
     console.error('Error fetching hierarchy:', error);
     return [];
@@ -147,7 +170,7 @@ export const fetchAllWorkDiagrams = async () => {
         ? { OR: [{ company_id: companyId }, { company_id: null }] }
         : undefined,
     });
-    return data ?? [];
+    return dedupeCompanyCatalog(data ?? []);
   } catch (error) {
     console.error('Error fetching work diagrams:', error);
     return [];
@@ -220,10 +243,10 @@ export const fetchAllHierarchies = async () => {
           ? { OR: [{ company_id: companyId }, { company_id: null }] }
           : {}),
       },
-      select: { id: true, name: true },
+      select: { id: true, name: true, company_id: true },
       orderBy: { name: 'asc' },
     });
-    return data.map((h) => ({ id: h.id, name: h.name }));
+    return dedupeCompanyCatalog(data).map((h) => ({ id: h.id, name: h.name }));
   } catch (error) {
     console.error('Error fetching hierarchies:', error);
     return [];

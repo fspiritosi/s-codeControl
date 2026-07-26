@@ -21,6 +21,11 @@ import {
 } from '../../shared/payment-order-validators';
 import { CHECK_STATUS_LABELS } from '../../shared/validators';
 import { sendPaymentOrderPaidEmail } from './shared/email/sendPaymentOrderPaidEmail';
+import {
+  getCreditNoteAmountsByInvoice,
+  recalcPurchaseInvoiceStatusMany,
+} from '@/shared/lib/purchase-invoice-status';
+import { CREDIT_NOTE_VOUCHER_TYPES } from '@/shared/lib/purchase-invoice-balance';
 
 const columnMap: Record<string, string> = { status: 'status' };
 const textFilterColumns = ['full_number'];
@@ -335,14 +340,12 @@ export async function getPendingPurchaseInvoices(supplierId: string) {
 
   // Las notas de crédito no se imputan a una OP: se excluyen y descuentan el
   // saldo de su factura original.
-  const NC_TYPES = ['NOTA_CREDITO_A', 'NOTA_CREDITO_B', 'NOTA_CREDITO_C'];
-
   const invoices = await prisma.purchase_invoices.findMany({
     where: {
       company_id: companyId,
       supplier_id: supplierId,
       status: { notIn: ['CANCELLED'] },
-      voucher_type: { notIn: NC_TYPES as any },
+      voucher_type: { notIn: CREDIT_NOTE_VOUCHER_TYPES as any },
     },
     select: {
       id: true,
@@ -364,22 +367,7 @@ export async function getPendingPurchaseInvoices(supplierId: string) {
   });
 
   // Crédito de notas de crédito (confirmadas) por factura original.
-  const creditByInvoice = new Map<string, number>();
-  if (invoices.length > 0) {
-    const ncGroups = await prisma.purchase_invoices.groupBy({
-      by: ['original_invoice_id'],
-      where: {
-        company_id: companyId,
-        voucher_type: { in: NC_TYPES as any },
-        status: { notIn: ['DRAFT', 'CANCELLED'] },
-        original_invoice_id: { in: invoices.map((i) => i.id) },
-      },
-      _sum: { total: true },
-    });
-    for (const g of ncGroups) {
-      if (g.original_invoice_id) creditByInvoice.set(g.original_invoice_id, Number(g._sum.total ?? 0));
-    }
-  }
+  const creditByInvoice = await getCreditNoteAmountsByInvoice(invoices.map((i) => i.id));
 
   return invoices
     .map((inv) => {
@@ -567,6 +555,7 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
           create: parsed.data.items.map((i) => ({
             invoice_id: i.invoice_id || null,
             expense_id: i.expense_id || null,
+            is_on_account: i.is_on_account ?? false,
             amount: parseFloat(i.amount),
             discount_pct: Math.round((i.discount_pct ?? 0) * 100) / 100,
           })),
@@ -701,6 +690,7 @@ export async function updatePaymentOrder(id: string, data: PaymentOrderFormData)
             create: parsed.data.items.map((i) => ({
               invoice_id: i.invoice_id || null,
               expense_id: i.expense_id || null,
+              is_on_account: i.is_on_account ?? false,
               amount: parseFloat(i.amount),
             })),
           },
@@ -1029,35 +1019,9 @@ export async function markPaymentOrderAsPaid(id: string): Promise<{
         },
       });
 
-      for (const invoiceId of invoiceIds) {
-        const invoice = await tx.purchase_invoices.findUnique({
-          where: { id: invoiceId },
-          select: { id: true, total: true, status: true },
-        });
-        if (!invoice) continue;
-        if (invoice.status === 'CANCELLED') continue;
-
-        const aggregate = await tx.payment_order_items.aggregate({
-          where: {
-            invoice_id: invoiceId,
-            payment_order: { status: 'PAID' },
-          },
-          _sum: { amount: true },
-        });
-        const paidSum = Number(aggregate._sum.amount ?? 0);
-        const total = Number(invoice.total);
-
-        let nextStatus: 'PAID' | 'PARTIAL_PAID' | null = null;
-        if (paidSum >= total - 0.005) nextStatus = 'PAID';
-        else if (paidSum > 0) nextStatus = 'PARTIAL_PAID';
-
-        if (nextStatus && invoice.status !== nextStatus) {
-          await tx.purchase_invoices.update({
-            where: { id: invoiceId },
-            data: { status: nextStatus },
-          });
-        }
-      }
+      // El estado de cada factura se deriva con el criterio unificado:
+      // cobertura = pagos imputados + notas de crédito aplicadas.
+      await recalcPurchaseInvoiceStatusMany(invoiceIds, tx);
 
       // Actualizar status de gastos vinculados
       for (const expenseId of expenseIds) {
@@ -1142,6 +1106,8 @@ export async function cancelPaymentOrder(id: string) {
     });
     if (!order) return { error: 'Orden no encontrada' };
     if (order.status === 'CANCELLED') return { error: 'Ya está anulada' };
+    // Esto también cubre los pagos a cuenta: el saldo a favor solo nace de OPs
+    // pagadas, así que una OP cuyo crédito ya se imputó nunca llega hasta acá.
     if (order.status === 'PAID') return { error: 'No se puede anular una OP pagada' };
 
     const wasConfirmed = order.status === 'CONFIRMED';

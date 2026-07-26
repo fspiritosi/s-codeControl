@@ -11,6 +11,10 @@ import {
 } from '@/modules/purchasing/shared/validators';
 import { isCreditNoteVoucherType, CREDIT_NOTE_VOUCHER_TYPES } from '@/modules/purchasing/shared/types';
 import { recalcInvoicingStatusMany } from '@/modules/purchasing/shared/recalc-invoicing-status';
+import {
+  recalcPurchaseInvoiceStatus,
+  recalcPurchaseInvoiceStatusMany,
+} from '@/shared/lib/purchase-invoice-status';
 import type { DataTableSearchParams } from '@/shared/components/data-table/types';
 import {
   parseSearchParams,
@@ -580,6 +584,8 @@ export async function updatePurchaseInvoice(
         id: true,
         supplier_id: true,
         status: true,
+        voucher_type: true,
+        original_invoice_id: true,
         purchase_order_id: true,
         lines: { select: { purchase_order_line: { select: { order_id: true } } } },
       },
@@ -769,6 +775,18 @@ export async function updatePurchaseInvoice(
     }
     await recalcInvoicingStatusMany(affectedOrderIds);
 
+    // Editar puede cambiar el monto de una NC o reasignarla a otra factura:
+    // hay que recalcular la original anterior y la nueva. Si es una factura
+    // común, su propio estado depende del total, que también pudo cambiar.
+    const affectedInvoiceIds = new Set<string>();
+    if (existing.original_invoice_id) affectedInvoiceIds.add(existing.original_invoice_id);
+    if (creditNoteOriginalId) affectedInvoiceIds.add(creditNoteOriginalId);
+    if (!isCreditNoteVoucherType(data.voucher_type)) affectedInvoiceIds.add(invoiceId);
+    await recalcPurchaseInvoiceStatusMany(affectedInvoiceIds);
+    for (const affectedId of affectedInvoiceIds) {
+      revalidatePath(`/dashboard/purchasing/invoices/${affectedId}`);
+    }
+
     revalidatePath('/dashboard/purchasing');
     revalidatePath(`/dashboard/purchasing/invoices/${invoiceId}`);
     return { data: { id: invoiceId }, error: null };
@@ -854,6 +872,13 @@ export async function confirmPurchaseInvoice(id: string) {
     // Recalcular invoicing_status de todas las OCs afectadas (cabecera + líneas)
     // con el criterio unificado (verifica cantidades por línea y montos vs OC).
     await recalcInvoicingStatusMany(affectedOrderIds);
+
+    // Al confirmar una NC su crédito pasa a ser efectivo: la factura original
+    // puede quedar cubierta total o parcialmente sin que medie ninguna OP.
+    if (isCreditNoteVoucherType(invoice.voucher_type) && invoice.original_invoice_id) {
+      await recalcPurchaseInvoiceStatus(invoice.original_invoice_id);
+      revalidatePath(`/dashboard/purchasing/invoices/${invoice.original_invoice_id}`);
+    }
 
     revalidatePath('/dashboard/purchasing');
     return { error: null };
@@ -994,6 +1019,8 @@ export async function deletePurchaseInvoice(id: string) {
         id: true,
         full_number: true,
         status: true,
+        voucher_type: true,
+        original_invoice_id: true,
         purchase_order_id: true,
         lines: { select: { purchase_order_line: { select: { order_id: true } } } },
       },
@@ -1031,6 +1058,12 @@ export async function deletePurchaseInvoice(id: string) {
 
     // Recalcular el estado de las OCs que estaban vinculadas a la factura borrada.
     await recalcInvoicingStatusMany(affectedOrderIds);
+
+    // Al borrar una NC su crédito desaparece: la factura original vuelve a deber.
+    if (isCreditNoteVoucherType(invoice.voucher_type) && invoice.original_invoice_id) {
+      await recalcPurchaseInvoiceStatus(invoice.original_invoice_id);
+      revalidatePath(`/dashboard/purchasing/invoices/${invoice.original_invoice_id}`);
+    }
 
     revalidatePath('/dashboard/purchasing');
     return { error: null };

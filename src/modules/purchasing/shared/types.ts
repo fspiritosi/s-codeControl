@@ -43,12 +43,18 @@ export const VOUCHER_TYPE_LABELS: Record<string, string> = {
   RECIBO: 'Recibo',
 };
 
-/** Tipos de comprobante que son notas de crédito (restan saldo deudor). */
-export const CREDIT_NOTE_VOUCHER_TYPES = ['NOTA_CREDITO_A', 'NOTA_CREDITO_B', 'NOTA_CREDITO_C'] as const;
-
-export function isCreditNoteVoucherType(voucherType: string): boolean {
-  return (CREDIT_NOTE_VOUCHER_TYPES as readonly string[]).includes(voucherType);
-}
+/**
+ * Tipos de comprobante y helpers de NC/ND.
+ * La fuente única es `@/shared/lib/purchase-invoice-balance`: tesorería y
+ * proveedores usan las mismas constantes y no pueden importar de este módulo.
+ */
+export {
+  CREDIT_NOTE_VOUCHER_TYPES,
+  DEBIT_NOTE_VOUCHER_TYPES,
+  ACTIVE_CREDIT_NOTE_STATUSES,
+  isCreditNoteVoucherType,
+  isDebitNoteVoucherType,
+} from '@/shared/lib/purchase-invoice-balance';
 
 export const RECEIVING_NOTE_STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Borrador',
