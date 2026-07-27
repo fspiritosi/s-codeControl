@@ -18,7 +18,14 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { storage } from '@/shared/lib/storage';
 import SimpleDocument from '@/modules/documents/features/upload/components/SimpleDocument';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTrigger } from '@/shared/components/ui/alert-dialog';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/shared/components/ui/alert-dialog';
 import { Button, buttonVariants } from '@/shared/components/ui/button';
 import { CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Skeleton } from '@/shared/components/ui/skeleton';
@@ -194,34 +201,35 @@ export const DocumentationDrawer = ({ resource, document, id }: Props) => {
                     {doc?.id_document_types?.name}
                   </p>
                 </div>
-                {doc.state === 'pendiente' && (
+                {doc.state === 'pendiente' && role !== 'Invitado' && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      {role !== 'Invitado' && (
-                        <Button
-                          onClick={() => {
-                            setDefaultDocumentId(doc?.id_document_types?.id);
-                          }}
-                        >
-                          Subir
-                        </Button>
-                      )}
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          setDefaultDocumentId(doc?.id_document_types?.id);
+                        }}
+                      >
+                        Subir
+                      </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent asChild>
+                    {/* Sin asChild: AlertDialogContent de Radix pasa dos hijos internos
+                        (Slottable + DescriptionWarning) y el Slot rompe con Children.only. */}
+                    <AlertDialogContent>
                       <AlertDialogHeader>
-                        <div className="max-h-[90vh] overflow-y-auto">
-                          <div className="space-y-3">
-                            <div>
-                              <SimpleDocument
-                                resource={resource}
-                                handleOpen={() => handleOpen()}
-                                defaultDocumentId={defaultDocumentId}
-                                document={document}
-                              />
-                            </div>
-                          </div>
-                        </div>
+                        <AlertDialogTitle>Subir documento</AlertDialogTitle>
+                        <AlertDialogDescription className="sr-only">
+                          Formulario para cargar el documento pendiente
+                        </AlertDialogDescription>
                       </AlertDialogHeader>
+                      <div className="max-h-[70vh] space-y-3 overflow-y-auto">
+                        <SimpleDocument
+                          resource={resource}
+                          handleOpen={() => handleOpen()}
+                          defaultDocumentId={defaultDocumentId}
+                          document={document}
+                        />
+                      </div>
                     </AlertDialogContent>
                   </AlertDialog>
                 )}
