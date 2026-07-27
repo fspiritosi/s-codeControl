@@ -623,28 +623,36 @@ export const ColumnsMonthlyEquipment: ColumnDef<Colum>[] = [
       const handleOpen = () => setOpen(!open);
 
       if (isNoPresented) {
+        // El trigger usa asChild: si no hay botón que renderizar (Invitado), Radix
+        // recibiría `false` y rompería con React.Children.only.
+        if (role === 'Invitado') return null;
+
         return (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              {role !== 'Invitado' && <Button variant="outline">Subir documento</Button>}
+              {/* type="button": esta tabla vive dentro del <form> de la ficha del
+                  equipo y sin esto el click dispara su submit. */}
+              <Button variant="outline" type="button">
+                Subir documento
+              </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent asChild>
+            {/* Sin asChild: AlertDialogContent de Radix pasa dos hijos internos
+                (Slottable + DescriptionWarning) y el Slot rompe con Children.only. */}
+            <AlertDialogContent>
               <AlertDialogHeader>
-                <div className="max-h-[90vh] overflow-y-auto">
-                  <div className="space-y-3">
-                    <div>
-                      <SimpleDocument
-                        resource={'equipo'}
-                        //change
-                        handleOpen={() => handleOpen()}
-                        defaultDocumentId={row.original.id_document_types}
-                        // document={document}
-                        numberDocument={row.original.document_number || (row.original as any).vehicle_id}
-                      />
-                    </div>
-                  </div>
-                </div>
+                <AlertDialogTitle>Subir documento</AlertDialogTitle>
+                <AlertDialogDescription className="sr-only">
+                  Formulario para cargar el documento pendiente
+                </AlertDialogDescription>
               </AlertDialogHeader>
+              <div className="max-h-[70vh] space-y-3 overflow-y-auto">
+                <SimpleDocument
+                  resource={'equipo'}
+                  handleOpen={() => handleOpen()}
+                  defaultDocumentId={row.original.id_document_types}
+                  numberDocument={row.original.document_number || (row.original as any).vehicle_id}
+                />
+              </div>
             </AlertDialogContent>
           </AlertDialog>
         );
