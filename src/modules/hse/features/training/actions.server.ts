@@ -1,11 +1,13 @@
 'use server';
 
 import { fetchCurrentUser } from '@/shared/actions/auth';
+import { prisma } from '@/shared/lib/prisma';
 import { storageServer } from '@/shared/lib/storage-server';
 // TODO: Phase 8 — migrate .from() queries to Prisma server actions and .auth to NextAuth
 import { supabaseServer } from '@/shared/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
+import { validateForPublish, type TrainingRecordData } from './shared/record-fields';
 
 /**
  * Crea una nueva capacitación
@@ -1385,6 +1387,22 @@ export const updateTrainingStatus = async (trainingId: string, status: 'Borrador
   try {
     const supabase = (await supabaseServer()) as any;
 
+    // Publicar exige los datos del acta cargados (tsk-540). La validación vive
+    // acá y no solo en el diálogo porque también se publica desde el listado.
+    if (status === 'Publicado') {
+      const record = await fetchTrainingRecordFields(trainingId);
+      const errors = record
+        ? validateForPublish(record)
+        : ['No se encontró la capacitación'];
+
+      if (errors.length) {
+        return {
+          success: false,
+          error: `No se puede publicar la capacitación: ${errors.join('. ')}`,
+        };
+      }
+    }
+
     const { error: updateError } = await supabase.from('trainings').update({ status }).eq('id', trainingId);
 
     if (updateError) {
@@ -1500,3 +1518,151 @@ export const deleteTraining = async (trainingId: string) => {
 //     };
 //   }
 // };
+
+// ============================================================
+// Registro de capacitación — datos del acta (tsk-540)
+// ============================================================
+
+const getCompanyId = async () => (await cookies()).get('actualComp')?.value ?? null;
+
+/**
+ * Capacitadores de la empresa. Antes el capacitador era una imagen pegada en el
+ * Word; el cliente anticipó que puede cambiar, así que es un catálogo.
+ */
+export const fetchTrainingInstructors = async () => {
+  const company_id = await getCompanyId();
+  if (!company_id) return [];
+
+  return prisma.training_instructors.findMany({
+    where: { company_id, is_active: true },
+    select: { id: true, full_name: true, position: true, license_numbers: true, signature_path: true },
+    orderBy: { full_name: 'asc' },
+  });
+};
+
+export const createTrainingInstructor = async (data: {
+  full_name: string;
+  position?: string | null;
+  license_numbers?: string | null;
+  signature_path?: string | null;
+}) => {
+  try {
+    const company_id = await getCompanyId();
+    if (!company_id) return { success: false as const, error: 'No se ha seleccionado una empresa' };
+
+    if (!data.full_name?.trim()) {
+      return { success: false as const, error: 'El nombre del capacitador es obligatorio' };
+    }
+
+    const instructor = await prisma.training_instructors.create({
+      data: {
+        company_id,
+        full_name: data.full_name.trim(),
+        position: data.position?.trim() || null,
+        license_numbers: data.license_numbers?.trim() || null,
+        signature_path: data.signature_path || null,
+      },
+    });
+
+    revalidatePath('/dashboard/hse');
+    return { success: true as const, data: instructor };
+  } catch (error: any) {
+    console.error('Error al crear capacitador:', error);
+    return { success: false as const, error: `Error al crear el capacitador: ${error.message}` };
+  }
+};
+
+/**
+ * Guarda los campos del acta. Si la capacitación está publicada (o se está
+ * publicando), exige los datos que el acta necesita: la planilla en papel aclara
+ * que no se deben dejar campos en blanco.
+ */
+export const updateTrainingRecordFields = async (
+  trainingId: string,
+  data: TrainingRecordData,
+  options: { willBePublished?: boolean } = {}
+) => {
+  try {
+    const company_id = await getCompanyId();
+    if (!company_id) return { success: false as const, error: 'No se ha seleccionado una empresa' };
+
+    const current = await prisma.trainings.findFirst({
+      where: { id: trainingId, company_id },
+      select: { status: true },
+    });
+
+    if (!current) return { success: false as const, error: 'No se encontró la capacitación' };
+
+    const isPublished = options.willBePublished ?? current.status === 'Publicado';
+    if (isPublished) {
+      const errors = validateForPublish(data);
+      if (errors.length) {
+        return { success: false as const, error: errors.join('. ') };
+      }
+    }
+
+    await prisma.trainings.update({
+      where: { id: trainingId },
+      data: {
+        dictated_at: data.dictated_at ? new Date(data.dictated_at) : null,
+        location: data.location,
+        instructor_id: data.instructor_id,
+        estimated_duration_minutes: data.estimated_duration_minutes,
+        topics: data.topics,
+        teaching_resources: data.teaching_resources,
+        material_delivered: data.material_delivered,
+        // Si no se entregó material, el detalle no aplica.
+        material_delivered_detail: data.material_delivered ? data.material_delivered_detail : null,
+        evaluation_methods: data.evaluation_methods,
+        effectiveness_method: data.effectiveness_method,
+        requires_new_actions: data.requires_new_actions,
+        new_actions_detail: data.requires_new_actions ? data.new_actions_detail : null,
+        validity_months: data.validity_months,
+        updated_at: new Date(),
+      },
+    });
+
+    revalidatePath('/dashboard/hse');
+    revalidatePath(`/dashboard/hse/detail/${trainingId}`);
+
+    return { success: true as const };
+  } catch (error: any) {
+    console.error('Error al guardar los datos del acta:', error);
+    return { success: false as const, error: `Error al guardar los datos del acta: ${error.message}` };
+  }
+};
+
+/**
+ * Datos del acta de una capacitación, para hidratar el formulario de edición.
+ */
+export const fetchTrainingRecordFields = async (trainingId: string): Promise<TrainingRecordData | null> => {
+  const company_id = await getCompanyId();
+  if (!company_id) return null;
+
+  const training = await prisma.trainings.findFirst({
+    where: { id: trainingId, company_id },
+    select: {
+      dictated_at: true,
+      location: true,
+      instructor_id: true,
+      estimated_duration_minutes: true,
+      topics: true,
+      teaching_resources: true,
+      material_delivered: true,
+      material_delivered_detail: true,
+      evaluation_methods: true,
+      effectiveness_method: true,
+      requires_new_actions: true,
+      new_actions_detail: true,
+      validity_months: true,
+    },
+  });
+
+  if (!training) return null;
+
+  return {
+    ...training,
+    // El input date del formulario espera yyyy-MM-dd.
+    dictated_at: training.dictated_at ? training.dictated_at.toISOString().split('T')[0] : null,
+  };
+};
