@@ -21,6 +21,9 @@ import {
 /** Cliente Prisma o el `tx` de una transacción. */
 type PrismaClientLike = typeof prisma | any;
 
+/** Estados en los que una factura todavía admite recálculo de pago. */
+const RECALCULABLE_STATUSES = ['CONFIRMED', 'PARTIAL_PAID', 'PAID'];
+
 /** Crédito de NC activas aplicable a cada factura original. */
 export async function getCreditNoteAmountsByInvoice(
   invoiceIds: string[],
@@ -81,7 +84,7 @@ export async function recalcPurchaseInvoiceStatus(
     select: { id: true, total: true, status: true, voucher_type: true },
   });
   if (!invoice) return null;
-  if (!['CONFIRMED', 'PARTIAL_PAID', 'PAID'].includes(invoice.status)) return invoice.status;
+  if (!RECALCULABLE_STATUSES.includes(invoice.status)) return invoice.status;
   if (isCreditNoteVoucherType(invoice.voucher_type)) return invoice.status;
 
   const [paidAgg, creditByInvoice, appliedCreditByInvoice] = await Promise.all([
@@ -106,12 +109,73 @@ export async function recalcPurchaseInvoiceStatus(
   return newStatus;
 }
 
+/**
+ * Versión en lote: resuelve N facturas con un número fijo de consultas en vez de
+ * repetir `recalcPurchaseInvoiceStatus` una vez por factura.
+ *
+ * El bucle anterior costaba ~4 consultas por factura (findUnique + aggregate +
+ * 2 groupBy) y las encadenaba de forma secuencial. Dentro de la transacción de
+ * `markPaymentOrderAsPaid` eso agotaba el timeout de 5 s de Prisma: una OP con
+ * 13 facturas superaba los 5300 ms y abortaba en el `groupBy` de
+ * `supplier_credit_applications`. Ahora son 4 consultas en total —
+ * `getCreditNoteAmountsByInvoice` y `getAppliedCreditByInvoice` ya recibían un
+ * array— más un `updateMany` por estado destino (a lo sumo tres).
+ */
 export async function recalcPurchaseInvoiceStatusMany(
   invoiceIds: Iterable<string>,
   client: PrismaClientLike = prisma
 ): Promise<void> {
   const unique = Array.from(new Set(invoiceIds));
-  for (const id of unique) {
-    await recalcPurchaseInvoiceStatus(id, client);
+  if (unique.length === 0) return;
+
+  const invoices = await client.purchase_invoices.findMany({
+    where: { id: { in: unique } },
+    select: { id: true, total: true, status: true, voucher_type: true },
+  });
+
+  // Mismo criterio que la versión unitaria: solo facturas en estado pagable y
+  // nunca una NC, que no se paga sino que se aplica.
+  const targets = (
+    invoices as { id: string; total: unknown; status: string; voucher_type: string }[]
+  ).filter(
+    (inv) => RECALCULABLE_STATUSES.includes(inv.status) && !isCreditNoteVoucherType(inv.voucher_type)
+  );
+  if (targets.length === 0) return;
+
+  const targetIds = targets.map((inv) => inv.id);
+
+  const [paidGroups, creditByInvoice, appliedCreditByInvoice] = await Promise.all([
+    client.payment_order_items.groupBy({
+      by: ['invoice_id'],
+      where: { invoice_id: { in: targetIds }, payment_order: { status: 'PAID' } },
+      _sum: { amount: true },
+    }),
+    getCreditNoteAmountsByInvoice(targetIds, client),
+    getAppliedCreditByInvoice(targetIds, client),
+  ]);
+
+  const paidByInvoice = new Map<string, number>();
+  for (const g of paidGroups as { invoice_id: string | null; _sum: { amount: unknown } }[]) {
+    if (g.invoice_id) paidByInvoice.set(g.invoice_id, Number(g._sum.amount ?? 0));
+  }
+
+  // Agrupar por estado destino: como mucho un updateMany por estado, en lugar
+  // de un update por factura.
+  const idsByNewStatus = new Map<string, string[]>();
+  for (const inv of targets) {
+    const newStatus = derivePurchaseInvoiceStatus({
+      total: Number(inv.total),
+      paid: paidByInvoice.get(inv.id) ?? 0,
+      creditNotes: creditByInvoice.get(inv.id) ?? 0,
+      creditApplied: appliedCreditByInvoice.get(inv.id) ?? 0,
+    });
+    if (newStatus === inv.status) continue;
+    const pending = idsByNewStatus.get(newStatus);
+    if (pending) pending.push(inv.id);
+    else idsByNewStatus.set(newStatus, [inv.id]);
+  }
+
+  for (const [status, ids] of idsByNewStatus) {
+    await client.purchase_invoices.updateMany({ where: { id: { in: ids } }, data: { status } });
   }
 }

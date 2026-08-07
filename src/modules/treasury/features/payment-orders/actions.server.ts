@@ -1023,37 +1023,52 @@ export async function markPaymentOrderAsPaid(id: string): Promise<{
       // cobertura = pagos imputados + notas de crédito aplicadas.
       await recalcPurchaseInvoiceStatusMany(invoiceIds, tx);
 
-      // Actualizar status de gastos vinculados
-      for (const expenseId of expenseIds) {
-        const expense = await tx.expenses.findUnique({
-          where: { id: expenseId },
-          select: { id: true, amount: true, status: true },
-        });
-        if (!expense) continue;
-        if (expense.status === 'CANCELLED') continue;
+      // Actualizar status de gastos vinculados. En lote por el mismo motivo que
+      // las facturas: un gasto por iteración costaba findUnique + aggregate +
+      // update y hacía crecer la transacción de forma lineal.
+      if (expenseIds.length > 0) {
+        const [expenses, paidGroups] = await Promise.all([
+          tx.expenses.findMany({
+            where: { id: { in: expenseIds } },
+            select: { id: true, amount: true, status: true },
+          }),
+          tx.payment_order_items.groupBy({
+            by: ['expense_id'],
+            where: { expense_id: { in: expenseIds }, payment_order: { status: 'PAID' } },
+            _sum: { amount: true },
+          }),
+        ]);
 
-        const aggregate = await tx.payment_order_items.aggregate({
-          where: {
-            expense_id: expenseId,
-            payment_order: { status: 'PAID' },
-          },
-          _sum: { amount: true },
-        });
-        const paidSum = Number(aggregate._sum.amount ?? 0);
-        const total = Number(expense.amount);
+        const paidByExpense = new Map<string, number>();
+        for (const g of paidGroups) {
+          if (g.expense_id) paidByExpense.set(g.expense_id, Number(g._sum.amount ?? 0));
+        }
 
-        let nextStatus: 'PAID' | 'PARTIAL_PAID' | null = null;
-        if (paidSum >= total - 0.005) nextStatus = 'PAID';
-        else if (paidSum > 0) nextStatus = 'PARTIAL_PAID';
+        const idsByNextStatus = new Map<'PAID' | 'PARTIAL_PAID', string[]>();
+        for (const expense of expenses) {
+          if (expense.status === 'CANCELLED') continue;
 
-        if (nextStatus && expense.status !== nextStatus) {
-          await tx.expenses.update({
-            where: { id: expenseId },
-            data: { status: nextStatus },
-          });
+          const paidSum = paidByExpense.get(expense.id) ?? 0;
+          const total = Number(expense.amount);
+
+          let nextStatus: 'PAID' | 'PARTIAL_PAID' | null = null;
+          if (paidSum >= total - 0.005) nextStatus = 'PAID';
+          else if (paidSum > 0) nextStatus = 'PARTIAL_PAID';
+
+          if (!nextStatus || expense.status === nextStatus) continue;
+          const pending = idsByNextStatus.get(nextStatus);
+          if (pending) pending.push(expense.id);
+          else idsByNextStatus.set(nextStatus, [expense.id]);
+        }
+
+        for (const [status, ids] of idsByNextStatus) {
+          await tx.expenses.updateMany({ where: { id: { in: ids } }, data: { status } });
         }
       }
-    });
+    },
+    // El cuerpo ya no crece con la cantidad de ítems, pero el default de Prisma
+    // (5 s) deja poco margen ante una OP muy grande o una base con latencia alta.
+    { timeout: 30_000, maxWait: 10_000 });
 
     // Mail al proveedor (fuera de la transacción)
     let emailStatus: 'SENT' | 'NO_EMAIL' | 'FAILED' = 'FAILED';
