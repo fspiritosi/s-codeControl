@@ -11,6 +11,7 @@ export {
 // Create / mutate actions
 export {
   UpdateVehicle,
+  updateVehicleKilometerFromChecklist,
   insertVehicle,
   updateVehicleById,
   updateVehicleByIdAndCompany,

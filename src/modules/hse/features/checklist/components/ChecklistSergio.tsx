@@ -5,8 +5,10 @@ import { Input } from '@/shared/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 
-import { UpdateVehicle } from '@/modules/equipment/features/create/actions.server';
+import { updateVehicleKilometerFromChecklist } from '@/modules/equipment/features/create/actions.server';
 import { CreateNewFormAnswer } from '@/modules/forms/features/answers/actions.server';
+import { missingFieldsMessage, parseKilometraje, scrollToFirstInvalidField } from '@/shared/lib/form-errors';
+import { FormErrorSummary } from './FormErrorSummary';
 import { cn } from '@/shared/lib/utils';
 import { useLoggedUserStore } from '@/shared/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,7 +16,7 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -154,6 +156,7 @@ export default function VehicleInspectionChecklist({
   const [activeTab, setActiveTab] = useState('luces');
   const params = useParams();
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   // const params = new URLSearchParams(searchParams as any);
 
   //   'equipments?.find((equipment) => equipment.value === default_equipment_id)',
@@ -179,25 +182,60 @@ export default function VehicleInspectionChecklist({
             chofer: currentUser?.[0].fullname?.toLocaleUpperCase(),
           },
   });
+  // Los ítems viven repartidos en pestañas, así que además de avisar hay que
+  // abrir la pestaña donde está el error: si no, el usuario ve el toast pero no
+  // encuentra qué le falta.
+  const irAlPrimerError = (errors: typeof form.formState.errors = form.formState.errors) => {
+    const erroresPorSeccion = errors as Record<string, unknown>;
+    const seccionConError = Object.keys(checklistItems).find((section) => erroresPorSeccion[section]);
+
+    if (seccionConError) {
+      setActiveTab(seccionConError);
+    }
+
+    // Radix desmonta el contenido de las pestañas ocultas, así que el campo no
+    // existe en el DOM hasta que la pestaña nueva se pinta. Dos frames esperan
+    // ese pintado de forma determinista.
+    requestAnimationFrame(() => requestAnimationFrame(() => scrollToFirstInvalidField(formRef.current)));
+  };
+
+  const onInvalid = (errors: typeof form.formState.errors) => {
+    toast.error(missingFieldsMessage(errors));
+    irAlPrimerError(errors);
+  };
+
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     const equipment = equipments?.find((equipment) => equipment.value === data.movil);
-    //Si el kilometraje es menor al actual, marcar un error y no permitir guardar
-    if (equipment?.intern_number && Number(data.kilometraje) < Number(equipment.kilometer)) {
-      form.setError('kilometraje', {
-        type: 'manual',
-        message: `El kilometraje no puede ser menor al actual ${equipment.kilometer}`,
-      });
+
+    const kilometraje = parseKilometraje(String(data.kilometraje ?? ''));
+
+    if ('error' in kilometraje) {
+      form.setError('kilometraje', { type: 'manual', message: kilometraje.error }, { shouldFocus: true });
+      toast.error(kilometraje.error);
+      scrollToFirstInvalidField(formRef.current);
       return;
     }
-    toast.promise(CreateNewFormAnswer(resetQrSelection ? form_Info[0].id : (params.id as string), data), {
+
+    //Si el kilometraje es menor al actual, marcar un error y no permitir guardar
+    if (equipment?.intern_number && kilometraje.value < Number(equipment.kilometer)) {
+      const message = `El kilometraje no puede ser menor al actual ${equipment.kilometer}`;
+      form.setError('kilometraje', { type: 'manual', message }, { shouldFocus: true });
+      toast.error(message);
+      scrollToFirstInvalidField(formRef.current);
+      return;
+    }
+
+    const answer = { ...data, kilometraje: kilometraje.normalized };
+
+    toast.promise(CreateNewFormAnswer(resetQrSelection ? form_Info[0].id : (params.id as string), answer), {
       loading: 'Guardando...',
       success: 'Checklist guardado correctamente',
       error: 'Ocurrió un error al guardar el checklist',
     });
 
     //Comparar el kilometraje con el del equipo y si es mayor actualizarlo
-    if (equipment && Number(data.kilometraje) > Number(equipment.kilometer)) {
-      await UpdateVehicle(equipment.value, { kilometer: data.kilometraje });
+    if (equipment && kilometraje.value > Number(equipment.kilometer)) {
+      await updateVehicleKilometerFromChecklist(equipment.value, kilometraje.normalized);
     }
 
     router.refresh();
@@ -335,7 +373,7 @@ export default function VehicleInspectionChecklist({
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form ref={formRef} onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
@@ -423,7 +461,7 @@ export default function VehicleInspectionChecklist({
                   <FormItem>
                     <FormLabel>KILOMETRAJE</FormLabel>
                     <FormControl>
-                      <Input disabled={defaultAnswer?.length ? true : false} {...field} />
+                      <Input disabled={defaultAnswer?.length ? true : false} inputMode="numeric" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -538,15 +576,16 @@ export default function VehicleInspectionChecklist({
               )}
             />
 
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-              {defaultAnswer?.length ? (
-                false
-              ) : (
-                <Button type="submit" className="w-full sm:w-auto">
-                  Guardar Checklist
-                </Button>
-              )}
-            </div>
+            {defaultAnswer?.length ? null : (
+              <div className="flex flex-col gap-3">
+                <FormErrorSummary control={form.control} onGoToFirstError={irAlPrimerError} />
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+                  <Button type="submit" className="w-full sm:w-auto">
+                    Guardar Checklist
+                  </Button>
+                </div>
+              </div>
+            )}
           </form>
         </Form>
       </CardContent>
