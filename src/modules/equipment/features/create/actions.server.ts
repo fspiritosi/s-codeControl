@@ -2,6 +2,8 @@
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
 import { ensurePendingDocumentsForEquipment } from '@/shared/lib/documentAlerts';
+import { supabaseServer } from '@/shared/lib/supabase/server';
+import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 
 export const UpdateVehicle = async (vehicleId: string, vehicleData: any) => {
@@ -15,6 +17,80 @@ export const UpdateVehicle = async (vehicleId: string, vehicleData: any) => {
     await ensurePendingDocumentsForEquipment(vehicleId);
   } catch (error) {
     console.error(error);
+  }
+};
+
+/**
+ * Actualiza el kilometraje desde un checklist.
+ *
+ * No pasa por `UpdateVehicle` a propósito: esa acción aborta cuando no hay
+ * cookie `actualComp`, que es siempre el caso en el flujo público de QR
+ * (/maintenance/[id]), donde el chofer nunca tuvo una empresa seleccionada. El
+ * resultado era que el kilometraje del equipo nunca se actualizaba con lo que
+ * cargaban los choferes.
+ *
+ * Como una server action es un endpoint público, acá se valida a mano lo que
+ * `actualComp` no validaba: que quien la llama esté identificado (empleado por
+ * CUIL o usuario con sesión) y que pertenezca a la empresa dueña del equipo.
+ */
+export const updateVehicleKilometerFromChecklist = async (vehicleId: string, kilometer: string) => {
+  if (!/^\d+$/.test(kilometer)) {
+    return { error: 'El kilometraje debe ser un número entero' };
+  }
+
+  try {
+    const cookiesStore = await cookies();
+    const empleadoId = cookiesStore.get('empleado_id')?.value;
+
+    const supabase = await supabaseServer();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!empleadoId && !user?.id) {
+      return { error: 'No autorizado' };
+    }
+
+    const vehicle = await prisma.vehicles.findUnique({
+      where: { id: vehicleId },
+      select: { company_id: true },
+    });
+
+    if (!vehicle?.company_id) {
+      return { error: 'Equipo inexistente' };
+    }
+
+    const perteneceALaEmpresa = empleadoId
+      ? Boolean(
+          await prisma.employees.findFirst({
+            where: { id: empleadoId, company_id: vehicle.company_id },
+            select: { id: true },
+          })
+        )
+      : Boolean(
+          (await prisma.company.findFirst({
+            where: { id: vehicle.company_id, owner_id: user!.id },
+            select: { id: true },
+          })) ??
+            (await prisma.share_company_users.findFirst({
+              where: { company_id: vehicle.company_id, profile_id: user!.id },
+              select: { id: true },
+            }))
+        );
+
+    if (!perteneceALaEmpresa) {
+      return { error: 'No autorizado' };
+    }
+
+    await prisma.vehicles.update({
+      where: { id: vehicleId },
+      data: { kilometer },
+    });
+
+    return { error: null };
+  } catch (error) {
+    console.error('Error updating vehicle kilometer from checklist:', error);
+    return { error: String(error) };
   }
 };
 
