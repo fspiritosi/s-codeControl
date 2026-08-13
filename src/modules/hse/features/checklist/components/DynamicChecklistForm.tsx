@@ -1,7 +1,9 @@
 'use client';
 
-import { UpdateVehicle } from '@/modules/equipment/features/create/actions.server';
+import { updateVehicleKilometerFromChecklist } from '@/modules/equipment/features/create/actions.server';
 import { CreateNewFormAnswer } from '@/modules/forms/features/answers/actions.server';
+import { missingFieldsMessage, parseKilometraje, scrollToFirstInvalidField } from '@/shared/lib/form-errors';
+import { FormErrorSummary } from './FormErrorSummary';
 import { PDFPreviewDialog } from '@/shared/components/pdf/PDFPreviewDialog';
 import dynamic from 'next/dynamic';
 // Carga diferida: react-pdf (~478KB) solo se descarga al previsualizar/generar el PDF.
@@ -26,7 +28,7 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
@@ -267,6 +269,7 @@ export default function DynamicChecklistForm({
   const [formSchema] = useState(() => generateSchema(config));
   const params = useParams();
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: defaultAnswer?.length
@@ -295,27 +298,46 @@ export default function DynamicChecklistForm({
   const actualCompany = useLoggedUserStore((state) => state.actualCompany);
 
 
+  // Sin esto, un checklist incompleto no da ninguna señal: el submit se corta en
+  // la validación y los radios de Radix no reciben foco, así que la pantalla ni
+  // se mueve.
+  const onInvalid = (errors: typeof form.formState.errors) => {
+    toast.error(missingFieldsMessage(errors));
+    scrollToFirstInvalidField(formRef.current);
+  };
+
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     //Comparar el kilometraje con el del equipo y si es mayor actualizarlo
     const equipment = equipments?.find((equipment) => equipment.value === data.movil);
 
-    //Si el kilometraje es menor al actual, marcar un error y no permitir guardar
-    if (equipment?.intern_number && Number(data.kilometraje) < Number(equipment.kilometer)) {
-      form.setError('kilometraje', {
-        type: 'manual',
-        message: `El kilometraje no puede ser menor al actual ${equipment.kilometer}`,
-      });
+    const kilometraje = parseKilometraje(String(data.kilometraje ?? ''));
+
+    if ('error' in kilometraje) {
+      form.setError('kilometraje', { type: 'manual', message: kilometraje.error }, { shouldFocus: true });
+      toast.error(kilometraje.error);
+      scrollToFirstInvalidField(formRef.current);
       return;
     }
 
-    toast.promise(CreateNewFormAnswer(resetQrSelection ? form_Info[0].id : (params.id as string), data), {
+    //Si el kilometraje es menor al actual, marcar un error y no permitir guardar
+    if (equipment?.intern_number && kilometraje.value < Number(equipment.kilometer)) {
+      const message = `El kilometraje no puede ser menor al actual ${equipment.kilometer}`;
+      form.setError('kilometraje', { type: 'manual', message }, { shouldFocus: true });
+      toast.error(message);
+      scrollToFirstInvalidField(formRef.current);
+      return;
+    }
+
+    const answer = { ...data, kilometraje: kilometraje.normalized };
+
+    toast.promise(CreateNewFormAnswer(resetQrSelection ? form_Info[0].id : (params.id as string), answer), {
       loading: 'Guardando...',
       success: 'Checklist guardado correctamente',
       error: 'Ocurrió un error al guardar el checklist',
     });
 
-    if (equipment?.intern_number && Number(data.kilometraje) > Number(equipment.kilometer)) {
-      await UpdateVehicle(equipment.value, { kilometer: data.kilometraje });
+    if (equipment?.intern_number && kilometraje.value > Number(equipment.kilometer)) {
+      await updateVehicleKilometerFromChecklist(equipment.value, kilometraje.normalized);
     } //! mover a la funcion create
 
     router.refresh();
@@ -392,7 +414,7 @@ export default function DynamicChecklistForm({
       </div>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form ref={formRef} onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
@@ -477,6 +499,9 @@ export default function DynamicChecklistForm({
                           <FormControl>
                             <Input
                               disabled={item.disabled ? item.disabled : defaultAnswer?.length ? true : false}
+                              // Teclado numérico en el celular: es donde aparecen los
+                              // kilometrajes tipeados con separador de miles.
+                              inputMode={item.id === 'kilometraje' ? 'numeric' : undefined}
                               {...field}
                             />
                           </FormControl>
@@ -573,8 +598,11 @@ export default function DynamicChecklistForm({
               )}
             />
             {!defaultAnswer?.length ? (
-              <div className="flex justify-end">
-                <Button type="submit">Guardar Checklist</Button>
+              <div className="flex flex-col gap-3">
+                <FormErrorSummary control={form.control} onGoToFirstError={() => scrollToFirstInvalidField(formRef.current)} />
+                <div className="flex justify-end">
+                  <Button type="submit">Guardar Checklist</Button>
+                </div>
               </div>
             ) : null}
           </form>
