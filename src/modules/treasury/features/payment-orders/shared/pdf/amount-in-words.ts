@@ -1,7 +1,16 @@
 /**
  * Convierte un importe numérico a su representación textual en español (Argentina).
- * Formato: "PESOS <enteros> CON <centavos>/100"
+ * Formato: "<MONEDA> <enteros> CON <centavos>/100"
+ *
+ * La moneda es un parámetro desde que las órdenes de pago son multimoneda
+ * (tsk-576): antes decía "PESOS" siempre, así que una orden en dólares salía
+ * con el importe en letras equivocado.
  */
+
+const CURRENCY_WORDS: Record<string, string> = {
+  ARS: 'PESOS',
+  USD: 'DÓLARES',
+};
 
 const UNITS = [
   '',
@@ -84,11 +93,12 @@ function integerToWords(n: number): string {
   return rest === 0 ? millionsText : `${millionsText} ${belowMillion(rest)}`;
 }
 
-export function amountToSpanishWords(amount: number): string {
+export function amountToSpanishWords(amount: number, currency = 'ARS'): string {
   const safe = Math.abs(Math.round(amount * 100) / 100);
   const integerPart = Math.floor(safe);
   const cents = Math.round((safe - integerPart) * 100);
   const words = integerToWords(integerPart).replace(/\s+/g, ' ').trim();
   const centsStr = String(cents).padStart(2, '0');
-  return `PESOS ${words} CON ${centsStr}/100`;
+  const currencyWord = CURRENCY_WORDS[currency] ?? currency;
+  return `${currencyWord} ${words} CON ${centsStr}/100`;
 }

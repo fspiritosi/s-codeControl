@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatDateUTC } from '@/shared/lib/utils/formatters';
@@ -43,6 +43,13 @@ import {
   getSupplierPaymentMethodsForPaymentOrder,
 } from '../actions.server';
 import { PAYMENT_METHOD_LABELS } from '../../../shared/validators';
+import {
+  BASE_CURRENCY,
+  convertAmount,
+  currencySymbol,
+  effectiveRate,
+  SUPPORTED_CURRENCIES,
+} from '@/shared/lib/currency-conversion';
 import { CheckPaymentField } from './CheckPaymentField';
 import { formatCbu } from './CopyableCbu';
 
@@ -77,6 +84,9 @@ interface InvoiceOption {
   total: number;
   already_paid: number;
   remaining: number;
+  /** total, already_paid y remaining están en esta moneda (tsk-576). */
+  currency: string;
+  exchange_rate: number;
 }
 
 interface ExpenseOption {
@@ -102,7 +112,12 @@ interface ItemDraft {
   invoice_id: string | null;
   expense_id: string | null;
   invoice_label: string | null;
+  /** Importe en la moneda del comprobante (tsk-576). */
   amount: string;
+  /** Moneda del comprobante. Gastos y pagos a cuenta van siempre en ARS. */
+  currency: string;
+  /** Tipo de cambio del comprobante, usado para convertir a la moneda de la OP. */
+  exchange_rate: number;
   // Importe base (saldo de la factura/gasto) antes de aplicar el descuento.
   base_amount: string;
   // % de descuento aplicado a esta línea (0-100). El amount ya es el neto.
@@ -210,6 +225,9 @@ export interface PaymentOrderEditData {
   id: string;
   supplier_id: string | null;
   date: string;
+  /** Moneda de la orden (tsk-576). Las órdenes viejas no la tienen: caen a ARS. */
+  currency?: string | null;
+  exchange_rate?: number | null;
   scheduled_payment_date: string | null;
   notes: string | null;
   full_number: string;
@@ -218,6 +236,8 @@ export interface PaymentOrderEditData {
     expense_id: string | null;
     invoice_label: string | null;
     amount: string;
+    currency?: string | null;
+    exchange_rate?: number | null;
     discount_pct?: number;
     is_on_account?: boolean;
   }>;
@@ -310,6 +330,17 @@ export function NewPaymentOrderForm({
     initialData?.supplier_id ?? pendingDraft?.supplierId ?? ''
   );
   const [date, setDate] = useState(initialData?.date ?? today());
+  // La orden se arma en pesos por defecto aunque la factura del proveedor esté
+  // en dólares; el usuario puede cambiarla (tsk-576).
+  const [orderCurrency, setOrderCurrency] = useState<string>(
+    initialData?.currency ?? BASE_CURRENCY
+  );
+  // Tipo de cambio de la orden. Solo hace falta cuando la orden está en moneda
+  // extranjera y hay comprobantes en pesos: una factura en pesos trae rate 1 y
+  // no alcanza para convertirla (tsk-576).
+  const [orderExchangeRate, setOrderExchangeRate] = useState<number>(
+    initialData?.exchange_rate ?? 1
+  );
   const [scheduledDate, setScheduledDate] = useState<string>(
     initialData?.scheduled_payment_date ?? ''
   );
@@ -365,6 +396,8 @@ export function NewPaymentOrderForm({
         amount: i.amount,
         base_amount: (Math.round(base * 100) / 100).toFixed(2),
         discount_pct: disc ? String(disc) : '0',
+        currency: i.currency ?? BASE_CURRENCY,
+        exchange_rate: i.exchange_rate ?? 1,
         is_on_account: i.is_on_account ?? false,
       };
     }) ?? []
@@ -458,6 +491,8 @@ export function NewPaymentOrderForm({
         amount: amount.toFixed(2),
         base_amount: amount.toFixed(2),
         discount_pct: '0',
+        currency: inv.currency ?? 'ARS',
+        exchange_rate: inv.exchange_rate || 1,
         is_on_account: false,
       });
       totalAmount += amount;
@@ -495,13 +530,29 @@ export function NewPaymentOrderForm({
     setSupplierId(newId);
   };
 
+  // Los totales van en la moneda de la orden: sumar los importes crudos
+  // mezclaría dólares con pesos (tsk-576).
+  const toOrderCurrency = useCallback(
+    (amount: number, item: Pick<ItemDraft, 'currency' | 'exchange_rate'>) =>
+      convertAmount({
+        amount,
+        from: item.currency,
+        to: orderCurrency,
+        rate: effectiveRate(item, {
+          currency: orderCurrency,
+          exchange_rate: orderExchangeRate,
+        }),
+      }),
+    [orderCurrency, orderExchangeRate]
+  );
+
   const itemsTotal = useMemo(
-    () => items.reduce((acc, i) => acc + (parseFloat(i.amount) || 0), 0),
-    [items]
+    () => items.reduce((acc, i) => acc + toOrderCurrency(parseFloat(i.amount) || 0, i), 0),
+    [items, toOrderCurrency]
   );
   const grossItemsTotal = useMemo(
-    () => items.reduce((acc, i) => acc + (parseFloat(i.base_amount) || 0), 0),
-    [items]
+    () => items.reduce((acc, i) => acc + toOrderCurrency(parseFloat(i.base_amount) || 0, i), 0),
+    [items, toOrderCurrency]
   );
   const discountTotal = Math.round((grossItemsTotal - itemsTotal) * 100) / 100;
   const paymentsTotal = useMemo(
@@ -512,6 +563,13 @@ export function NewPaymentOrderForm({
     () => retentions.reduce((acc, r) => acc + (parseFloat(r.amount) || 0), 0),
     [retentions]
   );
+  /** Ítems cuyo comprobante está en una moneda distinta a la de la orden. */
+  const hasForeignItems = useMemo(
+    () => items.some((i) => i.currency !== orderCurrency),
+    [items, orderCurrency]
+  );
+
+  const orderSymbol = currencySymbol(orderCurrency);
   const netToPay = Math.round((itemsTotal - retentionsTotal) * 100) / 100;
   const diff = Math.round((netToPay - paymentsTotal) * 100) / 100;
 
@@ -583,6 +641,10 @@ export function NewPaymentOrderForm({
         base_amount: base,
         discount_pct: globalDiscount,
         amount: netFromDiscount(base, globalDiscount),
+        // El tipo de cambio sale de la factura, no de la cotización del día:
+        // así el importe convertido coincide con lo que se facturó (tsk-576).
+        currency: invoice.currency ?? 'ARS',
+        exchange_rate: invoice.exchange_rate || 1,
         is_on_account: false,
       },
     ]);
@@ -603,6 +665,9 @@ export function NewPaymentOrderForm({
         base_amount: base,
         discount_pct: globalDiscount,
         amount: netFromDiscount(base, globalDiscount),
+        // Los gastos no tienen moneda propia: van siempre en la base.
+        currency: BASE_CURRENCY,
+        exchange_rate: 1,
         is_on_account: false,
       },
     ]);
@@ -624,6 +689,10 @@ export function NewPaymentOrderForm({
         amount: '',
         base_amount: '',
         discount_pct: '0',
+        // Un pago a cuenta no viene de un comprobante: se carga directo en la
+        // moneda de la orden, sin conversión.
+        currency: orderCurrency,
+        exchange_rate: 1,
         is_on_account: true,
       },
     ]);
@@ -726,12 +795,18 @@ export function NewPaymentOrderForm({
       const payload = {
         supplier_id: supplierId || null,
         date,
+        currency: orderCurrency as (typeof SUPPORTED_CURRENCIES)[number],
+        // Tipo de cambio de referencia de la orden: el que se aplica a cada
+        // comprobante viaja en el ítem, porque cada factura trae el suyo.
+        exchange_rate: orderExchangeRate,
         scheduled_payment_date: scheduledDate || null,
         notes: notes.trim() || null,
         items: items.map((i) => ({
           invoice_id: i.invoice_id,
           expense_id: i.expense_id,
           amount: i.amount.trim(),
+          currency: i.currency as (typeof SUPPORTED_CURRENCIES)[number],
+          exchange_rate: i.exchange_rate,
           discount_pct: parseFloat(i.discount_pct) || 0,
           is_on_account: i.is_on_account,
         })),
@@ -811,6 +886,46 @@ export function NewPaymentOrderForm({
               onChange={(e) => setScheduledDate(e.target.value)}
             />
           </div>
+          {/* Moneda de la orden (tsk-576). Arranca en pesos aunque la factura
+              del proveedor esté en dólares. */}
+          <div className="space-y-1.5">
+            <Label>Moneda de la orden</Label>
+            <Select value={orderCurrency} onValueChange={setOrderCurrency}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SUPPORTED_CURRENCIES.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c === 'ARS' ? 'Pesos (ARS)' : 'Dólares (USD)'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {hasForeignItems && orderCurrency === BASE_CURRENCY && (
+              <p className="text-xs text-muted-foreground">
+                Hay comprobantes en otra moneda. Se convierten con el tipo de cambio de cada factura.
+              </p>
+            )}
+          </div>
+
+          {/* Una factura en pesos trae tipo de cambio 1 y no alcanza para
+              convertirla si la orden está en dólares: ahí lo pone la orden. */}
+          {orderCurrency !== BASE_CURRENCY && (
+            <div className="space-y-1.5">
+              <Label>Tipo de cambio (1 {orderCurrency} = ? {BASE_CURRENCY})</Label>
+              <Input
+                type="number"
+                step="0.0001"
+                min="0"
+                value={orderExchangeRate || ''}
+                onChange={(e) => setOrderExchangeRate(parseFloat(e.target.value) || 0)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Se aplica a los comprobantes en {BASE_CURRENCY}.
+              </p>
+            </div>
+          )}
           <div className="md:col-span-3 space-y-1.5">
             <Label>Notas (opcional)</Label>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
@@ -889,14 +1004,25 @@ export function NewPaymentOrderForm({
                             <TableCell className="text-sm">
                               {formatDateUTC(inv.due_date)}
                             </TableCell>
+                            {/* Los importes están en la moneda de la factura, no
+                                en la de la orden: se muestra el símbolo que
+                                corresponde para no confundirlos (tsk-576). */}
                             <TableCell className="text-right font-mono text-sm">
-                              ${inv.total.toFixed(2)}
+                              {currencySymbol(inv.currency)}
+                              {inv.total.toFixed(2)}
                             </TableCell>
                             <TableCell className="text-right font-mono text-sm text-muted-foreground">
-                              ${inv.already_paid.toFixed(2)}
+                              {currencySymbol(inv.currency)}
+                              {inv.already_paid.toFixed(2)}
                             </TableCell>
                             <TableCell className="text-right font-mono font-semibold">
-                              ${inv.remaining.toFixed(2)}
+                              {currencySymbol(inv.currency)}
+                              {inv.remaining.toFixed(2)}
+                              {inv.currency !== orderCurrency && (
+                                <span className="ml-1 text-xs font-normal text-muted-foreground">
+                                  ({inv.currency})
+                                </span>
+                              )}
                             </TableCell>
                             <TableCell className="text-right">
                               <Button
@@ -1004,7 +1130,10 @@ export function NewPaymentOrderForm({
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>{paymentTarget === 'expense' ? 'Gastos' : 'Facturas'} ({items.length})</CardTitle>
-            <CardDescription>Importes a pagar — total: ${itemsTotal.toFixed(2)}</CardDescription>
+            <CardDescription>
+              Importes a pagar — total: {orderSymbol}
+              {itemsTotal.toFixed(2)} {orderCurrency}
+            </CardDescription>
           </div>
           <div className="flex items-center gap-2">
             <Label className="text-xs whitespace-nowrap">Descuento global %</Label>
@@ -1105,7 +1234,10 @@ export function NewPaymentOrderForm({
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Pagos ({payments.length})</CardTitle>
-            <CardDescription>Métodos de pago — total: ${paymentsTotal.toFixed(2)}</CardDescription>
+            <CardDescription>
+              Métodos de pago — total: {orderSymbol}
+              {paymentsTotal.toFixed(2)} {orderCurrency}
+            </CardDescription>
           </div>
           <div className="flex items-center gap-2">
             {canLoadPendingBalance && (
@@ -1428,29 +1560,40 @@ export function NewPaymentOrderForm({
                 <div>
                   <span className="text-muted-foreground">Descuento:</span>{' '}
                   <span className="font-mono font-semibold text-amber-600">
-                    −${discountTotal.toFixed(2)}
+                    −{orderSymbol}
+                    {discountTotal.toFixed(2)}
                   </span>
                 </div>
               )}
               <div>
                 <span className="text-muted-foreground">Total {paymentTarget === 'expense' ? 'gastos' : 'facturas'}:</span>{' '}
-                <span className="font-mono font-semibold">${itemsTotal.toFixed(2)}</span>
+                <span className="font-mono font-semibold">
+                  {orderSymbol}
+                  {itemsTotal.toFixed(2)}
+                </span>
               </div>
               {retentionsTotal > 0 && (
                 <div>
                   <span className="text-muted-foreground">Retenciones:</span>{' '}
                   <span className="font-mono font-semibold text-amber-600">
-                    −${retentionsTotal.toFixed(2)}
+                    −{orderSymbol}
+                    {retentionsTotal.toFixed(2)}
                   </span>
                 </div>
               )}
               <div>
                 <span className="text-muted-foreground">Neto a pagar:</span>{' '}
-                <span className="font-mono font-semibold">${netToPay.toFixed(2)}</span>
+                <span className="font-mono font-semibold">
+                  {orderSymbol}
+                  {netToPay.toFixed(2)}
+                </span>
               </div>
               <div>
                 <span className="text-muted-foreground">Total pagos:</span>{' '}
-                <span className="font-mono font-semibold">${paymentsTotal.toFixed(2)}</span>
+                <span className="font-mono font-semibold">
+                  {orderSymbol}
+                  {paymentsTotal.toFixed(2)}
+                </span>
               </div>
               <div>
                 <span className="text-muted-foreground">Diferencia:</span>{' '}

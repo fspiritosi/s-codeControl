@@ -195,8 +195,11 @@ export async function sendPaymentOrderPaidEmail(
       retentionsTotal: Number(order.retentions_total),
       netToPay:
         order.net_to_pay !== null ? Number(order.net_to_pay) : totalAmount,
+      // La orden puede estar en dólares (tsk-576): el importe en letras tiene
+      // que decir DÓLARES, no PESOS.
       amountInWords: amountToSpanishWords(
-        order.net_to_pay !== null ? Number(order.net_to_pay) : totalAmount
+        order.net_to_pay !== null ? Number(order.net_to_pay) : totalAmount,
+        order.currency
       ),
       pdfSettings,
     };

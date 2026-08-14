@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { PAYMENT_ORDER_STATUS_LABELS } from '../../../shared/validators';
 import { DataTableColumnHeader } from '@/shared/components/data-table';
+import { currencySymbol } from '@/shared/lib/currency-conversion';
 
 function StatusBadge({ status }: { status: string }) {
   const variant =
@@ -73,11 +74,20 @@ export const paymentOrderColumns: ColumnDef<any>[] = [
     accessorKey: 'total_amount',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Total" />,
     meta: { title: 'Total' },
-    cell: ({ row }) => (
-      <span className="text-right font-mono block">
-        ${Number(row.original.total_amount).toFixed(2)}
-      </span>
-    ),
+    cell: ({ row }) => {
+      // Una OP puede estar en dólares (tsk-576): mostrar "$" delante induciría
+      // a error al comparar totales en el listado.
+      const currency = (row.original as { currency?: string }).currency ?? 'ARS';
+      return (
+        <span className="text-right font-mono block">
+          {currencySymbol(currency)}
+          {Number(row.original.total_amount).toFixed(2)}
+          {currency !== 'ARS' && (
+            <span className="ml-1 text-xs text-muted-foreground">{currency}</span>
+          )}
+        </span>
+      );
+    },
   },
   {
     accessorKey: 'status',

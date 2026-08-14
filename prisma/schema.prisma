@@ -2589,6 +2589,13 @@ model payment_orders {
   number                 Int
   full_number            String
   date                   DateTime             @db.Timestamptz
+  /// Moneda de la orden (tsk-576). Por defecto ARS, incluso si la factura del
+  /// proveedor está en dólares. total_amount, retentions_total y net_to_pay
+  /// están expresados en esta moneda.
+  currency               String               @default("ARS")
+  /// Tipo de cambio de referencia. El que se aplicó a cada comprobante está en
+  /// payment_order_items, porque cada uno puede traer el suyo.
+  exchange_rate          Decimal              @default(1) @db.Decimal(15, 4)
   total_amount           Decimal              @db.Decimal(15, 2)
   retentions_total       Decimal              @default(0) @db.Decimal(15, 2)
   net_to_pay             Decimal?             @db.Decimal(15, 2)
@@ -2717,7 +2724,17 @@ model payment_order_items {
   payment_order_id String  @db.Uuid
   invoice_id       String? @db.Uuid
   expense_id       String? @db.Uuid
+  /// Importe imputado EN LA MONEDA DEL COMPROBANTE. Es lo que hace que el saldo
+  /// de una factura en dólares cierre contra su propio total, sin depender de
+  /// ningún tipo de cambio al leer (tsk-576).
   amount           Decimal @db.Decimal(15, 2)
+  /// Moneda del comprobante imputado. Gastos y pagos a cuenta van siempre en ARS.
+  currency         String  @default("ARS")
+  /// Tipo de cambio aplicado a este ítem, tomado de la factura (snapshot).
+  exchange_rate    Decimal @default(1) @db.Decimal(15, 4)
+  /// `amount` convertido a la moneda de la OP. Es lo que suma para total_amount
+  /// y lo que cuadra contra los pagos.
+  amount_in_order_currency Decimal @db.Decimal(15, 2)
   discount_pct     Decimal @default(0) @db.Decimal(5, 2)
   /// Pago a cuenta: ítem sin comprobante que genera saldo a favor del proveedor.
   is_on_account    Boolean @default(false)
