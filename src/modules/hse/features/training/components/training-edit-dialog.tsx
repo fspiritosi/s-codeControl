@@ -16,10 +16,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs } from '@/shared/components/ui/tabs';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { ArchiveIcon, GlobeIcon, Loader2, PencilIcon, TagIcon, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { MultiSelectCombobox } from '@/shared/components/ui/multi-select-combobox';
-import { fetchAllTags, fetchTrainingById, updateTraining } from '../actions.server';
+import {
+  fetchAllTags,
+  fetchTrainingById,
+  fetchTrainingInstructors,
+  fetchTrainingRecordFields,
+  updateTraining,
+  updateTrainingRecordFields,
+} from '../actions.server';
+import { EMPTY_TRAINING_RECORD, type TrainingRecordData } from '../shared/record-fields';
+import { TrainingRecordFields } from './TrainingRecordFields';
+
+type Instructor = { id: string; full_name: string; position: string | null };
 
 interface TrainingEditDialogProps {
   training: Awaited<ReturnType<typeof fetchTrainingById>>;
@@ -40,6 +51,16 @@ export function TrainingEditDialog({ training, allTags, open, onOpenChange, sele
     status: training?.status || 'Borrador',
   });
 
+  // Datos del acta de registro (tsk-540)
+  const [record, setRecord] = useState<TrainingRecordData>(EMPTY_TRAINING_RECORD);
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
+
+  useEffect(() => {
+    if (!open || !training?.id) return;
+    fetchTrainingInstructors().then((data) => setInstructors(data as Instructor[]));
+    fetchTrainingRecordFields(training.id).then((data) => setRecord(data ?? EMPTY_TRAINING_RECORD));
+  }, [open, training?.id]);
+
   const handleRemoveTag = (tag: string) => {
     setFormData({
       ...formData,
@@ -56,8 +77,19 @@ export function TrainingEditDialog({ training, allTags, open, onOpenChange, sele
 
     setIsSubmitting(true);
 
-
     try {
+      // Los datos del acta van primero: si la capacitación se está publicando y
+      // le faltan campos, no se guarda nada y el error se muestra tal cual
+      // (tsk-540).
+      const recordResult = await updateTrainingRecordFields(training?.id || '', record, {
+        willBePublished: formData.status === 'Publicado',
+      });
+
+      if (!recordResult.success) {
+        toast.error(recordResult.error);
+        return;
+      }
+
       await toast.promise(
         updateTraining(training?.id || '', {
           title: formData.title,
@@ -215,6 +247,12 @@ export function TrainingEditDialog({ training, allTags, open, onOpenChange, sele
             <p className="text-sm text-muted-foreground">
               Las etiquetas ayudan a categorizar y filtrar las capacitaciones
             </p>
+          </div>
+
+          {/* Datos del acta de registro de capacitación (tsk-540). Acá sí se
+              muestran los campos de HSE, que se cargan una vez dictada. */}
+          <div className="space-y-2 pt-4">
+            <TrainingRecordFields value={record} onChange={setRecord} instructors={instructors} showHseFields />
           </div>
         </Tabs>
 

@@ -21,6 +21,8 @@ export default async function EditPaymentOrderPage({
     id: order.id,
     full_number: order.full_number,
     supplier_id: order.supplier_id,
+    currency: order.currency,
+    exchange_rate: order.exchange_rate,
     date: new Date(order.date).toISOString().slice(0, 10),
     scheduled_payment_date: order.scheduled_payment_date
       ? new Date(order.scheduled_payment_date).toISOString().slice(0, 10)
@@ -31,6 +33,8 @@ export default async function EditPaymentOrderPage({
       expense_id: i.expense_id ?? null,
       invoice_label: i.invoice?.full_number ?? i.expense?.full_number ?? null,
       amount: i.amount.toFixed(2),
+      currency: i.currency,
+      exchange_rate: i.exchange_rate,
       discount_pct: i.discount_pct,
       is_on_account: i.is_on_account,
     })),

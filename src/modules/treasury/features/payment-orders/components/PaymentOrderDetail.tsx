@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { ArrowLeft } from 'lucide-react';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
+import { currencySymbol } from '@/shared/lib/currency-conversion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import {
   Table,
@@ -24,6 +25,9 @@ import {
 export async function PaymentOrderDetail({ id }: { id: string }) {
   const order = await getPaymentOrderById(id);
   if (!order) notFound();
+  // La orden puede estar en dólares (tsk-576): los importes de la orden usan
+  // su símbolo, y cada ítem el de su propio comprobante.
+  const orderSymbol = currencySymbol(order.currency);
 
   const variant =
     order.status === 'PAID'
@@ -71,19 +75,24 @@ export async function PaymentOrderDetail({ id }: { id: string }) {
           <CardHeader>
             <CardDescription>Total facturas</CardDescription>
             <CardTitle className="text-2xl font-mono">
-              ${order.total_amount.toFixed(2)}
+              {orderSymbol}
+              {order.total_amount.toFixed(2)} {order.currency}
             </CardTitle>
             {order.retentions_total > 0 && order.net_to_pay !== null && (
               <div className="text-xs text-muted-foreground space-y-0.5 mt-1">
                 <div>
                   Retenciones:{' '}
                   <span className="font-mono text-amber-600">
-                    −${order.retentions_total.toFixed(2)}
+                    −{orderSymbol}
+                    {order.retentions_total.toFixed(2)}
                   </span>
                 </div>
                 <div>
                   Neto pagado:{' '}
-                  <span className="font-mono font-semibold">${order.net_to_pay.toFixed(2)}</span>
+                  <span className="font-mono font-semibold">
+                    {orderSymbol}
+                    {order.net_to_pay.toFixed(2)}
+                  </span>
                 </div>
               </div>
             )}
@@ -127,16 +136,23 @@ export async function PaymentOrderDetail({ id }: { id: string }) {
                   </TableCell>
                   <TableCell className="text-sm font-mono">
                     {item.invoice
-                      ? `$${item.invoice.total.toFixed(2)}`
+                      ? `${currencySymbol(item.currency)}${item.invoice.total.toFixed(2)}`
                       : item.expense
-                        ? `$${item.expense.amount.toFixed(2)}`
+                        ? `${currencySymbol(item.currency)}${item.expense.amount.toFixed(2)}`
                         : '-'}
                   </TableCell>
                   <TableCell className="text-right font-mono text-sm">
                     {item.discount_pct > 0 ? `${item.discount_pct}%` : '-'}
                   </TableCell>
                   <TableCell className="text-right font-mono font-semibold">
-                    ${item.amount.toFixed(2)}
+                    {currencySymbol(item.currency)}
+                    {item.amount.toFixed(2)}
+                    {item.currency !== order.currency && (
+                      <span className="block text-xs font-normal text-muted-foreground">
+                        = {orderSymbol}
+                        {item.amount_in_order_currency.toFixed(2)} @ {item.exchange_rate}
+                      </span>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -204,7 +220,10 @@ export async function PaymentOrderDetail({ id }: { id: string }) {
                     <TableCell className="text-sm text-muted-foreground">
                       {p.reference ?? '-'}
                     </TableCell>
-                    <TableCell className="text-right font-mono">${p.amount.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-mono">
+                      {orderSymbol}
+                      {p.amount.toFixed(2)}
+                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -243,10 +262,14 @@ export async function PaymentOrderDetail({ id }: { id: string }) {
                         <div className="text-xs text-muted-foreground">{r.tax_type.jurisdiction}</div>
                       )}
                     </TableCell>
-                    <TableCell className="text-right font-mono">${r.base_amount.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-mono">
+                      {orderSymbol}
+                      {r.base_amount.toFixed(2)}
+                    </TableCell>
                     <TableCell className="text-right font-mono">{r.rate}%</TableCell>
                     <TableCell className="text-right font-mono font-medium text-amber-600">
-                      ${r.amount.toFixed(2)}
+                      {orderSymbol}
+                      {r.amount.toFixed(2)}
                     </TableCell>
                     <TableCell className="font-mono text-xs">
                       {r.certificate_number ? (

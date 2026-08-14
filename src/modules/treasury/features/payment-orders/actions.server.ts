@@ -26,6 +26,7 @@ import {
   recalcPurchaseInvoiceStatusMany,
 } from '@/shared/lib/purchase-invoice-status';
 import { CREDIT_NOTE_VOUCHER_TYPES } from '@/shared/lib/purchase-invoice-balance';
+import { convertAmount, effectiveRate } from '@/shared/lib/currency-conversion';
 
 const columnMap: Record<string, string> = { status: 'status' };
 const textFilterColumns = ['full_number'];
@@ -233,12 +234,16 @@ export async function getPaymentOrderById(id: string) {
   if (!order) return null;
   return {
     ...order,
+    // Decimal -> number para poder pasarlo a componentes cliente.
+    exchange_rate: Number(order.exchange_rate),
     total_amount: Number(order.total_amount),
     retentions_total: Number(order.retentions_total),
     net_to_pay: order.net_to_pay !== null ? Number(order.net_to_pay) : null,
     items: order.items.map((i) => ({
       ...i,
       amount: Number(i.amount),
+      exchange_rate: Number(i.exchange_rate),
+      amount_in_order_currency: Number(i.amount_in_order_currency),
       discount_pct: Number(i.discount_pct),
       invoice: i.invoice ? { ...i.invoice, total: Number(i.invoice.total) } : null,
       expense: i.expense ? { ...i.expense, amount: Number(i.expense.amount) } : null,
@@ -356,6 +361,11 @@ export async function getPendingPurchaseInvoices(supplierId: string) {
       subtotal: true,
       vat_amount: true,
       total: true,
+      // La OP se arma por defecto en ARS aunque la factura esté en dólares: el
+      // formulario necesita la moneda y el tipo de cambio del comprobante para
+      // convertir (tsk-576).
+      currency: true,
+      exchange_rate: true,
       // Solo cuentan las imputaciones de OPs no anuladas: al anular una OP sus
       // items se conservan (audit), pero no deben descontar del saldo pendiente.
       payment_order_items: {
@@ -389,6 +399,9 @@ export async function getPendingPurchaseInvoices(supplierId: string) {
         total,
         already_paid: Math.round(alreadyPaid * 100) / 100,
         remaining,
+        // total, already_paid y remaining están en esta moneda, no en la de la OP.
+        currency: inv.currency ?? 'ARS',
+        exchange_rate: Number(inv.exchange_rate ?? 1),
       };
     })
     .filter((inv) => inv.remaining > 0);
@@ -478,7 +491,23 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
 
   try {
     await requirePermission('tesoreria.create');
-    const totalAmount = parsed.data.items.reduce((acc, i) => acc + parseFloat(i.amount), 0);
+    // El total se suma en la moneda de la orden: sumar los `amount` crudos
+    // mezclaría dólares con pesos (tsk-576).
+    const orderCurrency = parsed.data.currency ?? 'ARS';
+    const orderRef = { currency: orderCurrency, exchange_rate: parsed.data.exchange_rate ?? 1 };
+    const itemsWithConversion = parsed.data.items.map((i) => {
+      const amount = parseFloat(i.amount);
+      const itemCurrency = i.currency ?? 'ARS';
+      const rate = effectiveRate({ currency: itemCurrency, exchange_rate: i.exchange_rate ?? 1 }, orderRef);
+      return {
+        ...i,
+        amount,
+        itemCurrency,
+        rate,
+        converted: convertAmount({ amount, from: itemCurrency, to: orderCurrency, rate }),
+      };
+    });
+    const totalAmount = itemsWithConversion.reduce((acc, i) => acc + i.converted, 0);
     const retentions = (parsed.data.retentions ?? []).map((r) => ({
       tax_type_id: r.tax_type_id,
       base_amount: Math.round(Number(r.base_amount) * 100) / 100,
@@ -545,6 +574,8 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
         scheduled_payment_date: parsed.data.scheduled_payment_date
           ? new Date(parsed.data.scheduled_payment_date)
           : null,
+        currency: orderCurrency,
+        exchange_rate: parsed.data.exchange_rate ?? 1,
         total_amount: Math.round(totalAmount * 100) / 100,
         retentions_total: retentionsTotal,
         net_to_pay: netToPay,
@@ -552,11 +583,16 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
         status: 'DRAFT',
         created_by: user.id,
         items: {
-          create: parsed.data.items.map((i) => ({
+          create: itemsWithConversion.map((i) => ({
             invoice_id: i.invoice_id || null,
             expense_id: i.expense_id || null,
             is_on_account: i.is_on_account ?? false,
-            amount: parseFloat(i.amount),
+            // amount queda en la moneda del comprobante para que el saldo de la
+            // factura cierre contra su propio total.
+            amount: i.amount,
+            currency: i.itemCurrency,
+            exchange_rate: i.rate,
+            amount_in_order_currency: i.converted,
             discount_pct: Math.round((i.discount_pct ?? 0) * 100) / 100,
           })),
         },
@@ -621,7 +657,23 @@ export async function updatePaymentOrder(id: string, data: PaymentOrderFormData)
 
   try {
     await requirePermission('tesoreria.update');
-    const totalAmount = parsed.data.items.reduce((acc, i) => acc + parseFloat(i.amount), 0);
+    // Igual que en createPaymentOrder: el total se suma en la moneda de la orden
+    // para no mezclar dólares con pesos (tsk-576).
+    const orderCurrency = parsed.data.currency ?? 'ARS';
+    const orderRef = { currency: orderCurrency, exchange_rate: parsed.data.exchange_rate ?? 1 };
+    const itemsWithConversion = parsed.data.items.map((i) => {
+      const amount = parseFloat(i.amount);
+      const itemCurrency = i.currency ?? 'ARS';
+      const rate = effectiveRate({ currency: itemCurrency, exchange_rate: i.exchange_rate ?? 1 }, orderRef);
+      return {
+        ...i,
+        amount,
+        itemCurrency,
+        rate,
+        converted: convertAmount({ amount, from: itemCurrency, to: orderCurrency, rate }),
+      };
+    });
+    const totalAmount = itemsWithConversion.reduce((acc, i) => acc + i.converted, 0);
     const retentions = (parsed.data.retentions ?? []).map((r) => ({
       tax_type_id: r.tax_type_id,
       base_amount: Math.round(Number(r.base_amount) * 100) / 100,
@@ -682,16 +734,21 @@ export async function updatePaymentOrder(id: string, data: PaymentOrderFormData)
           scheduled_payment_date: parsed.data.scheduled_payment_date
             ? new Date(parsed.data.scheduled_payment_date)
             : null,
+          currency: orderCurrency,
+          exchange_rate: parsed.data.exchange_rate ?? 1,
           total_amount: Math.round(totalAmount * 100) / 100,
           retentions_total: retentionsTotal,
           net_to_pay: netToPay,
           notes: parsed.data.notes || null,
           items: {
-            create: parsed.data.items.map((i) => ({
+            create: itemsWithConversion.map((i) => ({
               invoice_id: i.invoice_id || null,
               expense_id: i.expense_id || null,
               is_on_account: i.is_on_account ?? false,
-              amount: parseFloat(i.amount),
+              amount: i.amount,
+              currency: i.itemCurrency,
+              exchange_rate: i.rate,
+              amount_in_order_currency: i.converted,
             })),
           },
           payments: {

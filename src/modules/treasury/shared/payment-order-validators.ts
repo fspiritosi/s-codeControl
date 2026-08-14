@@ -1,3 +1,4 @@
+import { convertAmount, effectiveRate, SUPPORTED_CURRENCIES } from '@/shared/lib/currency-conversion';
 import { z } from 'zod';
 
 const amountString = z
@@ -9,7 +10,16 @@ export const paymentOrderItemSchema = z
   .object({
     invoice_id: z.string().uuid().optional().nullable(),
     expense_id: z.string().uuid().optional().nullable(),
+    /** Importe en la moneda del comprobante (tsk-576). */
     amount: amountString.refine((v) => parseFloat(v) > 0, 'Debe ser mayor a 0'),
+    /** Moneda del comprobante. Gastos y pagos a cuenta van en ARS. */
+    currency: z.enum(SUPPORTED_CURRENCIES).optional().default('ARS'),
+    /** Tipo de cambio aplicado, tomado de la factura. */
+    exchange_rate: z.coerce
+      .number()
+      .positive('El tipo de cambio debe ser mayor a 0')
+      .optional()
+      .default(1),
     discount_pct: z.coerce
       .number()
       .min(0, 'El descuento no puede ser negativo')
@@ -111,6 +121,16 @@ export type PaymentOrderRetentionFormData = z.infer<typeof paymentOrderRetention
 export const paymentOrderSchema = z
   .object({
     supplier_id: z.string().uuid().optional().nullable(),
+    /**
+     * Moneda de la orden (tsk-576). Por defecto ARS, incluso cuando la factura
+     * del proveedor está en dólares: el usuario puede cambiarla.
+     */
+    currency: z.enum(SUPPORTED_CURRENCIES).optional().default('ARS'),
+    exchange_rate: z.coerce
+      .number()
+      .positive('El tipo de cambio debe ser mayor a 0')
+      .optional()
+      .default(1),
     date: z.string().min(1, 'Fecha requerida'),
     scheduled_payment_date: z
       .string()
@@ -124,7 +144,21 @@ export const paymentOrderSchema = z
   })
   .refine(
     (data) => {
-      const itemsTotal = data.items.reduce((acc, i) => acc + parseFloat(i.amount), 0);
+      // El cuadre se hace en la moneda de la orden: sumar los `amount` crudos
+      // mezclaría dólares con pesos (tsk-576).
+      const order = { currency: data.currency ?? 'ARS', exchange_rate: data.exchange_rate ?? 1 };
+      const itemsTotal = data.items.reduce((acc, i) => {
+        const item = { currency: i.currency ?? 'ARS', exchange_rate: i.exchange_rate ?? 1 };
+        return (
+          acc +
+          convertAmount({
+            amount: parseFloat(i.amount),
+            from: item.currency,
+            to: order.currency,
+            rate: effectiveRate(item, order),
+          })
+        );
+      }, 0);
       const paymentsTotal = data.payments.reduce((acc, p) => acc + parseFloat(p.amount), 0);
       const retentionsTotal = (data.retentions ?? []).reduce(
         (acc, r) => acc + (Number(r.amount) || 0),
@@ -148,5 +182,23 @@ export const paymentOrderSchema = z
         message: 'Un pago a cuenta requiere seleccionar el proveedor',
       });
     }
+
+    // Un comprobante en otra moneda necesita un tipo de cambio explícito: con
+    // rate = 1 se pagaría una factura en dólares como si fueran pesos, que es
+    // justamente el error que esta tarea corrige (tsk-576).
+    const order = { currency: data.currency ?? 'ARS', exchange_rate: data.exchange_rate ?? 1 };
+    data.items.forEach((i, index) => {
+      const item = { currency: i.currency ?? 'ARS', exchange_rate: i.exchange_rate ?? 1 };
+      if (item.currency === order.currency) return;
+      // El rate puede venir de la factura o, si la factura está en pesos y la
+      // orden en dólares, de la propia orden.
+      if (effectiveRate(item, order) <= 1) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['items', index, 'exchange_rate'],
+          message: `El comprobante está en ${item.currency} y la orden en ${order.currency}: falta el tipo de cambio`,
+        });
+      }
+    });
   });
 export type PaymentOrderFormData = z.infer<typeof paymentOrderSchema>;
