@@ -28,8 +28,21 @@ const CERTIFICATE_DOCUMENT_TYPE = 'Capacitación';
 
 const getCompanyId = async () => (await cookies()).get('actualComp')?.value ?? null;
 
-const toPublicUrl = async (path: string | null | undefined) =>
-  path ? await storageServer.getPublicUrl('documents', path) : null;
+/**
+ * URL de una imagen de firma para embeber en el PDF.
+ *
+ * Va firmada y no pública por dos razones: `documents` es un bucket privado, y
+ * una firma manuscrita es un dato personal que no debería quedar accesible a
+ * quien tenga la URL. Diez minutos alcanzan de sobra: @react-pdf/renderer
+ * descarga la imagen mientras genera el documento.
+ *
+ * Si la firma no se puede resolver devuelve null y el layout muestra "Sin
+ * firma", en lugar de romper la generación del registro entero.
+ */
+const SIGNED_URL_TTL_SECONDS = 600;
+
+const toSignatureUrl = async (path: string | null | undefined) =>
+  path ? await storageServer.getSignedUrl('documents', path, SIGNED_URL_TTL_SECONDS) : null;
 
 const toIsoDate = (value: Date | null | undefined) => (value ? value.toISOString().split('T')[0] : null);
 
@@ -93,7 +106,7 @@ export const buildTrainingRecord = async (trainingId: string): Promise<TrainingR
         attempt.signer_full_name ??
         `${attempt.employee.lastname ?? ''} ${attempt.employee.firstname ?? ''}`.trim(),
       position: attempt.signer_position ?? attempt.employee.hierarchy_rel?.name ?? '',
-      signature_url: await toPublicUrl(attempt.signature_path),
+      signature_url: await toSignatureUrl(attempt.signature_path),
       result: `${attempt.score ?? 0}/${attempt.max_score} – Aprobado`,
     }))
   );
@@ -107,7 +120,7 @@ export const buildTrainingRecord = async (trainingId: string): Promise<TrainingR
     instructor_name: training.instructor?.full_name ?? null,
     instructor_position: training.instructor?.position ?? null,
     instructor_licenses: training.instructor?.license_numbers ?? null,
-    instructor_signature_url: await toPublicUrl(training.instructor?.signature_path),
+    instructor_signature_url: await toSignatureUrl(training.instructor?.signature_path),
     topics: training.topics,
     teaching_resources: training.teaching_resources,
     material_delivered: training.material_delivered,
@@ -190,8 +203,8 @@ export const buildTrainingCertificate = async (
       instructor_name: training.instructor?.full_name ?? null,
       instructor_position: training.instructor?.position ?? null,
       instructor_licenses: training.instructor?.license_numbers ?? null,
-      instructor_signature_url: await toPublicUrl(training.instructor?.signature_path),
-      employee_signature_url: await toPublicUrl(attempt.signature_path),
+      instructor_signature_url: await toSignatureUrl(training.instructor?.signature_path),
+      employee_signature_url: await toSignatureUrl(attempt.signature_path),
       company_name: training.company.company_name,
     },
   };

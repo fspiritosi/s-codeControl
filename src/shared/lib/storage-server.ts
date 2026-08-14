@@ -59,6 +59,26 @@ export const storageServer = {
     return data.publicUrl
   },
 
+  /**
+   * URL temporal para un archivo de un bucket privado.
+   *
+   * A diferencia de `getPublicUrl`, que devuelve una URL bien formada aunque el
+   * bucket sea privado (y después da 400 al abrirla), acá el error se ve.
+   * Devuelve null si el archivo no existe o no se puede firmar, para que quien
+   * llame decida qué mostrar en vez de romper.
+   *
+   * `expiresIn` va en segundos.
+   */
+  async getSignedUrl(bucket: StorageBucket, path: string, expiresIn = 300) {
+    const supabase = await supabaseServer()
+    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresIn)
+    if (error) {
+      console.error(`No se pudo firmar la URL de ${bucket}/${path}:`, error.message)
+      return null
+    }
+    return data?.signedUrl ?? null
+  },
+
   async list(bucket: StorageBucket, path?: string, options?: ListOptions) {
     const supabase = await supabaseServer()
     const { data, error } = await supabase.storage.from(bucket).list(path, options)
