@@ -150,6 +150,26 @@ enum training_status {
   Borrador
   Archivado
   Publicado
+  /// Cierre formal: el registro grupal deja de incorporar empleados y queda
+  /// congelado como definitivo (tsk-540).
+  Cerrada
+}
+
+/// "Temas incluidos" del acta de capacitación: son cuatro fijos del formulario
+/// en papel, no tags libres (tsk-540).
+enum training_topic {
+  SEGURIDAD_VIAL
+  SEGURIDAD_HIGIENE
+  SALUD
+  MEDIO_AMBIENTE
+}
+
+/// "Evaluación" del acta de capacitación: cómo se evaluó (tsk-540).
+enum training_evaluation_method {
+  ESCRITA_ORAL
+  ENCUESTA_AUDITORIA
+  SUPERVISION_INSPECCION
+  EVALUACION_DESEMPENO
 }
 
 enum expense_status {
@@ -314,6 +334,7 @@ model profile {
   owned_companies             company[]                 @relation("company_owner")
   share_company_users         share_company_users[]
   documents_employees         documents_employees[]     @relation("documents_employees_user")
+  trainings_closed            trainings[]               @relation("trainings_closed_by")
   documents_equipment         documents_equipment[]     @relation("documents_equipment_user")
   documents_company           documents_company[]       @relation("documents_company_user")
   vehicles                    vehicles[]                @relation("vehicles_user")
@@ -372,6 +393,7 @@ model company {
   service_items          service_items[]
   type                   type[]
   trainings              trainings[]
+  training_instructors   training_instructors[]
   hse_documents          hse_documents[]
   hse_doc_types          hse_doc_types[]
   hse_document_tags      hse_document_tags[]
@@ -1341,13 +1363,62 @@ model trainings {
   status          training_status? @default(Borrador)
   updated_at      DateTime?        @db.Timestamptz
 
+  // Datos del acta de capacitación (tsk-540).
+  // dictated_at define el mes al que corresponde la capacitación.
+  // estimated_duration_minutes es la duración declarada por el capacitador: no
+  // confundir con test_limit_time, que es el límite de tiempo del cuestionario.
+  // validity_months en null = la capacitación no vence.
+  dictated_at                DateTime?                    @db.Date
+  // Fecha límite para que los empleados realicen la capacitación. Pasada esa
+  // fecha y completados los campos de HSE, se puede cerrar (tsk-540).
+  deadline_at                DateTime?                    @db.Date
+  closed_at                  DateTime?                    @db.Timestamptz
+  closed_by                  String?                      @db.Uuid
+  // Ruta del registro definitivo congelado en Storage al cerrar.
+  record_pdf_path            String?
+  location                   String?                      @default("Capacitación Online")
+  instructor_id              String?                      @db.Uuid
+  estimated_duration_minutes Int?
+  topics                     training_topic[]
+  teaching_resources         String?
+  material_delivered         Boolean?
+  material_delivered_detail  String?
+  evaluation_methods         training_evaluation_method[]
+  effectiveness_method       String?
+  requires_new_actions       Boolean?
+  new_actions_detail         String?
+  validity_months            Int?
+
   company                    company                      @relation(fields: [company_id], references: [id])
+  instructor                 training_instructors?        @relation(fields: [instructor_id], references: [id])
+  closed_by_profile          profile?                     @relation("trainings_closed_by", fields: [closed_by], references: [id])
   training_materials         training_materials[]
   training_questions         training_questions[]
   training_assignments       training_assignments[]
   training_attempts          training_attempts[]
   training_tag_assignments   training_tag_assignments[]
   training_material_readings training_material_readings[]
+
+  @@index([instructor_id])
+}
+
+/// Capacitadores por empresa. Antes el capacitador era una imagen pegada en el
+/// Word; el cliente anticipó que puede cambiar, así que va como catálogo.
+model training_instructors {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id      String   @db.Uuid
+  full_name       String
+  position        String?
+  license_numbers String?
+  signature_path  String?
+  is_active       Boolean  @default(true)
+  created_at      DateTime @default(now()) @db.Timestamptz
+  updated_at      DateTime @default(now()) @db.Timestamptz
+
+  company   company     @relation(fields: [company_id], references: [id])
+  trainings trainings[]
+
+  @@index([company_id])
 }
 
 model training_materials {
@@ -1418,6 +1489,17 @@ model training_attempts {
   max_score          Int
   passed             Boolean?
   time_spent_seconds Int?
+
+  // Firma del empleado en el portal, al aprobar (tsk-540).
+  // signer_full_name / signer_position son un snapshot al momento de firmar: la
+  // planilla se regenera en cada descarga y sin esto un empleado que cambió de
+  // puesto aparecería con el puesto nuevo al lado de una firma vieja.
+  signature_path       String?
+  signed_at            DateTime? @db.Timestamptz
+  signature_ip         String?
+  signature_user_agent String?
+  signer_full_name     String?
+  signer_position      String?
 
   employee                 employees                  @relation(fields: [employee_id], references: [id])
   training                 trainings?                 @relation(fields: [training_id], references: [id])

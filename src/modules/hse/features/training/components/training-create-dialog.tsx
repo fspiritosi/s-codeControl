@@ -16,23 +16,32 @@ import { Label } from '@/shared/components/ui/label';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { Loader2, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { createTraining } from '../actions.server';
+import { createTraining, fetchTrainingInstructors, updateTrainingRecordFields } from '../actions.server';
+import { EMPTY_TRAINING_RECORD, type TrainingRecordData } from '../shared/record-fields';
+import { TrainingRecordFields } from './TrainingRecordFields';
 
-interface TrainingCreateDialogProps {
-  // No se necesitan props por ahora
-}
+type Instructor = { id: string; full_name: string; position: string | null };
 
 export function TrainingCreateDialog() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
   });
+  // Datos del acta de registro (tsk-540). Se guardan en un segundo paso, una vez
+  // creada la capacitación, porque necesitan su id.
+  const [record, setRecord] = useState<TrainingRecordData>(EMPTY_TRAINING_RECORD);
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (!isDialogOpen) return;
+    fetchTrainingInstructors().then((data) => setInstructors(data as Instructor[]));
+  }, [isDialogOpen]);
 
   const handleSubmit = async () => {
     toast.promise(
@@ -65,6 +74,15 @@ export function TrainingCreateDialog() {
             throw new Error('No se pudo obtener el ID de la capacitación creada');
           }
 
+          // 2. Guardar los datos del acta (tsk-540). La capacitación nace en
+          // Borrador, así que acá no se exige que estén completos: la validación
+          // corre al publicarla.
+          const recordResult = await updateTrainingRecordFields(trainingResult.data.id, record);
+          if (!recordResult.success) {
+            setIsLoading(false);
+            throw new Error(recordResult.error);
+          }
+
           // 3. Limpiar formulario y cerrar diálogo
 
           // Reset form
@@ -72,6 +90,7 @@ export function TrainingCreateDialog() {
             title: '',
             description: '',
           });
+          setRecord(EMPTY_TRAINING_RECORD);
 
           setIsDialogOpen(false);
           router.refresh(); // Para actualizar la lista de capacitaciones
@@ -129,6 +148,9 @@ export function TrainingCreateDialog() {
             rows={4}
           />
         </div>
+
+        {/* Datos del acta de registro de capacitación (tsk-540) */}
+        <TrainingRecordFields value={record} onChange={setRecord} instructors={instructors} />
         {/* </TabsContent> */}
         {/* </Tabs> */}
 

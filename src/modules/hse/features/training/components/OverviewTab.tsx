@@ -5,11 +5,19 @@ import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Progress } from '@/shared/components/ui/progress';
 import { sendEmail } from '@/shared/lib/renderEmail';
+import { useLoggedUserStore } from '@/shared/store/loggedUser';
 import { CheckCircle, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { fetchTrainingById, updateTrainingStatus } from '../actions.server';
+import { TrainingRecordActions } from './TrainingRecordActions';
 
 function OverviewTab({ training }: { training: Awaited<ReturnType<typeof fetchTrainingById>> }) {
+  // El registro grupal es solo para administradores (tsk-540). Se sigue el
+  // criterio del resto de la app: Invitado no escribe ni descarga, y Auditor
+  // tiene su propia vista acotada.
+  const role = useLoggedUserStore((state) => state.roleActualCompany);
+  const isAdmin = role !== 'Invitado' && role !== 'Auditor';
+
   // Calcular métricas importantes
   const completedCount = Array.from(
     new Set(training?.attempts?.filter((attempt: any) => attempt.passed).map((a: any) => a.employee_id))
@@ -235,6 +243,27 @@ function OverviewTab({ training }: { training: Awaited<ReturnType<typeof fetchTr
               <CheckCircle className="h-4 w-4 mr-2" />
               Publicar Capacitación
             </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Registro de capacitación (tsk-540). Solo administradores: el registro
+          grupal no se archiva en ningún legajo, se descarga desde acá. */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Registro de capacitación</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <TrainingRecordActions
+            trainingId={training?.id || ''}
+            trainingTitle={training?.title || ''}
+            status={training?.status ?? null}
+            isAdmin={isAdmin}
+          />
+          {training?.status === 'Cerrada' && (
+            <p className="text-sm text-muted-foreground">
+              La capacitación está cerrada: el registro es definitivo y no incorpora nuevos empleados.
+            </p>
           )}
         </CardContent>
       </Card>
