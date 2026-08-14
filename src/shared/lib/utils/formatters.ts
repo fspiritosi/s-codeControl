@@ -45,6 +45,28 @@ export function formatCurrencyARS(value: number | null | undefined): string {
 }
 
 /**
+ * Formatea un importe en la moneda indicada, con el mismo estilo de separadores
+ * que `formatCurrencyARS`.
+ *
+ * Existe porque las órdenes de pago pasaron a ser multimoneda (tsk-576) y
+ * mostrar "$" delante de un importe en dólares induce a error.
+ * Ejemplo: (150, 'USD') → 'US$ 150,00'
+ */
+export function formatCurrencyIn(
+  value: number | null | undefined,
+  currency: string | null | undefined
+): string {
+  if (value == null || isNaN(value)) return '—';
+  if (!currency || currency === 'ARS') return arsFormatter.format(value);
+  return new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+/**
  * Formatea un número decimal como porcentaje.
  * Retorna '—' para null/undefined/NaN.
  * Ejemplo: 0.85 → '85,00%'
