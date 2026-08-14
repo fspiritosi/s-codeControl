@@ -27,6 +27,7 @@ export const DEFAULT_TRAINING_LOCATION = 'Capacitación Online';
 
 export type TrainingRecordData = {
   dictated_at: string | null;
+  deadline_at: string | null;
   location: string | null;
   instructor_id: string | null;
   estimated_duration_minutes: number | null;
@@ -43,6 +44,7 @@ export type TrainingRecordData = {
 
 export const EMPTY_TRAINING_RECORD: TrainingRecordData = {
   dictated_at: null,
+  deadline_at: null,
   location: DEFAULT_TRAINING_LOCATION,
   instructor_id: null,
   estimated_duration_minutes: null,
@@ -69,14 +71,17 @@ export function evaluationMethodLabel(value: string): string {
  * Campos que exige el acta para poder publicar la capacitación.
  *
  * "Método de evaluación de la eficacia" y "¿Se requieren nuevas acciones?" NO
- * entran acá: el referente de HSE los carga después de dictada la capacitación,
- * así que exigirlos al publicar impediría dictarla. Se validan al descargar la
- * planilla (ver validateForRecordDownload).
+ * entran acá: el referente de HSE los carga al terminar el período, después de
+ * evaluar los resultados. Se exigen recién al cerrar (ver validateForClose).
  */
 export function validateForPublish(data: TrainingRecordData): string[] {
   const errors: string[] = [];
 
   if (!data.dictated_at) errors.push('Falta la fecha en que se dicta la capacitación');
+  if (!data.deadline_at) errors.push('Falta la fecha límite de realización');
+  if (data.dictated_at && data.deadline_at && data.deadline_at < data.dictated_at) {
+    errors.push('La fecha límite no puede ser anterior a la fecha en que se dicta');
+  }
   if (!data.location?.trim()) errors.push('Falta el lugar');
   if (!data.instructor_id) errors.push('Falta seleccionar el capacitador');
   if (!data.estimated_duration_minutes || data.estimated_duration_minutes <= 0) {
@@ -94,11 +99,13 @@ export function validateForPublish(data: TrainingRecordData): string[] {
 }
 
 /**
- * Campos que carga el referente de HSE una vez dictada la capacitación. La
- * planilla en papel aclara que no se deben dejar campos en blanco, así que se
- * avisa antes de descargarla.
+ * Campos que exige el cierre formal de la capacitación.
+ *
+ * El registro provisorio se descarga en cualquier momento aunque falten estos
+ * campos: sirve para seguir el avance. El definitivo, no — la planilla en papel
+ * aclara que no se deben dejar campos en blanco.
  */
-export function validateForRecordDownload(data: TrainingRecordData): string[] {
+export function validateForClose(data: TrainingRecordData): string[] {
   const errors: string[] = [...validateForPublish(data)];
 
   if (!data.effectiveness_method?.trim()) errors.push('Falta el método de evaluación de la eficacia');

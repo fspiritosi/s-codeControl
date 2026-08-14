@@ -150,6 +150,9 @@ enum training_status {
   Borrador
   Archivado
   Publicado
+  /// Cierre formal: el registro grupal deja de incorporar empleados y queda
+  /// congelado como definitivo (tsk-540).
+  Cerrada
 }
 
 /// "Temas incluidos" del acta de capacitación: son cuatro fijos del formulario
@@ -331,6 +334,7 @@ model profile {
   owned_companies             company[]                 @relation("company_owner")
   share_company_users         share_company_users[]
   documents_employees         documents_employees[]     @relation("documents_employees_user")
+  trainings_closed            trainings[]               @relation("trainings_closed_by")
   documents_equipment         documents_equipment[]     @relation("documents_equipment_user")
   documents_company           documents_company[]       @relation("documents_company_user")
   vehicles                    vehicles[]                @relation("vehicles_user")
@@ -1365,6 +1369,13 @@ model trainings {
   // confundir con test_limit_time, que es el límite de tiempo del cuestionario.
   // validity_months en null = la capacitación no vence.
   dictated_at                DateTime?                    @db.Date
+  // Fecha límite para que los empleados realicen la capacitación. Pasada esa
+  // fecha y completados los campos de HSE, se puede cerrar (tsk-540).
+  deadline_at                DateTime?                    @db.Date
+  closed_at                  DateTime?                    @db.Timestamptz
+  closed_by                  String?                      @db.Uuid
+  // Ruta del registro definitivo congelado en Storage al cerrar.
+  record_pdf_path            String?
   location                   String?                      @default("Capacitación Online")
   instructor_id              String?                      @db.Uuid
   estimated_duration_minutes Int?
@@ -1380,6 +1391,7 @@ model trainings {
 
   company                    company                      @relation(fields: [company_id], references: [id])
   instructor                 training_instructors?        @relation(fields: [instructor_id], references: [id])
+  closed_by_profile          profile?                     @relation("trainings_closed_by", fields: [closed_by], references: [id])
   training_materials         training_materials[]
   training_questions         training_questions[]
   training_assignments       training_assignments[]

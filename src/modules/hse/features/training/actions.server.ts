@@ -7,7 +7,7 @@ import { storageServer } from '@/shared/lib/storage-server';
 import { supabaseServer } from '@/shared/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
-import { validateForPublish, type TrainingRecordData } from './shared/record-fields';
+import { validateForClose, validateForPublish, type TrainingRecordData } from './shared/record-fields';
 
 /**
  * Crea una nueva capacitación
@@ -519,6 +519,9 @@ export const fetchTrainingById = async (id: string) => {
       cuil: string;
       department: string | null;
       status: string;
+      // Necesario para generar la constancia y la hoja de evaluación, que van
+      // por intento y no por capacitación (tsk-540).
+      attemptId?: string | null;
       lastAttempt?: {
         date: string;
         score: string;
@@ -546,6 +549,7 @@ export const fetchTrainingById = async (id: string) => {
             cuil: employee.cuil || '',
             department: employee.company_position || null, // Campo correcto según Employee
             status: 'completed',
+            attemptId: attempt?.id ?? null,
             lastAttempt: attempt
               ? {
                   date: attempt.completed_at,
@@ -1605,6 +1609,7 @@ export const updateTrainingRecordFields = async (
       where: { id: trainingId },
       data: {
         dictated_at: data.dictated_at ? new Date(data.dictated_at) : null,
+        deadline_at: data.deadline_at ? new Date(data.deadline_at) : null,
         location: data.location,
         instructor_id: data.instructor_id,
         estimated_duration_minutes: data.estimated_duration_minutes,
@@ -1633,6 +1638,120 @@ export const updateTrainingRecordFields = async (
 };
 
 /**
+ * Datos completos del registro grupal (tsk-540).
+ *
+ * Lista únicamente a los empleados que aprobaron hasta el momento de la
+ * consulta: el registro es "vivo" hasta que se cierra. Toma el intento aprobado
+ * (el definitivo); los intentos previos quedan solo para consulta administrativa.
+ *
+ * Nombre y puesto salen del snapshot tomado al firmar y caen al dato actual del
+ * empleado solo si no hay firma (capacitaciones anteriores a la implementación).
+ */
+export const fetchTrainingRecord = async (trainingId: string) => {
+  const company_id = await getCompanyId();
+  if (!company_id) return null;
+
+  const training = await prisma.trainings.findFirst({
+    where: { id: trainingId, company_id },
+    include: {
+      instructor: true,
+      company: { select: { company_name: true, company_cuit: true } },
+    },
+  });
+
+  if (!training) return null;
+
+  const attempts = await prisma.training_attempts.findMany({
+    where: { training_id: trainingId, passed: true },
+    include: {
+      employee: {
+        select: {
+          firstname: true,
+          lastname: true,
+          document_number: true,
+          hierarchy_rel: { select: { name: true } },
+        },
+      },
+    },
+    orderBy: [{ completed_at: 'asc' }],
+  });
+
+  // Un empleado puede tener más de un intento aprobado si rehizo la
+  // capacitación: nos quedamos con el último.
+  const latestByEmployee = new Map<string, (typeof attempts)[number]>();
+  for (const attempt of attempts) {
+    const previous = latestByEmployee.get(attempt.employee_id);
+    if (!previous || (attempt.attempt_number ?? 0) >= (previous.attempt_number ?? 0)) {
+      latestByEmployee.set(attempt.employee_id, attempt);
+    }
+  }
+
+  const rows = [...latestByEmployee.values()].map((attempt, index) => ({
+    number: index + 1,
+    full_name:
+      attempt.signer_full_name ?? `${attempt.employee.lastname ?? ''} ${attempt.employee.firstname ?? ''}`.trim(),
+    position: attempt.signer_position ?? attempt.employee.hierarchy_rel?.name ?? '',
+    signature_path: attempt.signature_path,
+    // El cliente pidió este formato exacto: "8/10 – Aprobado".
+    result: `${attempt.score ?? 0}/${attempt.max_score} – Aprobado`,
+    completed_at: attempt.completed_at,
+    // Dato secundario: no va en la planilla, sí en los reportes internos.
+    time_spent_seconds: attempt.time_spent_seconds,
+  }));
+
+  return { training, rows };
+};
+
+/**
+ * Cierre formal de la capacitación (tsk-540). Exige la fecha límite cumplida y
+ * los campos de HSE completos; a partir de acá el registro grupal queda
+ * definitivo y deja de incorporar empleados.
+ */
+export const closeTraining = async (trainingId: string) => {
+  try {
+    const company_id = await getCompanyId();
+    if (!company_id) return { success: false as const, error: 'No se ha seleccionado una empresa' };
+
+    const training = await prisma.trainings.findFirst({
+      where: { id: trainingId, company_id },
+      select: { status: true, deadline_at: true },
+    });
+
+    if (!training) return { success: false as const, error: 'No se encontró la capacitación' };
+    if (training.status === 'Cerrada') return { success: false as const, error: 'La capacitación ya está cerrada' };
+    if (training.status !== 'Publicado') {
+      return { success: false as const, error: 'Solo se pueden cerrar capacitaciones publicadas' };
+    }
+
+    const record = await fetchTrainingRecordFields(trainingId);
+    const errors = record ? validateForClose(record) : ['No se encontró la capacitación'];
+    if (errors.length) {
+      return { success: false as const, error: `No se puede cerrar la capacitación: ${errors.join('. ')}` };
+    }
+
+    const user = await fetchCurrentUser();
+
+    await prisma.trainings.update({
+      where: { id: trainingId },
+      data: {
+        status: 'Cerrada',
+        closed_at: new Date(),
+        closed_by: user?.id ?? null,
+        updated_at: new Date(),
+      },
+    });
+
+    revalidatePath('/dashboard/hse');
+    revalidatePath(`/dashboard/hse/detail/${trainingId}`);
+
+    return { success: true as const };
+  } catch (error: any) {
+    console.error('Error al cerrar la capacitación:', error);
+    return { success: false as const, error: `Error al cerrar la capacitación: ${error.message}` };
+  }
+};
+
+/**
  * Datos del acta de una capacitación, para hidratar el formulario de edición.
  */
 export const fetchTrainingRecordFields = async (trainingId: string): Promise<TrainingRecordData | null> => {
@@ -1643,6 +1762,7 @@ export const fetchTrainingRecordFields = async (trainingId: string): Promise<Tra
     where: { id: trainingId, company_id },
     select: {
       dictated_at: true,
+      deadline_at: true,
       location: true,
       instructor_id: true,
       estimated_duration_minutes: true,
@@ -1664,5 +1784,6 @@ export const fetchTrainingRecordFields = async (trainingId: string): Promise<Tra
     ...training,
     // El input date del formulario espera yyyy-MM-dd.
     dictated_at: training.dictated_at ? training.dictated_at.toISOString().split('T')[0] : null,
+    deadline_at: training.deadline_at ? training.deadline_at.toISOString().split('T')[0] : null,
   };
 };

@@ -184,6 +184,20 @@ export function TrainingRecordFields({
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="deadline_at">Fecha límite de realización</Label>
+          <Input
+            id="deadline_at"
+            type="date"
+            value={value.deadline_at ?? ''}
+            min={value.dictated_at ?? undefined}
+            onChange={(e) => set('deadline_at', e.target.value || null)}
+          />
+          <p className="text-sm text-muted-foreground">
+            Hasta esa fecha los empleados pueden realizarla. Después se cierra y el registro queda definitivo.
+          </p>
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="location">Lugar</Label>
           <Input
             id="location"

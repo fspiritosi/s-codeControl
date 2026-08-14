@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { fetchTrainingById } from '../actions.server';
+import { TrainingEmployeeDocuments } from './TrainingRecordActions';
 
 type Employee = {
   id: string;
@@ -18,6 +19,7 @@ type Employee = {
   department: string | null;
   status: string;
   email: string;
+  attemptId?: string | null;
   lastAttempt?: {
     date: string;
     score: string;
@@ -47,7 +49,11 @@ export const getStatusBadge = (status: string) => {
       return <Badge variant="outline">Desconocido</Badge>;
   }
 };
-export function getAreaColums(handleEdit: (email: string) => Promise<void>): ColumnDef<Employee[number]>[] {
+export function getAreaColums(
+  handleEdit: (email: string) => Promise<void>,
+  // Solo se usa para nombrar los archivos de constancia y evaluación (tsk-540).
+  trainingTitle = ''
+): ColumnDef<Employee[number]>[] {
   return [
     {
       accessorKey: 'name',
@@ -107,6 +113,23 @@ export function getAreaColums(handleEdit: (email: string) => Promise<void>): Col
       },
       filterFn: (row, id, value) => {
         return value.includes(row.getValue(id));
+      },
+    },
+    {
+      id: 'Documentos',
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Documentos" />,
+      enableSorting: false,
+      cell: ({ row }) => {
+        // La constancia solo existe para quien aprobó (tsk-540).
+        if (!row.original.attemptId || row.original.lastAttempt?.result !== 'passed') return null;
+
+        return (
+          <TrainingEmployeeDocuments
+            attemptId={row.original.attemptId}
+            employeeName={row.original.name}
+            trainingTitle={trainingTitle}
+          />
+        );
       },
     },
 
@@ -367,7 +390,7 @@ function EmployeesTab({ training }: EmployeesTabProps) {
           <TabsContent value="completed" className="pt-4">
             <div className="">
               <DataTable
-                columns={getAreaColums(handleSendInvitation) as ColumnDef<Record<string, unknown>>[]}
+                columns={getAreaColums(handleSendInvitation, training?.title || '') as ColumnDef<Record<string, unknown>>[]}
                 data={completedEmployees as unknown as Record<string, unknown>[]}
                 tableId="areaTable"
                 facetedFilters={[
