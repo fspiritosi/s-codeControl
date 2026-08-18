@@ -3658,6 +3658,7 @@ model torque_specs {
   company company        @relation(fields: [company_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
   brand   brand_vehicles @relation(fields: [brand_id], references: [id], onUpdate: Cascade, onDelete: Restrict)
 
+  @@unique([company_id, brand_id, configuration])
   @@index([company_id])
   @@index([brand_id])
 }

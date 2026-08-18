@@ -27,6 +27,10 @@ CREATE TABLE "torque_specs" (
 );
 CREATE INDEX "torque_specs_company_id_idx" ON "torque_specs"("company_id");
 CREATE INDEX "torque_specs_brand_id_idx" ON "torque_specs"("brand_id");
+-- Sin esta unique, el ON CONFLICT DO NOTHING del seed (más abajo) no tiene
+-- arbiter: una empresa no puede tener dos veces la misma configuración para
+-- la misma marca, y esto es lo que hace idempotente al seed.
+CREATE UNIQUE INDEX "torque_specs_company_brand_config_key" ON "torque_specs"("company_id", "brand_id", "configuration");
 
 -- ============================================================
 -- 3) torque_certificates: cabecera del certificado
