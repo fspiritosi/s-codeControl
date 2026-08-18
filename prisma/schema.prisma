@@ -346,6 +346,7 @@ model profile {
   user_roles_created          user_roles[]              @relation("user_roles_created_by")
   notification_recipients     notification_recipients[]
   alert_acknowledgements      alert_acknowledgements[]  @relation("alert_ack_reviewer")
+  torque_certificates_created torque_certificates[]     @relation("torque_certificates_created_by")
 }
 
 model company {
@@ -460,6 +461,10 @@ model company {
   // Tablas auxiliares de cálculo (tsk-519)
   exchange_rates exchange_rates[]
   indices        indices[]
+
+  // Certificado de torqueo (tsk-575)
+  torque_specs        torque_specs[]
+  torque_certificates torque_certificates[]
 }
 
 model pdf_settings {
@@ -616,6 +621,7 @@ model brand_vehicles {
   company        company?         @relation(fields: [company_id], references: [id])
   model_vehicles model_vehicles[]
   vehicles       vehicles[]       @relation("vehicles_brand")
+  torque_specs   torque_specs[]
 }
 
 model model_vehicles {
@@ -694,6 +700,9 @@ model vehicles {
   costo_equipo          costo_equipo?
   asignaciones_servicio asignacion_equipo_servicio[]
   registros_combustible registro_combustible[]
+
+  // Certificado de torqueo (tsk-575)
+  torque_certificates torque_certificates[]
 }
 
 model work_diagram {
@@ -3615,4 +3624,92 @@ model receipt_withholdings {
   receipt receipts @relation(fields: [receipt_id], references: [id], onDelete: Cascade)
 
   @@index([receipt_id])
+}
+
+// ============================================================
+// Certificado de torqueo (tsk-575)
+// ============================================================
+
+enum torque_sheet_format {
+  LIGHT
+  BUS
+}
+
+enum torque_bolt_condition {
+  DRY
+  LUBRICATED
+}
+
+/// Tabla de referencia de torques por marca/configuración (papel impreso).
+/// Las marcas no son globales: brand_id apunta a brand_vehicles, que tiene
+/// company_id, por lo que cada empresa tiene su propio set de specs.
+model torque_specs {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id    String   @db.Uuid
+  brand_id      BigInt
+  configuration String
+  nm_min        Int
+  nm_max        Int
+  ftlb_min      Int?
+  ftlb_max      Int?
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now()) @db.Timestamptz
+
+  company company        @relation(fields: [company_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  brand   brand_vehicles @relation(fields: [brand_id], references: [id], onUpdate: Cascade, onDelete: Restrict)
+
+  @@index([company_id])
+  @@index([brand_id])
+}
+
+/// Cabecera del certificado de torqueo.
+model torque_certificates {
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id            String                @db.Uuid
+  number                Int
+  full_number           String
+  vehicle_id            String                @db.Uuid
+  sheet_format          torque_sheet_format
+  date                  DateTime              @db.Date
+  driver_name           String
+  mechanic_name         String
+  place                 String
+  tool_type             String
+  calibration_di        String?
+  calibration_dd        String?
+  calibration_td        String?
+  calibration_ti        String?
+  required_torque       String
+  meets_requirement     Boolean
+  tolerance_range_nm    String?
+  bolt_condition        torque_bolt_condition
+  vehicle_domain        String?
+  vehicle_intern_number String?
+  vehicle_brand_name    String?
+  created_by            String?               @db.Uuid
+  created_at            DateTime              @default(now()) @db.Timestamptz
+
+  company        company  @relation(fields: [company_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  vehicle        vehicles @relation(fields: [vehicle_id], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  created_by_rel profile? @relation("torque_certificates_created_by", fields: [created_by], references: [id], onUpdate: Cascade, onDelete: SetNull)
+
+  checks torque_certificate_checks[]
+
+  @@unique([company_id, number])
+  @@index([vehicle_id])
+}
+
+/// Checklist del certificado. item_key guarda una de las 15 claves definidas
+/// en src/modules/maintenance/features/torque/shared/torque-spec.ts — el
+/// catálogo no se duplica en la base.
+model torque_certificate_checks {
+  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  certificate_id String  @db.Uuid
+  item_key       String
+  value          Boolean
+  observations   String?
+
+  certificate torque_certificates @relation(fields: [certificate_id], references: [id], onDelete: Cascade)
+
+  @@index([certificate_id])
 }
