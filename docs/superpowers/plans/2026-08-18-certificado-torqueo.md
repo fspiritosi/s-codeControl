@@ -222,7 +222,7 @@ Run: `npm run create-migration -- create_torque_certificates`
 Los dos enums: `torque_sheet_format` (`LIGHT`, `BUS`) y `torque_bolt_condition`
 (`DRY`, `LUBRICATED`).
 
-`torque_specs`: `company_id`, `brand_id` → `brand_vehicles`, `configuration`
+`torque_specs`: `company_id`, `brand_id` → `brand_vehicles` (**BigInt**, no uuid), `configuration`
 (text), `nm_min`, `nm_max`, `ftlb_min`, `ftlb_max` (los ft-lbs nullable),
 `is_active` (default true).
 
@@ -250,10 +250,12 @@ cargadas:
 -- Valores de las dos hojas en papel. Mercedes-Benz para vehículos chicos,
 -- Iveco para colectivos; se cargan como dato porque la tabla que se imprime
 -- depende de la marca real del vehículo, no del formato de hoja (tsk-575).
+-- Las marcas NO son globales: brand_vehicles tiene company_id. Por eso cada
+-- empresa se une con SUS propias marcas y no con un CROSS JOIN, que le
+-- asignaría a un cliente las marcas de otro.
 INSERT INTO torque_specs (company_id, brand_id, configuration, nm_min, nm_max, ftlb_min, ftlb_max)
-SELECT c.id, b.id, v.configuration, v.nm_min, v.nm_max, v.ftlb_min, v.ftlb_max
-FROM company c
-CROSS JOIN (VALUES
+SELECT b.company_id, b.id, v.configuration, v.nm_min, v.nm_max, v.ftlb_min, v.ftlb_max
+FROM (VALUES
   ('Mercedes-Benz', '9+1',  150, 170, 111, 125),
   ('Mercedes-Benz', '15+1', 170, 190, 125, 140),
   ('Mercedes-Benz', '19+1', 190, 210, 140, 155),
@@ -264,7 +266,7 @@ CROSS JOIN (VALUES
   ('Iveco', '43+1', 1100, 1300, 811,  959),
   ('Iveco', '44+1', 1200, 1400, 885, 1030)
 ) AS v(brand_name, configuration, nm_min, nm_max, ftlb_min, ftlb_max)
-JOIN brand_vehicles b ON b.name = v.brand_name
+JOIN brand_vehicles b ON b.name = v.brand_name AND b.company_id IS NOT NULL
 ON CONFLICT DO NOTHING;
 ```
 
