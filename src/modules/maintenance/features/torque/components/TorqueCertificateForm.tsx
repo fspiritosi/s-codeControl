@@ -15,6 +15,7 @@ import { RadioGroup, RadioGroupItem } from '@/shared/components/ui/radio-group';
 import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Textarea } from '@/shared/components/ui/textarea';
+import { useLoggedUserStore } from '@/shared/store/loggedUser';
 import {
   createTorqueCertificate,
   getTorqueSpecsByBrand,
@@ -100,6 +101,7 @@ function YesNoField({
 export function TorqueCertificateForm({ vehicles }: { vehicles: TorqueVehicleOption[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const companyLogo = useLoggedUserStore((state) => state.actualCompany)?.company_logo;
 
   const [vehicleId, setVehicleId] = useState('');
   const selectedVehicle = useMemo(
@@ -107,14 +109,20 @@ export function TorqueCertificateForm({ vehicles }: { vehicles: TorqueVehicleOpt
     [vehicles, vehicleId]
   );
 
-  const [fetchedSpecs, setFetchedSpecs] = useState<TorqueSpecOption[]>([]);
+  // Se guarda junto con el brandId al que corresponden: fetchedSpecs no se
+  // limpia al cambiar de vehículo, así que sin este chequeo el PDF podría
+  // salir con los torques de la marca anterior si el usuario cambia de
+  // equipo y guarda dentro de la ventana del fetch (o si una respuesta
+  // llega fuera de orden).
+  const [fetchedSpecs, setFetchedSpecs] = useState<{ brandId: string; rows: TorqueSpecOption[] } | null>(null);
   // loadingSpecs sale de useTransition en vez de un useState propio: así el
   // efecto no llama a ningún setState de forma sincrónica en su cuerpo (evita
   // el render extra que marca react-hooks/set-state-in-effect).
   const [loadingSpecs, startSpecsTransition] = useTransition();
-  // Derivadas del vehículo elegido, no reseteadas seteando estado en el
-  // efecto — sin vehículo, no hay specs que mostrar.
-  const specs = selectedVehicle ? fetchedSpecs : [];
+  // Derivadas del vehículo elegido, comprobando que las specs cargadas
+  // correspondan a su marca — no alcanza con "hay vehículo seleccionado".
+  const specs =
+    selectedVehicle && fetchedSpecs?.brandId === selectedVehicle.brand_id ? fetchedSpecs.rows : [];
 
   const [sheetFormat, setSheetFormat] = useState<torque_sheet_format>('LIGHT');
   const [date, setDate] = useState(today());
@@ -137,9 +145,10 @@ export function TorqueCertificateForm({ vehicles }: { vehicles: TorqueVehicleOpt
   useEffect(() => {
     if (!selectedVehicle) return;
     let cancelled = false;
+    const brandId = selectedVehicle.brand_id;
     startSpecsTransition(async () => {
-      const result = await getTorqueSpecsByBrand(selectedVehicle.brand_id);
-      if (!cancelled) setFetchedSpecs(result);
+      const result = await getTorqueSpecsByBrand(brandId);
+      if (!cancelled) setFetchedSpecs({ brandId, rows: result });
     });
     return () => {
       cancelled = true;
@@ -215,6 +224,8 @@ export function TorqueCertificateForm({ vehicles }: { vehicles: TorqueVehicleOpt
 
       try {
         const pdfData: TorqueCertificatePdfData = {
+          fullNumber: result.fullNumber ?? '',
+          sheetFormat,
           date,
           driverName: driverName.trim(),
           mechanicName: mechanicName.trim(),
@@ -234,7 +245,9 @@ export function TorqueCertificateForm({ vehicles }: { vehicles: TorqueVehicleOpt
           boltCondition,
         };
 
-        const blob = await pdf(<TorqueCertificateLayout data={pdfData} specs={specs} />).toBlob();
+        const blob = await pdf(
+          <TorqueCertificateLayout data={pdfData} specs={specs} logoUrl={companyLogo} />
+        ).toBlob();
         const fileLabel = selectedVehicle.domain ?? selectedVehicle.intern_number;
         download(blob, `Certificado_torqueo_${fileLabel}.pdf`);
       } catch (error) {

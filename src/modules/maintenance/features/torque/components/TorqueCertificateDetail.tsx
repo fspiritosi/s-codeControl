@@ -8,6 +8,8 @@ import { toast } from 'sonner';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { formatDateUTC } from '@/shared/lib/utils/formatters';
+import { useLoggedUserStore } from '@/shared/store/loggedUser';
 import type { getTorqueCertificateById } from '../actions.server';
 import { getTorqueSpecsByBrand } from '../actions.server';
 import { checkLabel, SHEET_FORMATS, TORQUE_CHECK_ITEMS, type TorqueCheckKey } from '../shared/torque-spec';
@@ -52,6 +54,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 
 export function TorqueCertificateDetail({ certificate }: { certificate: TorqueCertificateDetailData }) {
   const [isPending, startTransition] = useTransition();
+  const companyLogo = useLoggedUserStore((state) => state.actualCompany)?.company_logo;
 
   const previousItems = TORQUE_CHECK_ITEMS.filter((i) => i.group === 'previous');
   const tighteningItems = TORQUE_CHECK_ITEMS.filter((i) => i.group === 'tightening');
@@ -65,6 +68,8 @@ export function TorqueCertificateDetail({ certificate }: { certificate: TorqueCe
           : [];
 
         const pdfData: TorqueCertificatePdfData = {
+          fullNumber: certificate.full_number,
+          sheetFormat: certificate.sheet_format,
           date: new Date(certificate.date).toISOString().slice(0, 10),
           driverName: certificate.driver_name,
           mechanicName: certificate.mechanic_name,
@@ -88,7 +93,9 @@ export function TorqueCertificateDetail({ certificate }: { certificate: TorqueCe
           boltCondition: certificate.bolt_condition,
         };
 
-        const blob = await pdf(<TorqueCertificateLayout data={pdfData} specs={specs} />).toBlob();
+        const blob = await pdf(
+          <TorqueCertificateLayout data={pdfData} specs={specs} logoUrl={companyLogo} />
+        ).toBlob();
         const fileLabel = certificate.vehicle_domain ?? certificate.vehicle_intern_number ?? certificate.full_number;
         download(blob, `Certificado_torqueo_${fileLabel}.pdf`);
       } catch (error) {
@@ -121,7 +128,7 @@ export function TorqueCertificateDetail({ certificate }: { certificate: TorqueCe
           <CardTitle>Datos generales</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Field label="Fecha" value={new Date(certificate.date).toLocaleDateString('es-AR')} />
+          <Field label="Fecha" value={formatDateUTC(certificate.date)} />
           <Field label="Conductor" value={certificate.driver_name} />
           <Field label="Mecánico" value={certificate.mechanic_name} />
           <Field label="Cargado por" value={certificate.created_by_rel?.fullname} />

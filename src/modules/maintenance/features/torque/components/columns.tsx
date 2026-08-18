@@ -1,9 +1,9 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { format } from 'date-fns';
 import Link from 'next/link';
 import { DataTableColumnHeader } from '@/shared/components/data-table';
+import { formatDateUTC } from '@/shared/lib/utils/formatters';
 import type { TorqueCertificateRow } from '../actions.server';
 import { SHEET_FORMATS } from '../shared/torque-spec';
 
@@ -32,9 +32,9 @@ export const torqueCertificateColumns: ColumnDef<TorqueCertificateRow>[] = [
   },
   {
     id: 'date',
-    accessorFn: (row) => format(new Date(row.date), 'dd/MM/yyyy'),
+    accessorFn: (row) => formatDateUTC(row.date),
     header: ({ column }) => <DataTableColumnHeader column={column} title="Fecha" />,
-    cell: ({ row }) => <span>{format(new Date(row.original.date), 'dd/MM/yyyy')}</span>,
+    cell: ({ row }) => <span>{formatDateUTC(row.original.date)}</span>,
   },
   {
     accessorKey: 'vehicle_domain',

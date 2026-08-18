@@ -1,6 +1,7 @@
 'use client';
 
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
+import type { torque_sheet_format } from '@/generated/prisma/client';
 import { checkLabel, formatTorqueRange, TORQUE_CHECK_ITEMS, type TorqueCheckKey } from '../../shared/torque-spec';
 
 /**
@@ -33,6 +34,14 @@ export type TorquePdfSpecRow = {
 };
 
 export type TorqueCertificatePdfData = {
+  /** Número completo del certificado (ej: "TQ-00001"), para rastrear el papel hasta su registro. */
+  fullNumber: string;
+  /**
+   * Formato de la hoja (LIGHT/BUS). Todavía no se usa en el layout: es la
+   * costura para cuando lleguen los juegos de fotos/diagramas propios de cada
+   * formato y haya que elegir cuál mostrar.
+   */
+  sheetFormat: torque_sheet_format;
   /** Fecha en formato ISO (YYYY-MM-DD); se formatea acá a DD/MM/YYYY. */
   date: string;
   driverName: string;
@@ -66,6 +75,7 @@ const styles = StyleSheet.create({
   },
   logo: { width: 130, height: 38, objectFit: 'contain' },
   docTitle: { fontSize: 12, fontFamily: 'Helvetica-Bold', textAlign: 'right' },
+  docNumber: { fontSize: 9, fontFamily: 'Helvetica-Bold', textAlign: 'right', marginTop: 2 },
   sectionTitle: {
     fontSize: 9,
     fontFamily: 'Helvetica-Bold',
@@ -157,10 +167,13 @@ export function TorqueCertificateLayout({
   return (
     <Document title={`Checklist de torqueo — ${data.vehicleDomain ?? data.vehicleInternNumber ?? ''}`}>
       <Page size="A4" style={styles.page}>
-        {/* Encabezado: logo de la empresa (opcional) + título */}
+        {/* Encabezado: logo de la empresa (opcional) + título + número de certificado */}
         <View style={styles.header}>
           {logoUrl ? <Image style={styles.logo} src={logoUrl} /> : <Text> </Text>}
-          <Text style={styles.docTitle}>CHECKLIST DE TORQUEO</Text>
+          <View>
+            <Text style={styles.docTitle}>CHECKLIST DE TORQUEO</Text>
+            <Text style={styles.docNumber}>{data.fullNumber}</Text>
+          </View>
         </View>
 
         {/* 1. Datos Generales */}

@@ -120,6 +120,16 @@ export async function getVehiclesForTorque(): Promise<TorqueVehicleOption[]> {
  * Specs de torque activas de una marca, ordenadas por nm_min. brandId llega
  * como string desde el cliente y hay que convertirlo a BigInt antes de
  * filtrar: torque_specs.brand_id es BigInt en la base.
+ *
+ * A diferencia del resto de las actions de este archivo, esta lectura NO se
+ * filtra por company_id. brand_vehicles.name tiene un @unique GLOBAL
+ * preexistente, así que solo existe una fila "Mercedes-Benz" en todo el
+ * sistema y pertenece a la empresa que la creó primero; el seed cargó las
+ * specs de torque con ese mismo company_id. Filtrar por empresa acá dejaría
+ * sin specs a cualquier otra empresa que use esa marca. Las specs son datos
+ * técnicos del fabricante (un Mercedes 9+1 lleva 150-170 Nm en cualquier
+ * empresa), no información de negocio de un cliente, así que no hay riesgo
+ * de fuga al leerlas sin scoping.
  */
 export async function getTorqueSpecsByBrand(brandId: string): Promise<TorqueSpecOption[]> {
   const { companyId } = await getActionContext();
@@ -134,7 +144,7 @@ export async function getTorqueSpecsByBrand(brandId: string): Promise<TorqueSpec
 
   try {
     const specs = await prisma.torque_specs.findMany({
-      where: { company_id: companyId, brand_id: brandIdBigInt, is_active: true },
+      where: { brand_id: brandIdBigInt, is_active: true },
       select: {
         configuration: true,
         nm_min: true,
@@ -222,7 +232,7 @@ export async function getTorqueCertificateById(id: string) {
  */
 export async function createTorqueCertificate(
   input: TorqueCertificateInput
-): Promise<{ success: boolean; id?: string; error?: string }> {
+): Promise<{ success: boolean; id?: string; fullNumber?: string; error?: string }> {
   const { companyId } = await getActionContext();
   if (!companyId) return { success: false, error: 'No hay empresa seleccionada' };
 
@@ -289,11 +299,11 @@ export async function createTorqueCertificate(
             })),
           },
         },
-        select: { id: true },
+        select: { id: true, full_number: true },
       });
     });
 
-    return { success: true, id: certificate.id };
+    return { success: true, id: certificate.id, fullNumber: certificate.full_number };
   } catch (error) {
     console.error('Error creating torque certificate:', error);
     return { success: false, error: 'No se pudo crear el certificado de torqueo' };

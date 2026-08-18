@@ -3641,8 +3641,11 @@ enum torque_bolt_condition {
 }
 
 /// Tabla de referencia de torques por marca/configuración (papel impreso).
-/// Las marcas no son globales: brand_id apunta a brand_vehicles, que tiene
-/// company_id, por lo que cada empresa tiene su propio set de specs.
+/// company_id existe para saber quién cargó cada spec, pero la lectura
+/// (getTorqueSpecsByBrand) NO filtra por empresa: brand_vehicles.name tiene
+/// un @unique GLOBAL, así que una marca (ej: "Mercedes-Benz") es una sola
+/// fila compartida por todo el sistema, y sus specs de torque son datos
+/// técnicos del fabricante, no información de negocio de una empresa.
 model torque_specs {
   id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   company_id    String   @db.Uuid
