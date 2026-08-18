@@ -56,12 +56,18 @@ function emptyChecks(): ChecksState {
   return state;
 }
 
-/** Sí/No compacto para cada ítem del checklist. */
+/**
+ * Sí/No compacto para cada ítem del checklist. `id` se deriva de la key del
+ * ítem (no del label): un id de HTML no debe llevar espacios y dos ítems
+ * podrían compartir label.
+ */
 function YesNoField({
+  id,
   label,
   value,
   onChange,
 }: {
+  id: string;
   label: string;
   value: boolean | null;
   onChange: (value: boolean) => void;
@@ -75,14 +81,14 @@ function YesNoField({
         onValueChange={(v) => onChange(v === 'si')}
       >
         <div className="flex items-center gap-1.5">
-          <RadioGroupItem value="si" id={`${label}-si`} />
-          <Label htmlFor={`${label}-si`} className="font-normal text-sm">
+          <RadioGroupItem value="si" id={`${id}-si`} />
+          <Label htmlFor={`${id}-si`} className="font-normal text-sm">
             Sí
           </Label>
         </div>
         <div className="flex items-center gap-1.5">
-          <RadioGroupItem value="no" id={`${label}-no`} />
-          <Label htmlFor={`${label}-no`} className="font-normal text-sm">
+          <RadioGroupItem value="no" id={`${id}-no`} />
+          <Label htmlFor={`${id}-no`} className="font-normal text-sm">
             No
           </Label>
         </div>
@@ -101,8 +107,14 @@ export function TorqueCertificateForm({ vehicles }: { vehicles: TorqueVehicleOpt
     [vehicles, vehicleId]
   );
 
-  const [specs, setSpecs] = useState<TorqueSpecOption[]>([]);
-  const [loadingSpecs, setLoadingSpecs] = useState(false);
+  const [fetchedSpecs, setFetchedSpecs] = useState<TorqueSpecOption[]>([]);
+  // loadingSpecs sale de useTransition en vez de un useState propio: así el
+  // efecto no llama a ningún setState de forma sincrónica en su cuerpo (evita
+  // el render extra que marca react-hooks/set-state-in-effect).
+  const [loadingSpecs, startSpecsTransition] = useTransition();
+  // Derivadas del vehículo elegido, no reseteadas seteando estado en el
+  // efecto — sin vehículo, no hay specs que mostrar.
+  const specs = selectedVehicle ? fetchedSpecs : [];
 
   const [sheetFormat, setSheetFormat] = useState<torque_sheet_format>('LIGHT');
   const [date, setDate] = useState(today());
@@ -123,19 +135,12 @@ export function TorqueCertificateForm({ vehicles }: { vehicles: TorqueVehicleOpt
   // Al elegir el equipo se cargan las specs de torque de su marca, solo para
   // mostrarlas en pantalla mientras se carga el certificado (igual que en el papel).
   useEffect(() => {
-    if (!selectedVehicle) {
-      setSpecs([]);
-      return;
-    }
+    if (!selectedVehicle) return;
     let cancelled = false;
-    setLoadingSpecs(true);
-    getTorqueSpecsByBrand(selectedVehicle.brand_id)
-      .then((result) => {
-        if (!cancelled) setSpecs(result);
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingSpecs(false);
-      });
+    startSpecsTransition(async () => {
+      const result = await getTorqueSpecsByBrand(selectedVehicle.brand_id);
+      if (!cancelled) setFetchedSpecs(result);
+    });
     return () => {
       cancelled = true;
     };
@@ -379,6 +384,7 @@ export function TorqueCertificateForm({ vehicles }: { vehicles: TorqueVehicleOpt
           {previousItems.map((item) => (
             <div key={item.key} className="py-2 first:pt-0 last:pb-0">
               <YesNoField
+                id={item.key}
                 label={item.label}
                 value={checks[item.key].value}
                 onChange={(value) => updateCheckValue(item.key, value)}
@@ -474,6 +480,7 @@ export function TorqueCertificateForm({ vehicles }: { vehicles: TorqueVehicleOpt
           {tighteningItems.map((item) => (
             <YesNoField
               key={item.key}
+              id={item.key}
               label={item.label}
               value={checks[item.key].value}
               onChange={(value) => updateCheckValue(item.key, value)}
