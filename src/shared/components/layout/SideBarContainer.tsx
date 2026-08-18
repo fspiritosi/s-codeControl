@@ -8,6 +8,7 @@ import {
   Calendar,
   CalendarCheck,
   CalendarDays,
+  ClipboardCheck,
   ClipboardList,
   FileText,
   GraduationCap,
@@ -71,10 +72,11 @@ const ALL_LINKS: SideLink[] = [
     requiredPermission: null,
     isSection: true,
     children: [
-      { name: 'VTV',           href: '/dashboard/vtv',         icon: <CalendarCheck size={sizeIcons} />, position: 1, requiredPermission: 'equipos.view' },
-      { name: 'Mantenimiento', href: '/dashboard/maintenance', icon: <Wrench size={sizeIcons} />,        position: 2, requiredPermission: 'mantenimiento.view' },
-      { name: 'Operaciones',   href: '/dashboard/operations',  icon: <Calendar size={sizeIcons} />,      position: 3, requiredPermission: 'operaciones.view' },
-      { name: 'Formularios',   href: '/dashboard/forms',       icon: <ClipboardList size={sizeIcons} />, position: 4, requiredPermission: 'formularios.view' },
+      { name: 'VTV',                     href: '/dashboard/vtv',                 icon: <CalendarCheck size={sizeIcons} />,   position: 1, requiredPermission: 'equipos.view' },
+      { name: 'Mantenimiento',           href: '/dashboard/maintenance',         icon: <Wrench size={sizeIcons} />,          position: 2, requiredPermission: 'mantenimiento.view' },
+      { name: 'Certificados de torqueo', href: '/dashboard/maintenance/torque',  icon: <ClipboardCheck size={sizeIcons} />,  position: 3, requiredPermission: 'mantenimiento.view' },
+      { name: 'Operaciones',             href: '/dashboard/operations',          icon: <Calendar size={sizeIcons} />,        position: 4, requiredPermission: 'operaciones.view' },
+      { name: 'Formularios',             href: '/dashboard/forms',               icon: <ClipboardList size={sizeIcons} />,   position: 5, requiredPermission: 'formularios.view' },
     ],
   },
   {

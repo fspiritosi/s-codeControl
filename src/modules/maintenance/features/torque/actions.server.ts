@@ -186,7 +186,9 @@ export async function getTorqueCertificates(): Promise<TorqueCertificateRow[]> {
 /**
  * Certificado completo con sus checks. No resuelve patente/interno/marca por
  * relación: usa el snapshot guardado al crear, para que un certificado ya
- * emitido no cambie si después se corrige el equipo.
+ * emitido no cambie si después se corrige el equipo. Sí incluye
+ * `vehicle.brand` (no snapshot) porque la reimpresión necesita el brand_id
+ * para volver a traer la tabla de specs de torque de esa marca (tsk-575 task 6).
  */
 export async function getTorqueCertificateById(id: string) {
   const { companyId } = await getActionContext();
@@ -198,6 +200,7 @@ export async function getTorqueCertificateById(id: string) {
       include: {
         checks: { orderBy: { item_key: 'asc' } },
         created_by_rel: { select: { fullname: true } },
+        vehicle: { select: { brand: true } },
       },
     });
     return certificate;
