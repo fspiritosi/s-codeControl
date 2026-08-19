@@ -78,8 +78,10 @@ export async function PaymentOrderDetail({ id }: { id: string }) {
               {orderSymbol}
               {order.total_amount.toFixed(2)} {order.currency}
             </CardTitle>
-            {order.retentions_total > 0 && order.net_to_pay !== null && (
+            {(order.retentions_total > 0 || order.credits_total > 0) &&
+              order.net_to_pay !== null && (
               <div className="text-xs text-muted-foreground space-y-0.5 mt-1">
+                {order.retentions_total > 0 && (
                 <div>
                   Retenciones:{' '}
                   <span className="font-mono text-amber-600">
@@ -87,6 +89,16 @@ export async function PaymentOrderDetail({ id }: { id: string }) {
                     {order.retentions_total.toFixed(2)}
                   </span>
                 </div>
+                )}
+                {order.credits_total > 0 && (
+                <div>
+                  Notas de crédito:{' '}
+                  <span className="font-mono text-emerald-600">
+                    −{orderSymbol}
+                    {order.credits_total.toFixed(2)}
+                  </span>
+                </div>
+                )}
                 <div>
                   Neto pagado:{' '}
                   <span className="font-mono font-semibold">
@@ -231,6 +243,48 @@ export async function PaymentOrderDetail({ id }: { id: string }) {
           </Table>
         </CardContent>
       </Card>
+
+      {order.credit_applications.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Notas de crédito aplicadas</CardTitle>
+            <CardDescription>
+              Crédito del proveedor usado en esta orden. Baja lo que se transfiere; las
+              facturas de arriba se cancelan igual por su importe completo.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nota de crédito</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead className="text-right">Total de la nota</TableHead>
+                  <TableHead className="text-right">Aplicado</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {order.credit_applications.map((c) => (
+                  <TableRow key={c.id}>
+                    <TableCell className="font-mono">
+                      {c.credit_note?.full_number ?? '—'}
+                    </TableCell>
+                    <TableCell>
+                      {c.credit_note ? format(new Date(c.credit_note.issue_date), 'dd/MM/yyyy') : '—'}
+                    </TableCell>
+                    <TableCell className="text-right font-mono">
+                      {c.credit_note ? c.credit_note.total.toFixed(2) : '—'}
+                    </TableCell>
+                    <TableCell className="text-right font-mono font-medium text-emerald-600">
+                      −{c.amount.toFixed(2)} {c.credit_note?.currency ?? ''}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
       {order.retentions.length > 0 && (
         <Card>

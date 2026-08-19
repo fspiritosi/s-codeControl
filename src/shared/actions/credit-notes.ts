@@ -26,6 +26,10 @@ import {
  * Antes una NC descontaba sola el saldo de `original_invoice_id`. Ahora el
  * usuario decide: la aplica a una o varias facturas, o la usa dentro de una OP
  * (eso vive en tesorería). Lo que no imputa queda disponible.
+ *
+ * Vive en `shared/actions` y no en un módulo porque lo usan proveedores (la
+ * cuenta corriente) y compras (el ofrecimiento al confirmar la NC), y los
+ * módulos no pueden importarse entre sí.
  * Ver .planes/tkt-586-notas-credito-imputacion.md
  */
 

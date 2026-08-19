@@ -2,7 +2,7 @@
 
 **Ticket:** TKT-586 "Modificación en OP y NC" (cc-tickets #586)
 **Rama:** `feature/tkt-586-notas-credito-op` (desde `main`)
-**Estado:** Spec aprobado, pendiente de implementación
+**Estado:** Implementado y verificado (2026-08-19)
 **Fecha:** 2026-08-18
 
 ---
@@ -303,6 +303,16 @@ Commits por fase (supera holgado los umbrales de CLAUDE.md). Sin push hasta que 
 
 ---
 
-## 11. Preguntas abiertas
+## 11. Verificación
+
+| Qué | Resultado |
+|---|---|
+| `npx tsc --noEmit` | Sin errores. |
+| `npm run build` | Compilado correctamente en 22 s. |
+| `npx vitest run` | 14 archivos, 132 tests en verde (incluye los nuevos de imputación múltiple, crédito usado en OP y el circuito completo de TKT-586). |
+| Migración aplicada en local | Sin error; los estados de las 8 facturas existentes quedaron idénticos antes y después. |
+| Backfill con datos sintéticos | Probado en transacción con `ROLLBACK` sobre datos reales de la base local: **(a)** NC contra factura 100% pagada → no imputa nada y el crédito queda entero disponible (el caso del cliente); **(b)** dos NC contra una factura de $2.601.500 sin pagos → la más vieja toma $2.000.000 y la nueva $601.500, quedándole $398.500 a favor (mismo reparto greedy que antes); **(c)** NC en borrador → no imputa nada. |
+
+## 12. Preguntas abiertas
 
 Ninguna: las tres decisiones pendientes se cerraron el 2026-08-18 y quedaron incorporadas como decisiones 10, 11 y 12.

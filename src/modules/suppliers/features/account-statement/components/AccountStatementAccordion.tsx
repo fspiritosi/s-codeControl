@@ -18,6 +18,8 @@ interface Props {
   expenses: { rows: any[]; summary: any };
   creditBalance: any;
   applicableInvoices: any[];
+  creditNotes?: any[];
+  creditNoteApplications?: any[];
 }
 
 export function AccountStatementAccordion({
@@ -29,7 +31,14 @@ export function AccountStatementAccordion({
   expenses,
   creditBalance,
   applicableInvoices,
+  creditNotes = [],
+  creditNoteApplications = [],
 }: Props) {
+  // El badge muestra la plata a favor completa: pagos a cuenta + notas de
+  // crédito sin imputar (TKT-586).
+  const creditAvailable =
+    (creditBalance?.available ?? 0) +
+    creditNotes.reduce((acc: number, n: any) => acc + (n.available ?? 0), 0);
   return (
     <Accordion type="multiple" defaultValue={['invoices']} className="space-y-2">
       <AccordionItem value="invoices" className="border rounded-md px-4 bg-card shadow-sm">
@@ -48,10 +57,10 @@ export function AccountStatementAccordion({
         <AccordionTrigger className="hover:no-underline">
           <div className="flex items-center gap-3">
             <span className="font-medium">Saldo a favor</span>
-            {creditBalance?.available > 0 && (
+            {creditAvailable > 0 && (
               <Badge variant="success">
                 $
-                {creditBalance.available.toLocaleString('es-AR', {
+                {creditAvailable.toLocaleString('es-AR', {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -64,6 +73,8 @@ export function AccountStatementAccordion({
             supplierId={supplierId}
             balance={creditBalance}
             applicableInvoices={applicableInvoices}
+            creditNotes={creditNotes}
+            creditNoteApplications={creditNoteApplications}
           />
         </AccordionContent>
       </AccordionItem>

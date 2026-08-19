@@ -19,9 +19,11 @@ interface Row {
   total: number;
   paid: number;
   credit_applied: number;
+  /** Saldo a favor (pago a cuenta) imputado a la factura. */
+  on_account_applied: number;
   remaining: number;
   status: string;
-  /** Solo en NC: número de la factura que corrige. */
+  /** Solo en NC: comprobantes a los que se imputó, o la factura de referencia. */
   applies_to: string | null;
 }
 
@@ -107,7 +109,7 @@ export function InvoicesSection({ rows, summary }: { rows: Row[]; summary: Summa
                 <span className="font-mono font-medium">{r.full_number}</span>
                 {r.applies_to && (
                   <span className="text-xs text-muted-foreground">
-                    aplica a {r.applies_to}
+                    aplicada a {r.applies_to}
                   </span>
                 )}
               </div>
@@ -146,6 +148,15 @@ export function InvoicesSection({ rows, summary }: { rows: Row[]; summary: Summa
             cell: (r) => (
               <span className="text-sm text-muted-foreground">
                 {r.credit_applied > 0 ? fmt(r.credit_applied) : '-'}
+              </span>
+            ),
+            className: 'text-right',
+          },
+          {
+            header: 'A cuenta',
+            cell: (r) => (
+              <span className="text-sm text-muted-foreground">
+                {r.on_account_applied > 0 ? fmt(r.on_account_applied) : '-'}
               </span>
             ),
             className: 'text-right',

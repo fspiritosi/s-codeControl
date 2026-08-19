@@ -22,6 +22,10 @@ import {
 } from '@/shared/components/ui/alert-dialog';
 import { INVOICE_STATUS_LABELS, VOUCHER_TYPE_LABELS, INVOICE_RECEIVING_STATUS_LABELS, INVOICE_RECEIVING_STATUS_COLORS } from '@/modules/purchasing/shared/types';
 import { confirmPurchaseInvoice, deletePurchaseInvoice } from '../actions.server';
+import {
+  applyCreditNoteToInvoices,
+  getCreditNoteApplicationSuggestion,
+} from '@/shared/actions/credit-notes';
 import { formatDateUTC } from '@/shared/lib/utils/formatters';
 import { MoreHorizontal, Eye, CheckCircle, Pencil, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -35,6 +39,50 @@ function ActionsCell({ row, isOwner }: { row: any; isOwner: boolean }) {
   const id = row.original.id;
   const fullNumber = row.original.full_number;
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  // Ofrecimiento de imputar una NC recién confirmada a la factura que corrige
+  // (TKT-586). Es una oferta, no un automatismo: el usuario puede decir que no
+  // y hacerlo después desde la cuenta corriente del proveedor.
+  const [creditSuggestion, setCreditSuggestion] = useState<{
+    creditNoteId: string;
+    creditNoteFullNumber: string;
+    invoiceId: string;
+    invoiceFullNumber: string;
+    suggestedAmount: number;
+  } | null>(null);
+  const [applyingSuggestion, setApplyingSuggestion] = useState(false);
+
+  const fmtAmount = (n: number) =>
+    `$${n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const applySuggestion = () => {
+    if (!creditSuggestion) return;
+    setApplyingSuggestion(true);
+    toast.promise(
+      async () => {
+        const res = await applyCreditNoteToInvoices({
+          creditNoteId: creditSuggestion.creditNoteId,
+          allocations: [
+            {
+              invoiceId: creditSuggestion.invoiceId,
+              amount: creditSuggestion.suggestedAmount,
+            },
+          ],
+        });
+        if (!res.ok) throw new Error(res.error ?? 'No se pudo imputar');
+        setCreditSuggestion(null);
+        setApplyingSuggestion(false);
+        router.refresh();
+      },
+      {
+        loading: 'Imputando...',
+        success: 'Crédito imputado',
+        error: (e) => {
+          setApplyingSuggestion(false);
+          return e.message;
+        },
+      }
+    );
+  };
 
   // DRAFT: editable por cualquiera con acceso. CONFIRMED: solo el owner de la empresa.
   const canEdit = status === 'DRAFT' || (status === 'CONFIRMED' && isOwner);
@@ -82,6 +130,10 @@ function ActionsCell({ row, isOwner }: { row: any; isOwner: boolean }) {
                     const result = await confirmPurchaseInvoice(id);
                     if (result.error) throw new Error(result.error);
                     router.refresh();
+                    // Si es una NC con factura de referencia que todavía debe
+                    // algo, se ofrece imputarla ahí mismo.
+                    const suggestion = await getCreditNoteApplicationSuggestion(id);
+                    if (suggestion) setCreditSuggestion(suggestion);
                   },
                   { loading: 'Confirmando...', success: 'Factura confirmada', error: (e) => e.message }
                 );
@@ -106,6 +158,37 @@ function ActionsCell({ row, isOwner }: { row: any; isOwner: boolean }) {
           )}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <AlertDialog
+        open={!!creditSuggestion}
+        onOpenChange={(open) => !open && setCreditSuggestion(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              ¿Imputar la nota {creditSuggestion?.creditNoteFullNumber} a{' '}
+              {creditSuggestion?.invoiceFullNumber}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Se imputarían {fmtAmount(creditSuggestion?.suggestedAmount ?? 0)} al saldo de esa
+              factura. Si preferís usar el crédito en otra factura o en una orden de pago,
+              elegí &quot;Ahora no&quot;: queda disponible en la cuenta corriente del proveedor.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={applyingSuggestion}>Ahora no</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                applySuggestion();
+              }}
+              disabled={applyingSuggestion}
+            >
+              Imputar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
         <AlertDialogContent>
