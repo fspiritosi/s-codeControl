@@ -64,6 +64,54 @@ export type Database = {
         }
         Relationships: []
       }
+      alert_acknowledgements: {
+        Row: {
+          alert_key: string
+          alert_type: string
+          company_id: string
+          created_at: string
+          id: string
+          label: string | null
+          reviewed_at: string
+          reviewed_by: string
+        }
+        Insert: {
+          alert_key: string
+          alert_type: string
+          company_id: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          reviewed_at?: string
+          reviewed_by: string
+        }
+        Update: {
+          alert_key?: string
+          alert_type?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          reviewed_at?: string
+          reviewed_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_acknowledgements_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alert_acknowledgements_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asignacion_equipo_servicio: {
         Row: {
           afectacion_pct: number
@@ -149,6 +197,13 @@ export type Database = {
             foreignKeyName: "asignacion_mod_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "asignacion_mod_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
@@ -184,6 +239,13 @@ export type Database = {
           id?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "public_assing_customer_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
           {
             foreignKeyName: "public_assing_customer_employee_id_fkey"
             columns: ["employee_id"]
@@ -677,6 +739,13 @@ export type Database = {
             foreignKeyName: "public_covenant_employee_emplyee_id_fkey"
             columns: ["emplyee_id"]
             isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "public_covenant_employee_emplyee_id_fkey"
+            columns: ["emplyee_id"]
+            isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
@@ -876,6 +945,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "company"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "companies_employees_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "companies_employees_employee_id_fkey"
@@ -1279,6 +1355,13 @@ export type Database = {
             foreignKeyName: "contractor_employee_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "contractor_employee_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
@@ -1347,7 +1430,10 @@ export type Database = {
           id: string
           is_active: boolean
           km_anuales: number
+          moneda_compra: string
+          tipo_cambio_compra: number | null
           valor_compra: number
+          valor_compra_usd: number | null
           valor_residual_pct: number
           vehicle_id: string
         }
@@ -1359,7 +1445,10 @@ export type Database = {
           id?: string
           is_active?: boolean
           km_anuales?: number
+          moneda_compra?: string
+          tipo_cambio_compra?: number | null
           valor_compra: number
+          valor_compra_usd?: number | null
           valor_residual_pct: number
           vehicle_id: string
         }
@@ -1371,7 +1460,10 @@ export type Database = {
           id?: string
           is_active?: boolean
           km_anuales?: number
+          moneda_compra?: string
+          tipo_cambio_compra?: number | null
           valor_compra?: number
+          valor_compra_usd?: number | null
           valor_residual_pct?: number
           vehicle_id?: string
         }
@@ -1540,10 +1632,19 @@ export type Database = {
           company_id: string
           created_at: string
           cuit: number
+          document_type: string | null
+          fiscal_address: string | null
+          fiscal_city: string | null
+          fiscal_province: string | null
+          fiscal_zip_code: string | null
           id: string
           is_active: boolean | null
           name: string
           reason_for_termination: string | null
+          tax_condition:
+            | Database["public"]["Enums"]["customer_tax_condition"]
+            | null
+          tax_id: string | null
           termination_date: string | null
         }
         Insert: {
@@ -1553,10 +1654,19 @@ export type Database = {
           company_id: string
           created_at?: string
           cuit: number
+          document_type?: string | null
+          fiscal_address?: string | null
+          fiscal_city?: string | null
+          fiscal_province?: string | null
+          fiscal_zip_code?: string | null
           id?: string
           is_active?: boolean | null
           name: string
           reason_for_termination?: string | null
+          tax_condition?:
+            | Database["public"]["Enums"]["customer_tax_condition"]
+            | null
+          tax_id?: string | null
           termination_date?: string | null
         }
         Update: {
@@ -1566,10 +1676,19 @@ export type Database = {
           company_id?: string
           created_at?: string
           cuit?: number
+          document_type?: string | null
+          fiscal_address?: string | null
+          fiscal_city?: string | null
+          fiscal_province?: string | null
+          fiscal_zip_code?: string | null
           id?: string
           is_active?: boolean | null
           name?: string
           reason_for_termination?: string | null
+          tax_condition?:
+            | Database["public"]["Enums"]["customer_tax_condition"]
+            | null
+          tax_id?: string | null
           termination_date?: string | null
         }
         Relationships: [
@@ -1649,6 +1768,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "dailyreportrows"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dailyreportemployeerelations_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "dailyreportemployeerelations_employee_id_fkey"
@@ -1856,6 +1982,13 @@ export type Database = {
             foreignKeyName: "diagrams_logs_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "diagrams_logs_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
@@ -1880,6 +2013,7 @@ export type Database = {
           id: string
           is_active: boolean
           is_it_montlhy: boolean | null
+          is_vtv: boolean | null
           mandatory: boolean
           multiresource: boolean
           name: string
@@ -1897,6 +2031,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_it_montlhy?: boolean | null
+          is_vtv?: boolean | null
           mandatory: boolean
           multiresource: boolean
           name: string
@@ -1914,6 +2049,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_it_montlhy?: boolean | null
+          is_vtv?: boolean | null
           mandatory?: boolean
           multiresource?: boolean
           name?: string
@@ -2035,6 +2171,13 @@ export type Database = {
           validity?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "documents_employees_applies_fkey"
+            columns: ["applies"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
           {
             foreignKeyName: "documents_employees_applies_fkey"
             columns: ["applies"]
@@ -2176,6 +2319,55 @@ export type Database = {
             columns: ["documents_equipment_id"]
             isOneToOne: false
             referencedRelation: "documents_equipment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_material_progress: {
+        Row: {
+          completed_at: string | null
+          employee_id: string
+          id: string
+          material_id: string | null
+          started_at: string | null
+          time_spent_seconds: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          employee_id: string
+          id?: string
+          material_id?: string | null
+          started_at?: string | null
+          time_spent_seconds?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          employee_id?: string
+          id?: string
+          material_id?: string | null
+          started_at?: string | null
+          time_spent_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_material_progress_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "employee_material_progress_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_material_progress_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "training_materials"
             referencedColumns: ["id"]
           },
         ]
@@ -2431,7 +2623,58 @@ export type Database = {
             foreignKeyName: "public_employees_diagram_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "public_employees_diagram_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exchange_rates: {
+        Row: {
+          company_id: string
+          created_at: string
+          fecha: string
+          fuente: string | null
+          id: string
+          moneda_destino: string
+          moneda_origen: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          fecha: string
+          fuente?: string | null
+          id?: string
+          moneda_destino?: string
+          moneda_origen?: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          fecha?: string
+          fuente?: string | null
+          id?: string
+          moneda_destino?: string
+          moneda_origen?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exchange_rates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
             referencedColumns: ["id"]
           },
         ]
@@ -2857,6 +3100,13 @@ export type Database = {
             foreignKeyName: "hse_document_assignment_versions_assignee_id_fkey"
             columns: ["assignee_id"]
             isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "hse_document_assignment_versions_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
@@ -2914,6 +3164,13 @@ export type Database = {
           status?: Database["public"]["Enums"]["hse_doc_status"]
         }
         Relationships: [
+          {
+            foreignKeyName: "hse_document_assignments_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
           {
             foreignKeyName: "hse_document_assignments_assignee_id_fkey"
             columns: ["assignee_id"]
@@ -3171,6 +3428,76 @@ export type Database = {
           },
         ]
       }
+      index_values: {
+        Row: {
+          anio: number
+          created_at: string
+          id: string
+          indice_id: string
+          mes: number
+          updated_at: string
+          variacion: number
+        }
+        Insert: {
+          anio: number
+          created_at?: string
+          id?: string
+          indice_id: string
+          mes: number
+          updated_at?: string
+          variacion: number
+        }
+        Update: {
+          anio?: number
+          created_at?: string
+          id?: string
+          indice_id?: string
+          mes?: number
+          updated_at?: string
+          variacion?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "index_values_indice_id_fkey"
+            columns: ["indice_id"]
+            isOneToOne: false
+            referencedRelation: "indices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      indices: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          nombre: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          nombre: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          nombre?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "indices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       industry_type: {
         Row: {
           created_at: string
@@ -3362,6 +3689,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "config_cct"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "liquidacion_sueldo_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
           },
           {
             foreignKeyName: "liquidacion_sueldo_employee_id_fkey"
@@ -3656,26 +3990,38 @@ export type Database = {
       payment_order_items: {
         Row: {
           amount: number
+          amount_in_order_currency: number
+          currency: string
           discount_pct: number
+          exchange_rate: number
           expense_id: string | null
           id: string
           invoice_id: string | null
+          is_on_account: boolean
           payment_order_id: string
         }
         Insert: {
           amount: number
+          amount_in_order_currency: number
+          currency?: string
           discount_pct?: number
+          exchange_rate?: number
           expense_id?: string | null
           id?: string
           invoice_id?: string | null
+          is_on_account?: boolean
           payment_order_id: string
         }
         Update: {
           amount?: number
+          amount_in_order_currency?: number
+          currency?: string
           discount_pct?: number
+          exchange_rate?: number
           expense_id?: string | null
           id?: string
           invoice_id?: string | null
+          is_on_account?: boolean
           payment_order_id?: string
         }
         Relationships: [
@@ -3841,9 +4187,11 @@ export type Database = {
           confirmed_by: string | null
           created_at: string
           created_by: string
+          currency: string
           date: string
           document_key: string | null
           document_url: string | null
+          exchange_rate: number
           full_number: string
           id: string
           net_to_pay: number | null
@@ -3864,9 +4212,11 @@ export type Database = {
           confirmed_by?: string | null
           created_at?: string
           created_by: string
+          currency?: string
           date: string
           document_key?: string | null
           document_url?: string | null
+          exchange_rate?: number
           full_number: string
           id?: string
           net_to_pay?: number | null
@@ -3887,9 +4237,11 @@ export type Database = {
           confirmed_by?: string | null
           created_at?: string
           created_by?: string
+          currency?: string
           date?: string
           document_key?: string | null
           document_url?: string | null
+          exchange_rate?: number
           full_number?: string
           id?: string
           net_to_pay?: number | null
@@ -4754,6 +5106,199 @@ export type Database = {
           },
         ]
       }
+      receipt_items: {
+        Row: {
+          amount: number
+          id: string
+          invoice_id: string
+          receipt_id: string
+        }
+        Insert: {
+          amount: number
+          id?: string
+          invoice_id: string
+          receipt_id: string
+        }
+        Update: {
+          amount?: number
+          id?: string
+          invoice_id?: string
+          receipt_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "sales_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipt_items_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "receipts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receipt_payments: {
+        Row: {
+          amount: number
+          check_bank: string | null
+          check_due_date: string | null
+          check_number: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          payment_method: Database["public"]["Enums"]["sales_payment_method"]
+          receipt_id: string
+          reference: string | null
+        }
+        Insert: {
+          amount: number
+          check_bank?: string | null
+          check_due_date?: string | null
+          check_number?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_method: Database["public"]["Enums"]["sales_payment_method"]
+          receipt_id: string
+          reference?: string | null
+        }
+        Update: {
+          amount?: number
+          check_bank?: string | null
+          check_due_date?: string | null
+          check_number?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_method?: Database["public"]["Enums"]["sales_payment_method"]
+          receipt_id?: string
+          reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_payments_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "receipts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receipt_withholdings: {
+        Row: {
+          amount: number
+          certificate_number: string | null
+          created_at: string
+          id: string
+          rate: number | null
+          receipt_id: string
+          tax_type: Database["public"]["Enums"]["withholding_tax_type"]
+        }
+        Insert: {
+          amount: number
+          certificate_number?: string | null
+          created_at?: string
+          id?: string
+          rate?: number | null
+          receipt_id: string
+          tax_type: Database["public"]["Enums"]["withholding_tax_type"]
+        }
+        Update: {
+          amount?: number
+          certificate_number?: string | null
+          created_at?: string
+          id?: string
+          rate?: number | null
+          receipt_id?: string
+          tax_type?: Database["public"]["Enums"]["withholding_tax_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_withholdings_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "receipts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receipts: {
+        Row: {
+          company_id: string
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          date: string
+          document_key: string | null
+          document_url: string | null
+          full_number: string
+          id: string
+          notes: string | null
+          number: number
+          status: Database["public"]["Enums"]["receipt_status"]
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          date: string
+          document_key?: string | null
+          document_url?: string | null
+          full_number: string
+          id?: string
+          notes?: string | null
+          number: number
+          status?: Database["public"]["Enums"]["receipt_status"]
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          date?: string
+          document_key?: string | null
+          document_url?: string | null
+          full_number?: string
+          id?: string
+          notes?: string | null
+          number?: number
+          status?: Database["public"]["Enums"]["receipt_status"]
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       receiving_note_lines: {
         Row: {
           description: string
@@ -5008,6 +5553,13 @@ export type Database = {
             foreignKeyName: "repair_solicitudes_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "repair_solicitudes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
@@ -5073,6 +5625,13 @@ export type Database = {
           title?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "repairlogs_modified_by_employee_fkey"
+            columns: ["modified_by_employee"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
           {
             foreignKeyName: "repairlogs_modified_by_employee_fkey"
             columns: ["modified_by_employee"]
@@ -5205,6 +5764,407 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_invoice_lines: {
+        Row: {
+          description: string
+          discount_amount: number
+          discount_type: Database["public"]["Enums"]["discount_type"] | null
+          discount_value: number | null
+          id: string
+          invoice_id: string
+          product_id: string | null
+          quantity: number
+          service_item_id: string | null
+          subtotal: number
+          total: number
+          unit_price: number
+          vat_amount: number
+          vat_rate: number
+        }
+        Insert: {
+          description: string
+          discount_amount?: number
+          discount_type?: Database["public"]["Enums"]["discount_type"] | null
+          discount_value?: number | null
+          id?: string
+          invoice_id: string
+          product_id?: string | null
+          quantity: number
+          service_item_id?: string | null
+          subtotal: number
+          total: number
+          unit_price: number
+          vat_amount: number
+          vat_rate: number
+        }
+        Update: {
+          description?: string
+          discount_amount?: number
+          discount_type?: Database["public"]["Enums"]["discount_type"] | null
+          discount_value?: number | null
+          id?: string
+          invoice_id?: string
+          product_id?: string | null
+          quantity?: number
+          service_item_id?: string | null
+          subtotal?: number
+          total?: number
+          unit_price?: number
+          vat_amount?: number
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_invoice_lines_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "sales_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_invoice_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_invoice_lines_service_item_id_fkey"
+            columns: ["service_item_id"]
+            isOneToOne: false
+            referencedRelation: "service_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_invoice_other_charges: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description: string
+          id?: string
+          invoice_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_invoice_other_charges_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "sales_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_invoice_perceptions: {
+        Row: {
+          amount: number
+          base_amount: number
+          created_at: string
+          id: string
+          invoice_id: string
+          notes: string | null
+          rate: number
+          tax_type_id: string
+        }
+        Insert: {
+          amount: number
+          base_amount: number
+          created_at?: string
+          id?: string
+          invoice_id: string
+          notes?: string | null
+          rate: number
+          tax_type_id: string
+        }
+        Update: {
+          amount?: number
+          base_amount?: number
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          notes?: string | null
+          rate?: number
+          tax_type_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_invoice_perceptions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "sales_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_invoice_perceptions_tax_type_id_fkey"
+            columns: ["tax_type_id"]
+            isOneToOne: false
+            referencedRelation: "tax_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_invoices: {
+        Row: {
+          cae: string | null
+          cae_expiry_date: string | null
+          company_id: string
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string
+          discount_amount: number
+          document_key: string | null
+          document_url: string | null
+          due_date: string | null
+          exchange_rate: number
+          full_number: string | null
+          global_discount_type:
+            | Database["public"]["Enums"]["discount_type"]
+            | null
+          global_discount_value: number | null
+          id: string
+          issue_date: string
+          notes: string | null
+          number: number | null
+          original_invoice_id: string | null
+          other_charges: number
+          other_taxes: number
+          point_of_sale_id: string | null
+          status: Database["public"]["Enums"]["sales_invoice_status"]
+          subtotal: number
+          total: number
+          updated_at: string
+          vat_amount: number
+          voucher_type: Database["public"]["Enums"]["voucher_type"]
+        }
+        Insert: {
+          cae?: string | null
+          cae_expiry_date?: string | null
+          company_id: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id: string
+          discount_amount?: number
+          document_key?: string | null
+          document_url?: string | null
+          due_date?: string | null
+          exchange_rate?: number
+          full_number?: string | null
+          global_discount_type?:
+            | Database["public"]["Enums"]["discount_type"]
+            | null
+          global_discount_value?: number | null
+          id?: string
+          issue_date: string
+          notes?: string | null
+          number?: number | null
+          original_invoice_id?: string | null
+          other_charges?: number
+          other_taxes?: number
+          point_of_sale_id?: string | null
+          status?: Database["public"]["Enums"]["sales_invoice_status"]
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          vat_amount?: number
+          voucher_type: Database["public"]["Enums"]["voucher_type"]
+        }
+        Update: {
+          cae?: string | null
+          cae_expiry_date?: string | null
+          company_id?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string
+          discount_amount?: number
+          document_key?: string | null
+          document_url?: string | null
+          due_date?: string | null
+          exchange_rate?: number
+          full_number?: string | null
+          global_discount_type?:
+            | Database["public"]["Enums"]["discount_type"]
+            | null
+          global_discount_value?: number | null
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          number?: number | null
+          original_invoice_id?: string | null
+          other_charges?: number
+          other_taxes?: number
+          point_of_sale_id?: string | null
+          status?: Database["public"]["Enums"]["sales_invoice_status"]
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          vat_amount?: number
+          voucher_type?: Database["public"]["Enums"]["voucher_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_invoices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_invoices_original_invoice_fkey"
+            columns: ["original_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "sales_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_invoices_point_of_sale_fkey"
+            columns: ["point_of_sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales_points_of_sale"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_number_sequences: {
+        Row: {
+          id: string
+          next_number: number
+          point_of_sale_id: string
+          updated_at: string
+          voucher_type: Database["public"]["Enums"]["voucher_type"]
+        }
+        Insert: {
+          id?: string
+          next_number?: number
+          point_of_sale_id: string
+          updated_at?: string
+          voucher_type: Database["public"]["Enums"]["voucher_type"]
+        }
+        Update: {
+          id?: string
+          next_number?: number
+          point_of_sale_id?: string
+          updated_at?: string
+          voucher_type?: Database["public"]["Enums"]["voucher_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_number_sequences_point_of_sale_id_fkey"
+            columns: ["point_of_sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales_points_of_sale"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_points_of_sale: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          number: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          number: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          number?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_points_of_sale_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_item_prices: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          notes: string | null
+          period_month: number | null
+          period_year: number | null
+          price: number
+          service_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          notes?: string | null
+          period_month?: number | null
+          period_year?: number | null
+          price: number
+          service_item_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          notes?: string | null
+          period_month?: number | null
+          period_year?: number | null
+          price?: number
+          service_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_item_prices_service_item_id_fkey"
+            columns: ["service_item_id"]
+            isOneToOne: false
+            referencedRelation: "service_items"
             referencedColumns: ["id"]
           },
         ]
@@ -5497,6 +6457,70 @@ export type Database = {
           status?: string | null
         }
         Relationships: []
+      }
+      supplier_credit_applications: {
+        Row: {
+          amount: number
+          applied_at: string
+          applied_by: string
+          company_id: string
+          created_at: string
+          id: string
+          invoice_id: string
+          notes: string | null
+          reversed_at: string | null
+          reversed_by: string | null
+          supplier_id: string
+        }
+        Insert: {
+          amount: number
+          applied_at?: string
+          applied_by: string
+          company_id: string
+          created_at?: string
+          id?: string
+          invoice_id: string
+          notes?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          supplier_id: string
+        }
+        Update: {
+          amount?: number
+          applied_at?: string
+          applied_by?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          notes?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_credit_applications_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_credit_applications_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_credit_applications_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       supplier_payment_methods: {
         Row: {
@@ -5831,6 +6855,636 @@ export type Database = {
         }
         Relationships: []
       }
+      torque_certificate_checks: {
+        Row: {
+          certificate_id: string
+          id: string
+          item_key: string
+          observations: string | null
+          value: boolean
+        }
+        Insert: {
+          certificate_id: string
+          id?: string
+          item_key: string
+          observations?: string | null
+          value: boolean
+        }
+        Update: {
+          certificate_id?: string
+          id?: string
+          item_key?: string
+          observations?: string | null
+          value?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "torque_certificate_checks_certificate_id_fkey"
+            columns: ["certificate_id"]
+            isOneToOne: false
+            referencedRelation: "torque_certificates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      torque_certificates: {
+        Row: {
+          bolt_condition: Database["public"]["Enums"]["torque_bolt_condition"]
+          calibration_dd: string | null
+          calibration_di: string | null
+          calibration_td: string | null
+          calibration_ti: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          date: string
+          driver_name: string
+          full_number: string
+          id: string
+          mechanic_name: string
+          meets_requirement: boolean
+          number: number
+          place: string
+          required_torque: string
+          sheet_format: Database["public"]["Enums"]["torque_sheet_format"]
+          tolerance_range_nm: string | null
+          tool_type: string
+          vehicle_brand_name: string | null
+          vehicle_domain: string | null
+          vehicle_id: string
+          vehicle_intern_number: string | null
+        }
+        Insert: {
+          bolt_condition: Database["public"]["Enums"]["torque_bolt_condition"]
+          calibration_dd?: string | null
+          calibration_di?: string | null
+          calibration_td?: string | null
+          calibration_ti?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          date: string
+          driver_name: string
+          full_number: string
+          id?: string
+          mechanic_name: string
+          meets_requirement: boolean
+          number: number
+          place: string
+          required_torque: string
+          sheet_format: Database["public"]["Enums"]["torque_sheet_format"]
+          tolerance_range_nm?: string | null
+          tool_type: string
+          vehicle_brand_name?: string | null
+          vehicle_domain?: string | null
+          vehicle_id: string
+          vehicle_intern_number?: string | null
+        }
+        Update: {
+          bolt_condition?: Database["public"]["Enums"]["torque_bolt_condition"]
+          calibration_dd?: string | null
+          calibration_di?: string | null
+          calibration_td?: string | null
+          calibration_ti?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          driver_name?: string
+          full_number?: string
+          id?: string
+          mechanic_name?: string
+          meets_requirement?: boolean
+          number?: number
+          place?: string
+          required_torque?: string
+          sheet_format?: Database["public"]["Enums"]["torque_sheet_format"]
+          tolerance_range_nm?: string | null
+          tool_type?: string
+          vehicle_brand_name?: string | null
+          vehicle_domain?: string | null
+          vehicle_id?: string
+          vehicle_intern_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "torque_certificates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "torque_certificates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "torque_certificates_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      torque_specs: {
+        Row: {
+          brand_id: number
+          company_id: string
+          configuration: string
+          created_at: string
+          ftlb_max: number | null
+          ftlb_min: number | null
+          id: string
+          is_active: boolean
+          nm_max: number
+          nm_min: number
+        }
+        Insert: {
+          brand_id: number
+          company_id: string
+          configuration: string
+          created_at?: string
+          ftlb_max?: number | null
+          ftlb_min?: number | null
+          id?: string
+          is_active?: boolean
+          nm_max: number
+          nm_min: number
+        }
+        Update: {
+          brand_id?: number
+          company_id?: string
+          configuration?: string
+          created_at?: string
+          ftlb_max?: number | null
+          ftlb_min?: number | null
+          id?: string
+          is_active?: boolean
+          nm_max?: number
+          nm_min?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "torque_specs_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brand_vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "torque_specs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_assignments: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          due_date: string | null
+          employee_id: string
+          id: string
+          is_mandatory: boolean | null
+          training_id: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          due_date?: string | null
+          employee_id: string
+          id?: string
+          is_mandatory?: boolean | null
+          training_id?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          due_date?: string | null
+          employee_id?: string
+          id?: string
+          is_mandatory?: boolean | null
+          training_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_assignments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "training_assignments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_assignments_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["training_id"]
+          },
+          {
+            foreignKeyName: "training_assignments_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_attempt_answers: {
+        Row: {
+          answered_at: string | null
+          attempt_id: string | null
+          id: string
+          is_correct: boolean | null
+          question_id: string | null
+          selected_option_id: string | null
+          text_answer: string | null
+        }
+        Insert: {
+          answered_at?: string | null
+          attempt_id?: string | null
+          id?: string
+          is_correct?: boolean | null
+          question_id?: string | null
+          selected_option_id?: string | null
+          text_answer?: string | null
+        }
+        Update: {
+          answered_at?: string | null
+          attempt_id?: string | null
+          id?: string
+          is_correct?: boolean | null
+          question_id?: string | null
+          selected_option_id?: string | null
+          text_answer?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_attempt_answers_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "training_attempts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_attempt_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "training_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_attempt_answers_selected_option_id_fkey"
+            columns: ["selected_option_id"]
+            isOneToOne: false
+            referencedRelation: "training_question_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_attempts: {
+        Row: {
+          attempt_number: number
+          completed_at: string | null
+          employee_id: string
+          id: string
+          max_score: number
+          passed: boolean | null
+          score: number | null
+          signature_ip: string | null
+          signature_path: string | null
+          signature_user_agent: string | null
+          signed_at: string | null
+          signer_full_name: string | null
+          signer_position: string | null
+          started_at: string | null
+          time_spent_seconds: number | null
+          training_id: string | null
+        }
+        Insert: {
+          attempt_number?: number
+          completed_at?: string | null
+          employee_id: string
+          id?: string
+          max_score: number
+          passed?: boolean | null
+          score?: number | null
+          signature_ip?: string | null
+          signature_path?: string | null
+          signature_user_agent?: string | null
+          signed_at?: string | null
+          signer_full_name?: string | null
+          signer_position?: string | null
+          started_at?: string | null
+          time_spent_seconds?: number | null
+          training_id?: string | null
+        }
+        Update: {
+          attempt_number?: number
+          completed_at?: string | null
+          employee_id?: string
+          id?: string
+          max_score?: number
+          passed?: boolean | null
+          score?: number | null
+          signature_ip?: string | null
+          signature_path?: string | null
+          signature_user_agent?: string | null
+          signed_at?: string | null
+          signer_full_name?: string | null
+          signer_position?: string | null
+          started_at?: string | null
+          time_spent_seconds?: number | null
+          training_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_attempts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "training_attempts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_attempts_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["training_id"]
+          },
+          {
+            foreignKeyName: "training_attempts_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_instructors: {
+        Row: {
+          company_id: string
+          created_at: string
+          full_name: string
+          id: string
+          is_active: boolean
+          license_numbers: string | null
+          position: string | null
+          signature_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          full_name: string
+          id?: string
+          is_active?: boolean
+          license_numbers?: string | null
+          position?: string | null
+          signature_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          license_numbers?: string | null
+          position?: string | null
+          signature_path?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_instructors_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_material_readings: {
+        Row: {
+          created_at: string | null
+          employee_id: string
+          id: string
+          material_id: string
+          read_at: string | null
+          training_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          employee_id: string
+          id?: string
+          material_id: string
+          read_at?: string | null
+          training_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          employee_id?: string
+          id?: string
+          material_id?: string
+          read_at?: string | null
+          training_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_material_readings_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "training_material_readings_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_material_readings_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "training_materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_material_readings_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["training_id"]
+          },
+          {
+            foreignKeyName: "training_material_readings_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_materials: {
+        Row: {
+          created_at: string | null
+          file_size: number | null
+          file_url: string
+          id: string
+          is_required: boolean | null
+          name: string
+          order_index: number
+          training_id: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_size?: number | null
+          file_url: string
+          id?: string
+          is_required?: boolean | null
+          name: string
+          order_index?: number
+          training_id?: string | null
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          is_required?: boolean | null
+          name?: string
+          order_index?: number
+          training_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_materials_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["training_id"]
+          },
+          {
+            foreignKeyName: "training_materials_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_question_options: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_correct: boolean | null
+          option_text: string
+          order_index: number
+          question_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_correct?: boolean | null
+          option_text: string
+          order_index?: number
+          question_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_correct?: boolean | null
+          option_text?: string
+          order_index?: number
+          question_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_question_options_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "training_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_questions: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          order_index: number
+          points: number | null
+          question_text: string
+          question_type: string | null
+          training_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          order_index?: number
+          points?: number | null
+          question_text: string
+          question_type?: string | null
+          training_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          order_index?: number
+          points?: number | null
+          question_text?: string
+          question_type?: string | null
+          training_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_questions_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["training_id"]
+          },
+          {
+            foreignKeyName: "training_questions_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_tag_assignments: {
         Row: {
           tag_id: string
@@ -5850,6 +7504,20 @@ export type Database = {
             columns: ["tag_id"]
             isOneToOne: false
             referencedRelation: "training_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_tag_assignments_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["training_id"]
+          },
+          {
+            foreignKeyName: "training_tag_assignments_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
             referencedColumns: ["id"]
           },
         ]
@@ -5877,6 +7545,121 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      trainings: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          company_id: string
+          created_at: string | null
+          deadline_at: string | null
+          description: string | null
+          dictated_at: string | null
+          effectiveness_method: string | null
+          estimated_duration_minutes: number | null
+          evaluation_methods:
+            | Database["public"]["Enums"]["training_evaluation_method"][]
+            | null
+          id: string
+          instructor_id: string | null
+          location: string | null
+          material_delivered: boolean | null
+          material_delivered_detail: string | null
+          new_actions_detail: string | null
+          passing_score: number
+          record_pdf_path: string | null
+          requires_new_actions: boolean | null
+          status: Database["public"]["Enums"]["training_status"] | null
+          teaching_resources: string | null
+          test_limit_time: number
+          title: string
+          topics: Database["public"]["Enums"]["training_topic"][] | null
+          updated_at: string | null
+          validity_months: number | null
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          company_id: string
+          created_at?: string | null
+          deadline_at?: string | null
+          description?: string | null
+          dictated_at?: string | null
+          effectiveness_method?: string | null
+          estimated_duration_minutes?: number | null
+          evaluation_methods?:
+            | Database["public"]["Enums"]["training_evaluation_method"][]
+            | null
+          id?: string
+          instructor_id?: string | null
+          location?: string | null
+          material_delivered?: boolean | null
+          material_delivered_detail?: string | null
+          new_actions_detail?: string | null
+          passing_score?: number
+          record_pdf_path?: string | null
+          requires_new_actions?: boolean | null
+          status?: Database["public"]["Enums"]["training_status"] | null
+          teaching_resources?: string | null
+          test_limit_time?: number
+          title: string
+          topics?: Database["public"]["Enums"]["training_topic"][] | null
+          updated_at?: string | null
+          validity_months?: number | null
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          company_id?: string
+          created_at?: string | null
+          deadline_at?: string | null
+          description?: string | null
+          dictated_at?: string | null
+          effectiveness_method?: string | null
+          estimated_duration_minutes?: number | null
+          evaluation_methods?:
+            | Database["public"]["Enums"]["training_evaluation_method"][]
+            | null
+          id?: string
+          instructor_id?: string | null
+          location?: string | null
+          material_delivered?: boolean | null
+          material_delivered_detail?: string | null
+          new_actions_detail?: string | null
+          passing_score?: number
+          record_pdf_path?: string | null
+          requires_new_actions?: boolean | null
+          status?: Database["public"]["Enums"]["training_status"] | null
+          teaching_resources?: string | null
+          test_limit_time?: number
+          title?: string
+          topics?: Database["public"]["Enums"]["training_topic"][] | null
+          updated_at?: string | null
+          validity_months?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainings_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainings_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "training_instructors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       type: {
         Row: {
@@ -6295,6 +8078,79 @@ export type Database = {
           },
         ]
       }
+      vtv_appointments: {
+        Row: {
+          appointment_date: string
+          company_id: string
+          created_at: string
+          created_by: string | null
+          document_equipment_id: string | null
+          document_validity: string | null
+          has_verification_appointment: boolean
+          has_verification_order: boolean
+          id: string
+          is_active: boolean
+          notes: string | null
+          status: Database["public"]["Enums"]["vtv_appointment_status"]
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          appointment_date: string
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          document_equipment_id?: string | null
+          document_validity?: string | null
+          has_verification_appointment?: boolean
+          has_verification_order?: boolean
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          status?: Database["public"]["Enums"]["vtv_appointment_status"]
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          appointment_date?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          document_equipment_id?: string | null
+          document_validity?: string | null
+          has_verification_appointment?: boolean
+          has_verification_order?: boolean
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          status?: Database["public"]["Enums"]["vtv_appointment_status"]
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vtv_appointments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "company"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vtv_appointments_document_equipment_id_fkey"
+            columns: ["document_equipment_id"]
+            isOneToOne: false
+            referencedRelation: "documents_equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vtv_appointments_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       warehouse_stocks: {
         Row: {
           available_qty: number
@@ -6499,6 +8355,13 @@ export type Database = {
             foreignKeyName: "withdrawal_orders_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "employee_training_progress"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "withdrawal_orders_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
@@ -6552,7 +8415,26 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      employee_training_progress: {
+        Row: {
+          assigned_at: string | null
+          completed_materials: number | null
+          due_date: string | null
+          employee_id: string | null
+          is_mandatory: boolean | null
+          last_attempt_date: string | null
+          last_attempt_number: number | null
+          last_attempt_passed: boolean | null
+          last_score: number | null
+          material_progress_percentage: string | null
+          max_score: number | null
+          overall_status: string | null
+          total_materials: number | null
+          training_id: string | null
+          training_title: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       actualizar_estado_documentos: {
@@ -6623,6 +8505,28 @@ export type Database = {
           termination_date: string | null
           type_of_contract: string
           workflow_diagram: string | null
+        }[]
+      }
+      get_company_users_by_cuil: {
+        Args: {
+          p_company_id: string
+        }
+        Returns: {
+          user_id: string
+          email: string
+          phone: string
+          confirmed_at: string
+          last_sign_in_at: string
+          user_created_at: string
+          user_updated_at: string
+          user_cuil: string
+          employee_id: string
+          employee_cuil: string
+          company_id: string
+          first_name: string
+          last_name: string
+          employee_created_at: string
+          raw_user_meta_data: Json
         }[]
       }
       migrate_document: {
@@ -6728,6 +8632,12 @@ export type Database = {
         | "no operativo"
         | "en reparación"
         | "operativo condicionado"
+      customer_tax_condition:
+        | "RESPONSABLE_INSCRIPTO"
+        | "MONOTRIBUTO"
+        | "EXENTO"
+        | "CONSUMIDOR_FINAL"
+        | "NO_RESPONSABLE"
       daily_report_status:
         | "pendiente"
         | "ejecutado"
@@ -6829,6 +8739,7 @@ export type Database = {
         | "Acuerdo de partes"
         | "Fin de contrato"
         | "Fallecimiento"
+      receipt_status: "DRAFT" | "CONFIRMED" | "CANCELLED"
       receiving_note_status: "DRAFT" | "CONFIRMED" | "CANCELLED"
       repair_state:
         | "Pendiente"
@@ -6839,6 +8750,20 @@ export type Database = {
         | "Cancelado"
         | "Programado"
       roles_enum: "Externo" | "Auditor"
+      sales_invoice_status:
+        | "DRAFT"
+        | "CONFIRMED"
+        | "PARTIAL_PAID"
+        | "PAID"
+        | "CANCELLED"
+      sales_payment_method:
+        | "CASH"
+        | "CHECK"
+        | "ECHEQ"
+        | "TRANSFER"
+        | "DEBIT_CARD"
+        | "CREDIT_CARD"
+        | "OTHER"
       session_status: "OPEN" | "CLOSED"
       state: "presentado" | "rechazado" | "aprobado" | "vencido" | "pendiente"
       status_type:
@@ -6883,6 +8808,19 @@ export type Database = {
         | "gasoil_g3"
         | "ipim_ng"
         | "custom"
+      torque_bolt_condition: "DRY" | "LUBRICATED"
+      torque_sheet_format: "LIGHT" | "BUS"
+      training_evaluation_method:
+        | "ESCRITA_ORAL"
+        | "ENCUESTA_AUDITORIA"
+        | "SUPERVISION_INSPECCION"
+        | "EVALUACION_DESEMPENO"
+      training_status: "Borrador" | "Archivado" | "Publicado" | "Cerrada"
+      training_topic:
+        | "SEGURIDAD_VIAL"
+        | "SEGURIDAD_HIGIENE"
+        | "SALUD"
+        | "MEDIO_AMBIENTE"
       type_of_maintenance_ENUM: "Correctivo" | "Preventivo"
       voucher_type:
         | "FACTURA_A"
@@ -6895,6 +8833,11 @@ export type Database = {
         | "NOTA_DEBITO_B"
         | "NOTA_DEBITO_C"
         | "RECIBO"
+      vtv_appointment_status:
+        | "pendiente"
+        | "orden_solicitada"
+        | "realizada"
+        | "cancelada"
       warehouse_type: "MAIN" | "BRANCH" | "TRANSIT" | "VIRTUAL"
       withdrawal_order_status:
         | "DRAFT"
@@ -6902,6 +8845,7 @@ export type Database = {
         | "APPROVED"
         | "COMPLETED"
         | "CANCELLED"
+      withholding_tax_type: "IVA" | "GANANCIAS" | "IIBB" | "SUSS" | "OTHER"
     }
     CompositeTypes: {
       [_ in never]: never
