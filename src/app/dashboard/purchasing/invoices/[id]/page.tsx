@@ -45,6 +45,15 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       other_charges_items: {
         orderBy: { created_at: 'asc' },
       },
+      // Notas de crédito imputadas a esta factura (TKT-586). Antes la relación
+      // era implícita por `original_invoice_id` y no se veía por ningún lado.
+      credit_note_applications_received: {
+        where: { reversed_at: null },
+        include: {
+          credit_note: { select: { id: true, full_number: true, issue_date: true, total: true } },
+        },
+        orderBy: { applied_at: 'asc' },
+      },
     },
   });
 
@@ -78,6 +87,15 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       appliedAmount: Number(it.amount),
     }))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const appliedCreditNotes = invoice.credit_note_applications_received.map((app) => ({
+    id: app.id,
+    creditNoteId: app.credit_note_id,
+    fullNumber: app.credit_note?.full_number ?? '',
+    issueDate: app.credit_note?.issue_date ?? null,
+    total: Number(app.credit_note?.total ?? 0),
+    appliedAmount: Number(app.amount),
+  }));
 
   return (
     <div className="space-y-6">
@@ -286,6 +304,50 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                   <TableRow key={oc.id}>
                     <TableCell>{oc.description}</TableCell>
                     <TableCell className="text-right font-mono font-medium">${Number(oc.amount).toFixed(2)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {appliedCreditNotes.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Notas de crédito imputadas</CardTitle>
+            <CardDescription>
+              Crédito aplicado al saldo de esta factura. Una misma nota puede repartirse entre
+              varias facturas.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>N°</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead className="text-right">Total de la nota</TableHead>
+                  <TableHead className="text-right">Imputado</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {appliedCreditNotes.map((nc) => (
+                  <TableRow key={nc.id}>
+                    <TableCell className="font-mono">{nc.fullNumber}</TableCell>
+                    <TableCell>{nc.issueDate ? formatDateUTC(nc.issueDate) : '-'}</TableCell>
+                    <TableCell className="text-right font-mono">${nc.total.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-mono text-emerald-600">
+                      −${nc.appliedAmount.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/dashboard/purchasing/invoices/${nc.creditNoteId}`}>
+                          Ver <ExternalLink className="size-3 ml-1" />
+                        </Link>
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

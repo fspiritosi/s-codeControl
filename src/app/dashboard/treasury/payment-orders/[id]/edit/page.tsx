@@ -57,6 +57,15 @@ export default async function EditPaymentOrderPage({
       amount: r.amount.toFixed(2),
       notes: r.notes ?? '',
     })),
+    credits: order.credit_applications.map((c) => ({
+      credit_note_id: c.credit_note_id,
+      label: c.credit_note?.full_number ?? '',
+      amount: c.amount.toFixed(2),
+      currency: c.credit_note?.currency ?? 'ARS',
+      // El tipo de cambio sale de la NC, no de la orden: el importe está en la
+      // moneda de la nota y se convierte al mostrarlo.
+      exchange_rate: c.credit_note?.exchange_rate ?? 1,
+    })),
   };
 
   return (

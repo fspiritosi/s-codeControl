@@ -6,6 +6,7 @@ import {
   buildSupplierAccountRows,
   computePurchaseOutstanding,
 } from '@/shared/lib/purchase-invoice-balance';
+import { getAppliedCreditByInvoice } from '@/shared/lib/purchase-invoice-status';
 
 async function ensureSupplierInCompany(supplierId: string, companyId: string) {
   const supplier = await prisma.suppliers.findFirst({
@@ -63,11 +64,10 @@ export interface ExpensesSummary {
 /**
  * Comprobantes de compra del proveedor con su saldo real.
  *
- * Antes cada nota de crédito se listaba como una fila suelta con saldo negativo
- * y la factura que corregía mostraba su saldo bruto: el neto cerraba pero por
- * comprobante engañaba. Ahora la NC se imputa contra su factura original
- * (`original_invoice_id`) y solo queda como crédito a favor lo que exceda el
- * saldo de esa factura.
+ * Cada nota de crédito muestra el crédito que todavía tiene a favor y cada
+ * factura lo que realmente adeuda. Desde TKT-586 las imputaciones son
+ * explícitas (`credit_note_applications`): una NC puede repartirse entre varias
+ * facturas o usarse dentro de una OP, y lo no imputado queda disponible.
  */
 export async function getSupplierInvoices(supplierId: string) {
   const { companyId } = await getActionContext();
@@ -76,7 +76,7 @@ export async function getSupplierInvoices(supplierId: string) {
     return { rows: [], summary: null as InvoicesSummary | null };
   }
 
-  const [data, paidAggByInvoice] = await Promise.all([
+  const [data, paidAggByInvoice, creditApps] = await Promise.all([
     prisma.purchase_invoices.findMany({
       where: { company_id: companyId, supplier_id: supplierId },
       select: {
@@ -103,6 +103,18 @@ export async function getSupplierInvoices(supplierId: string) {
       },
       _sum: { amount: true },
     }),
+    // Imputaciones de NC del proveedor, con el comprobante destino para poder
+    // mostrar en la fila de la NC contra qué se aplicó.
+    prisma.credit_note_applications.findMany({
+      where: { company_id: companyId, supplier_id: supplierId, reversed_at: null },
+      select: {
+        credit_note_id: true,
+        invoice_id: true,
+        amount: true,
+        invoice: { select: { full_number: true } },
+        payment_order: { select: { full_number: true } },
+      },
+    }),
   ]);
 
   const paidByInvoice = new Map<string, number>();
@@ -111,6 +123,29 @@ export async function getSupplierInvoices(supplierId: string) {
       paidByInvoice.set(row.invoice_id, Number(row._sum.amount ?? 0));
     }
   }
+
+  const appliedByNote = new Map<string, number>();
+  const creditNotesByInvoice = new Map<string, number>();
+  const targetsByNote = new Map<string, string[]>();
+  for (const app of creditApps) {
+    const amount = Number(app.amount);
+    appliedByNote.set(app.credit_note_id, (appliedByNote.get(app.credit_note_id) ?? 0) + amount);
+    if (app.invoice_id) {
+      creditNotesByInvoice.set(
+        app.invoice_id,
+        (creditNotesByInvoice.get(app.invoice_id) ?? 0) + amount
+      );
+    }
+    const target = app.invoice?.full_number ?? app.payment_order?.full_number;
+    if (target) {
+      const list = targetsByNote.get(app.credit_note_id) ?? [];
+      if (!list.includes(target)) list.push(target);
+      targetsByNote.set(app.credit_note_id, list);
+    }
+  }
+
+  // El saldo a favor por pagos a cuenta también baja lo que la factura adeuda.
+  const onAccountByInvoice = await getAppliedCreditByInvoice(data.map((inv) => inv.id));
 
   const { rows, totals } = buildSupplierAccountRows(
     data.map((inv) => ({
@@ -123,7 +158,8 @@ export async function getSupplierInvoices(supplierId: string) {
       status: inv.status as string,
       original_invoice_id: inv.original_invoice_id,
     })),
-    paidByInvoice
+    paidByInvoice,
+    { appliedByNote, creditNotesByInvoice, onAccountByInvoice, targetsByNote }
   );
 
   return { rows, summary: totals as InvoicesSummary };

@@ -118,6 +118,26 @@ export const paymentOrderRetentionSchema = z.object({
 });
 export type PaymentOrderRetentionFormData = z.infer<typeof paymentOrderRetentionSchema>;
 
+/**
+ * Crédito de nota de crédito aplicado en la orden (TKT-586).
+ *
+ * No es un ítem: los ítems son lo que se le debe al proveedor y sostienen la
+ * base de las retenciones. El crédito entra después, bajando el neto a
+ * transferir. Por eso va en su propio bloque y no como ítem negativo.
+ */
+export const paymentOrderCreditSchema = z.object({
+  credit_note_id: z.string().uuid('Seleccioná una nota de crédito'),
+  /** Importe en la moneda de la NC. */
+  amount: amountString.refine((v) => parseFloat(v) > 0, 'Debe ser mayor a 0'),
+  currency: z.enum(SUPPORTED_CURRENCIES).optional().default('ARS'),
+  exchange_rate: z.coerce
+    .number()
+    .positive('El tipo de cambio debe ser mayor a 0')
+    .optional()
+    .default(1),
+});
+export type PaymentOrderCreditFormData = z.infer<typeof paymentOrderCreditSchema>;
+
 export const paymentOrderSchema = z
   .object({
     supplier_id: z.string().uuid().optional().nullable(),
@@ -139,8 +159,12 @@ export const paymentOrderSchema = z
       .nullable(),
     notes: z.string().max(1000).optional().nullable(),
     items: z.array(paymentOrderItemSchema).min(1, 'Al menos un ítem'),
-    payments: z.array(paymentOrderPaymentSchema).min(1, 'Al menos un pago'),
+    // Sin `.min(1)`: si el crédito de las NC cubre el neto entero, no hay plata
+    // que transferir y la orden se confirma sin pagos (TKT-586). El chequeo real
+    // está en el superRefine de abajo, contra el neto.
+    payments: z.array(paymentOrderPaymentSchema),
     retentions: z.array(paymentOrderRetentionSchema).optional().default([]),
+    credits: z.array(paymentOrderCreditSchema).optional().default([]),
   })
   .refine(
     (data) => {
@@ -164,12 +188,24 @@ export const paymentOrderSchema = z
         (acc, r) => acc + (Number(r.amount) || 0),
         0
       );
-      // items_total - retentions_total === payments_total (neto a pagar).
-      return Math.abs(itemsTotal - retentionsTotal - paymentsTotal) < 0.01;
+      const creditsTotal = (data.credits ?? []).reduce((acc, c) => {
+        const credit = { currency: c.currency ?? 'ARS', exchange_rate: c.exchange_rate ?? 1 };
+        return (
+          acc +
+          convertAmount({
+            amount: parseFloat(c.amount),
+            from: credit.currency,
+            to: order.currency,
+            rate: effectiveRate(credit, order),
+          })
+        );
+      }, 0);
+      // items_total - retentions_total - credits_total === payments_total.
+      return Math.abs(itemsTotal - retentionsTotal - creditsTotal - paymentsTotal) < 0.01;
     },
     {
       message:
-        'El total de ítems menos las retenciones debe coincidir con el total de pagos',
+        'El total de ítems menos las retenciones y los créditos debe coincidir con el total de pagos',
     }
   )
   .superRefine((data, ctx) => {
@@ -183,10 +219,42 @@ export const paymentOrderSchema = z
       });
     }
 
+    // El crédito de una NC es del proveedor: sin proveedor no hay de quién
+    // tomarlo (mismo criterio que el pago a cuenta).
+    if ((data.credits ?? []).length > 0 && !data.supplier_id) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['supplier_id'],
+        message: 'Aplicar una nota de crédito requiere seleccionar el proveedor',
+      });
+    }
+
+    // Una NC no se puede cargar dos veces en la misma orden: se acumulan los
+    // importes en una sola línea.
+    const creditIds = (data.credits ?? []).map((c) => c.credit_note_id);
+    if (new Set(creditIds).size !== creditIds.length) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['credits'],
+        message: 'Hay una nota de crédito repetida',
+      });
+    }
+
     // Un comprobante en otra moneda necesita un tipo de cambio explícito: con
     // rate = 1 se pagaría una factura en dólares como si fueran pesos, que es
     // justamente el error que esta tarea corrige (tsk-576).
     const order = { currency: data.currency ?? 'ARS', exchange_rate: data.exchange_rate ?? 1 };
+    (data.credits ?? []).forEach((c, index) => {
+      const credit = { currency: c.currency ?? 'ARS', exchange_rate: c.exchange_rate ?? 1 };
+      if (credit.currency === order.currency) return;
+      if (effectiveRate(credit, order) <= 1) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['credits', index, 'exchange_rate'],
+          message: `La nota de crédito está en ${credit.currency} y la orden en ${order.currency}: falta el tipo de cambio`,
+        });
+      }
+    });
     data.items.forEach((i, index) => {
       const item = { currency: i.currency ?? 'ARS', exchange_rate: i.exchange_rate ?? 1 };
       if (item.currency === order.currency) return;
@@ -200,5 +268,44 @@ export const paymentOrderSchema = z
         });
       }
     });
+
+    // Una orden sin pagos solo se justifica si no queda nada por transferir.
+    if (data.payments.length === 0) {
+      const itemsTotal = data.items.reduce((acc, i) => {
+        const item = { currency: i.currency ?? 'ARS', exchange_rate: i.exchange_rate ?? 1 };
+        return (
+          acc +
+          convertAmount({
+            amount: parseFloat(i.amount),
+            from: item.currency,
+            to: order.currency,
+            rate: effectiveRate(item, order),
+          })
+        );
+      }, 0);
+      const retentionsTotal = (data.retentions ?? []).reduce(
+        (acc, r) => acc + (Number(r.amount) || 0),
+        0
+      );
+      const creditsTotal = (data.credits ?? []).reduce((acc, c) => {
+        const credit = { currency: c.currency ?? 'ARS', exchange_rate: c.exchange_rate ?? 1 };
+        return (
+          acc +
+          convertAmount({
+            amount: parseFloat(c.amount),
+            from: credit.currency,
+            to: order.currency,
+            rate: effectiveRate(credit, order),
+          })
+        );
+      }, 0);
+      if (itemsTotal - retentionsTotal - creditsTotal > 0.01) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['payments'],
+          message: 'Al menos un pago',
+        });
+      }
+    }
   });
 export type PaymentOrderFormData = z.infer<typeof paymentOrderSchema>;

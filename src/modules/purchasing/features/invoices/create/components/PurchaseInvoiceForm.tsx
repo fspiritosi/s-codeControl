@@ -699,7 +699,7 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
             {isCreditNote && (
               <FormField control={form.control} name="original_invoice_id" render={({ field }) => (
                 <FormItem className="md:col-span-2">
-                  <FormLabel>Factura que corrige *</FormLabel>
+                  <FormLabel>Factura que corrige</FormLabel>
                   <Select onValueChange={field.onChange} value={(field.value as string) ?? ''}>
                     <FormControl><SelectTrigger>
                       <SelectValue placeholder={watchedSupplier ? 'Seleccioná la factura' : 'Elegí primero el proveedor'} />
@@ -715,6 +715,12 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
                       ))}
                     </SelectContent>
                   </Select>
+                  {!field.value && (
+                    <p className="text-xs text-amber-600">
+                      Esta nota de crédito no queda asociada a ninguna factura. Su importe
+                      queda disponible como crédito para imputar más adelante.
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )} />

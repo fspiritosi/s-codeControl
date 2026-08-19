@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
-  allocateCreditNotes,
   buildSupplierAccountRows,
+  computeCreditNoteAvailable,
   computePurchaseOutstanding,
   computeSupplierCreditBalance,
   derivePurchaseInvoiceStatus,
   isCreditNoteVoucherType,
   isDebitNoteVoucherType,
+  type SupplierAccountCredit,
   type SupplierVoucherInput,
   type SupplierVoucherRow,
 } from './purchase-invoice-balance';
@@ -73,47 +74,25 @@ describe('derivePurchaseInvoiceStatus', () => {
   });
 });
 
-describe('allocateCreditNotes', () => {
-  it('aplica la NC completa cuando entra en el saldo', () => {
-    const applied = allocateCreditNotes(1000, [{ id: 'nc1', total: 400 }]);
-    expect(applied.get('nc1')).toBe(400);
+describe('computeCreditNoteAvailable', () => {
+  it('una NC sin imputar tiene todo su total disponible', () => {
+    expect(computeCreditNoteAvailable({ total: 1000, applied: 0 })).toBe(1000);
   });
 
-  it('recorta la NC al saldo disponible y deja el resto a favor', () => {
-    const applied = allocateCreditNotes(300, [{ id: 'nc1', total: 500 }]);
-    expect(applied.get('nc1')).toBe(300);
+  it('descuenta lo ya imputado', () => {
+    expect(computeCreditNoteAvailable({ total: 1000, applied: 400 })).toBe(600);
   });
 
-  it('reparte en orden: la primera NC consume el saldo antes que la siguiente', () => {
-    const applied = allocateCreditNotes(700, [
-      { id: 'vieja', total: 500 },
-      { id: 'nueva', total: 500 },
-    ]);
-    expect(applied.get('vieja')).toBe(500);
-    expect(applied.get('nueva')).toBe(200);
+  it('devuelve 0 cuando quedó íntegramente imputada', () => {
+    expect(computeCreditNoteAvailable({ total: 1000, applied: 1000 })).toBe(0);
   });
 
-  it('no aplica nada si la factura ya estaba saldada', () => {
-    const applied = allocateCreditNotes(0, [{ id: 'nc1', total: 500 }]);
-    expect(applied.get('nc1')).toBe(0);
+  it('nunca devuelve negativo aunque los datos vengan inconsistentes', () => {
+    expect(computeCreditNoteAvailable({ total: 1000, applied: 1500 })).toBe(0);
   });
 
-  it('trata un saldo negativo (sobrepago) como cero disponible', () => {
-    const applied = allocateCreditNotes(-100, [{ id: 'nc1', total: 500 }]);
-    expect(applied.get('nc1')).toBe(0);
-  });
-
-  it('reproduce el caso reportado: dos NC contra dos facturas del mismo importe', () => {
-    // NC de 218.250.000 contra la factura de 218.250.000: la cancela entera.
-    const aplicadoA = allocateCreditNotes(218_250_000, [{ id: 'nc880', total: 218_250_000 }]);
-    expect(aplicadoA.get('nc880')).toBe(218_250_000);
-    expect(
-      computePurchaseOutstanding({
-        total: 218_250_000,
-        paid: 0,
-        creditNotes: aplicadoA.get('nc880')!,
-      })
-    ).toBe(0);
+  it('absorbe centavos por debajo de la tolerancia', () => {
+    expect(computeCreditNoteAvailable({ total: 1000, applied: 999.995 })).toBe(0);
   });
 });
 
@@ -187,6 +166,37 @@ describe('buildSupplierAccountRows', () => {
   const byNumber = (rows: SupplierVoucherRow[], n: string) =>
     rows.find((r) => r.full_number === n)!;
 
+  /**
+   * Arma los mapas de imputación como los devuelve la base desde TKT-586.
+   * `target` es el número del comprobante destino (factura u OP) que se muestra
+   * en la fila de la NC; `invoice` es null cuando el crédito se usó en una OP.
+   */
+  const credit = (
+    apps: { note: string; invoice?: string | null; amount: number; target?: string }[],
+    onAccount: [string, number][] = []
+  ): SupplierAccountCredit => {
+    const appliedByNote = new Map<string, number>();
+    const creditNotesByInvoice = new Map<string, number>();
+    const targetsByNote = new Map<string, string[]>();
+    for (const a of apps) {
+      appliedByNote.set(a.note, (appliedByNote.get(a.note) ?? 0) + a.amount);
+      if (a.invoice) {
+        creditNotesByInvoice.set(a.invoice, (creditNotesByInvoice.get(a.invoice) ?? 0) + a.amount);
+      }
+      if (a.target) {
+        const list = targetsByNote.get(a.note) ?? [];
+        if (!list.includes(a.target)) list.push(a.target);
+        targetsByNote.set(a.note, list);
+      }
+    }
+    return {
+      appliedByNote,
+      creditNotesByInvoice,
+      targetsByNote,
+      onAccountByInvoice: new Map(onAccount),
+    };
+  };
+
   it('imputa la NC contra su factura y deja ambas en saldo 0', () => {
     const { rows, totals } = buildSupplierAccountRows(
       [
@@ -199,7 +209,8 @@ describe('buildSupplierAccountRows', () => {
           original_invoice_id: 'f1',
         }),
       ],
-      new Map()
+      new Map(),
+      credit([{ note: 'nc1', invoice: 'f1', amount: 1000, target: 'F-001' }])
     );
 
     expect(byNumber(rows, 'F-001').remaining).toBe(0);
@@ -222,12 +233,13 @@ describe('buildSupplierAccountRows', () => {
           original_invoice_id: 'f1',
         }),
       ],
-      new Map()
+      new Map(),
+      credit([{ note: 'nc1', invoice: 'f1', amount: 1000, target: 'F-001' }])
     );
     expect(totals.totalAmount).toBe(1000);
   });
 
-  it('el excedente de una NC queda como crédito a favor, no como deuda negativa de la factura', () => {
+  it('lo que la NC no imputó queda como crédito a favor', () => {
     const { rows, totals } = buildSupplierAccountRows(
       [
         v({ id: 'f1', full_number: 'F-001', total: 1000 }),
@@ -239,7 +251,8 @@ describe('buildSupplierAccountRows', () => {
           original_invoice_id: 'f1',
         }),
       ],
-      new Map()
+      new Map(),
+      credit([{ note: 'nc1', invoice: 'f1', amount: 1000, target: 'F-001' }])
     );
 
     expect(byNumber(rows, 'F-001').remaining).toBe(0);
@@ -248,7 +261,7 @@ describe('buildSupplierAccountRows', () => {
     expect(totals.totalDebt).toBe(-500);
   });
 
-  it('una NC en borrador no descuenta nada', () => {
+  it('una NC en borrador no descuenta nada ni suma crédito', () => {
     const { rows, totals } = buildSupplierAccountRows(
       [
         v({ id: 'f1', full_number: 'F-001', total: 1000 }),
@@ -269,72 +282,63 @@ describe('buildSupplierAccountRows', () => {
     expect(totals.unappliedCredit).toBe(0);
   });
 
-  it('la NC solo descuenta lo que la factura todavía debe después de los pagos', () => {
-    const { rows } = buildSupplierAccountRows(
+  it('una NC repartida entre varias facturas descuenta en cada una (TKT-586)', () => {
+    const { rows, totals } = buildSupplierAccountRows(
       [
-        v({ id: 'f1', full_number: 'F-001', total: 1000 }),
+        v({ id: 'f1', full_number: 'F-001', total: 500 }),
+        v({ id: 'f2', full_number: 'F-002', total: 500 }),
         v({
           id: 'nc1',
           full_number: 'NC-001',
           voucher_type: 'NOTA_CREDITO_A',
-          total: 600,
-          original_invoice_id: 'f1',
-        }),
-      ],
-      new Map([['f1', 700]])
-    );
-
-    // Quedaban 300 por pagar: la NC aplica 300 y le sobran 300 a favor.
-    expect(byNumber(rows, 'F-001').remaining).toBe(0);
-    expect(byNumber(rows, 'F-001').credit_applied).toBe(300);
-    expect(byNumber(rows, 'NC-001').remaining).toBe(-300);
-  });
-
-  it('reparte varias NC sobre la misma factura de la más vieja a la más nueva', () => {
-    const { rows } = buildSupplierAccountRows(
-      [
-        v({ id: 'f1', full_number: 'F-001', total: 1000 }),
-        v({
-          id: 'ncNueva',
-          full_number: 'NC-NUEVA',
-          voucher_type: 'NOTA_CREDITO_A',
-          issue_date: '2026-07-01',
-          total: 800,
-          original_invoice_id: 'f1',
-        }),
-        v({
-          id: 'ncVieja',
-          full_number: 'NC-VIEJA',
-          voucher_type: 'NOTA_CREDITO_A',
-          issue_date: '2026-01-01',
           total: 800,
           original_invoice_id: 'f1',
         }),
       ],
-      new Map()
+      new Map(),
+      credit([
+        { note: 'nc1', invoice: 'f1', amount: 500, target: 'F-001' },
+        { note: 'nc1', invoice: 'f2', amount: 300, target: 'F-002' },
+      ])
     );
 
-    expect(byNumber(rows, 'NC-VIEJA').credit_applied).toBe(800);
-    expect(byNumber(rows, 'NC-NUEVA').credit_applied).toBe(200);
-    expect(byNumber(rows, 'NC-NUEVA').remaining).toBe(-600);
     expect(byNumber(rows, 'F-001').remaining).toBe(0);
+    expect(byNumber(rows, 'F-002').remaining).toBe(200);
+    expect(byNumber(rows, 'NC-001').remaining).toBe(0);
+    expect(byNumber(rows, 'NC-001').applies_to).toBe('F-001, F-002');
+    expect(totals.totalDebt).toBe(200);
   });
 
-  it('una NC contra una factura anulada queda entera a favor', () => {
-    const { rows } = buildSupplierAccountRows(
+  it('una NC usada en una OP consume crédito y muestra la orden como destino', () => {
+    const { rows, totals } = buildSupplierAccountRows(
       [
-        v({ id: 'f1', full_number: 'F-001', total: 1000, status: 'CANCELLED' }),
         v({
           id: 'nc1',
           full_number: 'NC-001',
           voucher_type: 'NOTA_CREDITO_A',
-          total: 1000,
-          original_invoice_id: 'f1',
+          total: 200_000,
+          original_invoice_id: null,
         }),
       ],
-      new Map()
+      new Map(),
+      credit([{ note: 'nc1', invoice: null, amount: 200_000, target: 'OP-00002' }])
     );
-    expect(byNumber(rows, 'NC-001').remaining).toBe(-1000);
+
+    expect(byNumber(rows, 'NC-001').credit_applied).toBe(200_000);
+    expect(byNumber(rows, 'NC-001').remaining).toBe(0);
+    expect(byNumber(rows, 'NC-001').applies_to).toBe('OP-00002');
+    expect(totals.unappliedCredit).toBe(0);
+  });
+
+  it('el saldo a favor imputado también baja lo que la factura adeuda', () => {
+    const { rows } = buildSupplierAccountRows(
+      [v({ id: 'f1', full_number: 'F-001', total: 1000 })],
+      new Map([['f1', 400]]),
+      credit([], [['f1', 300]])
+    );
+
+    expect(byNumber(rows, 'F-001').on_account_applied).toBe(300);
+    expect(byNumber(rows, 'F-001').remaining).toBe(300);
   });
 
   it('la nota de débito suma deuda como comprobante propio, no contra la factura', () => {
@@ -358,9 +362,34 @@ describe('buildSupplierAccountRows', () => {
     expect(totals.pendingCount).toBe(2);
   });
 
+  it('el circuito de TKT-586: factura pagada, NC sin imputar, crédito entero disponible', () => {
+    // FC-1 se pagó entera; después llega la NC que la corrige. Como la factura
+    // no debe nada, la NC no se imputa a nada: su crédito queda disponible para
+    // usarlo en la OP de la refacturación.
+    const { rows, totals } = buildSupplierAccountRows(
+      [
+        v({ id: 'f1', full_number: 'FC-001', total: 200_000, status: 'PAID' }),
+        v({
+          id: 'nc1',
+          full_number: 'NC-001',
+          voucher_type: 'NOTA_CREDITO_A',
+          total: 200_000,
+          original_invoice_id: 'f1',
+        }),
+      ],
+      new Map([['f1', 200_000]])
+    );
+
+    expect(byNumber(rows, 'FC-001').remaining).toBe(0);
+    expect(byNumber(rows, 'NC-001').remaining).toBe(-200_000);
+    expect(totals.unappliedCredit).toBe(200_000);
+    expect(totals.totalDebt).toBe(-200_000);
+  });
+
   it('reproduce la cuenta corriente reportada por el cliente', () => {
     // Captura del proveedor 194dd099: 7 facturas + 2 NC, todas del 11/06/2026.
-    // 2 facturas ya pagadas por OP; cada NC corrige una factura de igual importe.
+    // 2 facturas ya pagadas por OP; cada NC corrige una factura de igual importe
+    // y quedó imputada contra ella (es lo que dejó el backfill de TKT-586).
     const vouchers: SupplierVoucherInput[] = [
       v({ id: 'f5776', full_number: '00005-00005776', total: 210_975_000, status: 'PAID' }),
       v({ id: 'f5777', full_number: '00005-00005777', total: 210_975_000, status: 'PAID' }),
@@ -389,7 +418,14 @@ describe('buildSupplierAccountRows', () => {
       ['f5777', 210_975_000],
     ]);
 
-    const { rows, totals } = buildSupplierAccountRows(vouchers, paid);
+    const { rows, totals } = buildSupplierAccountRows(
+      vouchers,
+      paid,
+      credit([
+        { note: 'nc880', invoice: 'f5779', amount: 218_250_000, target: '00005-00005779' },
+        { note: 'nc881', invoice: 'f5778', amount: 210_975_000, target: '00005-00005778' },
+      ])
+    );
 
     // Las facturas corregidas quedan saldadas, no con su saldo bruto.
     expect(byNumber(rows, '00005-00005779').remaining).toBe(0);

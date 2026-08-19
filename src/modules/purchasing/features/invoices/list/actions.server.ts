@@ -1054,7 +1054,39 @@ export async function deletePurchaseInvoice(id: string) {
       return { error: 'No se puede eliminar: la factura tiene movimientos de caja asociados.' };
     }
 
-    await prisma.purchase_invoices.delete({ where: { id } });
+    // Una NC con crédito ya imputado no se borra a espaldas del usuario: habría
+    // que devolverle saldo a facturas ajenas sin que se entere (TKT-586).
+    const activeApplication = await prisma.credit_note_applications.findFirst({
+      where: { credit_note_id: id, reversed_at: null },
+      select: {
+        invoice: { select: { full_number: true } },
+        payment_order: { select: { full_number: true } },
+      },
+    });
+    if (activeApplication) {
+      const target =
+        activeApplication.invoice?.full_number ??
+        activeApplication.payment_order?.full_number ??
+        '';
+      return {
+        error: `No se puede eliminar: el crédito de esta nota está imputado a ${target}. Revertí la imputación primero.`,
+      };
+    }
+
+    // Facturas que reciben crédito de alguna NC y quedarán sin él al borrar.
+    const affectedByCredit = await prisma.credit_note_applications.findMany({
+      where: { invoice_id: id },
+      select: { credit_note_id: true },
+    });
+
+    await prisma.$transaction(async (tx) => {
+      // Imputaciones ya revertidas (de esta NC) y las que esta factura recibió:
+      // sin borrarlas, la FK impide eliminar el comprobante.
+      await tx.credit_note_applications.deleteMany({
+        where: { OR: [{ credit_note_id: id }, { invoice_id: id }] },
+      });
+      await tx.purchase_invoices.delete({ where: { id } });
+    });
 
     // Recalcular el estado de las OCs que estaban vinculadas a la factura borrada.
     await recalcInvoicingStatusMany(affectedOrderIds);
@@ -1063,6 +1095,11 @@ export async function deletePurchaseInvoice(id: string) {
     if (isCreditNoteVoucherType(invoice.voucher_type) && invoice.original_invoice_id) {
       await recalcPurchaseInvoiceStatus(invoice.original_invoice_id);
       revalidatePath(`/dashboard/purchasing/invoices/${invoice.original_invoice_id}`);
+    }
+    // Si la factura borrada recibía crédito de alguna NC, ese crédito vuelve a
+    // estar disponible; no hay saldo que recalcular porque la factura ya no está.
+    for (const app of affectedByCredit) {
+      revalidatePath(`/dashboard/purchasing/invoices/${app.credit_note_id}`);
     }
 
     revalidatePath('/dashboard/purchasing');

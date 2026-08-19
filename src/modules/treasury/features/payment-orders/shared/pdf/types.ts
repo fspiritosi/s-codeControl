@@ -45,6 +45,14 @@ export interface PaymentOrderPDFPayment {
   destination?: PaymentOrderPDFDestination;
 }
 
+/** Nota de crédito aplicada en la orden (TKT-586). */
+export interface PaymentOrderPDFCredit {
+  fullNumber: string;
+  issueDate: Date | string | null;
+  total: number;
+  appliedAmount: number;
+}
+
 export interface PaymentOrderPDFRetention {
   name: string;
   jurisdiction?: string | null;
@@ -75,8 +83,10 @@ export interface PaymentOrderPDFData {
   expenses: PaymentOrderPDFExpense[];
   payments: PaymentOrderPDFPayment[];
   retentions?: PaymentOrderPDFRetention[];
+  credits?: PaymentOrderPDFCredit[];
   totalAmount: number;
   retentionsTotal?: number;
+  creditsTotal?: number;
   netToPay?: number;
   amountInWords: string;
   pdfSettings?: {

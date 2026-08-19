@@ -46,8 +46,10 @@ export function PaymentOrderTemplate({ data }: { data: PaymentOrderPDFData }) {
     expenses,
     payments,
     retentions = [],
+    credits = [],
     totalAmount,
     retentionsTotal = 0,
+    creditsTotal = 0,
     netToPay,
     amountInWords,
     pdfSettings,
@@ -259,17 +261,49 @@ export function PaymentOrderTemplate({ data }: { data: PaymentOrderPDFData }) {
           </View>
         ) : null}
 
+        {credits.length > 0 ? (
+          <View>
+            <Text style={styles.sectionTitle}>Notas de crédito aplicadas</Text>
+            <View style={[styles.tableHeader, { paddingVertical: 4 }]}>
+              <Text style={{ flex: 3, fontSize: 9, fontWeight: 'bold' }}>Comprobante</Text>
+              <Text style={{ flex: 1, fontSize: 9, fontWeight: 'bold', textAlign: 'right' }}>Fecha</Text>
+              <Text style={{ flex: 1, fontSize: 9, fontWeight: 'bold', textAlign: 'right' }}>Total</Text>
+              <Text style={{ flex: 1, fontSize: 9, fontWeight: 'bold', textAlign: 'right' }}>Aplicado</Text>
+            </View>
+            {credits.map((c, idx) => (
+              <View key={idx} style={[styles.tableRow, { paddingVertical: 3 }]}>
+                <Text style={{ flex: 3, fontSize: 9 }}>{c.fullNumber}</Text>
+                <Text style={{ flex: 1, fontSize: 9, textAlign: 'right' }}>
+                  {c.issueDate ? fmtDate(c.issueDate) : '-'}
+                </Text>
+                <Text style={{ flex: 1, fontSize: 9, textAlign: 'right' }}>{fmtAmount(c.total)}</Text>
+                <Text style={{ flex: 1, fontSize: 9, textAlign: 'right' }}>
+                  −{fmtAmount(c.appliedAmount)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
         <View style={styles.grandTotal}>
           <Text>{expenses.length > 0 && invoices.length === 0 ? 'TOTAL GASTOS' : 'TOTAL FACTURAS'}</Text>
           <Text>{fmtAmount(totalAmount)}</Text>
         </View>
 
-        {retentionsTotal > 0 && netToPay !== undefined ? (
+        {(retentionsTotal > 0 || creditsTotal > 0) && netToPay !== undefined ? (
           <>
-            <View style={[styles.grandTotal, { backgroundColor: undefined }]}>
-              <Text style={{ fontSize: 10 }}>Retenciones</Text>
-              <Text style={{ fontSize: 10 }}>−{fmtAmount(retentionsTotal)}</Text>
-            </View>
+            {retentionsTotal > 0 ? (
+              <View style={[styles.grandTotal, { backgroundColor: undefined }]}>
+                <Text style={{ fontSize: 10 }}>Retenciones</Text>
+                <Text style={{ fontSize: 10 }}>−{fmtAmount(retentionsTotal)}</Text>
+              </View>
+            ) : null}
+            {creditsTotal > 0 ? (
+              <View style={[styles.grandTotal, { backgroundColor: undefined }]}>
+                <Text style={{ fontSize: 10 }}>Notas de crédito</Text>
+                <Text style={{ fontSize: 10 }}>−{fmtAmount(creditsTotal)}</Text>
+              </View>
+            ) : null}
             <View style={styles.grandTotal}>
               <Text>NETO A PAGAR</Text>
               <Text>{fmtAmount(netToPay)}</Text>

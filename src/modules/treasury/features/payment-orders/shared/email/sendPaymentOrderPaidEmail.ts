@@ -86,6 +86,13 @@ export async function sendPaymentOrderPaidEmail(
           },
           orderBy: { created_at: 'asc' },
         },
+        credit_applications: {
+          where: { reversed_at: null },
+          include: {
+            credit_note: { select: { full_number: true, issue_date: true, total: true } },
+          },
+          orderBy: { created_at: 'asc' },
+        },
       },
     });
 
@@ -191,8 +198,15 @@ export async function sendPaymentOrderPaidEmail(
         amount: Number(r.amount),
         certificateNumber: r.certificate_number,
       })),
+      credits: order.credit_applications.map((c) => ({
+        fullNumber: c.credit_note?.full_number ?? '',
+        issueDate: c.credit_note?.issue_date ?? null,
+        total: Number(c.credit_note?.total ?? 0),
+        appliedAmount: Number(c.amount),
+      })),
       totalAmount,
       retentionsTotal: Number(order.retentions_total),
+      creditsTotal: Number(order.credits_total),
       netToPay:
         order.net_to_pay !== null ? Number(order.net_to_pay) : totalAmount,
       // La orden puede estar en dólares (tsk-576): el importe en letras tiene

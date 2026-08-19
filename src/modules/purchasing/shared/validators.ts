@@ -73,16 +73,12 @@ export const purchaseInvoiceSchema = z.object({
   perceptions: z.array(purchaseInvoicePerceptionSchema).optional().default([]),
   other_charges: z.array(purchaseInvoiceOtherChargeSchema).optional().default([]),
   attachment: z.any().optional(),
-}).superRefine((data, ctx) => {
-  const isNC = ['NOTA_CREDITO_A', 'NOTA_CREDITO_B', 'NOTA_CREDITO_C'].includes(data.voucher_type);
-  if (isNC && !data.original_invoice_id) {
-    ctx.addIssue({
-      code: 'custom',
-      path: ['original_invoice_id'],
-      message: 'Seleccioná la factura que corrige esta nota de crédito',
-    });
-  }
 });
+
+// Desde TKT-586 la factura de referencia de una NC es opcional: el crédito se
+// imputa después, explícitamente, a una o varias facturas (o dentro de una OP).
+// Exigirla acá obligaba a inventar un vínculo cuando la NC todavía no sabe
+// contra qué se va a aplicar. El formulario avisa cuando queda sin asociar.
 
 // MIME types y tamaño máximo para adjunto de Factura de Compra
 export const PURCHASE_INVOICE_ATTACHMENT_ALLOWED_MIME = [

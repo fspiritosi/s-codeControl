@@ -9,6 +9,10 @@ import {
   getSupplierCreditBalance,
   getInvoicesForCreditApplication,
 } from '../../credit/actions.server';
+import {
+  getSupplierCreditNotes,
+  getCreditNoteApplications,
+} from '@/shared/actions/credit-notes';
 import { AccountStatementAccordion } from './AccountStatementAccordion';
 
 interface Props {
@@ -24,6 +28,8 @@ export default async function AccountStatementTab({ supplierId }: Props) {
     expenses,
     creditBalance,
     applicableInvoices,
+    creditNotes,
+    creditNoteApplications,
   ] = await Promise.all([
     getSupplierInvoices(supplierId),
     getSupplierPurchaseOrders(supplierId),
@@ -32,6 +38,8 @@ export default async function AccountStatementTab({ supplierId }: Props) {
     getSupplierExpenses(supplierId),
     getSupplierCreditBalance(supplierId),
     getInvoicesForCreditApplication(supplierId),
+    getSupplierCreditNotes(supplierId),
+    getCreditNoteApplications(supplierId),
   ]);
 
   return (
@@ -44,6 +52,8 @@ export default async function AccountStatementTab({ supplierId }: Props) {
       expenses={expenses}
       creditBalance={creditBalance}
       applicableInvoices={applicableInvoices}
+      creditNotes={creditNotes}
+      creditNoteApplications={creditNoteApplications}
     />
   );
 }
