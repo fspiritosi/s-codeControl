@@ -26,6 +26,10 @@ import {
   recalcPurchaseInvoiceStatusMany,
 } from '@/shared/lib/purchase-invoice-status';
 import { CREDIT_NOTE_VOUCHER_TYPES } from '@/shared/lib/purchase-invoice-balance';
+import {
+  getCreditNoteAvailability,
+  getSupplierCreditNotesWithAvailability,
+} from '@/shared/lib/credit-notes';
 import { convertAmount, effectiveRate } from '@/shared/lib/currency-conversion';
 
 const columnMap: Record<string, string> = { status: 'status' };
@@ -228,6 +232,24 @@ export async function getPaymentOrderById(id: string) {
         },
         orderBy: { created_at: 'asc' },
       },
+      // Créditos de NC aplicados en la orden (TKT-586). Los revertidos quedan
+      // fuera: la orden ya no los está usando.
+      credit_applications: {
+        where: { reversed_at: null },
+        include: {
+          credit_note: {
+            select: {
+              id: true,
+              full_number: true,
+              issue_date: true,
+              total: true,
+              currency: true,
+              exchange_rate: true,
+            },
+          },
+        },
+        orderBy: { created_at: 'asc' },
+      },
     },
   });
 
@@ -238,6 +260,7 @@ export async function getPaymentOrderById(id: string) {
     exchange_rate: Number(order.exchange_rate),
     total_amount: Number(order.total_amount),
     retentions_total: Number(order.retentions_total),
+    credits_total: Number(order.credits_total),
     net_to_pay: order.net_to_pay !== null ? Number(order.net_to_pay) : null,
     items: order.items.map((i) => ({
       ...i,
@@ -254,6 +277,17 @@ export async function getPaymentOrderById(id: string) {
       base_amount: Number(r.base_amount),
       rate: Number(r.rate),
       amount: Number(r.amount),
+    })),
+    credit_applications: order.credit_applications.map((c) => ({
+      ...c,
+      amount: Number(c.amount),
+      credit_note: c.credit_note
+        ? {
+            ...c.credit_note,
+            total: Number(c.credit_note.total),
+            exchange_rate: Number(c.credit_note.exchange_rate),
+          }
+        : null,
     })),
   };
 }
@@ -407,6 +441,29 @@ export async function getPendingPurchaseInvoices(supplierId: string) {
     .filter((inv) => inv.remaining > 0);
 }
 
+/**
+ * Notas de crédito del proveedor con crédito disponible para aplicar en una OP
+ * (TKT-586).
+ *
+ * `currentOrderId` libera lo que la propia orden en edición ya tenía tomado,
+ * igual que con los cheques: si no, editar una OP mostraría su propio crédito
+ * como agotado.
+ */
+export async function getAvailableCreditNotesForPaymentOrder(
+  supplierId: string,
+  currentOrderId?: string
+) {
+  const { companyId } = await getActionContext();
+  if (!companyId || !supplierId) return [];
+
+  return getSupplierCreditNotesWithAvailability({
+    companyId,
+    supplierId,
+    excludePaymentOrderId: currentOrderId,
+    onlyWithCredit: true,
+  });
+}
+
 export async function getPendingExpenses(supplierId?: string) {
   const { companyId } = await getActionContext();
   if (!companyId) return [];
@@ -476,6 +533,87 @@ export async function getExpenseCategoriesForOrder() {
   });
 }
 
+/**
+ * Convierte los créditos de NC a la moneda de la orden (TKT-586).
+ *
+ * Mismo tratamiento que los ítems: el importe se guarda en la moneda de la NC
+ * —así el crédito consumido cierra contra el total de la propia nota— y aparte
+ * se calcula cuánto vale en la moneda de la orden, que es lo que baja el neto.
+ */
+function convertCredits(
+  credits: PaymentOrderFormData['credits'],
+  orderRef: { currency: string; exchange_rate: number }
+) {
+  return (credits ?? []).map((c) => {
+    const amount = parseFloat(c.amount);
+    const creditCurrency = c.currency ?? 'ARS';
+    const rate = effectiveRate(
+      { currency: creditCurrency, exchange_rate: c.exchange_rate ?? 1 },
+      orderRef
+    );
+    return {
+      credit_note_id: c.credit_note_id,
+      amount,
+      currency: creditCurrency,
+      rate,
+      converted: convertAmount({
+        amount,
+        from: creditCurrency,
+        to: orderRef.currency,
+        rate,
+      }),
+    };
+  });
+}
+
+/**
+ * Valida y persiste los créditos de NC de una orden.
+ *
+ * La disponibilidad se relee DENTRO de la transacción: dos órdenes en borrador
+ * no pueden tomar el mismo crédito. `excludeOrderId` deja fuera lo que la propia
+ * orden tenía reservado, para que editarla no la haga chocar consigo misma.
+ */
+async function persistOrderCredits(
+  tx: any,
+  params: {
+    orderId: string;
+    companyId: string;
+    supplierId: string | null;
+    userId: string;
+    credits: ReturnType<typeof convertCredits>;
+    excludeOrderId?: string;
+  }
+) {
+  for (const credit of params.credits) {
+    const availability = await getCreditNoteAvailability({
+      creditNoteId: credit.credit_note_id,
+      companyId: params.companyId,
+      supplierId: params.supplierId ?? undefined,
+      excludePaymentOrderId: params.excludeOrderId,
+      client: tx,
+    });
+    if (!availability) {
+      throw new Error('Una nota de crédito no existe, no está confirmada o es de otro proveedor');
+    }
+    if (credit.amount > availability.available + 0.001) {
+      throw new Error(
+        `El crédito disponible de la nota es de $${availability.available.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`
+      );
+    }
+
+    await tx.credit_note_applications.create({
+      data: {
+        company_id: params.companyId,
+        supplier_id: availability.supplierId,
+        credit_note_id: credit.credit_note_id,
+        payment_order_id: params.orderId,
+        amount: credit.amount,
+        applied_by: params.userId,
+      },
+    });
+  }
+}
+
 export async function createPaymentOrder(data: PaymentOrderFormData) {
   const { companyId } = await getActionContext();
   if (!companyId) return { data: null, error: 'No company selected' };
@@ -516,7 +654,11 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
       notes: r.notes?.trim() || null,
     }));
     const retentionsTotal = retentions.reduce((s, r) => s + r.amount, 0);
-    const netToPay = Math.round((totalAmount - retentionsTotal) * 100) / 100;
+    // Los créditos de NC bajan lo que hay que transferir, no lo facturado: por
+    // eso restan del neto y no de total_amount (TKT-586).
+    const credits = convertCredits(parsed.data.credits, orderRef);
+    const creditsTotal = Math.round(credits.reduce((acc, c) => acc + c.converted, 0) * 100) / 100;
+    const netToPay = Math.round((totalAmount - retentionsTotal - creditsTotal) * 100) / 100;
 
     if (retentions.length > 0) {
       const taxIds = Array.from(new Set(retentions.map((r) => r.tax_type_id)));
@@ -564,7 +706,8 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
     const nextNumber = (last?.number ?? 0) + 1;
     const fullNumber = `OP-${String(nextNumber).padStart(5, '0')}`;
 
-    const order = await prisma.payment_orders.create({
+    const order = await prisma.$transaction(async (tx) => {
+      const created = await tx.payment_orders.create({
       data: {
         company_id: companyId,
         supplier_id: parsed.data.supplier_id || null,
@@ -578,6 +721,7 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
         exchange_rate: parsed.data.exchange_rate ?? 1,
         total_amount: Math.round(totalAmount * 100) / 100,
         retentions_total: retentionsTotal,
+        credits_total: creditsTotal,
         net_to_pay: netToPay,
         notes: parsed.data.notes || null,
         status: 'DRAFT',
@@ -611,6 +755,17 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
         },
         ...(retentions.length > 0 ? { retentions: { create: retentions } } : {}),
       },
+      });
+
+      await persistOrderCredits(tx, {
+        orderId: created.id,
+        companyId,
+        supplierId: parsed.data.supplier_id || null,
+        userId: user.id!,
+        credits,
+      });
+
+      return created;
     });
 
     revalidatePath('/dashboard/treasury');
@@ -629,7 +784,7 @@ export async function createPaymentOrder(data: PaymentOrderFormData) {
     return { data: order, error: null };
   } catch (error) {
     console.error('Error creating payment order:', error);
-    return { data: null, error: String(error) };
+    return { data: null, error: error instanceof Error ? error.message : String(error) };
   }
 }
 
@@ -682,7 +837,9 @@ export async function updatePaymentOrder(id: string, data: PaymentOrderFormData)
       notes: r.notes?.trim() || null,
     }));
     const retentionsTotal = retentions.reduce((s, r) => s + r.amount, 0);
-    const netToPay = Math.round((totalAmount - retentionsTotal) * 100) / 100;
+    const credits = convertCredits(parsed.data.credits, orderRef);
+    const creditsTotal = Math.round(credits.reduce((acc, c) => acc + c.converted, 0) * 100) / 100;
+    const netToPay = Math.round((totalAmount - retentionsTotal - creditsTotal) * 100) / 100;
 
     if (retentions.length > 0) {
       const taxIds = Array.from(new Set(retentions.map((r) => r.tax_type_id)));
@@ -725,6 +882,9 @@ export async function updatePaymentOrder(id: string, data: PaymentOrderFormData)
       await tx.payment_order_items.deleteMany({ where: { payment_order_id: id } });
       await tx.payment_order_payments.deleteMany({ where: { payment_order_id: id } });
       await tx.payment_order_retentions.deleteMany({ where: { payment_order_id: id } });
+      // La orden está en borrador: sus imputaciones de NC se rehacen enteras,
+      // no se revierten (nunca llegaron a afectar el saldo de una factura).
+      await tx.credit_note_applications.deleteMany({ where: { payment_order_id: id } });
 
       await tx.payment_orders.update({
         where: { id },
@@ -738,6 +898,7 @@ export async function updatePaymentOrder(id: string, data: PaymentOrderFormData)
           exchange_rate: parsed.data.exchange_rate ?? 1,
           total_amount: Math.round(totalAmount * 100) / 100,
           retentions_total: retentionsTotal,
+          credits_total: creditsTotal,
           net_to_pay: netToPay,
           notes: parsed.data.notes || null,
           items: {
@@ -767,6 +928,15 @@ export async function updatePaymentOrder(id: string, data: PaymentOrderFormData)
           ...(retentions.length > 0 ? { retentions: { create: retentions } } : {}),
         },
       });
+
+      await persistOrderCredits(tx, {
+        orderId: id,
+        companyId,
+        supplierId: parsed.data.supplier_id || null,
+        userId: user.id!,
+        credits,
+        excludeOrderId: id,
+      });
     });
 
     revalidatePath('/dashboard/treasury');
@@ -774,7 +944,7 @@ export async function updatePaymentOrder(id: string, data: PaymentOrderFormData)
     return { data: { id }, error: null };
   } catch (error) {
     console.error('Error updating payment order:', error);
-    return { data: null, error: String(error) };
+    return { data: null, error: error instanceof Error ? error.message : String(error) };
   }
 }
 
@@ -886,7 +1056,10 @@ export async function confirmPaymentOrder(id: string) {
       }
     }
 
-    // Ejecutar en transacción: confirmar + generar movimientos
+    // Ejecutar en transacción: confirmar + generar movimientos.
+    // Una orden cubierta enteramente por créditos de NC no tiene pagos, así que
+    // este recorrido queda vacío y no se toca caja ni banco: no hay plata que
+    // mover (TKT-586).
     await prisma.$transaction(async (tx) => {
       for (const p of order.payments) {
         const amount = Number(p.amount);
@@ -1279,6 +1452,14 @@ export async function cancelPaymentOrder(id: string) {
           });
         }
       }
+
+      // Los créditos de NC que tomó la orden vuelven a estar disponibles. Se
+      // marcan revertidos en vez de borrarse: la imputación existió y queda
+      // como rastro, igual que los asientos de reverso de tesorería.
+      await tx.credit_note_applications.updateMany({
+        where: { payment_order_id: order.id, reversed_at: null },
+        data: { reversed_at: new Date(), reversed_by: user.id! },
+      });
 
       await tx.payment_orders.update({
         where: { id },

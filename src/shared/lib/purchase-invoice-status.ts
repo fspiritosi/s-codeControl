@@ -1,7 +1,6 @@
 import { prisma } from '@/shared/lib/prisma';
 import {
   ACTIVE_CREDIT_NOTE_STATUSES,
-  CREDIT_NOTE_VOUCHER_TYPES,
   derivePurchaseInvoiceStatus,
   isCreditNoteVoucherType,
 } from '@/shared/lib/purchase-invoice-balance';
@@ -24,7 +23,15 @@ type PrismaClientLike = typeof prisma | any;
 /** Estados en los que una factura todavía admite recálculo de pago. */
 const RECALCULABLE_STATUSES = ['CONFIRMED', 'PARTIAL_PAID', 'PAID'];
 
-/** Crédito de NC activas aplicable a cada factura original. */
+/**
+ * Crédito de NC imputado a cada factura.
+ *
+ * Desde TKT-586 sale de `credit_note_applications`: la NC ya no descuenta sola
+ * el saldo de `original_invoice_id`, se imputa explícitamente (a una o varias
+ * facturas) y lo que no se imputa queda disponible como crédito del proveedor.
+ * La firma no cambió a propósito: sus consumidores —recálculo de estados,
+ * saldos pendientes, OPs y bolsa de crédito— siguen sirviéndose igual.
+ */
 export async function getCreditNoteAmountsByInvoice(
   invoiceIds: string[],
   client: PrismaClientLike = prisma
@@ -32,20 +39,46 @@ export async function getCreditNoteAmountsByInvoice(
   const result = new Map<string, number>();
   if (invoiceIds.length === 0) return result;
 
-  const groups = await client.purchase_invoices.groupBy({
-    by: ['original_invoice_id'],
+  const groups = await client.credit_note_applications.groupBy({
+    by: ['invoice_id'],
     where: {
-      voucher_type: { in: CREDIT_NOTE_VOUCHER_TYPES as unknown as string[] },
-      status: { in: ACTIVE_CREDIT_NOTE_STATUSES as unknown as string[] },
-      original_invoice_id: { in: invoiceIds },
+      invoice_id: { in: invoiceIds },
+      reversed_at: null,
+      // Una NC que volvió a borrador o se anuló deja de aportar crédito, aunque
+      // sus imputaciones sigan en la tabla.
+      credit_note: { status: { in: ACTIVE_CREDIT_NOTE_STATUSES as unknown as string[] } },
     },
-    _sum: { total: true },
+    _sum: { amount: true },
   });
 
-  for (const g of groups as { original_invoice_id: string | null; _sum: { total: unknown } }[]) {
-    if (g.original_invoice_id) {
-      result.set(g.original_invoice_id, Number(g._sum.total ?? 0));
+  for (const g of groups as { invoice_id: string | null; _sum: { amount: unknown } }[]) {
+    if (g.invoice_id) {
+      result.set(g.invoice_id, Number(g._sum.amount ?? 0));
     }
+  }
+  return result;
+}
+
+/**
+ * Crédito ya imputado por cada NC, sin importar el destino (factura u OP).
+ * Es el otro lado de la misma tabla: lo que a la NC le queda disponible es su
+ * total menos esto. Ver `computeCreditNoteAvailable`.
+ */
+export async function getAppliedAmountByCreditNote(
+  creditNoteIds: string[],
+  client: PrismaClientLike = prisma
+): Promise<Map<string, number>> {
+  const result = new Map<string, number>();
+  if (creditNoteIds.length === 0) return result;
+
+  const groups = await client.credit_note_applications.groupBy({
+    by: ['credit_note_id'],
+    where: { credit_note_id: { in: creditNoteIds }, reversed_at: null },
+    _sum: { amount: true },
+  });
+
+  for (const g of groups as { credit_note_id: string; _sum: { amount: unknown } }[]) {
+    result.set(g.credit_note_id, Number(g._sum.amount ?? 0));
   }
   return result;
 }

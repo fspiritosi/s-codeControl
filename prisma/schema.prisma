@@ -423,6 +423,7 @@ model company {
   checks                 checks[]
   payment_orders         payment_orders[]
   supplier_credit_applications supplier_credit_applications[]
+  credit_note_applications     credit_note_applications[]
 
   // Configuración
   pdf_settings       pdf_settings?
@@ -1958,6 +1959,7 @@ model suppliers {
   payment_methods   supplier_payment_methods[]
   expenses          expenses[]
   credit_applications supplier_credit_applications[]
+  credit_note_applications credit_note_applications[]
 
   @@unique([company_id, code])
   @@unique([company_id, tax_id])
@@ -1985,6 +1987,42 @@ model supplier_credit_applications {
 
   @@index([company_id, supplier_id])
   @@index([invoice_id])
+}
+
+/// Imputación del crédito de una nota de crédito de compra (TKT-586).
+///
+/// Reemplaza la auto-imputación por `original_invoice_id`: una NC ahora se
+/// aplica explícitamente a una o varias facturas, o se usa dentro de una OP
+/// para bajar el neto a pagar. Lo que no se imputa queda disponible.
+/// Ver .planes/tkt-586-notas-credito-imputacion.md
+model credit_note_applications {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id       String    @db.Uuid
+  supplier_id      String    @db.Uuid
+  credit_note_id   String    @db.Uuid
+  /// Imputación directa a una factura (desde la cuenta corriente).
+  invoice_id       String?   @db.Uuid
+  /// Uso del crédito dentro de una OP (bloque de créditos).
+  payment_order_id String?   @db.Uuid
+  /// Importe en la moneda de la NC.
+  amount           Decimal   @db.Decimal(15, 2)
+  applied_at       DateTime  @default(now()) @db.Timestamptz
+  applied_by       String
+  reversed_at      DateTime? @db.Timestamptz
+  reversed_by      String?
+  notes            String?
+  created_at       DateTime  @default(now()) @db.Timestamptz
+
+  company       company            @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  supplier      suppliers          @relation(fields: [supplier_id], references: [id])
+  credit_note   purchase_invoices  @relation("credit_note_applications_note", fields: [credit_note_id], references: [id])
+  invoice       purchase_invoices? @relation("credit_note_applications_invoice", fields: [invoice_id], references: [id])
+  payment_order payment_orders?    @relation(fields: [payment_order_id], references: [id], onDelete: Cascade)
+
+  @@index([company_id, supplier_id])
+  @@index([credit_note_id])
+  @@index([invoice_id])
+  @@index([payment_order_id])
 }
 
 model supplier_payment_methods {
@@ -2223,6 +2261,10 @@ model purchase_invoices {
   perceptions         purchase_invoice_perceptions[]
   other_charges_items purchase_invoice_other_charges[]
   credit_applications supplier_credit_applications[]
+  /// Imputaciones EN LAS QUE ESTA NC ES EL ORIGEN del crédito (TKT-586).
+  credit_note_applications_made     credit_note_applications[] @relation("credit_note_applications_note")
+  /// Imputaciones de NC RECIBIDAS por esta factura (TKT-586).
+  credit_note_applications_received credit_note_applications[] @relation("credit_note_applications_invoice")
 
   @@unique([company_id, supplier_id, full_number])
   @@index([purchase_order_id])
@@ -2598,6 +2640,9 @@ model payment_orders {
   exchange_rate          Decimal              @default(1) @db.Decimal(15, 4)
   total_amount           Decimal              @db.Decimal(15, 2)
   retentions_total       Decimal              @default(0) @db.Decimal(15, 2)
+  /// Créditos de notas de crédito aplicados en esta OP, en la moneda de la
+  /// orden (TKT-586). net_to_pay = total_amount - retentions_total - credits_total.
+  credits_total          Decimal              @default(0) @db.Decimal(15, 2)
   net_to_pay             Decimal?             @db.Decimal(15, 2)
   notes                  String?
   status                 payment_order_status @default(DRAFT)
@@ -2619,6 +2664,7 @@ model payment_orders {
   bank_movements bank_movements[]
   cash_movements cash_movements[]
   retentions     payment_order_retentions[]
+  credit_applications credit_note_applications[]
 
   @@unique([company_id, number])
   @@index([company_id, status])

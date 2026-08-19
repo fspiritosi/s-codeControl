@@ -41,6 +41,7 @@ import {
   getPendingExpenses,
   getExpenseCategoriesForOrder,
   getSupplierPaymentMethodsForPaymentOrder,
+  getAvailableCreditNotesForPaymentOrder,
 } from '../actions.server';
 import { PAYMENT_METHOD_LABELS } from '../../../shared/validators';
 import {
@@ -205,6 +206,27 @@ function filterMethodsByPaymentMethod(
   return [];
 }
 
+/** Nota de crédito del proveedor con crédito disponible (TKT-586). */
+interface CreditNoteOption {
+  id: string;
+  full_number: string;
+  issue_date: Date | string;
+  currency: string;
+  exchange_rate: number;
+  total: number;
+  available: number;
+  original_invoice_full_number: string | null;
+}
+
+/** Crédito de NC cargado en la orden. `amount` va en la moneda de la NC. */
+export interface CreditDraft {
+  credit_note_id: string;
+  label: string;
+  amount: string;
+  currency: string;
+  exchange_rate: number;
+}
+
 export interface RetentionDraft {
   tax_type_id: string;
   base_amount: string;
@@ -254,6 +276,7 @@ export interface PaymentOrderEditData {
     check_id?: string | null;
   }>;
   retentions?: RetentionDraft[];
+  credits?: CreditDraft[];
 }
 
 interface Props {
@@ -410,10 +433,14 @@ export function NewPaymentOrderForm({
     })) ?? [emptyPayment()]
   );
   const [retentions, setRetentions] = useState<RetentionDraft[]>(initialData?.retentions ?? []);
+  const [credits, setCredits] = useState<CreditDraft[]>(initialData?.credits ?? []);
+  const [creditNotes, setCreditNotes] = useState<CreditNoteOption[]>([]);
 
   useEffect(() => {
     if (!supplierId) {
       setSupplierPaymentMethods([]);
+      setCreditNotes([]);
+      setCredits([]);
       setPosFilter('');
       setPendingExpenses(null);
       setExpenseCategoryFilter('');
@@ -429,12 +456,15 @@ export function NewPaymentOrderForm({
       getPendingExpenses(supplierId),
       getExpenseCategoriesForOrder(),
       getSupplierPaymentMethodsForPaymentOrder(supplierId),
+      // Al editar, la propia orden no cuenta como crédito ya tomado.
+      getAvailableCreditNotesForPaymentOrder(supplierId, initialData?.id),
     ])
-      .then(([invoices, expenses, categories, methods]) => {
+      .then(([invoices, expenses, categories, methods, notes]) => {
         if (cancelled) return;
         setPendingInvoices(invoices);
         setPendingExpenses(expenses);
         setExpenseCategories(categories);
+        setCreditNotes(notes as CreditNoteOption[]);
         const opts = methods as SupplierPaymentMethodOpt[];
         setSupplierPaymentMethods(opts);
         // Auto-asignar default por línea según método (sin pisar selección existente)
@@ -451,7 +481,7 @@ export function NewPaymentOrderForm({
     return () => {
       cancelled = true;
     };
-  }, [supplierId]);
+  }, [supplierId, initialData?.id]);
 
   // Cargar gastos y categorías cuando no hay proveedor seleccionado
   useEffect(() => {
@@ -569,9 +599,91 @@ export function NewPaymentOrderForm({
     [items, orderCurrency]
   );
 
+  /**
+   * Créditos de NC convertidos a la moneda de la orden. No tocan el total de
+   * ítems (que es lo facturado y la base de las retenciones): bajan el neto a
+   * transferir (TKT-586).
+   */
+  const creditsTotal = useMemo(
+    () =>
+      credits.reduce(
+        (acc, c) =>
+          acc +
+          toOrderCurrency(parseFloat(c.amount) || 0, {
+            currency: c.currency,
+            exchange_rate: c.exchange_rate,
+          }),
+        0
+      ),
+    [credits, toOrderCurrency]
+  );
+
   const orderSymbol = currencySymbol(orderCurrency);
-  const netToPay = Math.round((itemsTotal - retentionsTotal) * 100) / 100;
+  const netToPay = Math.round((itemsTotal - retentionsTotal - creditsTotal) * 100) / 100;
   const diff = Math.round((netToPay - paymentsTotal) * 100) / 100;
+
+  /** Crédito de cada NC que esta orden todavía puede tomar. */
+  const availableFor = useCallback(
+    (creditNoteId: string, currentIndex: number) => {
+      const note = creditNotes.find((n) => n.id === creditNoteId);
+      if (!note) return 0;
+      const takenElsewhere = credits.reduce(
+        (acc, c, i) =>
+          i !== currentIndex && c.credit_note_id === creditNoteId
+            ? acc + (parseFloat(c.amount) || 0)
+            : acc,
+        0
+      );
+      return Math.max(0, Math.round((note.available - takenElsewhere) * 100) / 100);
+    },
+    [creditNotes, credits]
+  );
+
+  const addCredit = () =>
+    setCredits((prev) => [
+      ...prev,
+      { credit_note_id: '', label: '', amount: '', currency: orderCurrency, exchange_rate: 1 },
+    ]);
+  const removeCredit = (index: number) =>
+    setCredits((prev) => prev.filter((_, i) => i !== index));
+  const updateCredit = (index: number, patch: Partial<CreditDraft>) =>
+    setCredits((prev) => prev.map((c, i) => (i === index ? { ...c, ...patch } : c)));
+
+  /**
+   * Al elegir la NC se propone el menor entre su crédito disponible y lo que
+   * todavía queda por pagar: es lo que el usuario quiere en el 99% de los casos
+   * y evita que cargue de más y no cuadre.
+   */
+  const handleCreditNoteChange = (index: number, creditNoteId: string) => {
+    const note = creditNotes.find((n) => n.id === creditNoteId);
+    if (!note) {
+      updateCredit(index, { credit_note_id: creditNoteId, label: '' });
+      return;
+    }
+    const pendingInOrderCurrency = Math.max(
+      0,
+      Math.round((itemsTotal - retentionsTotal - creditsTotal) * 100) / 100
+    );
+    const rate = effectiveRate(
+      { currency: note.currency, exchange_rate: note.exchange_rate },
+      { currency: orderCurrency, exchange_rate: orderExchangeRate }
+    );
+    // El tope se compara en la moneda de la NC, que es donde se guarda el importe.
+    const pendingInNoteCurrency = convertAmount({
+      amount: pendingInOrderCurrency,
+      from: orderCurrency,
+      to: note.currency,
+      rate,
+    });
+    const suggested = Math.min(availableFor(creditNoteId, index), pendingInNoteCurrency);
+    updateCredit(index, {
+      credit_note_id: creditNoteId,
+      label: note.full_number,
+      currency: note.currency,
+      exchange_rate: note.exchange_rate,
+      amount: suggested > 0 ? suggested.toFixed(2) : '',
+    });
+  };
 
   const addRetention = () =>
     setRetentions((prev) => [
@@ -753,7 +865,9 @@ export function NewPaymentOrderForm({
   const canLoadPendingBalance = selectedRemainingTotal > 0;
 
   const handleLoadPendingBalance = () => {
-    const total = Math.round(selectedRemainingTotal * 100) / 100;
+    // Lo que hay que transferir es el saldo de los comprobantes menos el crédito
+    // de las NC que ya se aplicó en la orden (TKT-586).
+    const total = Math.max(0, Math.round((selectedRemainingTotal - creditsTotal) * 100) / 100);
     if (total <= 0) return;
     const totalStr = total.toFixed(2);
     setPayments((prev) => {
@@ -778,16 +892,37 @@ export function NewPaymentOrderForm({
       toast.error('Agregá al menos un ítem');
       return;
     }
-    if (payments.length === 0) {
+    // Con el crédito de las NC cubriendo todo el neto no queda plata por
+    // transferir: la orden se guarda sin pagos (TKT-586).
+    if (payments.length === 0 && netToPay > 0.01) {
       toast.error('Agregá al menos un pago');
       return;
     }
     if (Math.abs(diff) >= 0.01) {
-      toast.error('El neto a pagar (ítems − retenciones) no coincide con el total de pagos');
+      toast.error(
+        'El neto a pagar (ítems − retenciones − créditos) no coincide con el total de pagos'
+      );
       return;
     }
     if (retentions.some((r) => !r.tax_type_id)) {
       toast.error('Hay una retención sin tipo seleccionado');
+      return;
+    }
+    if (credits.some((c) => !c.credit_note_id)) {
+      toast.error('Hay un crédito sin nota de crédito seleccionada');
+      return;
+    }
+    if (credits.some((c) => !(parseFloat(c.amount) > 0))) {
+      toast.error('Hay un crédito sin importe');
+      return;
+    }
+    const overapplied = credits.findIndex(
+      (c, i) => (parseFloat(c.amount) || 0) > availableFor(c.credit_note_id, i) + 0.001
+    );
+    if (overapplied >= 0) {
+      toast.error(
+        `La nota ${credits[overapplied].label} no tiene tanto crédito disponible`
+      );
       return;
     }
 
@@ -828,6 +963,12 @@ export function NewPaymentOrderForm({
           rate: parseFloat(r.rate) || 0,
           amount: parseFloat(r.amount) || 0,
           notes: r.notes.trim() || null,
+        })),
+        credits: credits.map((c) => ({
+          credit_note_id: c.credit_note_id,
+          amount: c.amount.trim(),
+          currency: c.currency as (typeof SUPPORTED_CURRENCIES)[number],
+          exchange_rate: c.exchange_rate,
         })),
       };
 
@@ -1230,6 +1371,118 @@ export function NewPaymentOrderForm({
         </CardContent>
       </Card>
 
+      {/* Créditos de notas de crédito (TKT-586). Van entre los comprobantes y los
+          pagos porque es el orden en que se lee el neto: se debe esto, se
+          descuenta este crédito, se transfiere la diferencia. */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Notas de crédito aplicadas ({credits.length})</CardTitle>
+            <CardDescription>
+              {supplierId
+                ? creditNotes.length > 0
+                  ? `Crédito aplicado: ${orderSymbol}${creditsTotal.toFixed(2)} ${orderCurrency}`
+                  : 'El proveedor no tiene notas de crédito con saldo disponible.'
+                : 'Seleccioná un proveedor para ver sus notas de crédito.'}
+            </CardDescription>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={addCredit}
+            disabled={!supplierId || creditNotes.length === 0}
+          >
+            <Plus className="size-4 mr-1" />
+            Aplicar nota de crédito
+          </Button>
+        </CardHeader>
+        {credits.length > 0 && (
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nota de crédito</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead className="text-right">Disponible</TableHead>
+                    <TableHead className="text-right">A aplicar</TableHead>
+                    <TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {credits.map((credit, idx) => {
+                    const note = creditNotes.find((n) => n.id === credit.credit_note_id);
+                    const available = availableFor(credit.credit_note_id, idx);
+                    const amount = parseFloat(credit.amount) || 0;
+                    const symbol = currencySymbol(credit.currency);
+                    return (
+                      <TableRow key={`credit-${idx}`}>
+                        <TableCell className="min-w-[240px]">
+                          <Select
+                            value={credit.credit_note_id}
+                            onValueChange={(value) => handleCreditNoteChange(idx, value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Elegí una nota de crédito" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {creditNotes.map((n) => (
+                                <SelectItem key={n.id} value={n.id}>
+                                  {n.full_number} · {formatDateUTC(n.issue_date)}
+                                  {n.original_invoice_full_number
+                                    ? ` · corrige ${n.original_invoice_full_number}`
+                                    : ''}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {note && note.currency !== orderCurrency && (
+                            <p className="text-[11px] text-muted-foreground mt-1">
+                              En {note.currency}, se convierte a {orderCurrency}.
+                            </p>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right font-mono">
+                          {note ? `${symbol}${note.total.toFixed(2)}` : '—'}
+                        </TableCell>
+                        <TableCell className="text-right font-mono">
+                          {note ? `${symbol}${available.toFixed(2)}` : '—'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={credit.amount}
+                            onChange={(e) => updateCredit(idx, { amount: e.target.value })}
+                            className="text-right font-mono"
+                          />
+                          {amount > available + 0.001 && (
+                            <p className="text-[11px] text-destructive mt-1">
+                              Supera el crédito disponible
+                            </p>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
+                            onClick={() => removeCredit(idx)}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        )}
+      </Card>
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -1578,6 +1831,15 @@ export function NewPaymentOrderForm({
                   <span className="font-mono font-semibold text-amber-600">
                     −{orderSymbol}
                     {retentionsTotal.toFixed(2)}
+                  </span>
+                </div>
+              )}
+              {creditsTotal > 0 && (
+                <div>
+                  <span className="text-muted-foreground">Notas de crédito:</span>{' '}
+                  <span className="font-mono font-semibold text-emerald-600">
+                    −{orderSymbol}
+                    {creditsTotal.toFixed(2)}
                   </span>
                 </div>
               )}

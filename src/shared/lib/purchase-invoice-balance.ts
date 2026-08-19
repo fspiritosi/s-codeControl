@@ -105,25 +105,18 @@ export function computeSupplierCreditBalance(input: {
 }
 
 /**
- * Reparte, sobre una misma factura original, cuánto de cada NC llegó a aplicarse.
+ * Crédito todavía disponible de una nota de crédito (TKT-586).
  *
- * Una NC puede exceder el saldo que le quedaba a la factura (o apuntar a una ya
- * pagada): ese excedente no descuenta nada y queda como crédito a favor. El
- * reparto es greedy en el orden recibido — se espera cronológico — para que la
- * NC más vieja consuma primero.
+ * Una NC vale su total menos lo que ya se imputó — a facturas o dentro de una
+ * OP. Nunca negativo: si los datos vinieran inconsistentes, es preferible no
+ * ofrecer crédito antes que un número que rompa los cálculos aguas abajo.
  */
-export function allocateCreditNotes(
-  applicableAmount: number,
-  creditNotes: { id: string; total: number }[]
-): Map<string, number> {
-  const applied = new Map<string, number>();
-  let available = Math.max(0, applicableAmount);
-  for (const nc of creditNotes) {
-    const used = Math.min(nc.total, available);
-    applied.set(nc.id, round2(used));
-    available = round2(available - used);
-  }
-  return applied;
+export function computeCreditNoteAvailable(input: {
+  total: number;
+  applied: number;
+}): number {
+  const available = round2(input.total - input.applied);
+  return available < BALANCE_EPS ? 0 : available;
 }
 
 export interface SupplierVoucherInput {
@@ -140,11 +133,33 @@ export interface SupplierVoucherInput {
 export interface SupplierVoucherRow extends Omit<SupplierVoucherInput, 'total'> {
   total: number;
   paid: number;
+  /** En una factura: crédito de NC recibido. En una NC: crédito ya imputado. */
   credit_applied: number;
+  /** Solo en facturas: saldo a favor (pago a cuenta) imputado. */
+  on_account_applied: number;
   /** Positivo = deuda. Negativo = crédito de NC todavía sin imputar. */
   remaining: number;
-  /** Solo en NC: número de la factura que corrige. */
+  /** Solo en NC: comprobantes a los que se imputó, o la factura de referencia. */
   applies_to: string | null;
+}
+
+/**
+ * Imputaciones ya resueltas en la base, que esta función solo consume (TKT-586).
+ *
+ * Antes el reparto NC → factura se calculaba acá, en memoria, a partir de
+ * `original_invoice_id`. Ahora vive en `credit_note_applications`: una NC puede
+ * ir a varias facturas o usarse dentro de una OP, y esa decisión es del usuario,
+ * no de un greedy implícito.
+ */
+export interface SupplierAccountCredit {
+  /** Crédito ya imputado por cada NC (cuánto consumió). */
+  appliedByNote?: Map<string, number>;
+  /** Crédito de NC recibido por cada factura. */
+  creditNotesByInvoice?: Map<string, number>;
+  /** Saldo a favor (pago a cuenta) imputado a cada factura. */
+  onAccountByInvoice?: Map<string, number>;
+  /** Comprobantes a los que se imputó cada NC, para mostrarlos en la fila. */
+  targetsByNote?: Map<string, string[]>;
 }
 
 export interface SupplierVoucherTotals {
@@ -160,74 +175,63 @@ export interface SupplierVoucherTotals {
  * Arma las filas de la cuenta corriente de un proveedor con el saldo real de
  * cada comprobante.
  *
- * Antes cada NC se listaba como una fila suelta con saldo negativo y la factura
- * que corregía mostraba su saldo bruto: el neto cerraba pero por comprobante
- * engañaba. Acá la NC se imputa contra su factura original y solo queda como
- * crédito a favor lo que exceda el saldo de esa factura.
+ * Cada NC se muestra por lo que todavía tiene a favor (su total menos lo
+ * imputado) y cada factura por lo que le queda debiendo una vez descontados
+ * pagos, NC y saldo a favor. Las imputaciones llegan resueltas en `credit`:
+ * desde TKT-586 son filas de `credit_note_applications`, no un reparto
+ * derivado de `original_invoice_id`.
  */
 export function buildSupplierAccountRows(
   vouchers: SupplierVoucherInput[],
-  paidByInvoice: Map<string, number>
+  paidByInvoice: Map<string, number>,
+  credit: SupplierAccountCredit = {}
 ): { rows: SupplierVoucherRow[]; totals: SupplierVoucherTotals } {
   const byId = new Map(vouchers.map((v) => [v.id, v]));
   const isActiveCreditNote = (v: SupplierVoucherInput) =>
     isCreditNoteVoucherType(v.voucher_type) &&
     (ACTIVE_CREDIT_NOTE_STATUSES as readonly string[]).includes(v.status);
 
-  // Agrupar las NC activas por la factura que corrigen, en orden cronológico:
-  // la más vieja consume primero el saldo disponible.
-  const creditNotesByOriginal = new Map<string, { id: string; total: number }[]>();
-  for (const v of [...vouchers].sort(
-    (a, b) => new Date(a.issue_date).getTime() - new Date(b.issue_date).getTime()
-  )) {
-    if (!isActiveCreditNote(v) || !v.original_invoice_id) continue;
-    const list = creditNotesByOriginal.get(v.original_invoice_id) ?? [];
-    list.push({ id: v.id, total: v.total });
-    creditNotesByOriginal.set(v.original_invoice_id, list);
-  }
-
-  // Repartir, factura por factura, cuánto de cada NC llegó a aplicarse.
-  const creditAppliedByNote = new Map<string, number>();
-  const creditAppliedByInvoice = new Map<string, number>();
-  for (const [originalId, notes] of creditNotesByOriginal) {
-    const original = byId.get(originalId);
-    // Si la factura corregida no existe o está anulada, la NC queda a favor.
-    if (!original || original.status === 'CANCELLED') continue;
-    const applicable = original.total - (paidByInvoice.get(originalId) ?? 0);
-    const allocation = allocateCreditNotes(applicable, notes);
-    let appliedTotal = 0;
-    for (const [noteId, amount] of allocation) {
-      creditAppliedByNote.set(noteId, amount);
-      appliedTotal += amount;
-    }
-    creditAppliedByInvoice.set(originalId, round2(appliedTotal));
-  }
-
   const rows: SupplierVoucherRow[] = vouchers.map((v) => {
     if (isCreditNoteVoucherType(v.voucher_type)) {
       // La NC no se paga: se aplica. Su "saldo" es el crédito todavía a favor,
       // en negativo, y es 0 cuando quedó íntegramente imputada.
-      const applied = creditAppliedByNote.get(v.id) ?? 0;
-      const unapplied = isActiveCreditNote(v) ? round2(v.total - applied) : 0;
+      const applied = credit.appliedByNote?.get(v.id) ?? 0;
+      const unapplied = isActiveCreditNote(v)
+        ? Math.max(0, round2(v.total - applied))
+        : 0;
+      const targets = credit.targetsByNote?.get(v.id) ?? [];
       return {
         ...v,
         paid: 0,
         credit_applied: applied,
+        on_account_applied: 0,
         // `|| 0` evita el -0, que se formatearía en pantalla como "-$0,00".
         remaining: -unapplied || 0,
-        applies_to: v.original_invoice_id
-          ? (byId.get(v.original_invoice_id)?.full_number ?? null)
-          : null,
+        // Sin imputaciones todavía, se muestra la factura de referencia del
+        // comprobante: es el dato que el usuario cargó al emitir la NC.
+        applies_to:
+          targets.length > 0
+            ? targets.join(', ')
+            : v.original_invoice_id
+              ? (byId.get(v.original_invoice_id)?.full_number ?? null)
+              : null,
       };
     }
 
     const paid = round2(paidByInvoice.get(v.id) ?? 0);
-    const credit = creditAppliedByInvoice.get(v.id) ?? 0;
+    const creditNotes = credit.creditNotesByInvoice?.get(v.id) ?? 0;
+    const onAccount = credit.onAccountByInvoice?.get(v.id) ?? 0;
     return {
       ...v,
       paid,
-      credit_applied: credit,
-      remaining: computePurchaseOutstanding({ total: v.total, paid, creditNotes: credit }),
+      credit_applied: creditNotes,
+      on_account_applied: onAccount,
+      remaining: computePurchaseOutstanding({
+        total: v.total,
+        paid,
+        creditNotes,
+        creditApplied: onAccount,
+      }),
       applies_to: null,
     };
   });
