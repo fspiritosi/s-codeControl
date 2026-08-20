@@ -5,6 +5,50 @@ import { Card, CardContent } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
+import { BASE_CURRENCY, currencySymbol } from '@/shared/lib/currency-conversion';
+
+const decimals = { minimumFractionDigits: 2, maximumFractionDigits: 2 } as const;
+
+/** Importe en pesos. Es la moneda de todos los totales de la cuenta corriente. */
+export function fmtMoney(n: number): string {
+  return `$${n.toLocaleString('es-AR', decimals)}`;
+}
+
+/** Importe en la moneda de su comprobante: `US$406,98`, `$37.992,02`. */
+export function fmtMoneyIn(n: number, currency: string | null | undefined): string {
+  const cur = currency ?? BASE_CURRENCY;
+  return `${currencySymbol(cur)}${n.toLocaleString('es-AR', decimals)}`;
+}
+
+/**
+ * Celda de importe de la cuenta corriente.
+ *
+ * Un comprobante en dólares se muestra por su importe real —lo que dice el
+ * papel— con el equivalente en pesos debajo, que es lo que suma a los totales.
+ * En pesos no hay conversión que mostrar y se imprime una sola línea.
+ */
+export function MoneyCell({
+  amount,
+  currency,
+  inBase,
+  className,
+}: {
+  amount: number;
+  currency: string | null | undefined;
+  /** Equivalente en pesos, ya convertido al TC del comprobante. */
+  inBase: number;
+  className?: string;
+}) {
+  if (!currency || currency === BASE_CURRENCY) {
+    return <span className={className}>{fmtMoney(amount)}</span>;
+  }
+  return (
+    <div className="flex flex-col items-end leading-tight">
+      <span className={className}>{fmtMoneyIn(amount, currency)}</span>
+      <span className="text-[11px] font-normal text-muted-foreground">≈ {fmtMoney(inBase)}</span>
+    </div>
+  );
+}
 
 export function StatBlock({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
   return (

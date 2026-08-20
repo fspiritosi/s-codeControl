@@ -23,7 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select';
-import { PaginatedTable, StatBlock, SummaryGrid } from './SectionShell';
+import { MoneyCell, PaginatedTable, StatBlock, SummaryGrid, fmtMoney, fmtMoneyIn } from './SectionShell';
+import { BASE_CURRENCY, convertAmount } from '@/shared/lib/currency-conversion';
 import {
   applySupplierCredit,
   reverseSupplierCreditApplication,
@@ -56,6 +57,8 @@ interface ApplicableInvoice {
   id: string;
   full_number: string;
   issue_date: Date | string;
+  /** Moneda de la factura: `outstanding` está en ella. */
+  currency: string;
   total: number;
   outstanding: number;
 }
@@ -71,6 +74,9 @@ interface CreditNote {
   id: string;
   full_number: string;
   issue_date: Date | string;
+  /** Moneda de la NC: `total`, `applied` y `available` están en ella. */
+  currency: string;
+  exchange_rate: number;
   total: number;
   applied: number;
   available: number;
@@ -84,6 +90,8 @@ interface CreditNoteApplication {
   target_type: 'INVOICE' | 'PAYMENT_ORDER';
   target_id: string;
   target_full_number: string;
+  currency: string;
+  exchange_rate: number;
   amount: number;
   applied_at: Date | string;
   reversed_at: Date | string | null;
@@ -99,14 +107,26 @@ interface UnifiedRow {
   /** Una imputación usada en una OP se libera anulando la orden, no desde acá. */
   lockedByPaymentOrder: boolean;
   amount: number;
+  /** Moneda del importe imputado (la de la NC; un pago a cuenta siempre es ARS). */
+  currency: string;
+  /** `amount` convertido a pesos, que es lo que suma a los totales. */
+  amount_in_base: number;
   applied_at: Date | string;
   reversed_at: Date | string | null;
 }
 
 const ON_ACCOUNT = 'ON_ACCOUNT';
 
-const fmt = (n: number) =>
-  `$${n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const fmt = fmtMoney;
+
+/** Importe de una NC llevado a pesos con su propio TC. */
+const toBase = (amount: number, note: { currency: string; exchange_rate: number }) =>
+  convertAmount({
+    amount,
+    from: note.currency ?? BASE_CURRENCY,
+    to: BASE_CURRENCY,
+    rate: note.exchange_rate ?? 1,
+  });
 
 export function CreditSection({
   supplierId,
@@ -134,20 +154,37 @@ export function CreditSection({
     () => creditNotes.filter((n) => n.available > 0),
     [creditNotes]
   );
+  // El crédito disponible se totaliza en pesos: una NC en dólares se convierte
+  // con su propio TC. Sumar los importes crudos daba una cifra sin sentido.
   const creditNotesAvailable = useMemo(
-    () => notesWithCredit.reduce((acc, n) => acc + n.available, 0),
+    () => notesWithCredit.reduce((acc, n) => acc + toBase(n.available, n), 0),
     [notesWithCredit]
+  );
+  const hasForeignCurrency = useMemo(
+    () =>
+      creditNotes.some((n) => n.currency && n.currency !== BASE_CURRENCY) ||
+      applicableInvoices.some((i) => i.currency && i.currency !== BASE_CURRENCY),
+    [creditNotes, applicableInvoices]
   );
   const totalAvailable = Math.round((balance.available + creditNotesAvailable) * 100) / 100;
 
   const selectedNote = notesWithCredit.find((n) => n.id === source);
   const sourceAvailable = selectedNote ? selectedNote.available : balance.available;
+  // El importe imputado se guarda en la moneda del origen; un pago a cuenta es
+  // siempre en pesos.
+  const sourceCurrency = selectedNote?.currency ?? BASE_CURRENCY;
   const selectedInvoice = applicableInvoices.find((i) => i.id === invoiceId);
+  // La imputación resta del saldo de la factura sin convertir, así que solo tiene
+  // sentido entre comprobantes de la misma moneda: un crédito en dólares no puede
+  // descontar pesos por su valor nominal.
+  const currencyMismatch =
+    !!selectedInvoice && (selectedInvoice.currency ?? BASE_CURRENCY) !== sourceCurrency;
   // No se puede imputar más que el crédito del origen elegido ni más que lo que
   // debe la factura: el tope es el menor de los dos.
-  const maxAmount = selectedInvoice
-    ? Math.min(sourceAvailable, selectedInvoice.outstanding)
-    : 0;
+  const maxAmount =
+    selectedInvoice && !currencyMismatch
+      ? Math.min(sourceAvailable, selectedInvoice.outstanding)
+      : 0;
 
   const rows: UnifiedRow[] = useMemo(() => {
     const fromOnAccount: UnifiedRow[] = balance.applications.map((a) => ({
@@ -157,6 +194,9 @@ export function CreditSection({
       targetLabel: a.invoice_full_number,
       lockedByPaymentOrder: false,
       amount: a.amount,
+      // Un pago a cuenta nace de una OP y se carga siempre en pesos.
+      currency: BASE_CURRENCY,
+      amount_in_base: a.amount,
       applied_at: a.applied_at,
       reversed_at: a.reversed_at,
     }));
@@ -167,6 +207,8 @@ export function CreditSection({
       targetLabel: a.target_full_number,
       lockedByPaymentOrder: a.target_type === 'PAYMENT_ORDER',
       amount: a.amount,
+      currency: a.currency ?? BASE_CURRENCY,
+      amount_in_base: toBase(a.amount, a),
       applied_at: a.applied_at,
       reversed_at: a.reversed_at,
     }));
@@ -176,7 +218,7 @@ export function CreditSection({
   }, [balance.applications, creditNoteApplications]);
 
   const totalApplied = Math.round(
-    (balance.creditApplied + creditNotes.reduce((acc, n) => acc + n.applied, 0)) * 100
+    (balance.creditApplied + creditNotes.reduce((acc, n) => acc + toBase(n.applied, n), 0)) * 100
   ) / 100;
 
   function openDialog() {
@@ -197,14 +239,26 @@ export function CreditSection({
     setInvoiceId(id);
     setError(null);
     const inv = applicableInvoices.find((i) => i.id === id);
-    if (inv) setAmount(Math.min(sourceAvailable, inv.outstanding).toFixed(2));
+    if (!inv) return;
+    if ((inv.currency ?? BASE_CURRENCY) !== sourceCurrency) {
+      setAmount('');
+      return;
+    }
+    setAmount(Math.min(sourceAvailable, inv.outstanding).toFixed(2));
   }
 
   function submit() {
     const parsed = Number(amount);
     if (!invoiceId) return setError('Seleccioná una factura');
+    if (currencyMismatch) {
+      return setError(
+        `El crédito está en ${sourceCurrency} y la factura en ${selectedInvoice?.currency}. Solo se puede imputar entre comprobantes de la misma moneda.`
+      );
+    }
     if (!Number.isFinite(parsed) || parsed <= 0) return setError('El monto debe ser mayor a 0');
-    if (parsed > maxAmount + 0.001) return setError(`El máximo imputable es ${fmt(maxAmount)}`);
+    if (parsed > maxAmount + 0.001) {
+      return setError(`El máximo imputable es ${fmtMoneyIn(maxAmount, sourceCurrency)}`);
+    }
 
     setError(null);
     startTransition(async () => {
@@ -249,7 +303,11 @@ export function CreditSection({
         <StatBlock
           label="Crédito disponible"
           value={fmt(totalAvailable)}
-          hint="Para imputar a facturas"
+          hint={
+            hasForeignCurrency
+              ? 'Para imputar · en pesos, al TC de cada comprobante'
+              : 'Para imputar a facturas'
+          }
         />
         <StatBlock
           label="Pagos a cuenta"
@@ -310,7 +368,14 @@ export function CreditSection({
           },
           {
             header: 'Monto',
-            cell: (r: UnifiedRow) => <span className="font-medium">{fmt(r.amount)}</span>,
+            cell: (r: UnifiedRow) => (
+              <MoneyCell
+                amount={r.amount}
+                currency={r.currency}
+                inBase={r.amount_in_base}
+                className="font-medium"
+              />
+            ),
             className: 'text-right',
           },
           {
@@ -362,7 +427,8 @@ export function CreditSection({
                   )}
                   {notesWithCredit.map((n) => (
                     <SelectItem key={n.id} value={n.id}>
-                      {n.full_number} — {fmt(n.available)}
+                      {n.full_number} — {fmtMoneyIn(n.available, n.currency)}
+                      {n.currency !== BASE_CURRENCY && ` (≈ ${fmt(toBase(n.available, n))})`}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -383,8 +449,14 @@ export function CreditSection({
                 </SelectTrigger>
                 <SelectContent>
                   {applicableInvoices.map((inv) => (
-                    <SelectItem key={inv.id} value={inv.id}>
-                      {inv.full_number} — debe {fmt(inv.outstanding)}
+                    <SelectItem
+                      key={inv.id}
+                      value={inv.id}
+                      disabled={(inv.currency ?? BASE_CURRENCY) !== sourceCurrency}
+                    >
+                      {inv.full_number} — debe {fmtMoneyIn(inv.outstanding, inv.currency)}
+                      {(inv.currency ?? BASE_CURRENCY) !== sourceCurrency &&
+                        ` · otra moneda`}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -404,10 +476,16 @@ export function CreditSection({
                 }}
                 disabled={!invoiceId}
               />
-              {selectedInvoice && (
+              {selectedInvoice && !currencyMismatch && (
                 <p className="text-xs text-muted-foreground">
-                  Máximo imputable: {fmt(maxAmount)}. Si sobra crédito, queda disponible para
-                  otra factura o para una orden de pago.
+                  Máximo imputable: {fmtMoneyIn(maxAmount, sourceCurrency)}. Si sobra crédito,
+                  queda disponible para otra factura o para una orden de pago.
+                </p>
+              )}
+              {currencyMismatch && (
+                <p className="text-xs text-destructive">
+                  El crédito está en {sourceCurrency} y la factura en {selectedInvoice?.currency}:
+                  solo se puede imputar entre comprobantes de la misma moneda.
                 </p>
               )}
             </div>
@@ -419,7 +497,7 @@ export function CreditSection({
             <Button variant="outline" onClick={() => setOpen(false)} disabled={isPending}>
               Cancelar
             </Button>
-            <Button onClick={submit} disabled={isPending || !invoiceId}>
+            <Button onClick={submit} disabled={isPending || !invoiceId || currencyMismatch}>
               {isPending ? 'Aplicando...' : 'Aplicar'}
             </Button>
           </DialogFooter>

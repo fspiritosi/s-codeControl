@@ -441,4 +441,68 @@ describe('buildSupplierAccountRows', () => {
     expect(totals.pendingCount).toBe(3);
     expect(totals.unappliedCredit).toBe(0);
   });
+
+  describe('comprobantes en moneda extranjera', () => {
+    it('convierte a pesos los totales de una cuenta con facturas en USD y en ARS', () => {
+      const { rows, totals } = buildSupplierAccountRows(
+        [
+          v({ id: 'f1', full_number: 'F-ARS', total: 100_000 }),
+          v({ id: 'f2', full_number: 'F-USD', total: 500, currency: 'USD', exchange_rate: 1500 }),
+        ],
+        new Map()
+      );
+
+      // Cada fila conserva el importe de su comprobante...
+      expect(byNumber(rows, 'F-USD').total).toBe(500);
+      expect(byNumber(rows, 'F-USD').remaining).toBe(500);
+      // ...y expone el equivalente en pesos al TC de la factura.
+      expect(byNumber(rows, 'F-USD').total_in_base).toBe(750_000);
+      expect(byNumber(rows, 'F-USD').remaining_in_base).toBe(750_000);
+      // Una factura en pesos no se toca.
+      expect(byNumber(rows, 'F-ARS').total_in_base).toBe(100_000);
+
+      // El total es la suma de los equivalentes, no de los importes crudos
+      // (que habría dado 100.500).
+      expect(totals.totalAmount).toBe(850_000);
+      expect(totals.totalDebt).toBe(850_000);
+      expect(totals.hasForeignCurrency).toBe(true);
+    });
+
+    it('convierte el crédito sin imputar de una NC en dólares', () => {
+      const { rows, totals } = buildSupplierAccountRows(
+        [
+          v({ id: 'f1', full_number: 'F-USD', total: 500, currency: 'USD', exchange_rate: 1000 }),
+          v({
+            id: 'nc1',
+            full_number: 'NC-USD',
+            voucher_type: 'NOTA_CREDITO_A',
+            total: 200,
+            currency: 'USD',
+            exchange_rate: 1000,
+            original_invoice_id: 'f1',
+          }),
+        ],
+        new Map()
+      );
+
+      // La NC no está imputada: su crédito queda a favor, en dólares...
+      expect(byNumber(rows, 'NC-USD').remaining).toBe(-200);
+      // ...y en pesos para el total.
+      expect(byNumber(rows, 'NC-USD').remaining_in_base).toBe(-200_000);
+      expect(totals.unappliedCredit).toBe(200_000);
+      // Deuda neta: 500 USD de factura menos 200 USD de crédito, en pesos.
+      expect(totals.totalDebt).toBe(300_000);
+    });
+
+    it('sin moneda declarada trata el comprobante como pesos', () => {
+      const { rows, totals } = buildSupplierAccountRows(
+        [v({ id: 'f1', full_number: 'F-VIEJA', total: 1000 })],
+        new Map()
+      );
+
+      expect(byNumber(rows, 'F-VIEJA').currency).toBe('ARS');
+      expect(byNumber(rows, 'F-VIEJA').total_in_base).toBe(1000);
+      expect(totals.hasForeignCurrency).toBe(false);
+    });
+  });
 });

@@ -37,6 +37,8 @@ export interface ApplicableInvoiceRow {
   id: string;
   full_number: string;
   issue_date: Date | string;
+  /** Moneda de la factura: `total` y `outstanding` están en ella. */
+  currency: string;
   total: number;
   outstanding: number;
 }
@@ -147,6 +149,7 @@ export async function getInvoicesForCreditApplication(
       full_number: true,
       voucher_type: true,
       issue_date: true,
+      currency: true,
       total: true,
       payment_order_items: {
         where: { payment_order: { status: 'PAID' } },
@@ -171,6 +174,7 @@ export async function getInvoicesForCreditApplication(
         id: inv.id,
         full_number: inv.full_number,
         issue_date: inv.issue_date,
+        currency: inv.currency ?? 'ARS',
         total,
         outstanding: computePurchaseOutstanding({
           total,

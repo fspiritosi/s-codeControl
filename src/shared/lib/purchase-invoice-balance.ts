@@ -7,6 +7,8 @@
  * Lo que consulta la base está en `purchase-invoice-status.ts`.
  */
 
+import { BASE_CURRENCY, convertAmount } from '@/shared/lib/currency-conversion';
+
 /** Tolerancia de centavos al comparar montos. */
 export const BALANCE_EPS = 0.01;
 
@@ -128,10 +130,21 @@ export interface SupplierVoucherInput {
   total: number;
   status: string;
   original_invoice_id: string | null;
+  /** Moneda del comprobante. Ausente = ARS. */
+  currency?: string;
+  /** Tipo de cambio con el que se emitió. Solo se usa si la moneda no es la base. */
+  exchange_rate?: number;
 }
 
-export interface SupplierVoucherRow extends Omit<SupplierVoucherInput, 'total'> {
+export interface SupplierVoucherRow extends Omit<SupplierVoucherInput, 'total' | 'currency' | 'exchange_rate'> {
   total: number;
+  /** Moneda del comprobante, ya normalizada. Los importes de la fila están en ella. */
+  currency: string;
+  exchange_rate: number;
+  /** `total` convertido a pesos con el TC del comprobante. */
+  total_in_base: number;
+  /** `remaining` convertido a pesos. Es el que suma al total adeudado. */
+  remaining_in_base: number;
   paid: number;
   /** En una factura: crédito de NC recibido. En una NC: crédito ya imputado. */
   credit_applied: number;
@@ -163,12 +176,17 @@ export interface SupplierAccountCredit {
 }
 
 export interface SupplierVoucherTotals {
+  /** Todos los totales están en pesos: los comprobantes en moneda extranjera se
+   *  convierten con el TC de cada comprobante. Sumar los importes crudos
+   *  mezclaría dólares con pesos. */
   totalDebt: number;
   totalAmount: number;
   pendingCount: number;
   unappliedCredit: number;
   countByStatus: Record<string, number>;
   total: number;
+  /** Hay al menos un comprobante en moneda extranjera: la UI lo aclara. */
+  hasForeignCurrency: boolean;
 }
 
 /**
@@ -180,6 +198,11 @@ export interface SupplierVoucherTotals {
  * pagos, NC y saldo a favor. Las imputaciones llegan resueltas en `credit`:
  * desde TKT-586 son filas de `credit_note_applications`, no un reparto
  * derivado de `original_invoice_id`.
+ *
+ * Cada fila conserva los importes en la moneda de su comprobante —es lo que dice
+ * el papel— y agrega el equivalente en pesos. Los totales suman siempre esos
+ * equivalentes: un proveedor con facturas en dólares y en pesos daba un "Total
+ * adeudado" sin sentido, porque se sumaban los importes crudos.
  */
 export function buildSupplierAccountRows(
   vouchers: SupplierVoucherInput[],
@@ -187,11 +210,18 @@ export function buildSupplierAccountRows(
   credit: SupplierAccountCredit = {}
 ): { rows: SupplierVoucherRow[]; totals: SupplierVoucherTotals } {
   const byId = new Map(vouchers.map((v) => [v.id, v]));
+  const toBase = (amount: number, currency: string, rate: number) =>
+    convertAmount({ amount, from: currency, to: BASE_CURRENCY, rate });
   const isActiveCreditNote = (v: SupplierVoucherInput) =>
     isCreditNoteVoucherType(v.voucher_type) &&
     (ACTIVE_CREDIT_NOTE_STATUSES as readonly string[]).includes(v.status);
 
-  const rows: SupplierVoucherRow[] = vouchers.map((v) => {
+  const rows: SupplierVoucherRow[] = vouchers.map((voucher) => {
+    // Un comprobante sin moneda es anterior a tsk-576: era pesos por definición.
+    const currency = voucher.currency ?? BASE_CURRENCY;
+    const exchange_rate = voucher.exchange_rate ?? 1;
+    const v = { ...voucher, currency, exchange_rate };
+
     if (isCreditNoteVoucherType(v.voucher_type)) {
       // La NC no se paga: se aplica. Su "saldo" es el crédito todavía a favor,
       // en negativo, y es 0 cuando quedó íntegramente imputada.
@@ -200,13 +230,16 @@ export function buildSupplierAccountRows(
         ? Math.max(0, round2(v.total - applied))
         : 0;
       const targets = credit.targetsByNote?.get(v.id) ?? [];
+      const remaining = -unapplied || 0;
       return {
         ...v,
+        total_in_base: toBase(v.total, currency, exchange_rate),
+        remaining_in_base: toBase(remaining, currency, exchange_rate),
         paid: 0,
         credit_applied: applied,
         on_account_applied: 0,
         // `|| 0` evita el -0, que se formatearía en pantalla como "-$0,00".
-        remaining: -unapplied || 0,
+        remaining,
         // Sin imputaciones todavía, se muestra la factura de referencia del
         // comprobante: es el dato que el usuario cargó al emitir la NC.
         applies_to:
@@ -221,17 +254,20 @@ export function buildSupplierAccountRows(
     const paid = round2(paidByInvoice.get(v.id) ?? 0);
     const creditNotes = credit.creditNotesByInvoice?.get(v.id) ?? 0;
     const onAccount = credit.onAccountByInvoice?.get(v.id) ?? 0;
+    const remaining = computePurchaseOutstanding({
+      total: v.total,
+      paid,
+      creditNotes,
+      creditApplied: onAccount,
+    });
     return {
       ...v,
+      total_in_base: toBase(v.total, currency, exchange_rate),
+      remaining_in_base: toBase(remaining, currency, exchange_rate),
       paid,
       credit_applied: creditNotes,
       on_account_applied: onAccount,
-      remaining: computePurchaseOutstanding({
-        total: v.total,
-        paid,
-        creditNotes,
-        creditApplied: onAccount,
-      }),
+      remaining,
       applies_to: null,
     };
   });
@@ -241,20 +277,24 @@ export function buildSupplierAccountRows(
   let totalDebt = 0;
   let pendingCount = 0;
   let unappliedCredit = 0;
+  let hasForeignCurrency = false;
   for (const r of rows) {
     countByStatus[r.status] = (countByStatus[r.status] ?? 0) + 1;
+    if (r.currency !== BASE_CURRENCY) hasForeignCurrency = true;
     // Un borrador no es un comprobante emitido y uno anulado dejó de existir:
     // ninguno de los dos suma a la cuenta corriente.
     if (r.status === 'CANCELLED' || r.status === 'DRAFT') continue;
+    // Los acumuladores van en pesos: `*_in_base` ya trae cada importe convertido
+    // con el TC de su comprobante.
     if (isCreditNoteVoucherType(r.voucher_type)) {
-      unappliedCredit += -r.remaining;
+      unappliedCredit += -r.remaining_in_base;
     } else {
       // "Monto facturado" = solo facturas/ND (las NC no son facturación).
-      totalAmount += r.total;
+      totalAmount += r.total_in_base;
       if (r.remaining > 0) pendingCount += 1;
     }
     // Total adeudado neto: el crédito de NC sin aplicar resta (remaining negativo).
-    totalDebt += r.remaining;
+    totalDebt += r.remaining_in_base;
   }
 
   return {
@@ -266,6 +306,7 @@ export function buildSupplierAccountRows(
       unappliedCredit: round2(unappliedCredit),
       countByStatus,
       total: rows.length,
+      hasForeignCurrency,
     },
   };
 }
