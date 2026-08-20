@@ -893,8 +893,12 @@ export function NewPaymentOrderForm({
       return;
     }
     // Con el crédito de las NC cubriendo todo el neto no queda plata por
-    // transferir: la orden se guarda sin pagos (TKT-586).
-    if (payments.length === 0 && netToPay > 0.01) {
+    // transferir: la orden se guarda sin pagos (TKT-586). El formulario arranca
+    // con una línea de pago en blanco, y esa línea vacía no es un pago: si viaja
+    // al server, su importe vacío hace fallar la validación y la orden con neto
+    // 0 no se puede crear.
+    const effectivePayments = payments.filter((p) => (parseFloat(p.amount) || 0) > 0);
+    if (effectivePayments.length === 0 && netToPay > 0.01) {
       toast.error('Agregá al menos un pago');
       return;
     }
@@ -945,7 +949,7 @@ export function NewPaymentOrderForm({
           discount_pct: parseFloat(i.discount_pct) || 0,
           is_on_account: i.is_on_account,
         })),
-        payments: payments.map((p) => ({
+        payments: effectivePayments.map((p) => ({
           payment_method: p.payment_method,
           amount: p.amount.trim(),
           cash_register_id: p.cash_register_id,
@@ -1505,11 +1509,20 @@ export function NewPaymentOrderForm({
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
+          {items.length > 0 && netToPay <= 0.01 && (
+            <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+              El crédito aplicado cubre el total de los comprobantes: no queda nada por
+              transferir y la orden se guarda sin pagos. Si quedó una línea de pago en
+              blanco, podés eliminarla.
+            </p>
+          )}
           {payments.map((p, idx) => (
             <div key={idx} className="rounded-md border p-3 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Pago #{idx + 1}</span>
-                {payments.length > 1 && (
+                {/* La última línea también se puede quitar: si el crédito cubre
+                    el neto, la orden va sin pagos (TKT-586). */}
+                {(payments.length > 1 || netToPay <= 0.01) && (
                   <Button
                     variant="ghost"
                     size="icon"
