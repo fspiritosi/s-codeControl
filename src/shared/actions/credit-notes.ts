@@ -41,6 +41,10 @@ export interface CreditNoteApplicationRow {
   target_type: 'INVOICE' | 'PAYMENT_ORDER';
   target_id: string;
   target_full_number: string;
+  /** Moneda de la NC: `amount` está en ella, no en pesos. */
+  currency: string;
+  /** TC de la NC, para mostrar el equivalente en pesos. */
+  exchange_rate: number;
   amount: number;
   applied_at: Date | string;
   reversed_at: Date | string | null;
@@ -83,7 +87,7 @@ export async function getCreditNoteApplications(
       applied_at: true,
       reversed_at: true,
       notes: true,
-      credit_note: { select: { full_number: true } },
+      credit_note: { select: { full_number: true, currency: true, exchange_rate: true } },
       invoice: { select: { full_number: true } },
       payment_order: { select: { full_number: true } },
     },
@@ -97,6 +101,8 @@ export async function getCreditNoteApplications(
     target_type: a.invoice_id ? ('INVOICE' as const) : ('PAYMENT_ORDER' as const),
     target_id: a.invoice_id ?? a.payment_order_id ?? '',
     target_full_number: a.invoice?.full_number ?? a.payment_order?.full_number ?? '',
+    currency: a.credit_note?.currency ?? 'ARS',
+    exchange_rate: Number(a.credit_note?.exchange_rate ?? 1),
     amount: Number(a.amount),
     applied_at: a.applied_at,
     reversed_at: a.reversed_at,

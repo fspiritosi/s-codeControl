@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { Badge } from '@/shared/components/ui/badge';
 import { PAYMENT_ORDER_STATUS_LABELS } from '@/modules/treasury/shared/validators';
-import { PaginatedTable, StatBlock, StatusFilterToolbar, SummaryGrid } from './SectionShell';
+import { PaginatedTable, StatBlock, StatusFilterToolbar, SummaryGrid, MoneyCell, fmtMoney, fmtMoneyIn } from './SectionShell';
 
 interface Row {
   id: string;
@@ -13,6 +13,10 @@ interface Row {
   date: Date | string;
   scheduled_payment_date: Date | string | null;
   total_amount: number;
+  /** Moneda de la orden: los importes de la fila están en ella. */
+  currency: string;
+  /** `total_amount` convertido a pesos con el TC de la orden. */
+  total_in_base: number;
   applied_to_invoices: number;
   applied_to_expenses: number;
   on_account: number;
@@ -29,10 +33,10 @@ interface Summary {
   paidUnallocated: number;
   countByStatus: Record<string, number>;
   total: number;
+  hasForeignCurrency: boolean;
 }
 
-const fmt = (n: number) =>
-  `$${n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const fmt = fmtMoney;
 
 function statusVariant(s: string) {
   if (s === 'PAID') return 'success';
@@ -60,7 +64,11 @@ export function PaymentOrdersSection({ rows, summary }: { rows: Row[]; summary: 
   return (
     <div className="space-y-4 pt-2">
       <SummaryGrid>
-        <StatBlock label="Total pagado" value={fmt(summary?.totalPaid ?? 0)} />
+        <StatBlock
+          label="Total pagado"
+          value={fmt(summary?.totalPaid ?? 0)}
+          hint={summary?.hasForeignCurrency ? 'En pesos, al TC de cada orden' : undefined}
+        />
         <StatBlock
           label="Aplicado a facturas"
           value={fmt(summary?.paidToInvoices ?? 0)}
@@ -116,23 +124,30 @@ export function PaymentOrdersSection({ rows, summary }: { rows: Row[]; summary: 
           },
           {
             header: 'Total',
-            cell: (r) => <span className="font-medium">{fmt(r.total_amount)}</span>,
+            cell: (r) => (
+              <MoneyCell
+                amount={r.total_amount}
+                currency={r.currency}
+                inBase={r.total_in_base}
+                className="font-medium"
+              />
+            ),
             className: 'text-right',
           },
           {
             header: 'Imputación',
             cell: (r) => (
               <div className="flex flex-col text-xs text-muted-foreground">
-                {r.applied_to_invoices > 0 && <span>Facturas {fmt(r.applied_to_invoices)}</span>}
-                {r.applied_to_expenses > 0 && <span>Gastos {fmt(r.applied_to_expenses)}</span>}
+                {r.applied_to_invoices > 0 && <span>Facturas {fmtMoneyIn(r.applied_to_invoices, r.currency)}</span>}
+                {r.applied_to_expenses > 0 && <span>Gastos {fmtMoneyIn(r.applied_to_expenses, r.currency)}</span>}
                 {r.on_account > 0 && (
                   <span className="text-sky-600 dark:text-sky-400">
-                    A cuenta {fmt(r.on_account)}
+                    A cuenta {fmtMoneyIn(r.on_account, r.currency)}
                   </span>
                 )}
                 {r.unallocated !== 0 && (
                   <span className="text-amber-600 dark:text-amber-400">
-                    Sin imputar {fmt(r.unallocated)}
+                    Sin imputar {fmtMoneyIn(r.unallocated, r.currency)}
                   </span>
                 )}
                 {r.applied_to_invoices === 0 &&
