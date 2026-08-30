@@ -41,18 +41,3 @@ export type VehiculoConCosto = VehiculoResumen & {
   /** Ítems (accesorios + mantenimiento) que aporta el tipo de equipo. */
   items_count: number;
 };
-
-/**
- * Detalle de un equipo: costo + cálculos derivados. Los accesorios y el
- * mantenimiento se heredan del tipo de equipo, no se cargan por unidad.
- */
-export type CostoEquipoDetalle = {
-  vehiculo: VehiculoResumen;
-  costo: CostoEquipoClient;
-  tipo: { id: string; nombre: string };
-  items_tipo_count: number;
-  accesorios_total: number;
-  amortizacion_mensual: number;
-  mantenimiento_mensual: number;
-  costo_mensual: number;
-};

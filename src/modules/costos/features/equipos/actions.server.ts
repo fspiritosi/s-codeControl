@@ -11,7 +11,6 @@ import type {
   VehiculoConCosto,
   VehiculoResumen,
   CostoEquipoClient,
-  CostoEquipoDetalle,
   CostoEquipoInput,
 } from '@/modules/costos/shared/types/equipo.types';
 
@@ -133,55 +132,10 @@ export async function listVehiculosConCosto(): Promise<VehiculoConCosto[]> {
   });
 }
 
-export async function getCostoEquipo(vehicleId: string): Promise<CostoEquipoDetalle | null> {
-  const { companyId } = await getRequiredActionContext();
-  await assertModuloHabilitado(companyId);
-
-  const v = await prisma.vehicles.findFirst({
-    where: { id: vehicleId, company_id: companyId },
-    include: {
-      brand_rel: { select: { name: true } },
-      model_rel: { select: { name: true } },
-      type_rel: { select: { id: true, name: true } },
-      costo_equipo: true,
-    },
-  });
-  if (!v || !v.costo_equipo) return null;
-
-  const ce = v.costo_equipo;
-  const { marca, modelo } = nombreVehiculo(v);
-
-  const items_tipo = await itemsDelTipo(companyId, v.type);
-
-  const { accesorios_total, amortizacion_mensual, mantenimiento_mensual, costo_mensual } =
-    calcularCostoMensualEquipo({
-      valor_compra: ce.valor_compra.toString(),
-      valor_residual_pct: ce.valor_residual_pct.toString(),
-      anios_amortizacion: ce.anios_amortizacion,
-      items_tipo,
-      afectacion_pct: 1,
-    });
-
-  return {
-    vehiculo: { id: v.id, interno: v.intern_number, dominio: v.domain, marca, modelo, anio: v.year },
-    costo: {
-      ...ce,
-      valor_compra: toClientNumber(ce.valor_compra),
-      valor_residual_pct: toClientNumber(ce.valor_residual_pct),
-    },
-    tipo: { id: v.type, nombre: v.type_rel.name },
-    items_tipo_count: items_tipo.length,
-    accesorios_total: accesorios_total.toDecimalPlaces(2).toNumber(),
-    amortizacion_mensual: amortizacion_mensual.toDecimalPlaces(2).toNumber(),
-    mantenimiento_mensual: mantenimiento_mensual.toDecimalPlaces(2).toNumber(),
-    costo_mensual: costo_mensual.toDecimalPlaces(2).toNumber(),
-  };
-}
-
 /**
- * Detalle para la página de edición. A diferencia de `getCostoEquipo`, retorna el
- * vehículo aunque todavía no tenga costo cargado (costo/resumen en null).
- * Retorna null solo si el vehículo no existe o no pertenece a la empresa.
+ * Detalle para la página de edición: retorna el vehículo aunque todavía no tenga costo
+ * cargado (costo/resumen en null). Retorna null solo si el vehículo no existe o no
+ * pertenece a la empresa.
  *
  * `accesorios_total` y `mantenimiento_mensual` son del tipo de equipo, no de la
  * unidad: valen aunque el equipo todavía no tenga costo cargado, por eso viven al

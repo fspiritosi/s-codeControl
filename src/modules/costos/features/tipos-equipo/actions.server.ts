@@ -334,7 +334,9 @@ export async function bulkAddItemsCostoTipo(
 
 /**
  * Refresca el precio de los ítems vinculados a almacén desde products.cost_price.
- * No toca nombre ni cantidad. Devuelve cuántos cambiaron y el delta anual total.
+ * No toca nombre ni cantidad. Devuelve cuántos cambiaron y el delta total en el valor
+ * de los ítems. Ojo: ese delta no es anual, porque mezcla accesorios (base amortizable)
+ * con mantenimiento (anual); quien lo muestre no debe rotularlo con una unidad.
  */
 export async function refrescarPreciosDesdeAlmacen(
   perfilId: string

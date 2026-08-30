@@ -4,6 +4,7 @@ import { getCostoTipoEquipo } from '@/modules/costos/features/tipos-equipo/actio
 import { TablaItemsCostoTipo } from '@/modules/costos/features/tipos-equipo/components/TablaItemsCostoTipo';
 import { BotonRefrescarPrecios } from '@/modules/costos/features/tipos-equipo/components/BotonRefrescarPrecios';
 import { getProductsByCompany } from '@/modules/products/features/list/actions.server';
+import { getRequiredActionContext } from '@/shared/lib/server-action-context';
 import BackButton from '@/shared/components/common/BackButton';
 
 interface Props {
@@ -11,18 +12,25 @@ interface Props {
 }
 
 async function DetalleContent({ typeId }: { typeId: string }) {
-  const [detalle, productosRaw] = await Promise.all([
+  const [detalle, productosRaw, { companyId }] = await Promise.all([
     getCostoTipoEquipo(typeId),
     getProductsByCompany(),
+    getRequiredActionContext(),
   ]);
   if (!detalle) return notFound();
 
-  const productos = productosRaw.map((p) => ({
-    id: p.id,
-    code: p.code,
-    name: p.name,
-    cost_price: Number(p.cost_price),
-  }));
+  // getProductsByCompany trae los productos de todas las empresas visibles del grupo,
+  // pero las actions de ítems validan el product_id contra la empresa activa (la de la
+  // cookie actualComp). Sin este filtro el combo ofrecería productos de empresas
+  // hermanas que después el guardado rechaza con "Producto no encontrado o sin acceso".
+  const productos = productosRaw
+    .filter((p) => p.company_id === companyId)
+    .map((p) => ({
+      id: p.id,
+      code: p.code,
+      name: p.name,
+      cost_price: Number(p.cost_price),
+    }));
 
   const todos = [...detalle.accesorios, ...detalle.mantenimiento];
   const vinculados = todos.filter((i) => i.product_id).length;
@@ -48,6 +56,7 @@ async function DetalleContent({ typeId }: { typeId: string }) {
         typeId={detalle.type_id}
         perfilId={detalle.perfil_id}
         items={detalle.accesorios}
+        total={detalle.total_accesorios}
         productos={productos}
       />
 
@@ -56,6 +65,7 @@ async function DetalleContent({ typeId }: { typeId: string }) {
         typeId={detalle.type_id}
         perfilId={detalle.perfil_id}
         items={detalle.mantenimiento}
+        total={detalle.mantenimiento_anual}
         productos={productos}
       />
     </div>

@@ -30,6 +30,13 @@ interface Props {
   typeId: string;
   perfilId: string | null;
   items: ItemCostoTipoClient[];
+  /**
+   * Total exacto de la clase, calculado en el servidor en Decimal sobre los valores
+   * crudos. No se recalcula acá sumando los `subtotal`: esos ya vienen redondeados a 2
+   * decimales por ítem y sumarlos en float arrastraría ese error, mostrando un total
+   * distinto al del listado de tipos para el mismo tipo de equipo.
+   */
+  total: number;
   productos: ProductoOption[];
 }
 
@@ -52,7 +59,7 @@ const COPY = {
 
 const EMPTY = { nombre: '', product_id: '', cantidad: '1', precio_unitario: '' };
 
-export function TablaItemsCostoTipo({ clase, typeId, perfilId, items, productos }: Props) {
+export function TablaItemsCostoTipo({ clase, typeId, perfilId, items, total, productos }: Props) {
   const router = useRouter();
   const copy = COPY[clase];
   const [openNuevo, setOpenNuevo] = useState(false);
@@ -60,7 +67,6 @@ export function TablaItemsCostoTipo({ clase, typeId, perfilId, items, productos 
   const [form, setForm] = useState(EMPTY);
   const [loading, setLoading] = useState(false);
 
-  const total = items.reduce((acc, i) => acc + i.subtotal, 0);
   const opciones = productos.map((p) => ({ value: p.id, label: `${p.code} · ${p.name}` }));
 
   function reset() { setForm(EMPTY); }

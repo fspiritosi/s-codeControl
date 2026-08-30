@@ -27,8 +27,11 @@ export function BotonRefrescarPrecios({ perfilId, vinculados }: Props) {
         toast.info('Los precios ya estaban actualizados');
       } else {
         const signo = delta_total > 0 ? '+' : '';
+        // `delta_total` mezcla accesorios (van a la base amortizable y se prorratean por
+        // años) con mantenimiento (que sí es anual), así que el rótulo no puede afirmar
+        // una unidad: se informa el cambio en el valor de los ítems, sin llamarlo anual.
         toast.success(
-          `${actualizados} ${actualizados === 1 ? 'precio actualizado' : 'precios actualizados'} · ${signo}${formatCurrencyARS(delta_total)} anual`
+          `${actualizados} ${actualizados === 1 ? 'precio actualizado' : 'precios actualizados'} · ${signo}${formatCurrencyARS(delta_total)} en los ítems del tipo`
         );
         router.refresh();
       }
