@@ -76,6 +76,20 @@ async function assertPerfilPertenece(perfilId: string, companyId: string) {
   if (!perfil) throw new Error('Perfil de costo no encontrado o sin acceso');
 }
 
+/**
+ * Verifica que un product_id exista y pertenezca a la empresa antes de vincularlo a
+ * un ítem. Sin este chequeo, un ítem podría quedar vinculado a un producto de otra
+ * empresa: getCostoTipoEquipo hace include del producto sin filtrar por empresa, así
+ * que eso filtraría code/name de un producto ajeno hacia la UI.
+ */
+async function assertProductoPertenece(productId: string, companyId: string) {
+  const producto = await prisma.products.findFirst({
+    where: { id: productId, company_id: companyId },
+    select: { id: true },
+  });
+  if (!producto) throw new Error('Producto no encontrado o sin acceso');
+}
+
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
 export async function listTiposEquipoConCosto(): Promise<TipoEquipoResumen[]> {
@@ -208,6 +222,9 @@ export async function addItemCostoTipo(perfilId: string, input: ItemCostoTipoInp
   await assertModuloHabilitado(companyId);
   await assertPerfilPertenece(perfilId, companyId);
   const parsed = schemaItem.parse(input);
+  if (parsed.product_id) {
+    await assertProductoPertenece(parsed.product_id, companyId);
+  }
 
   const item = await prisma.item_costo_tipo.create({
     data: {
@@ -233,6 +250,9 @@ export async function updateItemCostoTipo(id: string, input: Partial<ItemCostoTi
   await assertPerfilPertenece(existing.costo_tipo_equipo_id, companyId);
 
   const parsed = schemaItem.partial().parse(input);
+  if (parsed.product_id) {
+    await assertProductoPertenece(parsed.product_id, companyId);
+  }
   await prisma.item_costo_tipo.update({ where: { id }, data: parsed });
   revalidatePath(TIPOS_PATH);
 }
@@ -262,6 +282,21 @@ export async function bulkAddItemsCostoTipo(
   await assertPerfilPertenece(perfilId, companyId);
 
   const parsed = z.array(schemaItem).min(1).parse(items);
+
+  // Un producto ajeno vinculado en el lote no debe poder escribirse: una sola query
+  // para todos los product_id del lote, comparando cantidad esperada vs. encontrada.
+  const productIds = Array.from(
+    new Set(parsed.map((i) => i.product_id).filter((id): id is string => !!id))
+  );
+  if (productIds.length > 0) {
+    const encontrados = await prisma.products.count({
+      where: { id: { in: productIds }, company_id: companyId },
+    });
+    if (encontrados !== productIds.length) {
+      throw new Error('Producto no encontrado o sin acceso');
+    }
+  }
+
   const result = await prisma.item_costo_tipo.createMany({
     data: parsed.map((i, idx) => ({
       costo_tipo_equipo_id: perfilId,
