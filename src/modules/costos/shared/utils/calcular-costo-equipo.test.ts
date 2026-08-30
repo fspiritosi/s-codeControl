@@ -4,6 +4,7 @@ import {
   calcularCostoMensualEquipo,
   type ItemCostoTipoCalc,
 } from './calcular-costo-equipo';
+import { calcularAmortizacionMensual } from './calcular-amortizacion';
 
 // ─── Fixture golden: IVECO BUS 170S28 NICCOLO 44+1 (interno 112, PECOM/RDLS-BDT, Jun 2025) ───
 // Transcrito de la planilla del cliente (composicion-pecom-*.xls, hoja "Equipos").
@@ -133,5 +134,23 @@ describe('calcularCostoMensualEquipo', () => {
     const full = calcularCostoMensualEquipo({ ...PECOM_112, afectacion_pct: 1 }).costo_mensual;
     const half = calcularCostoMensualEquipo({ ...PECOM_112, afectacion_pct: '0.5' }).costo_mensual;
     expect(half.toDecimalPlaces(6).toNumber()).toBe(full.div(2).toDecimalPlaces(6).toNumber());
+  });
+});
+
+describe('calcularAmortizacionMensual', () => {
+  it('aplica residual y prorratea por años y meses', () => {
+    // (1.000.000 − 35%) / 5 / 12 = 650.000 / 60 = 10.833,33…
+    const r = calcularAmortizacionMensual('1000000', '0.35', 5);
+    expect(r.toDecimalPlaces(2).toNumber()).toBe(10833.33);
+  });
+
+  it('suma accesorios a la base amortizable', () => {
+    // (1.000.000 − 35% + 200.000) / 60 = 850.000 / 60 = 14.166,67
+    const r = calcularAmortizacionMensual('1000000', '0.35', 5, '200000');
+    expect(r.toDecimalPlaces(2).toNumber()).toBe(14166.67);
+  });
+
+  it('retorna 0 si los años son 0', () => {
+    expect(calcularAmortizacionMensual('1000000', '0.35', 0).toNumber()).toBe(0);
   });
 });
