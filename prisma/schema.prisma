@@ -3083,12 +3083,10 @@ model costo_equipo {
   valor_residual_pct Decimal  @db.Decimal(5, 4)
   anios_amortizacion Int
   km_anuales         Int      @default(0)
-  accesorios         Decimal  @default(0) @db.Decimal(15, 2)
   is_active          Boolean  @default(true)
 
-  vehicle             vehicles             @relation(fields: [vehicle_id], references: [id])
-  company             company              @relation(fields: [company_id], references: [id])
-  items_mantenimiento item_mantenimiento[]
+  vehicle vehicles @relation(fields: [vehicle_id], references: [id])
+  company company  @relation(fields: [company_id], references: [id])
 }
 
 // Tipo de cambio por empresa: cotización de una moneda de origen a una de destino (tsk-519).
@@ -3139,17 +3137,6 @@ model index_values {
 
   @@unique([indice_id, anio, mes])
   @@index([indice_id])
-}
-
-model item_mantenimiento {
-  id              String  @id @default(uuid()) @db.Uuid
-  costo_equipo_id String  @db.Uuid
-  nombre          String
-  precio_anual    Decimal @db.Decimal(15, 2)
-  orden           Int     @default(0)
-  is_active       Boolean @default(true)
-
-  costo_equipo costo_equipo @relation(fields: [costo_equipo_id], references: [id], onDelete: Cascade)
 }
 
 enum clase_item_costo {

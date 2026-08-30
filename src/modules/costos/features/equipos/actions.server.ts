@@ -4,7 +4,7 @@ import { prisma } from '@/shared/lib/prisma';
 import { getRequiredActionContext } from '@/shared/lib/server-action-context';
 import { assertModuloHabilitado } from '@/modules/costos/shared/utils/access';
 import { toClientNumber } from '@/modules/costos/shared/utils/decimal';
-import { calcularCostoMensualEquipo } from '@/modules/costos/shared/utils/calcular-mantenimiento';
+import { calcularCostoMensualEquipo } from '@/modules/costos/shared/utils/calcular-costo-equipo';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type {
@@ -13,8 +13,6 @@ import type {
   CostoEquipoClient,
   CostoEquipoDetalle,
   CostoEquipoInput,
-  ItemMantenimientoClient,
-  ItemMantInput,
 } from '@/modules/costos/shared/types/equipo.types';
 
 const EQUIPOS_PATH = '/dashboard/costos/equipos';
@@ -27,14 +25,6 @@ const schemaCostoEquipo = z.object({
   valor_residual_pct: z.number().min(0).max(1),
   anios_amortizacion: z.number().int().positive(),
   km_anuales: z.number().int().nonnegative().default(0),
-  accesorios: z.number().nonnegative().default(0),
-  is_active: z.boolean().optional(),
-});
-
-const schemaItem = z.object({
-  nombre: z.string().min(1).max(200),
-  precio_anual: z.number().nonnegative(),
-  orden: z.number().int().nonnegative().default(0),
   is_active: z.boolean().optional(),
 });
 
@@ -50,12 +40,44 @@ function nombreVehiculo(v: {
   };
 }
 
-async function assertCostoEquipoPertenece(costoEquipoId: string, companyId: string) {
-  const ce = await prisma.costo_equipo.findFirst({
-    where: { id: costoEquipoId, company_id: companyId },
-    select: { id: true },
+type ItemTipoCalcRow = {
+  clase: 'ACCESORIO' | 'MANTENIMIENTO';
+  cantidad: string;
+  precio_unitario: string;
+  is_active: boolean;
+};
+
+/** Ítems por tipo de toda la empresa, en un solo query, para evitar el N+1. */
+async function itemsPorTipoDeEmpresa(companyId: string): Promise<Map<string, ItemTipoCalcRow[]>> {
+  const perfiles = await prisma.costo_tipo_equipo.findMany({
+    where: { company_id: companyId },
+    include: { items: { where: { is_active: true } } },
   });
-  if (!ce) throw new Error('Costo de equipo no encontrado o sin acceso');
+  return new Map(
+    perfiles.map((p) => [
+      p.type_id,
+      p.items.map((i) => ({
+        clase: i.clase,
+        cantidad: i.cantidad.toString(),
+        precio_unitario: i.precio_unitario.toString(),
+        is_active: i.is_active,
+      })),
+    ])
+  );
+}
+
+/** Ítems activos del tipo de un solo equipo. */
+async function itemsDelTipo(companyId: string, typeId: string): Promise<ItemTipoCalcRow[]> {
+  const perfil = await prisma.costo_tipo_equipo.findUnique({
+    where: { company_id_type_id: { company_id: companyId, type_id: typeId } },
+    include: { items: { where: { is_active: true } } },
+  });
+  return (perfil?.items ?? []).map((i) => ({
+    clase: i.clase,
+    cantidad: i.cantidad.toString(),
+    precio_unitario: i.precio_unitario.toString(),
+    is_active: i.is_active,
+  }));
 }
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -64,33 +86,35 @@ export async function listVehiculosConCosto(): Promise<VehiculoConCosto[]> {
   const { companyId } = await getRequiredActionContext();
   await assertModuloHabilitado(companyId);
 
-  const vehiculos = await prisma.vehicles.findMany({
-    where: { company_id: companyId },
-    include: {
-      brand_rel: { select: { name: true } },
-      model_rel: { select: { name: true } },
-      costo_equipo: { include: { items_mantenimiento: true } },
-    },
-    orderBy: { intern_number: 'asc' },
-  });
+  const [vehiculos, itemsPorTipo] = await Promise.all([
+    prisma.vehicles.findMany({
+      where: { company_id: companyId },
+      include: {
+        brand_rel: { select: { name: true } },
+        model_rel: { select: { name: true } },
+        costo_equipo: true,
+      },
+      orderBy: { intern_number: 'asc' },
+    }),
+    itemsPorTipoDeEmpresa(companyId),
+  ]);
 
   return vehiculos.map((v) => {
     const { marca, modelo } = nombreVehiculo(v);
     const ce = v.costo_equipo;
     let costo_mensual: number | null = null;
+    let accesorios_total: number | null = null;
+
     if (ce) {
-      const { costo_mensual: cm } = calcularCostoMensualEquipo({
+      const r = calcularCostoMensualEquipo({
         valor_compra: ce.valor_compra.toString(),
         valor_residual_pct: ce.valor_residual_pct.toString(),
         anios_amortizacion: ce.anios_amortizacion,
-        accesorios: ce.accesorios.toString(),
-        items: ce.items_mantenimiento.map((i) => ({
-          precio_anual: i.precio_anual.toString(),
-          is_active: i.is_active,
-        })),
+        items_tipo: itemsPorTipo.get(v.type) ?? [],
         afectacion_pct: 1,
       });
-      costo_mensual = cm.toDecimalPlaces(2).toNumber();
+      costo_mensual = r.costo_mensual.toDecimalPlaces(2).toNumber();
+      accesorios_total = r.accesorios_total.toDecimalPlaces(2).toNumber();
     }
 
     return {
@@ -103,7 +127,8 @@ export async function listVehiculosConCosto(): Promise<VehiculoConCosto[]> {
       tiene_costo: !!ce,
       valor_compra: ce ? toClientNumber(ce.valor_compra) : null,
       costo_mensual,
-      items_count: ce?.items_mantenimiento.length ?? 0,
+      accesorios_total,
+      items_count: (itemsPorTipo.get(v.type) ?? []).length,
     };
   });
 }
@@ -117,7 +142,8 @@ export async function getCostoEquipo(vehicleId: string): Promise<CostoEquipoDeta
     include: {
       brand_rel: { select: { name: true } },
       model_rel: { select: { name: true } },
-      costo_equipo: { include: { items_mantenimiento: { orderBy: { orden: 'asc' } } } },
+      type_rel: { select: { id: true, name: true } },
+      costo_equipo: true,
     },
   });
   if (!v || !v.costo_equipo) return null;
@@ -125,28 +151,27 @@ export async function getCostoEquipo(vehicleId: string): Promise<CostoEquipoDeta
   const ce = v.costo_equipo;
   const { marca, modelo } = nombreVehiculo(v);
 
-  const { amortizacion_mensual, mantenimiento_mensual, costo_mensual } = calcularCostoMensualEquipo({
-    valor_compra: ce.valor_compra.toString(),
-    valor_residual_pct: ce.valor_residual_pct.toString(),
-    anios_amortizacion: ce.anios_amortizacion,
-    accesorios: ce.accesorios.toString(),
-    items: ce.items_mantenimiento.map((i) => ({
-      precio_anual: i.precio_anual.toString(),
-      is_active: i.is_active,
-    })),
-    afectacion_pct: 1,
-  });
+  const items_tipo = await itemsDelTipo(companyId, v.type);
 
-  const { items_mantenimiento, ...ceScalar } = ce;
+  const { accesorios_total, amortizacion_mensual, mantenimiento_mensual, costo_mensual } =
+    calcularCostoMensualEquipo({
+      valor_compra: ce.valor_compra.toString(),
+      valor_residual_pct: ce.valor_residual_pct.toString(),
+      anios_amortizacion: ce.anios_amortizacion,
+      items_tipo,
+      afectacion_pct: 1,
+    });
+
   return {
     vehiculo: { id: v.id, interno: v.intern_number, dominio: v.domain, marca, modelo, anio: v.year },
     costo: {
-      ...ceScalar,
+      ...ce,
       valor_compra: toClientNumber(ce.valor_compra),
       valor_residual_pct: toClientNumber(ce.valor_residual_pct),
-      accesorios: toClientNumber(ce.accesorios),
     },
-    items: items_mantenimiento.map((i) => ({ ...i, precio_anual: toClientNumber(i.precio_anual) })),
+    tipo: { id: v.type, nombre: v.type_rel.name },
+    items_tipo_count: items_tipo.length,
+    accesorios_total: accesorios_total.toDecimalPlaces(2).toNumber(),
     amortizacion_mensual: amortizacion_mensual.toDecimalPlaces(2).toNumber(),
     mantenimiento_mensual: mantenimiento_mensual.toDecimalPlaces(2).toNumber(),
     costo_mensual: costo_mensual.toDecimalPlaces(2).toNumber(),
@@ -155,14 +180,21 @@ export async function getCostoEquipo(vehicleId: string): Promise<CostoEquipoDeta
 
 /**
  * Detalle para la página de edición. A diferencia de `getCostoEquipo`, retorna el
- * vehículo aunque todavía no tenga costo cargado (costo/items/resumen en null).
+ * vehículo aunque todavía no tenga costo cargado (costo/resumen en null).
  * Retorna null solo si el vehículo no existe o no pertenece a la empresa.
+ *
+ * `accesorios_total` y `mantenimiento_mensual` son del tipo de equipo, no de la
+ * unidad: valen aunque el equipo todavía no tenga costo cargado, por eso viven al
+ * nivel superior y no dentro de `resumen`.
  */
 export async function getEquipoParaEdicion(vehicleId: string): Promise<{
   vehiculo: VehiculoResumen;
   costo: CostoEquipoClient | null;
-  items: ItemMantenimientoClient[];
-  resumen: { amortizacion_mensual: number; mantenimiento_mensual: number; costo_mensual: number } | null;
+  tipo: { id: string; nombre: string };
+  items_tipo_count: number;
+  accesorios_total: number;
+  mantenimiento_mensual: number;
+  resumen: { amortizacion_mensual: number; costo_mensual: number } | null;
 } | null> {
   const { companyId } = await getRequiredActionContext();
   await assertModuloHabilitado(companyId);
@@ -172,7 +204,8 @@ export async function getEquipoParaEdicion(vehicleId: string): Promise<{
     include: {
       brand_rel: { select: { name: true } },
       model_rel: { select: { name: true } },
-      costo_equipo: { include: { items_mantenimiento: { orderBy: { orden: 'asc' } } } },
+      type_rel: { select: { id: true, name: true } },
+      costo_equipo: true,
     },
   });
   if (!v) return null;
@@ -187,37 +220,39 @@ export async function getEquipoParaEdicion(vehicleId: string): Promise<{
     anio: v.year,
   };
 
+  const items_tipo = await itemsDelTipo(companyId, v.type);
+  const tipo = { id: v.type, nombre: v.type_rel.name };
   const ce = v.costo_equipo;
-  if (!ce) return { vehiculo, costo: null, items: [], resumen: null };
 
-  const { items_mantenimiento, ...ceScalar } = ce;
-
-  const { amortizacion_mensual, mantenimiento_mensual, costo_mensual } = calcularCostoMensualEquipo({
-    valor_compra: ce.valor_compra.toString(),
-    valor_residual_pct: ce.valor_residual_pct.toString(),
-    anios_amortizacion: ce.anios_amortizacion,
-    accesorios: ce.accesorios.toString(),
-    items: items_mantenimiento.map((i) => ({
-      precio_anual: i.precio_anual.toString(),
-      is_active: i.is_active,
-    })),
-    afectacion_pct: 1,
-  });
+  // Sin costo cargado el equipo no amortiza, pero los ítems del tipo se muestran igual.
+  const { accesorios_total, amortizacion_mensual, mantenimiento_mensual, costo_mensual } =
+    calcularCostoMensualEquipo({
+      valor_compra: ce ? ce.valor_compra.toString() : 0,
+      valor_residual_pct: ce ? ce.valor_residual_pct.toString() : 0,
+      anios_amortizacion: ce ? ce.anios_amortizacion : 0,
+      items_tipo,
+      afectacion_pct: 1,
+    });
 
   return {
     vehiculo,
-    costo: {
-      ...ceScalar,
-      valor_compra: toClientNumber(ce.valor_compra),
-      valor_residual_pct: toClientNumber(ce.valor_residual_pct),
-      accesorios: toClientNumber(ce.accesorios),
-    },
-    items: items_mantenimiento.map((i) => ({ ...i, precio_anual: toClientNumber(i.precio_anual) })),
-    resumen: {
-      amortizacion_mensual: amortizacion_mensual.toDecimalPlaces(2).toNumber(),
-      mantenimiento_mensual: mantenimiento_mensual.toDecimalPlaces(2).toNumber(),
-      costo_mensual: costo_mensual.toDecimalPlaces(2).toNumber(),
-    },
+    costo: ce
+      ? {
+          ...ce,
+          valor_compra: toClientNumber(ce.valor_compra),
+          valor_residual_pct: toClientNumber(ce.valor_residual_pct),
+        }
+      : null,
+    tipo,
+    items_tipo_count: items_tipo.length,
+    accesorios_total: accesorios_total.toDecimalPlaces(2).toNumber(),
+    mantenimiento_mensual: mantenimiento_mensual.toDecimalPlaces(2).toNumber(),
+    resumen: ce
+      ? {
+          amortizacion_mensual: amortizacion_mensual.toDecimalPlaces(2).toNumber(),
+          costo_mensual: costo_mensual.toDecimalPlaces(2).toNumber(),
+        }
+      : null,
   };
 }
 
@@ -240,7 +275,6 @@ export async function upsertCostoEquipo(input: CostoEquipoInput) {
     valor_residual_pct: parsed.valor_residual_pct,
     anios_amortizacion: parsed.anios_amortizacion,
     km_anuales: parsed.km_anuales,
-    accesorios: parsed.accesorios,
     is_active: parsed.is_active ?? true,
   };
 
@@ -253,74 +287,4 @@ export async function upsertCostoEquipo(input: CostoEquipoInput) {
   revalidatePath(EQUIPOS_PATH);
   revalidatePath(`${EQUIPOS_PATH}/${parsed.vehicle_id}`);
   return costo;
-}
-
-// ─── Mutations: items de mantenimiento ────────────────────────────────────────
-
-export async function addItemMantenimiento(costoEquipoId: string, input: ItemMantInput) {
-  const { companyId } = await getRequiredActionContext();
-  await assertModuloHabilitado(companyId);
-  await assertCostoEquipoPertenece(costoEquipoId, companyId);
-  const parsed = schemaItem.parse(input);
-
-  const item = await prisma.item_mantenimiento.create({
-    data: { costo_equipo_id: costoEquipoId, ...parsed },
-  });
-  revalidatePath(EQUIPOS_PATH);
-  return item;
-}
-
-export async function updateItemMantenimiento(id: string, input: Partial<ItemMantInput>) {
-  const { companyId } = await getRequiredActionContext();
-  await assertModuloHabilitado(companyId);
-
-  const existing = await prisma.item_mantenimiento.findUnique({
-    where: { id },
-    select: { costo_equipo_id: true },
-  });
-  if (!existing) throw new Error('Ítem no encontrado');
-  await assertCostoEquipoPertenece(existing.costo_equipo_id, companyId);
-
-  const parsed = schemaItem.partial().parse(input);
-  const item = await prisma.item_mantenimiento.update({ where: { id }, data: parsed });
-  revalidatePath(EQUIPOS_PATH);
-  return item;
-}
-
-export async function deleteItemMantenimiento(id: string) {
-  const { companyId } = await getRequiredActionContext();
-  await assertModuloHabilitado(companyId);
-
-  const existing = await prisma.item_mantenimiento.findUnique({
-    where: { id },
-    select: { costo_equipo_id: true },
-  });
-  if (!existing) throw new Error('Ítem no encontrado');
-  await assertCostoEquipoPertenece(existing.costo_equipo_id, companyId);
-
-  await prisma.item_mantenimiento.delete({ where: { id } });
-  revalidatePath(EQUIPOS_PATH);
-}
-
-/** Carga masiva de ítems (usada por el dialog de importación). Retorna la cantidad insertada. */
-export async function bulkAddItemsMantenimiento(
-  costoEquipoId: string,
-  items: ItemMantInput[]
-): Promise<number> {
-  const { companyId } = await getRequiredActionContext();
-  await assertModuloHabilitado(companyId);
-  await assertCostoEquipoPertenece(costoEquipoId, companyId);
-
-  const parsed = z.array(schemaItem).min(1).parse(items);
-  const result = await prisma.item_mantenimiento.createMany({
-    data: parsed.map((i, idx) => ({
-      costo_equipo_id: costoEquipoId,
-      nombre: i.nombre,
-      precio_anual: i.precio_anual,
-      orden: i.orden ?? idx,
-      is_active: i.is_active ?? true,
-    })),
-  });
-  revalidatePath(EQUIPOS_PATH);
-  return result.count;
 }

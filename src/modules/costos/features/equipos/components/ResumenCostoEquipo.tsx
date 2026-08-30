@@ -2,15 +2,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/sha
 import { formatCurrencyARS } from '@/shared/lib/utils/formatters';
 
 interface Props {
+  accesorios_total: number;
   amortizacion_mensual: number;
   mantenimiento_mensual: number;
   costo_mensual: number;
 }
 
 /** Card resumen con amortización + mantenimiento + costo mensual total del equipo. */
-export function ResumenCostoEquipo({ amortizacion_mensual, mantenimiento_mensual, costo_mensual }: Props) {
+export function ResumenCostoEquipo({
+  accesorios_total,
+  amortizacion_mensual,
+  mantenimiento_mensual,
+  costo_mensual,
+}: Props) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardDescription>Accesorios</CardDescription>
+          <CardTitle className="text-xl">{formatCurrencyARS(accesorios_total)}</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <p className="text-xs text-muted-foreground">Heredados del tipo</p>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader className="pb-2">
           <CardDescription>Amortización mensual</CardDescription>

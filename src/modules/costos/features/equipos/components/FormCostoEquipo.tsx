@@ -25,7 +25,6 @@ export function FormCostoEquipo({ vehicleId, costo }: Props) {
     valor_residual_pct: costo ? String(costo.valor_residual_pct * 100) : '35',
     anios_amortizacion: costo ? String(costo.anios_amortizacion) : '5',
     km_anuales: costo ? String(costo.km_anuales) : '0',
-    accesorios: costo ? String(costo.accesorios) : '0',
   });
 
   function set<K extends keyof typeof form>(k: K, v: string) {
@@ -42,7 +41,6 @@ export function FormCostoEquipo({ vehicleId, costo }: Props) {
         valor_residual_pct: Number(form.valor_residual_pct) / 100,
         anios_amortizacion: parseInt(form.anios_amortizacion),
         km_anuales: parseInt(form.km_anuales || '0'),
-        accesorios: Number(form.accesorios || '0'),
       });
       toast.success('Costo de equipo guardado');
       router.refresh();
@@ -95,17 +93,6 @@ export function FormCostoEquipo({ vehicleId, costo }: Props) {
                 value={form.anios_amortizacion}
                 onChange={(e) => set('anios_amortizacion', e.target.value)}
                 required
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="accesorios">Accesorios</Label>
-              <Input
-                id="accesorios"
-                type="number"
-                step="0.01"
-                min="0"
-                value={form.accesorios}
-                onChange={(e) => set('accesorios', e.target.value)}
               />
             </div>
             <div className="space-y-1.5">

@@ -1,4 +1,4 @@
-import type { costo_equipo, item_mantenimiento } from '@/generated/prisma/client';
+import type { costo_equipo } from '@/generated/prisma/client';
 
 // ─── Inputs (formularios / mutaciones) ────────────────────────────────────────
 
@@ -9,31 +9,14 @@ export type CostoEquipoInput = {
   valor_residual_pct: number; // 0.35 = 35%
   anios_amortizacion: number;
   km_anuales: number;
-  accesorios: number;
-  is_active?: boolean;
-};
-
-/** Input para crear/actualizar un ítem de mantenimiento. */
-export type ItemMantInput = {
-  nombre: string;
-  precio_anual: number;
-  orden?: number;
   is_active?: boolean;
 };
 
 // ─── Tipos client-safe (Decimal → number) ─────────────────────────────────────
 
-export type ItemMantenimientoClient = Omit<item_mantenimiento, 'precio_anual'> & {
-  precio_anual: number;
-};
-
-export type CostoEquipoClient = Omit<
-  costo_equipo,
-  'valor_compra' | 'valor_residual_pct' | 'accesorios'
-> & {
+export type CostoEquipoClient = Omit<costo_equipo, 'valor_compra' | 'valor_residual_pct'> & {
   valor_compra: number;
   valor_residual_pct: number;
-  accesorios: number;
 };
 
 // ─── Vistas compuestas ────────────────────────────────────────────────────────
@@ -53,14 +36,22 @@ export type VehiculoConCosto = VehiculoResumen & {
   tiene_costo: boolean;
   valor_compra: number | null;
   costo_mensual: number | null;
+  /** Accesorios heredados del tipo de equipo. */
+  accesorios_total: number | null;
+  /** Ítems (accesorios + mantenimiento) que aporta el tipo de equipo. */
   items_count: number;
 };
 
-/** Detalle de un equipo: costo + ítems + cálculos derivados. */
+/**
+ * Detalle de un equipo: costo + cálculos derivados. Los accesorios y el
+ * mantenimiento se heredan del tipo de equipo, no se cargan por unidad.
+ */
 export type CostoEquipoDetalle = {
   vehiculo: VehiculoResumen;
   costo: CostoEquipoClient;
-  items: ItemMantenimientoClient[];
+  tipo: { id: string; nombre: string };
+  items_tipo_count: number;
+  accesorios_total: number;
   amortizacion_mensual: number;
   mantenimiento_mensual: number;
   costo_mensual: number;

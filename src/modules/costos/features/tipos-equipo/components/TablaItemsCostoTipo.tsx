@@ -17,6 +17,7 @@ import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import {
   addItemCostoTipo, updateItemCostoTipo, deleteItemCostoTipo, ensureCostoTipoEquipo,
 } from '../actions.server';
+import { ImportarItemsDialog } from './ImportarItemsDialog';
 import type { ClaseItemCosto, ItemCostoTipoClient } from '@/modules/costos/shared/types/tipo-equipo.types';
 import { formatCurrencyARS, formatDateUTC } from '@/shared/lib/utils/formatters';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
@@ -199,17 +200,22 @@ export function TablaItemsCostoTipo({ clase, typeId, perfilId, items, productos 
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base">{copy.titulo} ({items.length})</CardTitle>
-        <Dialog open={openNuevo} onOpenChange={setOpenNuevo}>
-          <DialogTrigger asChild>
-            <Button size="sm" variant="outline" className="gap-1.5">
-              <Plus className="h-3.5 w-3.5" /> Agregar
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader><DialogTitle>Nuevo ítem</DialogTitle></DialogHeader>
-            {FormBody(handleNuevo, 'Agregar')}
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          {/* La importación masiva necesita un perfil ya creado; con perfilId null se
+              carga el primer ítem desde "Agregar", que lo crea. */}
+          {perfilId && <ImportarItemsDialog perfilId={perfilId} clase={clase} />}
+          <Dialog open={openNuevo} onOpenChange={setOpenNuevo}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline" className="gap-1.5">
+                <Plus className="h-3.5 w-3.5" /> Agregar
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader><DialogTitle>Nuevo ítem</DialogTitle></DialogHeader>
+              {FormBody(handleNuevo, 'Agregar')}
+            </DialogContent>
+          </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
         <Dialog open={!!editando} onOpenChange={(v) => { if (!v) { setEditando(null); reset(); } }}>

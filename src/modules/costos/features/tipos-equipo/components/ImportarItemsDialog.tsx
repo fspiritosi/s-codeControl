@@ -21,17 +21,37 @@ import {
   TableHeader,
   TableRow,
 } from '@/shared/components/ui/table';
-import { bulkAddItemsMantenimiento } from '../actions.server';
-import type { ItemMantInput } from '@/modules/costos/shared/types/equipo.types';
+import { bulkAddItemsCostoTipo } from '../actions.server';
+import type { ClaseItemCosto } from '@/modules/costos/shared/types/tipo-equipo.types';
 import { formatCurrencyARS } from '@/shared/lib/utils/formatters';
 import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Props {
-  costoEquipoId: string;
+  perfilId: string;
+  clase: ClaseItemCosto;
 }
 
-type ParseResult = { items: ItemMantInput[]; errores: string[] };
+/**
+ * Fila parseada del pegado. El precio de la lista es el precio unitario de un ítem
+ * de cantidad 1, que es exactamente la semántica que tenía la carga por equipo.
+ */
+type ItemPegado = { nombre: string; precio_anual: number; orden: number };
+
+type ParseResult = { items: ItemPegado[]; errores: string[] };
+
+const COPY = {
+  ACCESORIO: {
+    titulo: 'Importar accesorios',
+    columna: 'Precio unitario',
+    placeholder: 'Butacas reclinables, 4498739\nEquipo de aire, 1200000',
+  },
+  MANTENIMIENTO: {
+    titulo: 'Importar ítems de mantenimiento',
+    columna: 'Precio anual',
+    placeholder: 'Patentes, 5428525\nSeguros, 1680000\nNeumáticos 1 juego x año, 5160000',
+  },
+} as const;
 
 /** Normaliza un número que puede venir con $, miles con punto y decimales con coma. */
 function parseNumero(raw: string): number | null {
@@ -48,7 +68,7 @@ function parseNumero(raw: string): number | null {
 }
 
 function parseEntrada(texto: string): ParseResult {
-  const items: ItemMantInput[] = [];
+  const items: ItemPegado[] = [];
   const errores: string[] = [];
   const trimmed = texto.trim();
   if (!trimmed) return { items, errores };
@@ -104,8 +124,9 @@ function parseEntrada(texto: string): ParseResult {
   return { items, errores };
 }
 
-export function ImportarItemsDialog({ costoEquipoId }: Props) {
+export function ImportarItemsDialog({ perfilId, clase }: Props) {
   const router = useRouter();
+  const copy = COPY[clase];
   const [open, setOpen] = useState(false);
   const [texto, setTexto] = useState('');
   const [loading, setLoading] = useState(false);
@@ -116,7 +137,16 @@ export function ImportarItemsDialog({ costoEquipoId }: Props) {
     if (items.length === 0) return;
     setLoading(true);
     try {
-      const count = await bulkAddItemsMantenimiento(costoEquipoId, items);
+      const count = await bulkAddItemsCostoTipo(
+        perfilId,
+        items.map((i) => ({
+          clase,
+          nombre: i.nombre,
+          cantidad: 1,
+          precio_unitario: i.precio_anual,
+          orden: i.orden,
+        }))
+      );
       toast.success(`${count} ítems importados`);
       setOpen(false);
       setTexto('');
@@ -137,10 +167,11 @@ export function ImportarItemsDialog({ costoEquipoId }: Props) {
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Importar ítems de mantenimiento</DialogTitle>
+          <DialogTitle>{copy.titulo}</DialogTitle>
           <DialogDescription>
             Pegá una lista en CSV (una línea por ítem: <code>descripción, precio</code>) o un array JSON
             con <code>nombre</code> y <code>precio_anual</code>. El precio admite $ y formato 1.234,56.
+            Cada ítem se carga con cantidad 1.
           </DialogDescription>
         </DialogHeader>
 
@@ -150,7 +181,7 @@ export function ImportarItemsDialog({ costoEquipoId }: Props) {
             <Textarea
               id="import_texto"
               rows={8}
-              placeholder={'Patentes, 5428525\nSeguros, 1680000\nNeumáticos 1 juego x año, 5160000'}
+              placeholder={copy.placeholder}
               value={texto}
               onChange={(e) => setTexto(e.target.value)}
               className="font-mono text-xs"
@@ -171,7 +202,7 @@ export function ImportarItemsDialog({ costoEquipoId }: Props) {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Descripción</TableHead>
-                        <TableHead className="text-right">Precio anual</TableHead>
+                        <TableHead className="text-right">{copy.columna}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
