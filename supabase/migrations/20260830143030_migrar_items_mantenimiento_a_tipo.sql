@@ -33,22 +33,40 @@ GROUP BY ce."company_id", v."type", ce."id", ce."accesorios", ce."created_at"
 ORDER BY ce."company_id", v."type", COUNT(im."id") DESC, ce."created_at" ASC;
 
 -- 3) Copiar los ítems de mantenimiento del donante.
+--    WHERE NOT EXISTS: idempotencia. item_costo_tipo no tiene constraint única
+--    sobre una clave natural, así que una re-ejecución de este archivo sobre una
+--    base donde ya corrió duplicaría cada ítem si no se filtra explícitamente
+--    (el paso 1 no vuelve a crear el perfil, el JOIN de arriba lo encuentra igual
+--    y sin este guard se insertarían todos los ítems de nuevo).
 INSERT INTO "item_costo_tipo"
   ("costo_tipo_equipo_id", "clase", "nombre", "cantidad", "precio_unitario", "orden", "is_active")
 SELECT cte."id", 'MANTENIMIENTO', im."nombre", 1, im."precio_anual", im."orden", im."is_active"
 FROM "donantes" d
 JOIN "costo_tipo_equipo" cte
   ON cte."company_id" = d."company_id" AND cte."type_id" = d."type_id"
-JOIN "item_mantenimiento" im ON im."costo_equipo_id" = d."costo_equipo_id";
+JOIN "item_mantenimiento" im ON im."costo_equipo_id" = d."costo_equipo_id"
+WHERE NOT EXISTS (
+  SELECT 1 FROM "item_costo_tipo" i2
+  WHERE i2."costo_tipo_equipo_id" = cte."id"
+    AND i2."clase" = 'MANTENIMIENTO'
+    AND i2."nombre" = im."nombre"
+);
 
 -- 4) El accesorio escalar del donante, si tenía.
+--    Mismo guard de idempotencia que el paso 3, sobre clase = 'ACCESORIO'.
 INSERT INTO "item_costo_tipo"
   ("costo_tipo_equipo_id", "clase", "nombre", "cantidad", "precio_unitario", "orden")
 SELECT cte."id", 'ACCESORIO', 'Accesorios (migrado)', 1, d."accesorios", 0
 FROM "donantes" d
 JOIN "costo_tipo_equipo" cte
   ON cte."company_id" = d."company_id" AND cte."type_id" = d."type_id"
-WHERE d."accesorios" > 0;
+WHERE d."accesorios" > 0
+  AND NOT EXISTS (
+    SELECT 1 FROM "item_costo_tipo" i2
+    WHERE i2."costo_tipo_equipo_id" = cte."id"
+      AND i2."clase" = 'ACCESORIO'
+      AND i2."nombre" = 'Accesorios (migrado)'
+  );
 
 -- 5) Informar cuántos ítems se descartan, para revisión posterior.
 DO $$
