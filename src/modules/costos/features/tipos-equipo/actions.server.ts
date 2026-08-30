@@ -29,6 +29,14 @@ const schemaItem = z.object({
   is_active: z.boolean().optional(),
 });
 
+// En el alta individual `orden` default a 0 tiene sentido. En el bulk, en cambio, el
+// default de Zod se aplicaría durante el parse y `i.orden ?? idx` nunca caería en el
+// índice del arreglo: todo ítem sin orden explícito quedaría en 0. Este schema deja
+// `orden` genuinamente opcional para que el fallback al índice funcione de verdad.
+const schemaItemBulk = schemaItem.omit({ orden: true }).extend({
+  orden: z.number().int().nonnegative().optional(),
+});
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 type ItemRow = {
@@ -41,10 +49,10 @@ type ItemRow = {
   precio_actualizado_at: Date | null;
   orden: number;
   is_active: boolean;
-  product?: { code: string; name: string } | null;
+  product?: { code: string; name: string; company_id: string } | null;
 };
 
-function toItemClient(i: ItemRow): ItemCostoTipoClient {
+function toItemClient(i: ItemRow, companyId: string): ItemCostoTipoClient {
   const cantidad = toClientNumber(i.cantidad.toString());
   const precio_unitario = toClientNumber(i.precio_unitario.toString());
   // El subtotal se calcula en Decimal, no con aritmética de floats.
@@ -52,13 +60,17 @@ function toItemClient(i: ItemRow): ItemCostoTipoClient {
     .mul(new Decimal(i.precio_unitario.toString()))
     .toDecimalPlaces(2)
     .toNumber();
+  // Defensa en profundidad: aunque las mutaciones ya validan pertenencia antes de
+  // escribir, esta lectura no depende de esa invariante. Si el producto vinculado no
+  // es de esta empresa, se expone como si no estuviera vinculado.
+  const productoPropio = i.product && i.product.company_id === companyId ? i.product : null;
   return {
     id: i.id,
     clase: i.clase,
     nombre: i.nombre,
     product_id: i.product_id,
-    product_code: i.product?.code ?? null,
-    product_name: i.product?.name ?? null,
+    product_code: productoPropio?.code ?? null,
+    product_name: productoPropio?.name ?? null,
     cantidad,
     precio_unitario,
     subtotal,
@@ -78,9 +90,9 @@ async function assertPerfilPertenece(perfilId: string, companyId: string) {
 
 /**
  * Verifica que un product_id exista y pertenezca a la empresa antes de vincularlo a
- * un ítem. Sin este chequeo, un ítem podría quedar vinculado a un producto de otra
- * empresa: getCostoTipoEquipo hace include del producto sin filtrar por empresa, así
- * que eso filtraría code/name de un producto ajeno hacia la UI.
+ * un ítem. Es la primera línea de defensa contra vincular un ítem a un producto
+ * ajeno; toItemClient agrega una segunda al leer, por si esta invariante llegara a
+ * romperse por otra vía de escritura.
  */
 async function assertProductoPertenece(productId: string, companyId: string) {
   const producto = await prisma.products.findFirst({
@@ -165,7 +177,7 @@ export async function getCostoTipoEquipo(typeId: string): Promise<CostoTipoEquip
       include: {
         items: {
           orderBy: [{ clase: 'asc' }, { orden: 'asc' }],
-          include: { product: { select: { code: true, name: true } } },
+          include: { product: { select: { code: true, name: true, company_id: true } } },
         },
       },
     }),
@@ -182,7 +194,7 @@ export async function getCostoTipoEquipo(typeId: string): Promise<CostoTipoEquip
       is_active: i.is_active,
     }))
   );
-  const items = (perfil?.items ?? []).map(toItemClient);
+  const items = (perfil?.items ?? []).map((i) => toItemClient(i, companyId));
 
   return {
     type_id: tipo.id,
@@ -281,7 +293,7 @@ export async function bulkAddItemsCostoTipo(
   await assertModuloHabilitado(companyId);
   await assertPerfilPertenece(perfilId, companyId);
 
-  const parsed = z.array(schemaItem).min(1).parse(items);
+  const parsed = z.array(schemaItemBulk).min(1).parse(items);
 
   // Un producto ajeno vinculado en el lote no debe poder escribirse: una sola query
   // para todos los product_id del lote, comparando cantidad esperada vs. encontrada.
