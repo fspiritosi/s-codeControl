@@ -30,6 +30,8 @@ import { toast } from 'sonner';
 interface Props {
   perfilId: string;
   clase: ClaseItemCosto;
+  /** Orden del primer ítem importado: los que ya están cargados no se pisan. */
+  ordenInicial: number;
 }
 
 /**
@@ -124,7 +126,7 @@ function parseEntrada(texto: string): ParseResult {
   return { items, errores };
 }
 
-export function ImportarItemsDialog({ perfilId, clase }: Props) {
+export function ImportarItemsDialog({ perfilId, clase, ordenInicial }: Props) {
   const router = useRouter();
   const copy = COPY[clase];
   const [open, setOpen] = useState(false);
@@ -144,7 +146,7 @@ export function ImportarItemsDialog({ perfilId, clase }: Props) {
           nombre: i.nombre,
           cantidad: 1,
           precio_unitario: i.precio_anual,
-          orden: i.orden,
+          orden: ordenInicial + i.orden,
         }))
       );
       toast.success(`${count} ítems importados`);

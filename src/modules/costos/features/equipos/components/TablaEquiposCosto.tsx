@@ -40,7 +40,7 @@ export function TablaEquiposCosto({ vehiculos }: Props) {
           <TableHead>Dominio</TableHead>
           <TableHead className="text-right">Valor compra</TableHead>
           <TableHead className="text-right">Costo mensual</TableHead>
-          <TableHead className="text-center w-20">Ítems</TableHead>
+          <TableHead className="text-center w-28">Ítems del tipo</TableHead>
           <TableHead className="w-10" />
         </TableRow>
       </TableHeader>

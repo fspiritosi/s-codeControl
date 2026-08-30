@@ -203,7 +203,9 @@ export function TablaItemsCostoTipo({ clase, typeId, perfilId, items, productos 
         <div className="flex gap-2">
           {/* La importación masiva necesita un perfil ya creado; con perfilId null se
               carga el primer ítem desde "Agregar", que lo crea. */}
-          {perfilId && <ImportarItemsDialog perfilId={perfilId} clase={clase} />}
+          {perfilId && (
+            <ImportarItemsDialog perfilId={perfilId} clase={clase} ordenInicial={items.length} />
+          )}
           <Dialog open={openNuevo} onOpenChange={setOpenNuevo}>
             <DialogTrigger asChild>
               <Button size="sm" variant="outline" className="gap-1.5">

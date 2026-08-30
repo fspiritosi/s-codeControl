@@ -16,6 +16,9 @@ import type {
 } from '@/modules/costos/shared/types/tipo-equipo.types';
 
 const TIPOS_PATH = '/dashboard/costos/tipos-equipo';
+// El costo mensual del listado de equipos se calcula con los ítems del tipo, así que
+// toda mutación de ítems acá invalida también esa pantalla.
+const EQUIPOS_PATH = '/dashboard/costos/equipos';
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -247,6 +250,7 @@ export async function addItemCostoTipo(perfilId: string, input: ItemCostoTipoInp
     },
   });
   revalidatePath(TIPOS_PATH);
+  revalidatePath(EQUIPOS_PATH);
   return item.id;
 }
 
@@ -267,6 +271,7 @@ export async function updateItemCostoTipo(id: string, input: Partial<ItemCostoTi
   }
   await prisma.item_costo_tipo.update({ where: { id }, data: parsed });
   revalidatePath(TIPOS_PATH);
+  revalidatePath(EQUIPOS_PATH);
 }
 
 export async function deleteItemCostoTipo(id: string) {
@@ -282,6 +287,7 @@ export async function deleteItemCostoTipo(id: string) {
 
   await prisma.item_costo_tipo.delete({ where: { id } });
   revalidatePath(TIPOS_PATH);
+  revalidatePath(EQUIPOS_PATH);
 }
 
 /** Carga masiva de ítems (dialog de importación). Retorna la cantidad insertada. */
@@ -322,6 +328,7 @@ export async function bulkAddItemsCostoTipo(
     })),
   });
   revalidatePath(TIPOS_PATH);
+  revalidatePath(EQUIPOS_PATH);
   return result.count;
 }
 
@@ -369,6 +376,7 @@ export async function refrescarPreciosDesdeAlmacen(
       )
     );
     revalidatePath(TIPOS_PATH);
+    revalidatePath(EQUIPOS_PATH);
   }
 
   return {
