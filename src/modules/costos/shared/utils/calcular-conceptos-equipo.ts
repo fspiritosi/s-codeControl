@@ -27,16 +27,27 @@ export type ContextoEquipo = {
 };
 
 export class CicloConceptosEquipoError extends Error {
+  /** Códigos del ciclo, en orden. Quien lo captura los traduce a nombres para el usuario. */
+  readonly ciclo: string[];
+
   constructor(ciclo: string[]) {
     super(`Ciclo detectado en conceptos de equipo: ${ciclo.join(' → ')}`);
     this.name = 'CicloConceptosEquipoError';
+    this.ciclo = ciclo;
   }
 }
 
 export class ReferenciaConceptoEquipoInvalidaError extends Error {
+  /** Código del concepto que referencia. */
+  readonly origen: string;
+  /** Código referenciado que no está en el conjunto. */
+  readonly referenciado: string;
+
   constructor(origen: string, referenciado: string) {
     super(`El concepto '${origen}' referencia a '${referenciado}', que no existe`);
     this.name = 'ReferenciaConceptoEquipoInvalidaError';
+    this.origen = origen;
+    this.referenciado = referenciado;
   }
 }
 

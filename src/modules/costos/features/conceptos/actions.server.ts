@@ -107,9 +107,19 @@ async function assertCatalogoResoluble(
     parametros: Record<string, unknown>;
   }
 ) {
+  // Todos los conceptos, activos e inactivos: es el mismo criterio que usa el motor, que toma
+  // al inactivo como existente pero de valor 0. Cargar sólo los activos haría fallar como
+  // "referencia inexistente" algo que en tiempo de cálculo resuelve sin problema.
   const existentes = await prisma.concepto_equipo.findMany({
-    where: { company_id: companyId, is_active: true },
-    select: { id: true, codigo: true, clase: true, clase_calculo: true, parametros: true },
+    where: { company_id: companyId },
+    select: {
+      id: true,
+      codigo: true,
+      clase: true,
+      clase_calculo: true,
+      parametros: true,
+      is_active: true,
+    },
   });
 
   const conceptos: ConceptoEquipoCalc[] = existentes
@@ -119,6 +129,7 @@ async function assertCatalogoResoluble(
       clase: c.clase,
       clase_calculo: c.clase_calculo,
       parametros: (c.parametros ?? {}) as Record<string, unknown>,
+      is_active: c.is_active,
     }));
 
   conceptos.push({
@@ -130,6 +141,33 @@ async function assertCatalogoResoluble(
 
   // Lanza CicloConceptosEquipoError o ReferenciaConceptoEquipoInvalidaError si algo no cierra.
   ordenTopologicoConceptos(conceptos);
+}
+
+/**
+ * Nombres de los conceptos de la empresa que usan a `codigo` como base, sea con PCT_CONCEPTO o
+ * dentro de la lista de un PCT_SUMA_CONCEPTOS.
+ */
+async function conceptosQueReferencian(
+  companyId: string,
+  codigo: string,
+  excluirId: string
+): Promise<string[]> {
+  const candidatos = await prisma.concepto_equipo.findMany({
+    where: {
+      company_id: companyId,
+      id: { not: excluirId },
+      clase_calculo: { in: ['PCT_CONCEPTO', 'PCT_SUMA_CONCEPTOS'] },
+    },
+    select: { nombre: true, clase_calculo: true, parametros: true },
+  });
+
+  return candidatos
+    .filter((c) => {
+      const p = (c.parametros ?? {}) as Record<string, unknown>;
+      if (c.clase_calculo === 'PCT_CONCEPTO') return p.concepto_codigo === codigo;
+      return Array.isArray(p.conceptos_codigos) && p.conceptos_codigos.includes(codigo);
+    })
+    .map((c) => c.nombre);
 }
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -276,7 +314,11 @@ export async function updateConcepto(id: string, input: Partial<ConceptoEquipoIn
   revalidatePath(EQUIPOS_PATH);
 }
 
-/** Borra un concepto. Falla si está asociado a algún tipo: primero hay que desasociarlo. */
+/**
+ * Borra un concepto. Falla si está asociado a algún tipo, y también si otro concepto lo usa
+ * como base: borrarlo dejaría esa referencia colgada y el motor lanzaría al resolver el perfil
+ * donde vive el que referencia.
+ */
 export async function deleteConcepto(id: string) {
   const { companyId } = await getRequiredActionContext();
   await assertModuloHabilitado(companyId);
@@ -289,6 +331,13 @@ export async function deleteConcepto(id: string) {
   if (existente._count.tipos > 0) {
     throw new Error(
       `No se puede eliminar: el concepto está asociado a ${existente._count.tipos} tipo(s) de equipo`
+    );
+  }
+
+  const dependientes = await conceptosQueReferencian(companyId, existente.codigo, id);
+  if (dependientes.length > 0) {
+    throw new Error(
+      `No se puede eliminar: lo usan como base ${dependientes.map((n) => `«${n}»`).join(', ')}`
     );
   }
 

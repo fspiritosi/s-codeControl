@@ -5,9 +5,11 @@ import { getRequiredActionContext } from '@/shared/lib/server-action-context';
 import { assertModuloHabilitado } from '@/modules/costos/shared/utils/access';
 import { Decimal, toClientNumber } from '@/modules/costos/shared/utils/decimal';
 import { calcularCostoMensualEquipo } from '@/modules/costos/shared/utils/calcular-costo-equipo';
-import type { ConceptoEquipoCalc } from '@/modules/costos/shared/utils/calcular-conceptos-equipo';
 import { describirCalculo } from '@/modules/costos/shared/validators/concepto-equipo';
-import { conceptosPorTipoDeEmpresa } from '@/modules/costos/shared/utils/conceptos-por-tipo';
+import {
+  conceptosDeUnTipo,
+  conceptosPorTipoDeEmpresa,
+} from '@/modules/costos/shared/utils/conceptos-por-tipo';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type {
@@ -40,34 +42,6 @@ function nombreVehiculo(v: {
   return {
     marca: v.brand_rel?.name ?? '—',
     modelo: v.model_rel?.name ?? '—',
-  };
-}
-
-/**
- * Conceptos activos del tipo de un solo equipo, en una query, con el nombre de cada uno:
- * el desglose de la pantalla de edición necesita mostrarlos por nombre, y el motor sólo
- * trabaja con códigos.
- */
-async function conceptosDelTipo(
-  companyId: string,
-  typeId: string
-): Promise<{ conceptos: ConceptoEquipoCalc[]; nombrePorCodigo: Map<string, string> }> {
-  const perfil = await prisma.costo_tipo_equipo.findUnique({
-    where: { company_id_type_id: { company_id: companyId, type_id: typeId } },
-    include: {
-      conceptos: { where: { is_active: true }, orderBy: { orden: 'asc' }, include: { concepto: true } },
-    },
-  });
-  const activos = (perfil?.conceptos ?? []).map((a) => a.concepto).filter((c) => c.is_active);
-
-  return {
-    conceptos: activos.map((c) => ({
-      codigo: c.codigo,
-      clase: c.clase,
-      clase_calculo: c.clase_calculo,
-      parametros: (c.parametros ?? {}) as Record<string, unknown>,
-    })),
-    nombrePorCodigo: new Map(activos.map((c) => [c.codigo, c.nombre])),
   };
 }
 
@@ -120,7 +94,9 @@ export async function listVehiculosConCosto(): Promise<VehiculoConCosto[]> {
       valor_compra: ce ? toClientNumber(ce.valor_compra) : null,
       costo_mensual,
       accesorios_total,
-      items_count: (conceptosPorTipo.get(v.type) ?? []).length,
+      // Sólo los activos: los inactivos viajan en la lista para que el motor los resuelva
+      // como 0, pero no son conceptos que el tipo aporte.
+      items_count: (conceptosPorTipo.get(v.type) ?? []).filter((c) => c.is_active !== false).length,
     };
   });
 }
@@ -169,7 +145,10 @@ export async function getEquipoParaEdicion(vehicleId: string): Promise<{
     anio: v.year,
   };
 
-  const { conceptos, nombrePorCodigo } = await conceptosDelTipo(companyId, v.type);
+  const { conceptos, nombrePorCodigo } = await conceptosDeUnTipo(companyId, v.type);
+  // Los inactivos entran al motor valiendo 0, para no dejar colgado a quien los use de base,
+  // pero no se listan ni se cuentan en el desglose de la unidad.
+  const visibles = conceptos.filter((c) => c.is_active !== false);
   const tipo = { id: v.type, nombre: v.type_rel.name };
   const ce = v.costo_equipo;
 
@@ -199,10 +178,10 @@ export async function getEquipoParaEdicion(vehicleId: string): Promise<{
         }
       : null,
     tipo,
-    items_tipo_count: conceptos.length,
+    items_tipo_count: visibles.length,
     accesorios_total: accesorios_total.toDecimalPlaces(2).toNumber(),
     mantenimiento_mensual: mantenimiento_mensual.toDecimalPlaces(2).toNumber(),
-    conceptos_resueltos: conceptos.map((c) => ({
+    conceptos_resueltos: visibles.map((c) => ({
       codigo: c.codigo,
       nombre: nombrePorCodigo.get(c.codigo) ?? c.codigo,
       clase: c.clase,
