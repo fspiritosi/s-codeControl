@@ -5,11 +5,7 @@ import { getRequiredActionContext } from '@/shared/lib/server-action-context';
 import { assertModuloHabilitado } from '@/modules/costos/shared/utils/access';
 import { Decimal } from '@/modules/costos/shared/utils/decimal';
 import { describirCalculo } from '@/modules/costos/shared/validators/concepto-equipo';
-import {
-  ordenTopologicoConceptos,
-  CicloConceptosEquipoError,
-  ReferenciaConceptoEquipoInvalidaError,
-} from '@/modules/costos/shared/utils/calcular-conceptos-equipo';
+import { assertPerfilResoluble } from '@/modules/costos/shared/utils/conceptos-por-tipo';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type {
@@ -53,57 +49,6 @@ function sumarFijos(
         new Decimal(String(par.cantidad ?? 0)).mul(new Decimal(String(par.precio_unitario ?? 0)))
       );
     }, new Decimal(0));
-}
-
-/**
- * El catálogo entero puede resolver y el perfil de un tipo igual no: el motor trabaja con el
- * SUBCONJUNTO asociado a ese tipo, así que un concepto porcentual asociado sin el concepto que
- * le sirve de base deja el perfil irresoluble y tumba toda pantalla que lo cueste.
- *
- * Por eso se valida acá, sobre el conjunto que quedaría asociado, y se traduce el error del
- * motor a nombres: los códigos no le dicen nada a quien está usando la pantalla.
- */
-async function assertPerfilResoluble(companyId: string, conceptoIds: string[]) {
-  if (conceptoIds.length === 0) return;
-
-  const [delPerfil, catalogo] = await Promise.all([
-    prisma.concepto_equipo.findMany({
-      where: { id: { in: conceptoIds }, company_id: companyId },
-      select: { codigo: true, clase: true, clase_calculo: true, parametros: true, is_active: true },
-    }),
-    prisma.concepto_equipo.findMany({
-      where: { company_id: companyId },
-      select: { codigo: true, nombre: true },
-    }),
-  ]);
-
-  const nombrePorCodigo = new Map(catalogo.map((c) => [c.codigo, c.nombre]));
-  const nombre = (codigo: string) => nombrePorCodigo.get(codigo) ?? codigo;
-
-  try {
-    ordenTopologicoConceptos(
-      delPerfil.map((c) => ({
-        codigo: c.codigo,
-        clase: c.clase,
-        clase_calculo: c.clase_calculo,
-        parametros: (c.parametros ?? {}) as Record<string, unknown>,
-        is_active: c.is_active,
-      }))
-    );
-  } catch (error) {
-    if (error instanceof ReferenciaConceptoEquipoInvalidaError) {
-      throw new Error(
-        `No se puede asociar «${nombre(error.origen)}»: depende de «${nombre(error.referenciado)}», ` +
-          'que no está asociado a este tipo'
-      );
-    }
-    if (error instanceof CicloConceptosEquipoError) {
-      throw new Error(
-        `No se puede asociar: los conceptos forman un ciclo (${error.ciclo.map(nombre).join(' → ')})`
-      );
-    }
-    throw error;
-  }
 }
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -350,6 +295,18 @@ export async function desasociarConcepto(asociacionId: string) {
   });
   if (!asociacion) throw new Error('Asociación no encontrada');
   await assertPerfilPertenece(asociacion.costo_tipo_equipo_id, companyId);
+
+  // Sacar el concepto que le sirve de base a un porcentual deja el perfil irresoluble, y eso
+  // ya no se ve: la red de las lecturas lo degradaría a costo cero en silencio.
+  const quedan = await prisma.concepto_tipo_equipo.findMany({
+    where: { costo_tipo_equipo_id: asociacion.costo_tipo_equipo_id, id: { not: asociacionId } },
+    select: { concepto_equipo_id: true },
+  });
+  await assertPerfilResoluble(
+    companyId,
+    quedan.map((a) => a.concepto_equipo_id),
+    { verbo: 'desasociar' }
+  );
 
   await prisma.concepto_tipo_equipo.delete({ where: { id: asociacionId } });
   revalidatePath(TIPOS_PATH);

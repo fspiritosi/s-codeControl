@@ -13,6 +13,7 @@ import {
   derivarCodigo,
   describirCalculo,
 } from '@/modules/costos/shared/validators/concepto-equipo';
+import { assertPerfilesQueUsanElConcepto } from '@/modules/costos/shared/utils/conceptos-por-tipo';
 import { revalidatePath } from 'next/cache';
 import type { Prisma } from '@/generated/prisma/client';
 import { z } from 'zod';
@@ -287,25 +288,49 @@ export async function updateConcepto(id: string, input: Partial<ConceptoEquipoIn
   if (parsed.product_id) await assertProductoPertenece(parsed.product_id, companyId);
   if (parsed.indice_id) await assertIndicePertenece(parsed.indice_id, companyId);
 
+  const clase = parsed.clase ?? existente.clase;
+  const is_active = parsed.is_active ?? existente.is_active;
+
   await assertCatalogoResoluble(companyId, {
     id,
     codigo: existente.codigo,
-    clase: parsed.clase ?? existente.clase,
+    clase,
     clase_calculo,
     parametros,
   });
+
+  // El catálogo entero puede cerrar y un perfil concreto no: el motor resuelve por tipo. Volver
+  // PCT_CONCEPTO a un FIJO ya asociado, con una base que esos tipos no tienen asociada, pasa la
+  // validación del catálogo y deja esos perfiles resolviendo en cero. Por eso, si cambia lo que
+  // el concepto HACE, se revalida cada perfil que ya lo usa.
+  // `clase` entra en la cuenta porque una base VALOR_COMPRA_MAS_ACCESORIOS depende de todos los
+  // accesorios del tipo: mover un concepto de clase mueve el grafo de dependencias.
+  const cambiaLaResolucion =
+    clase_calculo !== existente.clase_calculo ||
+    parsed.parametros !== undefined ||
+    clase !== existente.clase ||
+    is_active !== existente.is_active;
+
+  if (cambiaLaResolucion) {
+    await assertPerfilesQueUsanElConcepto(companyId, id, {
+      clase,
+      clase_calculo,
+      parametros,
+      is_active,
+    });
+  }
 
   await prisma.concepto_equipo.update({
     where: { id },
     data: {
       nombre: parsed.nombre ?? existente.nombre,
-      clase: parsed.clase ?? existente.clase,
+      clase,
       clase_calculo,
       parametros: parametros as Prisma.InputJsonObject,
       product_id: parsed.product_id === undefined ? existente.product_id : parsed.product_id,
       indice_id: parsed.indice_id === undefined ? existente.indice_id : parsed.indice_id,
       orden: parsed.orden ?? existente.orden,
-      is_active: parsed.is_active ?? existente.is_active,
+      is_active,
     },
   });
 
