@@ -1,6 +1,8 @@
 import { Decimal } from './decimal';
 import { prisma } from '@/shared/lib/prisma';
-import { calcularCostoMensualEquipo, type ItemCostoTipoCalc } from './calcular-costo-equipo';
+import { calcularCostoMensualEquipo } from './calcular-costo-equipo';
+import type { ConceptoEquipoCalc } from './calcular-conceptos-equipo';
+import { conceptosPorTipoDeEmpresa } from './conceptos-por-tipo';
 import type { ResumenEquipos, ResumenEquiposVehiculo } from '../types/composicion.types';
 
 type Num = Decimal | string | number;
@@ -15,8 +17,10 @@ export type EquipoServicioCalc = {
   valor_compra: Num;
   valor_residual_pct: Num;
   anios_amortizacion: number;
-  /** Accesorios y mantenimiento heredados del tipo de equipo. */
-  items_tipo: ItemCostoTipoCalc[];
+  /** Kilómetros anuales de la unidad, base de los conceptos POR_KM. */
+  km_anuales: number;
+  /** Conceptos heredados del tipo de equipo, resueltos con los valores de ESTA unidad. */
+  conceptos: ConceptoEquipoCalc[];
 };
 
 export type EquipoServicioResultado = {
@@ -49,7 +53,8 @@ export function agregarEquipos(equipos: EquipoServicioCalc[]): {
         valor_compra: e.valor_compra,
         valor_residual_pct: e.valor_residual_pct,
         anios_amortizacion: e.anios_amortizacion,
-        items_tipo: e.items_tipo,
+        km_anuales: e.km_anuales,
+        conceptos: e.conceptos,
         afectacion_pct: e.afectacion_pct,
       });
     return {
@@ -70,7 +75,7 @@ export function agregarEquipos(equipos: EquipoServicioCalc[]): {
 }
 
 /**
- * Versión que consulta la DB (asignaciones de equipos del servicio + los ítems del
+ * Versión que consulta la DB (asignaciones de equipos del servicio + los conceptos del
  * tipo de cada equipo) y retorna el resumen client-safe (Decimal → number). Sólo
  * considera equipos activos con costo cargado.
  */
@@ -82,7 +87,7 @@ export async function calcularEquiposServicio(servicioId: string): Promise<Resum
 
   // Los perfiles por tipo se traen en una sola query y se resuelven con un Map, para
   // no disparar un include por vehículo (N+1).
-  const [asignaciones, perfiles] = await Promise.all([
+  const [asignaciones, conceptosPorTipo] = await Promise.all([
     prisma.asignacion_equipo_servicio.findMany({
       where: { servicio_id: servicioId, is_active: true },
       include: {
@@ -99,23 +104,9 @@ export async function calcularEquiposServicio(servicioId: string): Promise<Resum
       },
       orderBy: { vehicle: { intern_number: 'asc' } },
     }),
-    prisma.costo_tipo_equipo.findMany({
-      where: { company_id: servicio.company_id },
-      include: { items: { where: { is_active: true } } },
-    }),
+    // Los perfiles se resuelven con el company_id DEL SERVICIO, no con la cookie.
+    conceptosPorTipoDeEmpresa(servicio.company_id),
   ]);
-
-  const itemsPorTipo = new Map(
-    perfiles.map((p) => [
-      p.type_id,
-      p.items.map((i) => ({
-        clase: i.clase,
-        cantidad: i.cantidad.toString(),
-        precio_unitario: i.precio_unitario.toString(),
-        is_active: i.is_active,
-      })),
-    ])
-  );
 
   // Se excluye el equipo sin costo_equipo activo. Que su tipo no tenga perfil NO lo
   // excluye: amortiza igual, con accesorios y mantenimiento en cero.
@@ -137,7 +128,8 @@ export async function calcularEquiposServicio(servicioId: string): Promise<Resum
         valor_compra: c.valor_compra.toString(),
         valor_residual_pct: c.valor_residual_pct.toString(),
         anios_amortizacion: c.anios_amortizacion,
-        items_tipo: itemsPorTipo.get(a.vehicle.type) ?? [],
+        km_anuales: c.km_anuales,
+        conceptos: conceptosPorTipo.get(a.vehicle.type) ?? [],
       };
     })
   );

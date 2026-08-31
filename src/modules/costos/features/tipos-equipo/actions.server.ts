@@ -3,85 +3,22 @@
 import { prisma } from '@/shared/lib/prisma';
 import { getRequiredActionContext } from '@/shared/lib/server-action-context';
 import { assertModuloHabilitado } from '@/modules/costos/shared/utils/access';
-import { Decimal, toClientNumber } from '@/modules/costos/shared/utils/decimal';
-import { sumarItemsTipo } from '@/modules/costos/shared/utils/calcular-costo-equipo';
-import { resolverRefrescoPrecios } from '@/modules/costos/shared/utils/refresco-precios';
+import { Decimal } from '@/modules/costos/shared/utils/decimal';
+import { describirCalculo } from '@/modules/costos/shared/validators/concepto-equipo';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type {
+  ConceptoAsociadoClient,
   CostoTipoEquipoDetalle,
-  ItemCostoTipoClient,
-  ItemCostoTipoInput,
-  TipoEquipoResumen,
-} from '@/modules/costos/shared/types/tipo-equipo.types';
+  TipoCosteadoResumen,
+} from '@/modules/costos/shared/types/concepto.types';
 
 const TIPOS_PATH = '/dashboard/costos/tipos-equipo';
-// El costo mensual del listado de equipos se calcula con los ítems del tipo, así que
-// toda mutación de ítems acá invalida también esa pantalla.
+// El costo mensual del listado de equipos se calcula con los conceptos del tipo, así que
+// toda mutación de asociaciones acá invalida también esa pantalla.
 const EQUIPOS_PATH = '/dashboard/costos/equipos';
 
-// ─── Schemas ──────────────────────────────────────────────────────────────────
-
-const schemaItem = z.object({
-  clase: z.enum(['ACCESORIO', 'MANTENIMIENTO']),
-  nombre: z.string().min(1).max(200),
-  product_id: z.string().uuid().nullable().optional(),
-  cantidad: z.number().positive(),
-  precio_unitario: z.number().nonnegative(),
-  orden: z.number().int().nonnegative().default(0),
-  is_active: z.boolean().optional(),
-});
-
-// En el alta individual `orden` default a 0 tiene sentido. En el bulk, en cambio, el
-// default de Zod se aplicaría durante el parse y `i.orden ?? idx` nunca caería en el
-// índice del arreglo: todo ítem sin orden explícito quedaría en 0. Este schema deja
-// `orden` genuinamente opcional para que el fallback al índice funcione de verdad.
-const schemaItemBulk = schemaItem.omit({ orden: true }).extend({
-  orden: z.number().int().nonnegative().optional(),
-});
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-type ItemRow = {
-  id: string;
-  clase: 'ACCESORIO' | 'MANTENIMIENTO';
-  nombre: string;
-  product_id: string | null;
-  cantidad: { toString(): string };
-  precio_unitario: { toString(): string };
-  precio_actualizado_at: Date | null;
-  orden: number;
-  is_active: boolean;
-  product?: { code: string; name: string; company_id: string } | null;
-};
-
-function toItemClient(i: ItemRow, companyId: string): ItemCostoTipoClient {
-  const cantidad = toClientNumber(i.cantidad.toString());
-  const precio_unitario = toClientNumber(i.precio_unitario.toString());
-  // El subtotal se calcula en Decimal, no con aritmética de floats.
-  const subtotal = new Decimal(i.cantidad.toString())
-    .mul(new Decimal(i.precio_unitario.toString()))
-    .toDecimalPlaces(2)
-    .toNumber();
-  // Defensa en profundidad: aunque las mutaciones ya validan pertenencia antes de
-  // escribir, esta lectura no depende de esa invariante. Si el producto vinculado no
-  // es de esta empresa, se expone como si no estuviera vinculado.
-  const productoPropio = i.product && i.product.company_id === companyId ? i.product : null;
-  return {
-    id: i.id,
-    clase: i.clase,
-    nombre: i.nombre,
-    product_id: i.product_id,
-    product_code: productoPropio?.code ?? null,
-    product_name: productoPropio?.name ?? null,
-    cantidad,
-    precio_unitario,
-    subtotal,
-    precio_actualizado_at: i.precio_actualizado_at,
-    orden: i.orden,
-    is_active: i.is_active,
-  };
-}
 
 async function assertPerfilPertenece(perfilId: string, companyId: string) {
   const perfil = await prisma.costo_tipo_equipo.findFirst({
@@ -92,77 +29,110 @@ async function assertPerfilPertenece(perfilId: string, companyId: string) {
 }
 
 /**
- * Verifica que un product_id exista y pertenezca a la empresa antes de vincularlo a
- * un ítem. Es la primera línea de defensa contra vincular un ítem a un producto
- * ajeno; toItemClient agrega una segunda al leer, por si esta invariante llegara a
- * romperse por otra vía de escritura.
+ * Suma el valor de los conceptos FIJO de una clase: cantidad × precio_unitario, todo en
+ * Decimal. Los porcentuales y los POR_KM no entran acá: dependen de cada unidad.
  */
-async function assertProductoPertenece(productId: string, companyId: string) {
-  const producto = await prisma.products.findFirst({
-    where: { id: productId, company_id: companyId },
-    select: { id: true },
-  });
-  if (!producto) throw new Error('Producto no encontrado o sin acceso');
+function sumarFijos(
+  conceptos: {
+    clase: 'ACCESORIO' | 'MANTENIMIENTO';
+    clase_calculo: string;
+    parametros: unknown;
+  }[],
+  clase: 'ACCESORIO' | 'MANTENIMIENTO'
+): Decimal {
+  return conceptos
+    .filter((c) => c.clase_calculo === 'FIJO' && c.clase === clase)
+    .reduce((acc, c) => {
+      const par = (c.parametros ?? {}) as Record<string, unknown>;
+      return acc.add(
+        new Decimal(String(par.cantidad ?? 0)).mul(new Decimal(String(par.precio_unitario ?? 0)))
+      );
+    }, new Decimal(0));
 }
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
-export async function listTiposEquipoConCosto(): Promise<TipoEquipoResumen[]> {
+/** Sólo los tipos que la empresa decidió costear. */
+export async function listTiposCosteados(): Promise<TipoCosteadoResumen[]> {
   const { companyId } = await getRequiredActionContext();
   await assertModuloHabilitado(companyId);
 
-  // type.company_id es nullable: hay tipos globales que usan varias empresas. El
-  // listado incluye los tipos propios MÁS los globales que los vehículos de esta
-  // empresa efectivamente usan; si no, esos equipos no tendrían dónde cargar sus ítems.
-  const conteos = await prisma.vehicles.groupBy({
-    by: ['type'],
-    where: { company_id: companyId },
-    _count: { _all: true },
-  });
-
-  const [tipos, perfiles] = await Promise.all([
-    prisma.type.findMany({
-      where: {
-        is_active: true,
-        OR: [{ company_id: companyId }, { id: { in: conteos.map((c) => c.type) } }],
+  const [perfiles, conteos] = await Promise.all([
+    prisma.costo_tipo_equipo.findMany({
+      where: { company_id: companyId },
+      include: {
+        tipo: { select: { id: true, name: true } },
+        conceptos: { where: { is_active: true }, include: { concepto: true } },
       },
-      select: { id: true, name: true },
-      orderBy: { name: 'asc' },
+    }),
+    prisma.vehicles.groupBy({
+      by: ['type'],
+      where: { company_id: companyId },
+      _count: { _all: true },
+    }),
+  ]);
+  const equiposPorTipo = new Map(conteos.map((c) => [c.type, c._count._all]));
+
+  return perfiles
+    .map((p) => {
+      const activos = p.conceptos.map((a) => a.concepto).filter((c) => c.is_active);
+
+      return {
+        type_id: p.type_id,
+        perfil_id: p.id,
+        nombre: p.tipo.name,
+        equipos_count: equiposPorTipo.get(p.type_id) ?? 0,
+        accesorios_count: activos.filter((c) => c.clase === 'ACCESORIO').length,
+        mantenimiento_count: activos.filter((c) => c.clase === 'MANTENIMIENTO').length,
+        total_fijo_accesorios: sumarFijos(activos, 'ACCESORIO').toDecimalPlaces(2).toNumber(),
+        total_fijo_mantenimiento: sumarFijos(activos, 'MANTENIMIENTO').toDecimalPlaces(2).toNumber(),
+        conceptos_variables: activos.filter((c) => c.clase_calculo !== 'FIJO').length,
+      };
+    })
+    .sort((a, b) => a.nombre.localeCompare(b.nombre));
+}
+
+/** Tipos de la empresa que todavía no tienen costo creado, para el selector de alta. */
+export async function listTiposDisponibles(): Promise<
+  { id: string; nombre: string; equipos: number }[]
+> {
+  const { companyId } = await getRequiredActionContext();
+  await assertModuloHabilitado(companyId);
+
+  const [conteos, perfiles] = await Promise.all([
+    prisma.vehicles.groupBy({
+      by: ['type'],
+      where: { company_id: companyId },
+      _count: { _all: true },
     }),
     prisma.costo_tipo_equipo.findMany({
       where: { company_id: companyId },
-      include: { items: { where: { is_active: true } } },
+      select: { type_id: true },
     }),
   ]);
+  const yaCosteados = new Set(perfiles.map((p) => p.type_id));
 
-  const perfilPorTipo = new Map(perfiles.map((p) => [p.type_id, p]));
-  const equiposPorTipo = new Map(conteos.map((c) => [c.type, c._count._all]));
-
-  return tipos.map((t) => {
-    const perfil = perfilPorTipo.get(t.id);
-    const items = perfil?.items ?? [];
-    const { accesorios, mantenimiento_anual } = sumarItemsTipo(
-      items.map((i) => ({
-        clase: i.clase,
-        cantidad: i.cantidad.toString(),
-        precio_unitario: i.precio_unitario.toString(),
-        is_active: i.is_active,
-      }))
-    );
-
-    return {
-      type_id: t.id,
-      nombre: t.name,
-      perfil_id: perfil?.id ?? null,
-      equipos_count: equiposPorTipo.get(t.id) ?? 0,
-      accesorios_count: items.filter((i) => i.clase === 'ACCESORIO').length,
-      mantenimiento_count: items.filter((i) => i.clase === 'MANTENIMIENTO').length,
-      total_accesorios: accesorios.toDecimalPlaces(2).toNumber(),
-      mantenimiento_anual: mantenimiento_anual.toDecimalPlaces(2).toNumber(),
-    };
+  // type.company_id es nullable: hay tipos globales que usan varias empresas. El selector
+  // ofrece los tipos propios MÁS los globales que los vehículos de esta empresa usan.
+  const tipos = await prisma.type.findMany({
+    where: {
+      is_active: true,
+      id: { notIn: [...yaCosteados] },
+      OR: [{ company_id: companyId }, { id: { in: conteos.map((c) => c.type) } }],
+    },
+    select: { id: true, name: true },
+    orderBy: { name: 'asc' },
   });
+
+  const equiposPorTipo = new Map(conteos.map((c) => [c.type, c._count._all]));
+  return tipos.map((t) => ({
+    id: t.id,
+    nombre: t.name,
+    equipos: equiposPorTipo.get(t.id) ?? 0,
+  }));
 }
 
+/** Detalle del perfil de un tipo. Devuelve null si el tipo no existe o no está costeado. */
 export async function getCostoTipoEquipo(typeId: string): Promise<CostoTipoEquipoDetalle | null> {
   const { companyId } = await getRequiredActionContext();
   await assertModuloHabilitado(companyId);
@@ -178,43 +148,72 @@ export async function getCostoTipoEquipo(typeId: string): Promise<CostoTipoEquip
     prisma.costo_tipo_equipo.findUnique({
       where: { company_id_type_id: { company_id: companyId, type_id: typeId } },
       include: {
-        items: {
-          orderBy: [{ clase: 'asc' }, { orden: 'asc' }],
-          include: { product: { select: { code: true, name: true, company_id: true } } },
+        conceptos: {
+          where: { is_active: true },
+          orderBy: { orden: 'asc' },
+          include: {
+            concepto: {
+              include: {
+                product: { select: { code: true, company_id: true } },
+                indice: { select: { nombre: true } },
+                _count: { select: { tipos: true } },
+              },
+            },
+          },
         },
       },
     }),
     prisma.vehicles.count({ where: { company_id: companyId, type: typeId } }),
   ]);
+  if (!perfil) return null;
 
-  // La suma va sobre los valores crudos de Prisma (strings), no sobre los numbers ya
-  // redondeados de toItemClient: si no, el total arrastra el error de redondeo por ítem.
-  const { accesorios, mantenimiento_anual } = sumarItemsTipo(
-    (perfil?.items ?? []).map((i) => ({
-      clase: i.clase,
-      cantidad: i.cantidad.toString(),
-      precio_unitario: i.precio_unitario.toString(),
-      is_active: i.is_active,
-    }))
-  );
-  const items = (perfil?.items ?? []).map((i) => toItemClient(i, companyId));
+  const conceptosClient: ConceptoAsociadoClient[] = perfil.conceptos.map((a) => {
+    const c = a.concepto;
+    const parametros = (c.parametros ?? {}) as Record<string, unknown>;
+    // Defensa en profundidad: si el producto vinculado no es de esta empresa, se expone
+    // como si no estuviera vinculado.
+    const productoPropio = c.product && c.product.company_id === companyId ? c.product : null;
+    return {
+      id: c.id,
+      asociacion_id: a.id,
+      codigo: c.codigo,
+      nombre: c.nombre,
+      clase: c.clase,
+      clase_calculo: c.clase_calculo,
+      parametros,
+      descripcion_calculo: describirCalculo(c.clase_calculo, parametros),
+      product_id: c.product_id,
+      product_code: productoPropio?.code ?? null,
+      indice_id: c.indice_id,
+      indice_nombre: c.indice?.nombre ?? null,
+      precio_actualizado_at: c.precio_actualizado_at,
+      orden: c.orden,
+      is_active: c.is_active,
+      usado_en_tipos: c._count.tipos,
+    };
+  });
+
+  // Los totales fijos van sobre los parámetros crudos, en Decimal, y sólo sobre los
+  // conceptos activos: así el total no arrastra el redondeo por concepto.
+  const activos = perfil.conceptos.map((a) => a.concepto).filter((c) => c.is_active);
 
   return {
     type_id: tipo.id,
     nombre: tipo.name,
-    perfil_id: perfil?.id ?? null,
+    perfil_id: perfil.id,
     equipos_count,
-    accesorios: items.filter((i) => i.clase === 'ACCESORIO'),
-    mantenimiento: items.filter((i) => i.clase === 'MANTENIMIENTO'),
-    total_accesorios: accesorios.toDecimalPlaces(2).toNumber(),
-    mantenimiento_anual: mantenimiento_anual.toDecimalPlaces(2).toNumber(),
+    accesorios: conceptosClient.filter((c) => c.clase === 'ACCESORIO'),
+    mantenimiento: conceptosClient.filter((c) => c.clase === 'MANTENIMIENTO'),
+    total_fijo_accesorios: sumarFijos(activos, 'ACCESORIO').toDecimalPlaces(2).toNumber(),
+    total_fijo_mantenimiento: sumarFijos(activos, 'MANTENIMIENTO').toDecimalPlaces(2).toNumber(),
+    conceptos_variables: conceptosClient.filter((c) => c.clase_calculo !== 'FIJO').length,
   };
 }
 
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
-/** Crea el perfil del tipo si todavía no existe. Devuelve su id. */
-export async function ensureCostoTipoEquipo(typeId: string): Promise<string> {
+/** Crea el perfil del tipo y le asocia los conceptos elegidos. */
+export async function crearCostoTipoEquipo(typeId: string, conceptoIds: string[]): Promise<string> {
   const { companyId } = await getRequiredActionContext();
   await assertModuloHabilitado(companyId);
 
@@ -224,165 +223,82 @@ export async function ensureCostoTipoEquipo(typeId: string): Promise<string> {
   });
   if (!tipo) throw new Error('Tipo de equipo no encontrado o sin acceso');
 
+  const ids = z.array(z.string().uuid()).parse(conceptoIds);
+  if (ids.length > 0) {
+    const propios = await prisma.concepto_equipo.count({
+      where: { id: { in: ids }, company_id: companyId },
+    });
+    if (propios !== new Set(ids).size)
+      throw new Error('Algún concepto no existe o no es de la empresa');
+  }
+
   const perfil = await prisma.costo_tipo_equipo.upsert({
     where: { company_id_type_id: { company_id: companyId, type_id: typeId } },
     create: { company_id: companyId, type_id: typeId },
     update: {},
   });
+
+  if (ids.length > 0) {
+    await prisma.concepto_tipo_equipo.createMany({
+      data: ids.map((conceptoId, idx) => ({
+        costo_tipo_equipo_id: perfil.id,
+        concepto_equipo_id: conceptoId,
+        orden: idx,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  revalidatePath(TIPOS_PATH);
+  revalidatePath(EQUIPOS_PATH);
   return perfil.id;
 }
 
-export async function addItemCostoTipo(perfilId: string, input: ItemCostoTipoInput) {
+export async function asociarConcepto(perfilId: string, conceptoId: string) {
   const { companyId } = await getRequiredActionContext();
   await assertModuloHabilitado(companyId);
   await assertPerfilPertenece(perfilId, companyId);
-  const parsed = schemaItem.parse(input);
-  if (parsed.product_id) {
-    await assertProductoPertenece(parsed.product_id, companyId);
-  }
 
-  const item = await prisma.item_costo_tipo.create({
-    data: {
-      costo_tipo_equipo_id: perfilId,
-      ...parsed,
-      product_id: parsed.product_id ?? null,
-      precio_actualizado_at: parsed.product_id ? new Date() : null,
-    },
+  const concepto = await prisma.concepto_equipo.findFirst({
+    where: { id: conceptoId, company_id: companyId },
+    select: { id: true },
+  });
+  if (!concepto) throw new Error('Concepto no encontrado o sin acceso');
+
+  const cuantos = await prisma.concepto_tipo_equipo.count({
+    where: { costo_tipo_equipo_id: perfilId },
+  });
+
+  await prisma.concepto_tipo_equipo.create({
+    data: { costo_tipo_equipo_id: perfilId, concepto_equipo_id: conceptoId, orden: cuantos },
   });
   revalidatePath(TIPOS_PATH);
   revalidatePath(EQUIPOS_PATH);
-  return item.id;
 }
 
-export async function updateItemCostoTipo(id: string, input: Partial<ItemCostoTipoInput>) {
+export async function desasociarConcepto(asociacionId: string) {
   const { companyId } = await getRequiredActionContext();
   await assertModuloHabilitado(companyId);
 
-  const existing = await prisma.item_costo_tipo.findUnique({
-    where: { id },
+  const asociacion = await prisma.concepto_tipo_equipo.findUnique({
+    where: { id: asociacionId },
     select: { costo_tipo_equipo_id: true },
   });
-  if (!existing) throw new Error('Ítem no encontrado');
-  await assertPerfilPertenece(existing.costo_tipo_equipo_id, companyId);
+  if (!asociacion) throw new Error('Asociación no encontrada');
+  await assertPerfilPertenece(asociacion.costo_tipo_equipo_id, companyId);
 
-  const parsed = schemaItem.partial().parse(input);
-  if (parsed.product_id) {
-    await assertProductoPertenece(parsed.product_id, companyId);
-  }
-  await prisma.item_costo_tipo.update({ where: { id }, data: parsed });
+  await prisma.concepto_tipo_equipo.delete({ where: { id: asociacionId } });
   revalidatePath(TIPOS_PATH);
   revalidatePath(EQUIPOS_PATH);
 }
 
-export async function deleteItemCostoTipo(id: string) {
-  const { companyId } = await getRequiredActionContext();
-  await assertModuloHabilitado(companyId);
-
-  const existing = await prisma.item_costo_tipo.findUnique({
-    where: { id },
-    select: { costo_tipo_equipo_id: true },
-  });
-  if (!existing) throw new Error('Ítem no encontrado');
-  await assertPerfilPertenece(existing.costo_tipo_equipo_id, companyId);
-
-  await prisma.item_costo_tipo.delete({ where: { id } });
-  revalidatePath(TIPOS_PATH);
-  revalidatePath(EQUIPOS_PATH);
-}
-
-/** Carga masiva de ítems (dialog de importación). Retorna la cantidad insertada. */
-export async function bulkAddItemsCostoTipo(
-  perfilId: string,
-  items: ItemCostoTipoInput[]
-): Promise<number> {
+/** Deshace la decisión de costear un tipo. Borra el perfil y sus asociaciones. */
+export async function eliminarCostoTipoEquipo(perfilId: string) {
   const { companyId } = await getRequiredActionContext();
   await assertModuloHabilitado(companyId);
   await assertPerfilPertenece(perfilId, companyId);
 
-  const parsed = z.array(schemaItemBulk).min(1).parse(items);
-
-  // Un producto ajeno vinculado en el lote no debe poder escribirse: una sola query
-  // para todos los product_id del lote, comparando cantidad esperada vs. encontrada.
-  const productIds = Array.from(
-    new Set(parsed.map((i) => i.product_id).filter((id): id is string => !!id))
-  );
-  if (productIds.length > 0) {
-    const encontrados = await prisma.products.count({
-      where: { id: { in: productIds }, company_id: companyId },
-    });
-    if (encontrados !== productIds.length) {
-      throw new Error('Producto no encontrado o sin acceso');
-    }
-  }
-
-  const result = await prisma.item_costo_tipo.createMany({
-    data: parsed.map((i, idx) => ({
-      costo_tipo_equipo_id: perfilId,
-      clase: i.clase,
-      nombre: i.nombre,
-      product_id: i.product_id ?? null,
-      cantidad: i.cantidad,
-      precio_unitario: i.precio_unitario,
-      orden: i.orden ?? idx,
-      is_active: i.is_active ?? true,
-    })),
-  });
+  await prisma.costo_tipo_equipo.delete({ where: { id: perfilId } });
   revalidatePath(TIPOS_PATH);
   revalidatePath(EQUIPOS_PATH);
-  return result.count;
-}
-
-/**
- * Refresca el precio de los ítems vinculados a almacén desde products.cost_price.
- * No toca nombre ni cantidad. Devuelve cuántos cambiaron y el delta total en el valor
- * de los ítems. Ojo: ese delta no es anual, porque mezcla accesorios (base amortizable)
- * con mantenimiento (anual); quien lo muestre no debe rotularlo con una unidad.
- */
-export async function refrescarPreciosDesdeAlmacen(
-  perfilId: string
-): Promise<{ actualizados: number; delta_total: number }> {
-  const { companyId } = await getRequiredActionContext();
-  await assertModuloHabilitado(companyId);
-  await assertPerfilPertenece(perfilId, companyId);
-
-  const items = await prisma.item_costo_tipo.findMany({
-    where: { costo_tipo_equipo_id: perfilId, product_id: { not: null } },
-    select: { id: true, product_id: true, cantidad: true, precio_unitario: true },
-  });
-  if (items.length === 0) return { actualizados: 0, delta_total: 0 };
-
-  const productos = await prisma.products.findMany({
-    where: { id: { in: items.map((i) => i.product_id!) }, company_id: companyId },
-    select: { id: true, cost_price: true },
-  });
-  const precios = new Map(productos.map((p) => [p.id, p.cost_price.toString()]));
-
-  const { actualizados, delta_total } = resolverRefrescoPrecios(
-    items.map((i) => ({
-      id: i.id,
-      product_id: i.product_id,
-      cantidad: i.cantidad.toString(),
-      precio_unitario: i.precio_unitario.toString(),
-    })),
-    precios
-  );
-
-  if (actualizados.length > 0) {
-    const ahora = new Date();
-    await prisma.$transaction(
-      actualizados.map((a) =>
-        prisma.item_costo_tipo.update({
-          where: { id: a.id },
-          data: { precio_unitario: a.precio_unitario.toFixed(2), precio_actualizado_at: ahora },
-        })
-      )
-    );
-    revalidatePath(TIPOS_PATH);
-    revalidatePath(EQUIPOS_PATH);
-  }
-
-  return {
-    actualizados: actualizados.length,
-    delta_total: delta_total.toDecimalPlaces(2).toNumber(),
-  };
 }

@@ -1,4 +1,5 @@
 import type { costo_equipo } from '@/generated/prisma/client';
+import type { ClaseItemCosto } from '@/modules/costos/shared/utils/calcular-costo-equipo';
 
 // ─── Inputs (formularios / mutaciones) ────────────────────────────────────────
 
@@ -31,6 +32,16 @@ export type VehiculoResumen = {
   anio: string;
 };
 
+/** Un concepto del tipo ya resuelto para una unidad concreta, con su importe. */
+export type ConceptoResueltoClient = {
+  codigo: string;
+  nombre: string;
+  clase: ClaseItemCosto;
+  /** Texto legible de cómo se calcula, resuelto en el servidor. */
+  descripcion_calculo: string;
+  importe: number;
+};
+
 /** Fila de la tabla principal de equipos. `costo_mensual` con afectación 100%. */
 export type VehiculoConCosto = VehiculoResumen & {
   tiene_costo: boolean;
@@ -38,6 +49,6 @@ export type VehiculoConCosto = VehiculoResumen & {
   costo_mensual: number | null;
   /** Accesorios heredados del tipo de equipo. */
   accesorios_total: number | null;
-  /** Ítems (accesorios + mantenimiento) que aporta el tipo de equipo. */
+  /** Conceptos (accesorios + mantenimiento) que aporta el tipo de equipo. */
   items_count: number;
 };

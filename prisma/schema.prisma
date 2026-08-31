@@ -416,13 +416,13 @@ model company {
   withdrawal_orders           withdrawal_orders[]
 
   // Tesorería
-  cash_registers         cash_registers[]
-  cash_register_sessions cash_register_sessions[]
-  cash_movements         cash_movements[]
-  bank_accounts          bank_accounts[]
-  bank_movements         bank_movements[]
-  checks                 checks[]
-  payment_orders         payment_orders[]
+  cash_registers               cash_registers[]
+  cash_register_sessions       cash_register_sessions[]
+  cash_movements               cash_movements[]
+  bank_accounts                bank_accounts[]
+  bank_movements               bank_movements[]
+  checks                       checks[]
+  payment_orders               payment_orders[]
   supplier_credit_applications supplier_credit_applications[]
   credit_note_applications     credit_note_applications[]
 
@@ -456,6 +456,7 @@ model company {
   costos_tipo_equipo    costo_tipo_equipo[]
   servicios_contrato    servicio_contrato[]
   liquidaciones_sueldos liquidacion_sueldo[]
+  conceptos_equipo      concepto_equipo[]
 
   // VTV
   vtv_appointments vtv_appointments[]
@@ -817,20 +818,20 @@ model documents_equipment {
 }
 
 model vtv_appointments {
-  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  company_id            String                 @db.Uuid
-  vehicle_id            String                 @db.Uuid
-  document_equipment_id String?                @db.Uuid
-  appointment_date      DateTime               @db.Date
-  document_validity     DateTime?              @db.Date
-  status                vtv_appointment_status @default(pendiente)
-  has_verification_order       Boolean         @default(false)
-  has_verification_appointment Boolean         @default(false)
-  notes                 String?
-  created_by            String?
-  is_active             Boolean                @default(true)
-  created_at            DateTime               @default(now()) @db.Timestamptz
-  updated_at            DateTime               @default(now()) @db.Timestamptz
+  id                           String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id                   String                 @db.Uuid
+  vehicle_id                   String                 @db.Uuid
+  document_equipment_id        String?                @db.Uuid
+  appointment_date             DateTime               @db.Date
+  document_validity            DateTime?              @db.Date
+  status                       vtv_appointment_status @default(pendiente)
+  has_verification_order       Boolean                @default(false)
+  has_verification_appointment Boolean                @default(false)
+  notes                        String?
+  created_by                   String?
+  is_active                    Boolean                @default(true)
+  created_at                   DateTime               @default(now()) @db.Timestamptz
+  updated_at                   DateTime               @default(now()) @db.Timestamptz
 
   company             company              @relation(fields: [company_id], references: [id], onDelete: Cascade)
   vehicle             vehicles             @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
@@ -1927,7 +1928,7 @@ model products {
   receiving_note_lines   receiving_note_lines[]
   withdrawal_order_lines withdrawal_order_lines[]
   sales_invoice_lines    sales_invoice_lines[]
-  items_costo_tipo       item_costo_tipo[]
+  conceptos_equipo       concepto_equipo[]
 
   @@unique([company_id, code])
 }
@@ -1962,15 +1963,15 @@ model suppliers {
   created_at        DateTime               @default(now()) @db.Timestamptz
   updated_at        DateTime               @default(now()) @updatedAt @db.Timestamptz
 
-  company           company                    @relation(fields: [company_id], references: [id])
-  purchase_orders   purchase_orders[]
-  purchase_invoices purchase_invoices[]
-  receiving_notes   receiving_notes[]
-  payment_orders    payment_orders[]
-  checks            checks[]
-  payment_methods   supplier_payment_methods[]
-  expenses          expenses[]
-  credit_applications supplier_credit_applications[]
+  company                  company                        @relation(fields: [company_id], references: [id])
+  purchase_orders          purchase_orders[]
+  purchase_invoices        purchase_invoices[]
+  receiving_notes          receiving_notes[]
+  payment_orders           payment_orders[]
+  checks                   checks[]
+  payment_methods          supplier_payment_methods[]
+  expenses                 expenses[]
+  credit_applications      supplier_credit_applications[]
   credit_note_applications credit_note_applications[]
 
   @@unique([company_id, code])
@@ -2260,23 +2261,23 @@ model purchase_invoices {
   created_at            DateTime                          @default(now()) @db.Timestamptz
   updated_at            DateTime                          @default(now()) @updatedAt @db.Timestamptz
 
-  company             company                          @relation(fields: [company_id], references: [id])
-  supplier            suppliers                        @relation(fields: [supplier_id], references: [id])
-  purchase_order      purchase_orders?                 @relation(fields: [purchase_order_id], references: [id])
-  original_invoice    purchase_invoices?               @relation("purchase_invoice_credit_notes", fields: [original_invoice_id], references: [id])
-  credit_notes        purchase_invoices[]              @relation("purchase_invoice_credit_notes")
-  lines               purchase_invoice_lines[]
-  installments        purchase_order_installments[]
-  receiving_notes     receiving_notes[]
-  payment_order_items payment_order_items[]
-  cash_movements      cash_movements[]
-  perceptions         purchase_invoice_perceptions[]
-  other_charges_items purchase_invoice_other_charges[]
-  credit_applications supplier_credit_applications[]
+  company                           company                          @relation(fields: [company_id], references: [id])
+  supplier                          suppliers                        @relation(fields: [supplier_id], references: [id])
+  purchase_order                    purchase_orders?                 @relation(fields: [purchase_order_id], references: [id])
+  original_invoice                  purchase_invoices?               @relation("purchase_invoice_credit_notes", fields: [original_invoice_id], references: [id])
+  credit_notes                      purchase_invoices[]              @relation("purchase_invoice_credit_notes")
+  lines                             purchase_invoice_lines[]
+  installments                      purchase_order_installments[]
+  receiving_notes                   receiving_notes[]
+  payment_order_items               payment_order_items[]
+  cash_movements                    cash_movements[]
+  perceptions                       purchase_invoice_perceptions[]
+  other_charges_items               purchase_invoice_other_charges[]
+  credit_applications               supplier_credit_applications[]
   /// Imputaciones EN LAS QUE ESTA NC ES EL ORIGEN del crédito (TKT-586).
-  credit_note_applications_made     credit_note_applications[] @relation("credit_note_applications_note")
+  credit_note_applications_made     credit_note_applications[]       @relation("credit_note_applications_note")
   /// Imputaciones de NC RECIBIDAS por esta factura (TKT-586).
-  credit_note_applications_received credit_note_applications[] @relation("credit_note_applications_invoice")
+  credit_note_applications_received credit_note_applications[]       @relation("credit_note_applications_invoice")
 
   @@unique([company_id, supplier_id, full_number])
   @@index([purchase_order_id])
@@ -2669,13 +2670,13 @@ model payment_orders {
   created_at             DateTime             @default(now()) @db.Timestamptz
   updated_at             DateTime             @default(now()) @updatedAt @db.Timestamptz
 
-  company        company                    @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  supplier       suppliers?                 @relation(fields: [supplier_id], references: [id])
-  items          payment_order_items[]
-  payments       payment_order_payments[]
-  bank_movements bank_movements[]
-  cash_movements cash_movements[]
-  retentions     payment_order_retentions[]
+  company             company                    @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  supplier            suppliers?                 @relation(fields: [supplier_id], references: [id])
+  items               payment_order_items[]
+  payments            payment_order_payments[]
+  bank_movements      bank_movements[]
+  cash_movements      cash_movements[]
+  retentions          payment_order_retentions[]
   credit_applications credit_note_applications[]
 
   @@unique([company_id, number])
@@ -2778,24 +2779,24 @@ model retention_certificate_sequences {
 }
 
 model payment_order_items {
-  id               String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  payment_order_id String  @db.Uuid
-  invoice_id       String? @db.Uuid
-  expense_id       String? @db.Uuid
+  id                       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payment_order_id         String  @db.Uuid
+  invoice_id               String? @db.Uuid
+  expense_id               String? @db.Uuid
   /// Importe imputado EN LA MONEDA DEL COMPROBANTE. Es lo que hace que el saldo
   /// de una factura en dólares cierre contra su propio total, sin depender de
   /// ningún tipo de cambio al leer (tsk-576).
-  amount           Decimal @db.Decimal(15, 2)
+  amount                   Decimal @db.Decimal(15, 2)
   /// Moneda del comprobante imputado. Gastos y pagos a cuenta van siempre en ARS.
-  currency         String  @default("ARS")
+  currency                 String  @default("ARS")
   /// Tipo de cambio aplicado a este ítem, tomado de la factura (snapshot).
-  exchange_rate    Decimal @default(1) @db.Decimal(15, 4)
+  exchange_rate            Decimal @default(1) @db.Decimal(15, 4)
   /// `amount` convertido a la moneda de la OP. Es lo que suma para total_amount
   /// y lo que cuadra contra los pagos.
   amount_in_order_currency Decimal @db.Decimal(15, 2)
-  discount_pct     Decimal @default(0) @db.Decimal(5, 2)
+  discount_pct             Decimal @default(0) @db.Decimal(5, 2)
   /// Pago a cuenta: ítem sin comprobante que genera saldo a favor del proveedor.
-  is_on_account    Boolean @default(false)
+  is_on_account            Boolean @default(false)
 
   payment_order payment_orders     @relation(fields: [payment_order_id], references: [id], onDelete: Cascade)
   invoice       purchase_invoices? @relation(fields: [invoice_id], references: [id])
@@ -3116,8 +3117,9 @@ model indices {
   created_at DateTime @default(now()) @db.Timestamptz
   updated_at DateTime @default(now()) @updatedAt @db.Timestamptz
 
-  company company        @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  values  index_values[]
+  company          company           @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  values           index_values[]
+  conceptos_equipo concepto_equipo[]
 
   @@unique([company_id, nombre])
   @@index([company_id])
@@ -3152,31 +3154,66 @@ model costo_tipo_equipo {
   type_id    String   @db.Uuid
   is_active  Boolean  @default(true)
 
-  company company           @relation(fields: [company_id], references: [id])
-  tipo    type              @relation(fields: [type_id], references: [id])
-  items   item_costo_tipo[]
+  company   company                @relation(fields: [company_id], references: [id])
+  tipo      type                   @relation(fields: [type_id], references: [id])
+  conceptos concepto_tipo_equipo[]
 
   @@unique([company_id, type_id])
 }
 
-/// Accesorio o ítem de mantenimiento de un tipo de equipo.
-/// `cantidad` es "por unidad de equipo" en ACCESORIO y "por año" en MANTENIMIENTO.
-model item_costo_tipo {
-  id                    String           @id @default(uuid()) @db.Uuid
-  costo_tipo_equipo_id  String           @db.Uuid
-  clase                 clase_item_costo
+enum clase_calculo_concepto_equipo {
+  FIJO
+  PCT_VALOR_EQUIPO
+  PCT_CONCEPTO
+  PCT_SUMA_CONCEPTOS
+  POR_KM
+}
+
+enum base_valor_equipo {
+  VALOR_COMPRA
+  VALOR_COMPRA_MAS_ACCESORIOS
+  VALOR_RESIDUAL
+}
+
+/// Catálogo de conceptos de costo de la empresa. Un concepto porcentual guarda la regla;
+/// el importe se resuelve por equipo, con los valores de cada unidad.
+model concepto_equipo {
+  id                    String                        @id @default(uuid()) @db.Uuid
+  created_at            DateTime                      @default(now()) @db.Timestamptz(6)
+  company_id            String                        @db.Uuid
+  codigo                String
   nombre                String
-  product_id            String?          @db.Uuid
-  cantidad              Decimal          @default(1) @db.Decimal(12, 3)
-  precio_unitario       Decimal          @db.Decimal(15, 2)
-  precio_actualizado_at DateTime?        @db.Timestamptz(6)
-  orden                 Int              @default(0)
-  is_active             Boolean          @default(true)
+  clase                 clase_item_costo
+  clase_calculo         clase_calculo_concepto_equipo
+  parametros            Json
+  product_id            String?                       @db.Uuid
+  indice_id             String?                       @db.Uuid
+  precio_actualizado_at DateTime?                     @db.Timestamptz(6)
+  orden                 Int                           @default(0)
+  is_active             Boolean                       @default(true)
+
+  company company                @relation(fields: [company_id], references: [id])
+  product products?              @relation(fields: [product_id], references: [id])
+  indice  indices?               @relation(fields: [indice_id], references: [id])
+  tipos   concepto_tipo_equipo[]
+
+  @@unique([company_id, codigo])
+  @@index([company_id])
+}
+
+/// Qué conceptos usa el perfil de costo de un tipo de equipo.
+model concepto_tipo_equipo {
+  id                   String  @id @default(uuid()) @db.Uuid
+  costo_tipo_equipo_id String  @db.Uuid
+  concepto_equipo_id   String  @db.Uuid
+  orden                Int     @default(0)
+  is_active            Boolean @default(true)
 
   costo_tipo costo_tipo_equipo @relation(fields: [costo_tipo_equipo_id], references: [id], onDelete: Cascade)
-  product    products?         @relation(fields: [product_id], references: [id])
+  concepto   concepto_equipo   @relation(fields: [concepto_equipo_id], references: [id])
 
-  @@index([costo_tipo_equipo_id, clase])
+  @@unique([costo_tipo_equipo_id, concepto_equipo_id])
+  @@index([costo_tipo_equipo_id])
 }
 
 // Servicio/contrato: agrupador maestro de todos los módulos de costo
@@ -3647,8 +3684,8 @@ model receipts {
   created_at   DateTime       @default(now()) @db.Timestamptz
   updated_at   DateTime       @default(now()) @updatedAt @db.Timestamptz
 
-  company      company               @relation(fields: [company_id], references: [id])
-  customer     customers             @relation(fields: [customer_id], references: [id])
+  company      company                @relation(fields: [company_id], references: [id])
+  customer     customers              @relation(fields: [customer_id], references: [id])
   items        receipt_items[]
   payments     receipt_payments[]
   withholdings receipt_withholdings[]

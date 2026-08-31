@@ -1,26 +1,30 @@
 import { describe, it, expect } from 'vitest';
 import {
-  sumarItemsTipo,
   calcularCostoMensualEquipo,
-  type ItemCostoTipoCalc,
+  type CostoEquipoCalcInput,
 } from './calcular-costo-equipo';
+import type { ConceptoEquipoCalc } from './calcular-conceptos-equipo';
 import { calcularAmortizacionMensual } from './calcular-amortizacion';
 
 // ─── Fixture golden: IVECO BUS 170S28 NICCOLO 44+1 (interno 112, PECOM/RDLS-BDT, Jun 2025) ───
 // Transcrito de la planilla del cliente (composicion-pecom-*.xls, hoja "Equipos").
 // Valor de compra 319.325.000 · residual 35% · 5 años · accesorios 4.498.739.
-const mant = (precio_unitario: string): ItemCostoTipoCalc => ({
+let seq = 0;
+const mant = (precio_unitario: string): ConceptoEquipoCalc => ({
+  codigo: `m${seq++}`,
   clase: 'MANTENIMIENTO',
-  cantidad: 1,
-  precio_unitario,
+  clase_calculo: 'FIJO',
+  parametros: { cantidad: 1, precio_unitario },
 });
 
 const PECOM_112 = {
   valor_compra: '319325000',
   valor_residual_pct: '0.35',
   anios_amortizacion: 5,
-  items_tipo: [
-    { clase: 'ACCESORIO', cantidad: 1, precio_unitario: '4498739' } as ItemCostoTipoCalc,
+  km_anuales: 0,
+  conceptos: [
+    { codigo: 'acc', clase: 'ACCESORIO', clase_calculo: 'FIJO',
+      parametros: { cantidad: 1, precio_unitario: '4498739' } } as ConceptoEquipoCalc,
     mant('5428525'),   // Patentes
     mant('1680000'),   // Seguros
     mant('1780000'),   // VTV / Habilitaciones 2 x año
@@ -56,36 +60,6 @@ const PECOM_112 = {
   ],
 };
 
-describe('sumarItemsTipo', () => {
-  it('separa accesorios de mantenimiento y multiplica cantidad por precio', () => {
-    const items: ItemCostoTipoCalc[] = [
-      { clase: 'ACCESORIO', cantidad: 2, precio_unitario: '150000' },
-      { clase: 'MANTENIMIENTO', cantidad: 6, precio_unitario: '860000' },
-    ];
-    const { accesorios, mantenimiento_anual } = sumarItemsTipo(items);
-    expect(accesorios.toNumber()).toBe(300000);
-    expect(mantenimiento_anual.toNumber()).toBe(5160000);
-  });
-
-  it('excluye los ítems inactivos de ambas clases', () => {
-    const items: ItemCostoTipoCalc[] = [
-      { clase: 'ACCESORIO', cantidad: 1, precio_unitario: '100000', is_active: false },
-      { clase: 'ACCESORIO', cantidad: 1, precio_unitario: '50000', is_active: true },
-      { clase: 'MANTENIMIENTO', cantidad: 1, precio_unitario: '999999', is_active: false },
-      { clase: 'MANTENIMIENTO', cantidad: 1, precio_unitario: '120000' },
-    ];
-    const { accesorios, mantenimiento_anual } = sumarItemsTipo(items);
-    expect(accesorios.toNumber()).toBe(50000);
-    expect(mantenimiento_anual.toNumber()).toBe(120000);
-  });
-
-  it('devuelve ceros con lista vacía', () => {
-    const { accesorios, mantenimiento_anual } = sumarItemsTipo([]);
-    expect(accesorios.toNumber()).toBe(0);
-    expect(mantenimiento_anual.toNumber()).toBe(0);
-  });
-});
-
 describe('calcularCostoMensualEquipo', () => {
   it('golden — IVECO 170S28 interno 112 (PECOM) → $7.794.945,28', () => {
     const r = calcularCostoMensualEquipo({ ...PECOM_112, afectacion_pct: 1 });
@@ -104,13 +78,18 @@ describe('calcularCostoMensualEquipo', () => {
       valor_compra: '1000000',
       valor_residual_pct: '0.35',
       anios_amortizacion: 5,
-      items_tipo: [],
+      km_anuales: 0,
+      conceptos: [],
     });
     const conAccesorio = calcularCostoMensualEquipo({
       valor_compra: '1000000',
       valor_residual_pct: '0.35',
       anios_amortizacion: 5,
-      items_tipo: [{ clase: 'ACCESORIO', cantidad: 2, precio_unitario: '100000' }],
+      km_anuales: 0,
+      conceptos: [
+        { codigo: 'acc', clase: 'ACCESORIO', clase_calculo: 'FIJO',
+          parametros: { cantidad: 2, precio_unitario: '100000' } },
+      ],
     });
     // (1.000.000 − 35%) / 60 = 10.833,33 ; con 200.000 de accesorios: 850.000 / 60 = 14.166,67
     expect(sinAccesorio.amortizacion_mensual.toDecimalPlaces(2).toNumber()).toBe(10833.33);
@@ -118,12 +97,13 @@ describe('calcularCostoMensualEquipo', () => {
     expect(conAccesorio.mantenimiento_mensual.toNumber()).toBe(0);
   });
 
-  it('sin ítems del tipo, amortiza igual con accesorios y mantenimiento en cero', () => {
+  it('sin conceptos del tipo, amortiza igual con accesorios y mantenimiento en cero', () => {
     const r = calcularCostoMensualEquipo({
       valor_compra: '1000000',
       valor_residual_pct: '0.35',
       anios_amortizacion: 5,
-      items_tipo: [],
+      km_anuales: 0,
+      conceptos: [],
     });
     expect(r.accesorios_total.toNumber()).toBe(0);
     expect(r.mantenimiento_mensual.toNumber()).toBe(0);
@@ -134,6 +114,24 @@ describe('calcularCostoMensualEquipo', () => {
     const full = calcularCostoMensualEquipo({ ...PECOM_112, afectacion_pct: 1 }).costo_mensual;
     const half = calcularCostoMensualEquipo({ ...PECOM_112, afectacion_pct: '0.5' }).costo_mensual;
     expect(half.toDecimalPlaces(6).toNumber()).toBe(full.div(2).toDecimalPlaces(6).toNumber());
+  });
+
+  it('un concepto porcentual da distinto importe según el valor de compra de la unidad', () => {
+    const conceptos: ConceptoEquipoCalc[] = [
+      { codigo: 'patentes', clase: 'MANTENIMIENTO', clase_calculo: 'PCT_VALOR_EQUIPO',
+        parametros: { pct: '0.17', base: 'VALOR_COMPRA' } },
+    ];
+    const caro = calcularCostoMensualEquipo({
+      valor_compra: '247625000', valor_residual_pct: '0.35', anios_amortizacion: 5,
+      km_anuales: 0, conceptos,
+    });
+    const barato = calcularCostoMensualEquipo({
+      valor_compra: '32000000', valor_residual_pct: '0.35', anios_amortizacion: 5,
+      km_anuales: 0, conceptos,
+    });
+    // 17% de cada valor de compra, prorrateado a mes
+    expect(caro.mantenimiento_mensual.toDecimalPlaces(2).toNumber()).toBe(3508020.83);
+    expect(barato.mantenimiento_mensual.toDecimalPlaces(2).toNumber()).toBe(453333.33);
   });
 });
 

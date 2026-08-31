@@ -14,7 +14,7 @@ async function DetalleContent({ vehicleId }: { vehicleId: string }) {
   const detalle = await getEquipoParaEdicion(vehicleId);
   if (!detalle) return notFound();
 
-  const { vehiculo, costo, tipo, items_tipo_count, accesorios_total, mantenimiento_mensual, resumen } =
+  const { vehiculo, costo, tipo, accesorios_total, mantenimiento_mensual, conceptos_resueltos, resumen } =
     detalle;
 
   return (
@@ -47,7 +47,7 @@ async function DetalleContent({ vehicleId }: { vehicleId: string }) {
         tipo={tipo}
         accesorios_total={accesorios_total}
         mantenimiento_mensual={mantenimiento_mensual}
-        items_tipo_count={items_tipo_count}
+        conceptos_resueltos={conceptos_resueltos}
       />
     </div>
   );

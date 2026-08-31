@@ -3,8 +3,11 @@
 import { prisma } from '@/shared/lib/prisma';
 import { getRequiredActionContext } from '@/shared/lib/server-action-context';
 import { assertModuloHabilitado } from '@/modules/costos/shared/utils/access';
-import { toClientNumber } from '@/modules/costos/shared/utils/decimal';
+import { Decimal, toClientNumber } from '@/modules/costos/shared/utils/decimal';
 import { calcularCostoMensualEquipo } from '@/modules/costos/shared/utils/calcular-costo-equipo';
+import type { ConceptoEquipoCalc } from '@/modules/costos/shared/utils/calcular-conceptos-equipo';
+import { describirCalculo } from '@/modules/costos/shared/validators/concepto-equipo';
+import { conceptosPorTipoDeEmpresa } from '@/modules/costos/shared/utils/conceptos-por-tipo';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type {
@@ -12,6 +15,7 @@ import type {
   VehiculoResumen,
   CostoEquipoClient,
   CostoEquipoInput,
+  ConceptoResueltoClient,
 } from '@/modules/costos/shared/types/equipo.types';
 
 const EQUIPOS_PATH = '/dashboard/costos/equipos';
@@ -39,44 +43,32 @@ function nombreVehiculo(v: {
   };
 }
 
-type ItemTipoCalcRow = {
-  clase: 'ACCESORIO' | 'MANTENIMIENTO';
-  cantidad: string;
-  precio_unitario: string;
-  is_active: boolean;
-};
-
-/** Ítems por tipo de toda la empresa, en un solo query, para evitar el N+1. */
-async function itemsPorTipoDeEmpresa(companyId: string): Promise<Map<string, ItemTipoCalcRow[]>> {
-  const perfiles = await prisma.costo_tipo_equipo.findMany({
-    where: { company_id: companyId },
-    include: { items: { where: { is_active: true } } },
-  });
-  return new Map(
-    perfiles.map((p) => [
-      p.type_id,
-      p.items.map((i) => ({
-        clase: i.clase,
-        cantidad: i.cantidad.toString(),
-        precio_unitario: i.precio_unitario.toString(),
-        is_active: i.is_active,
-      })),
-    ])
-  );
-}
-
-/** Ítems activos del tipo de un solo equipo. */
-async function itemsDelTipo(companyId: string, typeId: string): Promise<ItemTipoCalcRow[]> {
+/**
+ * Conceptos activos del tipo de un solo equipo, en una query, con el nombre de cada uno:
+ * el desglose de la pantalla de edición necesita mostrarlos por nombre, y el motor sólo
+ * trabaja con códigos.
+ */
+async function conceptosDelTipo(
+  companyId: string,
+  typeId: string
+): Promise<{ conceptos: ConceptoEquipoCalc[]; nombrePorCodigo: Map<string, string> }> {
   const perfil = await prisma.costo_tipo_equipo.findUnique({
     where: { company_id_type_id: { company_id: companyId, type_id: typeId } },
-    include: { items: { where: { is_active: true } } },
+    include: {
+      conceptos: { where: { is_active: true }, orderBy: { orden: 'asc' }, include: { concepto: true } },
+    },
   });
-  return (perfil?.items ?? []).map((i) => ({
-    clase: i.clase,
-    cantidad: i.cantidad.toString(),
-    precio_unitario: i.precio_unitario.toString(),
-    is_active: i.is_active,
-  }));
+  const activos = (perfil?.conceptos ?? []).map((a) => a.concepto).filter((c) => c.is_active);
+
+  return {
+    conceptos: activos.map((c) => ({
+      codigo: c.codigo,
+      clase: c.clase,
+      clase_calculo: c.clase_calculo,
+      parametros: (c.parametros ?? {}) as Record<string, unknown>,
+    })),
+    nombrePorCodigo: new Map(activos.map((c) => [c.codigo, c.nombre])),
+  };
 }
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -85,7 +77,7 @@ export async function listVehiculosConCosto(): Promise<VehiculoConCosto[]> {
   const { companyId } = await getRequiredActionContext();
   await assertModuloHabilitado(companyId);
 
-  const [vehiculos, itemsPorTipo] = await Promise.all([
+  const [vehiculos, conceptosPorTipo] = await Promise.all([
     prisma.vehicles.findMany({
       where: { company_id: companyId },
       include: {
@@ -95,7 +87,7 @@ export async function listVehiculosConCosto(): Promise<VehiculoConCosto[]> {
       },
       orderBy: { intern_number: 'asc' },
     }),
-    itemsPorTipoDeEmpresa(companyId),
+    conceptosPorTipoDeEmpresa(companyId),
   ]);
 
   return vehiculos.map((v) => {
@@ -109,7 +101,8 @@ export async function listVehiculosConCosto(): Promise<VehiculoConCosto[]> {
         valor_compra: ce.valor_compra.toString(),
         valor_residual_pct: ce.valor_residual_pct.toString(),
         anios_amortizacion: ce.anios_amortizacion,
-        items_tipo: itemsPorTipo.get(v.type) ?? [],
+        km_anuales: ce.km_anuales,
+        conceptos: conceptosPorTipo.get(v.type) ?? [],
         afectacion_pct: 1,
       });
       costo_mensual = r.costo_mensual.toDecimalPlaces(2).toNumber();
@@ -127,7 +120,7 @@ export async function listVehiculosConCosto(): Promise<VehiculoConCosto[]> {
       valor_compra: ce ? toClientNumber(ce.valor_compra) : null,
       costo_mensual,
       accesorios_total,
-      items_count: (itemsPorTipo.get(v.type) ?? []).length,
+      items_count: (conceptosPorTipo.get(v.type) ?? []).length,
     };
   });
 }
@@ -148,6 +141,8 @@ export async function getEquipoParaEdicion(vehicleId: string): Promise<{
   items_tipo_count: number;
   accesorios_total: number;
   mantenimiento_mensual: number;
+  /** Desglose por concepto ya resuelto para ESTA unidad: es donde el 17% se vuelve un número. */
+  conceptos_resueltos: ConceptoResueltoClient[];
   resumen: { amortizacion_mensual: number; costo_mensual: number } | null;
 } | null> {
   const { companyId } = await getRequiredActionContext();
@@ -174,19 +169,25 @@ export async function getEquipoParaEdicion(vehicleId: string): Promise<{
     anio: v.year,
   };
 
-  const items_tipo = await itemsDelTipo(companyId, v.type);
+  const { conceptos, nombrePorCodigo } = await conceptosDelTipo(companyId, v.type);
   const tipo = { id: v.type, nombre: v.type_rel.name };
   const ce = v.costo_equipo;
 
-  // Sin costo cargado el equipo no amortiza, pero los ítems del tipo se muestran igual.
-  const { accesorios_total, amortizacion_mensual, mantenimiento_mensual, costo_mensual } =
-    calcularCostoMensualEquipo({
-      valor_compra: ce ? ce.valor_compra.toString() : 0,
-      valor_residual_pct: ce ? ce.valor_residual_pct.toString() : 0,
-      anios_amortizacion: ce ? ce.anios_amortizacion : 0,
-      items_tipo,
-      afectacion_pct: 1,
-    });
+  // Sin costo cargado el equipo no amortiza, pero los conceptos del tipo se muestran igual.
+  const {
+    accesorios_total,
+    amortizacion_mensual,
+    mantenimiento_mensual,
+    costo_mensual,
+    por_concepto,
+  } = calcularCostoMensualEquipo({
+    valor_compra: ce ? ce.valor_compra.toString() : 0,
+    valor_residual_pct: ce ? ce.valor_residual_pct.toString() : 0,
+    anios_amortizacion: ce ? ce.anios_amortizacion : 0,
+    km_anuales: ce ? ce.km_anuales : 0,
+    conceptos,
+    afectacion_pct: 1,
+  });
 
   return {
     vehiculo,
@@ -198,9 +199,16 @@ export async function getEquipoParaEdicion(vehicleId: string): Promise<{
         }
       : null,
     tipo,
-    items_tipo_count: items_tipo.length,
+    items_tipo_count: conceptos.length,
     accesorios_total: accesorios_total.toDecimalPlaces(2).toNumber(),
     mantenimiento_mensual: mantenimiento_mensual.toDecimalPlaces(2).toNumber(),
+    conceptos_resueltos: conceptos.map((c) => ({
+      codigo: c.codigo,
+      nombre: nombrePorCodigo.get(c.codigo) ?? c.codigo,
+      clase: c.clase,
+      descripcion_calculo: describirCalculo(c.clase_calculo, c.parametros),
+      importe: (por_concepto.get(c.codigo) ?? new Decimal(0)).toDecimalPlaces(2).toNumber(),
+    })),
     resumen: ce
       ? {
           amortizacion_mensual: amortizacion_mensual.toDecimalPlaces(2).toNumber(),
