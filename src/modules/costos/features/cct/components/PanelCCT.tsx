@@ -20,16 +20,16 @@ export default async function PanelCCT({ cctId }: Props) {
     : activos[0];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <Card className="p-4">
+      <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold">Configurador de CCT</h2>
+          <h2 className="text-l font-semibold">Configurador de CCT</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Administrá los convenios colectivos, categorías y conceptos de liquidación.
           </p>
         </div>
         <FormNuevoCCT />
-      </div>
+      </CardHeader>
 
       {ccTs.length === 0 ? (
         <Card>
@@ -41,7 +41,7 @@ export default async function PanelCCT({ cctId }: Props) {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Lista de CCTs */}
           <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide px-1">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide px-1 py-1">
               Convenios
             </p>
             {ccTs.map((cct) => (
@@ -75,10 +75,10 @@ export default async function PanelCCT({ cctId }: Props) {
 
           {/* Panel derecho */}
           {seleccionado ? (
-            <div className="lg:col-span-3 space-y-4">
+              <Card className="lg:col-span-3 space-y-4 ">
               <SelectorParitaria cct={seleccionado} />
               <Tabs defaultValue="categorias">
-                <TabsList>
+                <TabsList className="bg-white">
                   <TabsTrigger value="categorias">Categorías</TabsTrigger>
                   <TabsTrigger value="conceptos">Conceptos</TabsTrigger>
                   <TabsTrigger value="valores">Valores × Categoría</TabsTrigger>
@@ -93,7 +93,7 @@ export default async function PanelCCT({ cctId }: Props) {
                   <TabValoresPorCategoria cct={seleccionado} />
                 </TabsContent>
               </Tabs>
-            </div>
+            </Card>
           ) : (
             <div className="lg:col-span-3 flex items-center justify-center text-muted-foreground">
               Seleccioná un CCT para ver sus detalles.
@@ -101,6 +101,6 @@ export default async function PanelCCT({ cctId }: Props) {
           )}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

@@ -37,7 +37,7 @@ export default async function PurchasingPage({
 
         <UrlTabsContent value="orders">
           {currentTab === 'orders' && (
-            <Card>
+            <Card >
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle>Órdenes de compra</CardTitle>
