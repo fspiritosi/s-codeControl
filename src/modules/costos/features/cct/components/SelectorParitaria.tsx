@@ -46,8 +46,8 @@ export function SelectorParitaria({ cct }: Props) {
   }
 
   return (
-    <div className="flex items-center justify-between border rounded-lg px-4 py-2 bg-muted/30">
-      <div>
+    <div className="flex items-center justify-between border rounded-lg px-4 py-2 ">
+      <div className='flex gap-4 items-center'>
         <p className="text-sm font-medium">
           {cct.cct_codigo} — {cct.cct_nombre}
         </p>

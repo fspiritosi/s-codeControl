@@ -361,7 +361,7 @@ export async function getProductsByCompany() {
 
   return prisma.products.findMany({
     where: { company_id: { in: scope.visibleCompanyIds }, status: 'ACTIVE' },
-    select: { id: true, code: true, name: true, unit_of_measure: true, cost_price: true, vat_rate: true, track_stock: true },
+    select: { id: true, company_id: true, code: true, name: true, unit_of_measure: true, cost_price: true, vat_rate: true, track_stock: true },
     orderBy: { name: 'asc' },
   });
 }
