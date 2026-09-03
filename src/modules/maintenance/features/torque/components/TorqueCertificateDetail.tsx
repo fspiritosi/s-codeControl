@@ -12,7 +12,14 @@ import { formatDateUTC } from '@/shared/lib/utils/formatters';
 import { useLoggedUserStore } from '@/shared/store/loggedUser';
 import type { getTorqueCertificateById } from '../actions.server';
 import { getTorqueSpecsByBrand } from '../actions.server';
-import { checkLabel, SHEET_FORMATS, TORQUE_CHECK_ITEMS, type TorqueCheckKey } from '../shared/torque-spec';
+import {
+  checkLabel,
+  isNutCount,
+  SHEET_FORMATS,
+  TORQUE_CHECK_ITEMS,
+  TORQUE_SEQUENCE_DIAGRAMS,
+  type TorqueCheckKey,
+} from '../shared/torque-spec';
 import { TorqueCertificateLayout, type TorqueCertificatePdfData } from './pdf/TorqueCertificateLayout';
 
 /**
@@ -70,6 +77,7 @@ export function TorqueCertificateDetail({ certificate }: { certificate: TorqueCe
         const pdfData: TorqueCertificatePdfData = {
           fullNumber: certificate.full_number,
           sheetFormat: certificate.sheet_format,
+          nutCount: certificate.nut_count,
           date: new Date(certificate.date).toISOString().slice(0, 10),
           driverName: certificate.driver_name,
           mechanicName: certificate.mechanic_name,
@@ -187,6 +195,20 @@ export function TorqueCertificateDetail({ certificate }: { certificate: TorqueCe
           <CardTitle>Secuencia de apriete</CardTitle>
           <CardDescription>Los 8 checks de apriete.</CardDescription>
         </CardHeader>
+        {/* Los certificados emitidos antes del selector no tienen secuencia
+            elegida: se reimprimen con el diagrama de las tres juntas. */}
+        {isNutCount(certificate.nut_count) && (
+          <CardContent className="flex items-center gap-4 pb-0">
+            <Field label="Secuencia" value={`${certificate.nut_count} tuercas`} />
+            <div className="rounded-md border bg-white p-2">
+              <img
+                src={TORQUE_SEQUENCE_DIAGRAMS[certificate.nut_count]}
+                alt={`Secuencia de apriete de ${certificate.nut_count} tuercas`}
+                className="h-20 w-auto object-contain"
+              />
+            </div>
+          </CardContent>
+        )}
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {tighteningItems.map((item) => {
             const check = checksByKey.get(item.key);

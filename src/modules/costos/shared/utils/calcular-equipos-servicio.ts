@@ -1,6 +1,8 @@
 import { Decimal } from './decimal';
 import { prisma } from '@/shared/lib/prisma';
-import { calcularCostoMensualEquipo, type ItemMantCalc } from './calcular-mantenimiento';
+import { calcularCostoMensualEquipo } from './calcular-costo-equipo';
+import type { ConceptoEquipoCalc } from './calcular-conceptos-equipo';
+import { conceptosPorTipoDeEmpresa } from './conceptos-por-tipo';
 import type { ResumenEquipos, ResumenEquiposVehiculo } from '../types/composicion.types';
 
 type Num = Decimal | string | number;
@@ -15,8 +17,10 @@ export type EquipoServicioCalc = {
   valor_compra: Num;
   valor_residual_pct: Num;
   anios_amortizacion: number;
-  accesorios?: Num;
-  items: ItemMantCalc[];
+  /** Kilómetros anuales de la unidad, base de los conceptos POR_KM. */
+  km_anuales: number;
+  /** Conceptos heredados del tipo de equipo, resueltos con los valores de ESTA unidad. */
+  conceptos: ConceptoEquipoCalc[];
 };
 
 export type EquipoServicioResultado = {
@@ -25,6 +29,7 @@ export type EquipoServicioResultado = {
   interno: string;
   descripcion: string;
   afectacion_pct: Decimal;
+  accesorios_total: Decimal;
   amortizacion_mensual: Decimal;
   mantenimiento_mensual: Decimal;
   costo_mensual: Decimal; // ya afectado
@@ -43,20 +48,22 @@ export function agregarEquipos(equipos: EquipoServicioCalc[]): {
   total_equipos: Decimal;
 } {
   const por_vehiculo = equipos.map((e): EquipoServicioResultado => {
-    const { amortizacion_mensual, mantenimiento_mensual, costo_mensual } = calcularCostoMensualEquipo({
-      valor_compra: e.valor_compra,
-      valor_residual_pct: e.valor_residual_pct,
-      anios_amortizacion: e.anios_amortizacion,
-      accesorios: e.accesorios ?? 0,
-      items: e.items,
-      afectacion_pct: e.afectacion_pct,
-    });
+    const { accesorios_total, amortizacion_mensual, mantenimiento_mensual, costo_mensual } =
+      calcularCostoMensualEquipo({
+        valor_compra: e.valor_compra,
+        valor_residual_pct: e.valor_residual_pct,
+        anios_amortizacion: e.anios_amortizacion,
+        km_anuales: e.km_anuales,
+        conceptos: e.conceptos,
+        afectacion_pct: e.afectacion_pct,
+      });
     return {
       asignacion_id: e.asignacion_id,
       vehicle_id: e.vehicle_id,
       interno: e.interno,
       descripcion: e.descripcion,
       afectacion_pct: new Decimal(e.afectacion_pct),
+      accesorios_total,
       amortizacion_mensual,
       mantenimiento_mensual,
       costo_mensual,
@@ -68,29 +75,41 @@ export function agregarEquipos(equipos: EquipoServicioCalc[]): {
 }
 
 /**
- * Versión que consulta la DB (asignaciones de equipos del servicio + su costo)
- * y retorna el resumen client-safe (Decimal → number). Sólo considera equipos
- * activos con costo cargado.
+ * Versión que consulta la DB (asignaciones de equipos del servicio + los conceptos del
+ * tipo de cada equipo) y retorna el resumen client-safe (Decimal → number). Sólo
+ * considera equipos activos con costo cargado.
  */
 export async function calcularEquiposServicio(servicioId: string): Promise<ResumenEquipos> {
-  const asignaciones = await prisma.asignacion_equipo_servicio.findMany({
-    where: { servicio_id: servicioId, is_active: true },
-    include: {
-      vehicle: {
-        select: {
-          intern_number: true,
-          domain: true,
-          brand_rel: { select: { name: true } },
-          model_rel: { select: { name: true } },
-          costo_equipo: {
-            include: { items_mantenimiento: { where: { is_active: true } } },
+  const servicio = await prisma.servicio_contrato.findUniqueOrThrow({
+    where: { id: servicioId },
+    select: { company_id: true },
+  });
+
+  // Los perfiles por tipo se traen en una sola query y se resuelven con un Map, para
+  // no disparar un include por vehículo (N+1).
+  const [asignaciones, conceptosPorTipo] = await Promise.all([
+    prisma.asignacion_equipo_servicio.findMany({
+      where: { servicio_id: servicioId, is_active: true },
+      include: {
+        vehicle: {
+          select: {
+            intern_number: true,
+            domain: true,
+            type: true,
+            brand_rel: { select: { name: true } },
+            model_rel: { select: { name: true } },
+            costo_equipo: true,
           },
         },
       },
-    },
-    orderBy: { vehicle: { intern_number: 'asc' } },
-  });
+      orderBy: { vehicle: { intern_number: 'asc' } },
+    }),
+    // Los perfiles se resuelven con el company_id DEL SERVICIO, no con la cookie.
+    conceptosPorTipoDeEmpresa(servicio.company_id),
+  ]);
 
+  // Se excluye el equipo sin costo_equipo activo. Que su tipo no tenga perfil NO lo
+  // excluye: amortiza igual, con accesorios y mantenimiento en cero.
   const conCosto = asignaciones.filter((a) => a.vehicle.costo_equipo && a.vehicle.costo_equipo.is_active);
 
   const { por_vehiculo, total_equipos } = agregarEquipos(
@@ -109,8 +128,8 @@ export async function calcularEquiposServicio(servicioId: string): Promise<Resum
         valor_compra: c.valor_compra.toString(),
         valor_residual_pct: c.valor_residual_pct.toString(),
         anios_amortizacion: c.anios_amortizacion,
-        accesorios: c.accesorios.toString(),
-        items: c.items_mantenimiento.map((i) => ({ precio_anual: i.precio_anual.toString(), is_active: i.is_active })),
+        km_anuales: c.km_anuales,
+        conceptos: conceptosPorTipo.get(a.vehicle.type) ?? [],
       };
     })
   );
