@@ -3787,6 +3787,11 @@ model torque_certificates {
   full_number           String
   vehicle_id            String                @db.Uuid
   sheet_format          torque_sheet_format
+  /// Cantidad de tuercas de la rueda (6, 8 o 10): elige el diagrama de
+  /// secuencia de apriete que imprime el PDF. Nullable solo por los
+  /// certificados emitidos antes del selector, que se reimprimen con el
+  /// diagrama de las tres secuencias juntas.
+  nut_count             Int?
   date                  DateTime              @db.Date
   driver_name           String
   mechanic_name         String

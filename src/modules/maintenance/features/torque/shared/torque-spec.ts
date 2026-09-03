@@ -56,6 +56,19 @@ export const SHEET_FORMATS = [
 
 export type SheetFormat = (typeof SHEET_FORMATS)[number]['value'];
 
+/**
+ * Cantidad de tuercas de la rueda. Es lo único que define qué secuencia de
+ * apriete corresponde, así que se elige en el formulario y no se deriva del
+ * formato de hoja: un colectivo y una camioneta pueden llevar la misma.
+ */
+export const NUT_COUNTS = [6, 8, 10] as const;
+
+export type NutCount = (typeof NUT_COUNTS)[number];
+
+export function isNutCount(value: unknown): value is NutCount {
+  return NUT_COUNTS.includes(value as NutCount);
+}
+
 export function checkLabel(key: string): string {
   return TORQUE_CHECK_ITEMS.find((i) => i.key === key)?.label ?? key;
 }
@@ -83,8 +96,28 @@ export function formatTorqueRange(spec: {
  * navegador (`pdf(...).toBlob()`), así que resuelven contra el mismo host y no
  * pasan por CORS. Si algún día el certificado se generase en el servidor,
  * habría que absolutizarlas.
+ *
+ * `diagram` es el recorte del papel con las tres secuencias juntas: quedó
+ * solo como fallback de los certificados emitidos antes del selector de
+ * secuencia (ver `sequenceDiagramSrc`).
  */
 export const TORQUE_SHEET_ASSETS: Record<SheetFormat, { diagram: string; photos: string }> = {
   LIGHT: { diagram: '/torque/secuencia-light.png', photos: '/torque/ruedas-light.png' },
   BUS: { diagram: '/torque/secuencia-bus.png', photos: '/torque/ruedas-bus.png' },
 };
+
+/** Diagrama de la secuencia de apriete de cada cantidad de tuercas. */
+export const TORQUE_SEQUENCE_DIAGRAMS: Record<NutCount, string> = {
+  6: '/torque/secuencia-6.png',
+  8: '/torque/secuencia-8.png',
+  10: '/torque/secuencia-10.png',
+};
+
+/**
+ * Imagen de la sección 4 del PDF. Con `nutCount` elegido imprime solo esa
+ * secuencia; sin él (certificados anteriores al selector) cae al recorte del
+ * papel con las tres, para que una reimpresión salga igual que el original.
+ */
+export function sequenceDiagramSrc(nutCount: number | null | undefined, sheetFormat: SheetFormat): string {
+  return isNutCount(nutCount) ? TORQUE_SEQUENCE_DIAGRAMS[nutCount] : TORQUE_SHEET_ASSETS[sheetFormat].diagram;
+}
