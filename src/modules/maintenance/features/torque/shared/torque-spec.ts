@@ -71,3 +71,20 @@ export function formatTorqueRange(spec: {
   if (spec.ftlb_min == null || spec.ftlb_max == null) return nm;
   return `${nm} (${spec.ftlb_min}-${spec.ftlb_max} ft-lbs)`;
 }
+
+/**
+ * Juego de imágenes de cada hoja: el diagrama de secuencia de apriete
+ * (sección 4) y la silueta del vehículo que lo acompaña. Son los recortes de
+ * los dos formularios en papel, servidos como assets estáticos desde
+ * `public/torque/` — no cambian por empresa ni por vehículo, así que no tiene
+ * sentido guardarlos en storage.
+ *
+ * Las rutas son relativas al origen a propósito: el PDF se arma en el
+ * navegador (`pdf(...).toBlob()`), así que resuelven contra el mismo host y no
+ * pasan por CORS. Si algún día el certificado se generase en el servidor,
+ * habría que absolutizarlas.
+ */
+export const TORQUE_SHEET_ASSETS: Record<SheetFormat, { diagram: string; photos: string }> = {
+  LIGHT: { diagram: '/torque/secuencia-light.png', photos: '/torque/ruedas-light.png' },
+  BUS: { diagram: '/torque/secuencia-bus.png', photos: '/torque/ruedas-bus.png' },
+};

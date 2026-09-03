@@ -7,6 +7,7 @@ import {
   computePurchaseOutstanding,
 } from '@/shared/lib/purchase-invoice-balance';
 import { getAppliedCreditByInvoice } from '@/shared/lib/purchase-invoice-status';
+import { BASE_CURRENCY, convertAmount } from '@/shared/lib/currency-conversion';
 
 async function ensureSupplierInCompany(supplierId: string, companyId: string) {
   const supplier = await prisma.suppliers.findFirst({
@@ -17,6 +18,8 @@ async function ensureSupplierInCompany(supplierId: string, companyId: string) {
 }
 
 export interface InvoicesSummary {
+  /** Todos los importes en pesos: lo emitido en dólares va convertido al TC del
+   *  comprobante. */
   totalDebt: number;
   totalAmount: number;
   /** Facturas (no NC) con saldo > 0. No se deriva del estado: lo hace del saldo. */
@@ -25,6 +28,9 @@ export interface InvoicesSummary {
   unappliedCredit: number;
   countByStatus: Record<string, number>;
   total: number;
+  /** Hay comprobantes en moneda extranjera: la UI aclara que los totales están
+   *  convertidos. */
+  hasForeignCurrency: boolean;
 }
 
 export interface PurchaseOrdersSummary {
@@ -51,6 +57,8 @@ export interface PaymentOrdersSummary {
   paidUnallocated: number;
   countByStatus: Record<string, number>;
   total: number;
+  /** Hay órdenes en moneda extranjera: los totales van convertidos a pesos. */
+  hasForeignCurrency: boolean;
 }
 
 export interface ExpensesSummary {
@@ -88,6 +96,10 @@ export async function getSupplierInvoices(supplierId: string) {
         total: true,
         status: true,
         original_invoice_id: true,
+        // La cuenta corriente mezcla comprobantes en pesos y en dólares: sin la
+        // moneda y su TC los totales suman peras con manzanas.
+        currency: true,
+        exchange_rate: true,
       },
       orderBy: { issue_date: 'desc' },
     }),
@@ -157,6 +169,8 @@ export async function getSupplierInvoices(supplierId: string) {
       total: Number(inv.total),
       status: inv.status as string,
       original_invoice_id: inv.original_invoice_id,
+      currency: inv.currency ?? 'ARS',
+      exchange_rate: Number(inv.exchange_rate ?? 1),
     })),
     paidByInvoice,
     { appliedByNote, creditNotesByInvoice, onAccountByInvoice, targetsByNote }
@@ -281,6 +295,10 @@ export async function getSupplierPaymentOrders(supplierId: string) {
       scheduled_payment_date: true,
       total_amount: true,
       status: true,
+      // Una OP puede estar en dólares (tsk-576): sin esto los totales de la
+      // sección sumarían dólares y pesos como si fueran lo mismo.
+      currency: true,
+      exchange_rate: true,
       items: {
         select: { amount: true, invoice_id: true, expense_id: true, is_on_account: true },
       },
@@ -299,12 +317,23 @@ export async function getSupplierPaymentOrders(supplierId: string) {
       else if (item.expense_id) toExpenses += amount;
     }
     const total = Number(po.total_amount);
+    const currency = po.currency ?? BASE_CURRENCY;
+    const exchange_rate = Number(po.exchange_rate ?? 1);
     return {
       id: po.id,
       full_number: po.full_number,
       date: po.date,
       scheduled_payment_date: po.scheduled_payment_date,
       total_amount: total,
+      currency,
+      exchange_rate,
+      /** `total_amount` convertido a pesos con el TC de la orden. */
+      total_in_base: convertAmount({
+        amount: total,
+        from: currency,
+        to: BASE_CURRENCY,
+        rate: exchange_rate,
+      }),
       applied_to_invoices: Math.round(toInvoices * 100) / 100,
       applied_to_expenses: Math.round(toExpenses * 100) / 100,
       on_account: Math.round(onAccount * 100) / 100,
@@ -320,16 +349,22 @@ export async function getSupplierPaymentOrders(supplierId: string) {
   let paidToExpenses = 0;
   let paidOnAccount = 0;
   let paidUnallocated = 0;
+  let hasForeignCurrency = false;
   for (const r of rows) {
     countByStatus[r.status] = (countByStatus[r.status] ?? 0) + 1;
+    if (r.currency !== BASE_CURRENCY) hasForeignCurrency = true;
+    // Los desgloses salen de los ítems, que están en la moneda de la orden:
+    // se convierten con el mismo TC que el total.
+    const toBase = (amount: number) =>
+      convertAmount({ amount, from: r.currency, to: BASE_CURRENCY, rate: r.exchange_rate });
     if (r.status === 'PAID') {
-      totalPaid += r.total_amount;
-      paidToInvoices += r.applied_to_invoices;
-      paidToExpenses += r.applied_to_expenses;
-      paidOnAccount += r.on_account;
-      paidUnallocated += r.unallocated;
+      totalPaid += r.total_in_base;
+      paidToInvoices += toBase(r.applied_to_invoices);
+      paidToExpenses += toBase(r.applied_to_expenses);
+      paidOnAccount += toBase(r.on_account);
+      paidUnallocated += toBase(r.unallocated);
     } else if (r.status === 'CONFIRMED' || r.status === 'DRAFT') {
-      totalScheduled += r.total_amount;
+      totalScheduled += r.total_in_base;
     }
   }
 
@@ -343,6 +378,7 @@ export async function getSupplierPaymentOrders(supplierId: string) {
     paidUnallocated: r2(paidUnallocated),
     countByStatus,
     total: rows.length,
+    hasForeignCurrency,
   };
 
   return { rows, summary };

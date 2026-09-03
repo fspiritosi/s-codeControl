@@ -2,7 +2,13 @@
 
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import type { torque_sheet_format } from '@/generated/prisma/client';
-import { checkLabel, formatTorqueRange, TORQUE_CHECK_ITEMS, type TorqueCheckKey } from '../../shared/torque-spec';
+import {
+  checkLabel,
+  formatTorqueRange,
+  TORQUE_CHECK_ITEMS,
+  TORQUE_SHEET_ASSETS,
+  type TorqueCheckKey,
+} from '../../shared/torque-spec';
 
 /**
  * Certificado de torqueo (tsk-575). Reproduce el checklist en papel que hoy
@@ -10,11 +16,10 @@ import { checkLabel, formatTorqueRange, TORQUE_CHECK_ITEMS, type TorqueCheckKey 
  * pantalla de reimpresión generen exactamente el mismo documento.
  *
  * Es una sola plantilla parametrizada: las dos hojas del papel (vehículos
- * chicos / colectivos) difieren solo en las fotos que se reciben por props
- * (`diagramUrl`, `vehiclePhotosUrl`) y en la tabla de torques (`specs`), no en
- * la estructura. Ambas imágenes, más el logo, son opcionales: si no vienen
- * (todavía no están los archivos definitivos) la sección se omite sin dejar
- * un hueco raro.
+ * chicos / colectivos) difieren solo en su juego de imágenes —que sale de
+ * `TORQUE_SHEET_ASSETS` según `data.sheetFormat`— y en la tabla de torques
+ * (`specs`), no en la estructura. El logo sí es opcional: si la empresa no
+ * tiene uno cargado, el encabezado se arma igual sin dejar un hueco raro.
  */
 
 /** Uno de los 15 ítems del checklist, con el valor cargado en el certificado. */
@@ -36,11 +41,7 @@ export type TorquePdfSpecRow = {
 export type TorqueCertificatePdfData = {
   /** Número completo del certificado (ej: "TQ-00001"), para rastrear el papel hasta su registro. */
   fullNumber: string;
-  /**
-   * Formato de la hoja (LIGHT/BUS). Todavía no se usa en el layout: es la
-   * costura para cuando lleguen los juegos de fotos/diagramas propios de cada
-   * formato y haya que elegir cuál mostrar.
-   */
+  /** Formato de la hoja (LIGHT/BUS): elige el juego de imágenes de la sección 4. */
   sheetFormat: torque_sheet_format;
   /** Fecha en formato ISO (YYYY-MM-DD); se formatea acá a DD/MM/YYYY. */
   date: string;
@@ -106,8 +107,10 @@ const styles = StyleSheet.create({
     lineHeight: 1.1,
   },
   inlineCheck: { flexDirection: 'row', alignItems: 'center', marginLeft: 8 },
-  diagram: { width: '100%', height: 140, objectFit: 'contain', marginBottom: 4 },
-  photos: { width: 130, height: 130, objectFit: 'contain', marginLeft: 6 },
+  // Alto ajustado al recorte real de cada asset (diagramas ~8:1, siluetas ~2,4:1)
+  // para no dejar aire muerto: `contain` centra lo que sobre.
+  diagram: { width: '100%', height: 70, objectFit: 'contain', marginBottom: 4 },
+  photos: { width: 170, height: 80, objectFit: 'contain', marginLeft: 6 },
   bullet: { flexDirection: 'row', marginTop: 1 },
   signatureBox: { marginTop: 24, alignItems: 'flex-end' },
   signatureLine: { width: 170, borderTop: '0.5pt solid black', paddingTop: 2 },
@@ -144,19 +147,14 @@ export function TorqueCertificateLayout({
   data,
   specs,
   logoUrl,
-  diagramUrl,
-  vehiclePhotosUrl,
 }: {
   data: TorqueCertificatePdfData;
   /** Specs de la marca del vehículo, ya filtradas/ordenadas por el caller. */
   specs: TorquePdfSpecRow[];
   logoUrl?: string | null;
-  /** Imagen del diagrama de secuencia de apriete. Opcional: todavía no hay archivo definitivo. */
-  diagramUrl?: string | null;
-  /** Fotos del vehículo que acompañan la tabla de la sección 4. Opcional. */
-  vehiclePhotosUrl?: string | null;
 }) {
   const checksByKey = new Map(data.checks.map((c) => [c.key, c]));
+  const sheetAssets = TORQUE_SHEET_ASSETS[data.sheetFormat];
 
   const previousItems = TORQUE_CHECK_ITEMS.filter((i) => i.group === 'previous');
   const torqueItems = TORQUE_CHECK_ITEMS.filter((i) => i.group === 'tightening' && i.key.startsWith('torque_'));
@@ -310,7 +308,7 @@ export function TorqueCertificateLayout({
 
         {/* 4. Secuencia de apriete */}
         <Text style={styles.sectionTitle}>4. Secuencia de apriete</Text>
-        {diagramUrl ? <Image style={styles.diagram} src={diagramUrl} /> : null}
+        <Image style={styles.diagram} src={sheetAssets.diagram} />
         <View style={{ flexDirection: 'row' }}>
           <View style={[styles.table, { flexGrow: 1 }]}>
             <View style={styles.th}>
@@ -337,7 +335,7 @@ export function TorqueCertificateLayout({
               );
             })}
           </View>
-          {vehiclePhotosUrl ? <Image style={styles.photos} src={vehiclePhotosUrl} /> : null}
+          <Image style={styles.photos} src={sheetAssets.photos} />
         </View>
 
         {/* 5. Secuencias de apriete (tabla de referencia por marca) */}

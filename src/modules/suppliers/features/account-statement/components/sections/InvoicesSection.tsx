@@ -8,7 +8,15 @@ import {
   INVOICE_STATUS_LABELS,
   VOUCHER_TYPE_LABELS,
 } from '@/modules/purchasing/shared/types';
-import { PaginatedTable, StatBlock, StatusFilterToolbar, SummaryGrid } from './SectionShell';
+import {
+  MoneyCell,
+  PaginatedTable,
+  StatBlock,
+  StatusFilterToolbar,
+  SummaryGrid,
+  fmtMoney,
+  fmtMoneyIn,
+} from './SectionShell';
 
 interface Row {
   id: string;
@@ -23,6 +31,11 @@ interface Row {
   on_account_applied: number;
   remaining: number;
   status: string;
+  /** Moneda del comprobante: los importes de la fila están en ella. */
+  currency: string;
+  /** `total` y `remaining` convertidos a pesos con el TC del comprobante. */
+  total_in_base: number;
+  remaining_in_base: number;
   /** Solo en NC: comprobantes a los que se imputó, o la factura de referencia. */
   applies_to: string | null;
 }
@@ -34,10 +47,10 @@ interface Summary {
   unappliedCredit: number;
   countByStatus: Record<string, number>;
   total: number;
+  hasForeignCurrency: boolean;
 }
 
-const fmt = (n: number) =>
-  `$${n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const fmt = fmtMoney;
 
 function statusVariant(s: string) {
   if (s === 'CONFIRMED') return 'default';
@@ -69,12 +82,20 @@ export function InvoicesSection({ rows, summary }: { rows: Row[]; summary: Summa
         <StatBlock
           label="Total adeudado"
           value={fmt(summary?.totalDebt ?? 0)}
-          hint="Neto de pagos y notas de crédito"
+          hint={
+            summary?.hasForeignCurrency
+              ? 'Neto de pagos y NC · en pesos, al TC de cada comprobante'
+              : 'Neto de pagos y notas de crédito'
+          }
         />
         <StatBlock
           label="Monto total facturado"
           value={fmt(summary?.totalAmount ?? 0)}
-          hint="No incluye notas de crédito"
+          hint={
+            summary?.hasForeignCurrency
+              ? 'No incluye NC · en pesos, al TC de cada comprobante'
+              : 'No incluye notas de crédito'
+          }
         />
         <StatBlock
           label="Pendientes"
@@ -86,7 +107,7 @@ export function InvoicesSection({ rows, summary }: { rows: Row[]; summary: Summa
           <StatBlock
             label="Crédito a favor"
             value={fmt(summary?.unappliedCredit ?? 0)}
-            hint="NC sin imputar"
+            hint={summary?.hasForeignCurrency ? 'NC sin imputar · en pesos' : 'NC sin imputar'}
           />
         ) : (
           <StatBlock label="Borradores" value={summary?.countByStatus['DRAFT'] ?? 0} />
@@ -133,13 +154,22 @@ export function InvoicesSection({ rows, summary }: { rows: Row[]; summary: Summa
           },
           {
             header: 'Total',
-            cell: (r) => <span className="font-medium">{fmt(r.total)}</span>,
+            cell: (r) => (
+              <MoneyCell
+                amount={r.total}
+                currency={r.currency}
+                inBase={r.total_in_base}
+                className="font-medium"
+              />
+            ),
             className: 'text-right',
           },
           {
             header: 'Pagado',
             cell: (r) => (
-              <span className="text-sm text-muted-foreground">{r.paid > 0 ? fmt(r.paid) : '-'}</span>
+              <span className="text-sm text-muted-foreground">
+                {r.paid > 0 ? fmtMoneyIn(r.paid, r.currency) : '-'}
+              </span>
             ),
             className: 'text-right',
           },
@@ -147,7 +177,7 @@ export function InvoicesSection({ rows, summary }: { rows: Row[]; summary: Summa
             header: 'NC aplicada',
             cell: (r) => (
               <span className="text-sm text-muted-foreground">
-                {r.credit_applied > 0 ? fmt(r.credit_applied) : '-'}
+                {r.credit_applied > 0 ? fmtMoneyIn(r.credit_applied, r.currency) : '-'}
               </span>
             ),
             className: 'text-right',
@@ -156,7 +186,7 @@ export function InvoicesSection({ rows, summary }: { rows: Row[]; summary: Summa
             header: 'A cuenta',
             cell: (r) => (
               <span className="text-sm text-muted-foreground">
-                {r.on_account_applied > 0 ? fmt(r.on_account_applied) : '-'}
+                {r.on_account_applied > 0 ? fmtMoneyIn(r.on_account_applied, r.currency) : '-'}
               </span>
             ),
             className: 'text-right',
@@ -164,9 +194,12 @@ export function InvoicesSection({ rows, summary }: { rows: Row[]; summary: Summa
           {
             header: 'Saldo',
             cell: (r) => (
-              <span className={`font-medium ${r.remaining < 0 ? 'text-emerald-600 dark:text-emerald-400' : ''}`}>
-                {fmt(r.remaining)}
-              </span>
+              <MoneyCell
+                amount={r.remaining}
+                currency={r.currency}
+                inBase={r.remaining_in_base}
+                className={`font-medium ${r.remaining < 0 ? 'text-emerald-600 dark:text-emerald-400' : ''}`}
+              />
             ),
             className: 'text-right',
           },
