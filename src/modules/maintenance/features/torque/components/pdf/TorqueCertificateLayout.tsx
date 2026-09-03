@@ -5,6 +5,7 @@ import type { torque_sheet_format } from '@/generated/prisma/client';
 import {
   checkLabel,
   formatTorqueRange,
+  sequenceDiagramSrc,
   TORQUE_CHECK_ITEMS,
   TORQUE_SHEET_ASSETS,
   type TorqueCheckKey,
@@ -16,9 +17,10 @@ import {
  * pantalla de reimpresión generen exactamente el mismo documento.
  *
  * Es una sola plantilla parametrizada: las dos hojas del papel (vehículos
- * chicos / colectivos) difieren solo en su juego de imágenes —que sale de
- * `TORQUE_SHEET_ASSETS` según `data.sheetFormat`— y en la tabla de torques
- * (`specs`), no en la estructura. El logo sí es opcional: si la empresa no
+ * chicos / colectivos) difieren solo en su juego de imágenes —la silueta sale
+ * de `TORQUE_SHEET_ASSETS` según `data.sheetFormat` y el diagrama de la
+ * sección 4 de `data.nutCount`— y en la tabla de torques (`specs`), no en la
+ * estructura. El logo sí es opcional: si la empresa no
  * tiene uno cargado, el encabezado se arma igual sin dejar un hueco raro.
  */
 
@@ -41,8 +43,14 @@ export type TorquePdfSpecRow = {
 export type TorqueCertificatePdfData = {
   /** Número completo del certificado (ej: "TQ-00001"), para rastrear el papel hasta su registro. */
   fullNumber: string;
-  /** Formato de la hoja (LIGHT/BUS): elige el juego de imágenes de la sección 4. */
+  /** Formato de la hoja (LIGHT/BUS): elige la silueta del vehículo de la sección 4. */
   sheetFormat: torque_sheet_format;
+  /**
+   * Cantidad de tuercas (6/8/10): elige el diagrama de secuencia de apriete.
+   * `null` en los certificados emitidos antes del selector, que se reimprimen
+   * con el recorte de las tres secuencias juntas.
+   */
+  nutCount: number | null;
   /** Fecha en formato ISO (YYYY-MM-DD); se formatea acá a DD/MM/YYYY. */
   date: string;
   driverName: string;
@@ -110,6 +118,9 @@ const styles = StyleSheet.create({
   // Alto ajustado al recorte real de cada asset (diagramas ~8:1, siluetas ~2,4:1)
   // para no dejar aire muerto: `contain` centra lo que sobre.
   diagram: { width: '100%', height: 70, objectFit: 'contain', marginBottom: 4 },
+  // El diagrama de una sola secuencia es casi cuadrado (~2,5:1), no una tira:
+  // necesita más alto que la banda con las tres para leerse igual de bien.
+  singleDiagram: { width: '100%', height: 90, objectFit: 'contain', marginBottom: 4 },
   photos: { width: 170, height: 80, objectFit: 'contain', marginLeft: 6 },
   bullet: { flexDirection: 'row', marginTop: 1 },
   signatureBox: { marginTop: 24, alignItems: 'flex-end' },
@@ -155,6 +166,8 @@ export function TorqueCertificateLayout({
 }) {
   const checksByKey = new Map(data.checks.map((c) => [c.key, c]));
   const sheetAssets = TORQUE_SHEET_ASSETS[data.sheetFormat];
+  const diagramSrc = sequenceDiagramSrc(data.nutCount, data.sheetFormat);
+  const hasSingleDiagram = diagramSrc !== sheetAssets.diagram;
 
   const previousItems = TORQUE_CHECK_ITEMS.filter((i) => i.group === 'previous');
   const torqueItems = TORQUE_CHECK_ITEMS.filter((i) => i.group === 'tightening' && i.key.startsWith('torque_'));
@@ -308,7 +321,7 @@ export function TorqueCertificateLayout({
 
         {/* 4. Secuencia de apriete */}
         <Text style={styles.sectionTitle}>4. Secuencia de apriete</Text>
-        <Image style={styles.diagram} src={sheetAssets.diagram} />
+        <Image style={hasSingleDiagram ? styles.singleDiagram : styles.diagram} src={diagramSrc} />
         <View style={{ flexDirection: 'row' }}>
           <View style={[styles.table, { flexGrow: 1 }]}>
             <View style={styles.th}>

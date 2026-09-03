@@ -5,6 +5,9 @@ import {
   TIGHTENING_CHECK_KEYS,
   formatTorqueRange,
   checkLabel,
+  isNutCount,
+  sequenceDiagramSrc,
+  TORQUE_SEQUENCE_DIAGRAMS,
 } from './torque-spec';
 
 describe('catálogo de ítems', () => {
@@ -36,5 +39,26 @@ describe('formatTorqueRange', () => {
     expect(
       formatTorqueRange({ nm_min: 500, nm_max: 600, ftlb_min: null, ftlb_max: null })
     ).toBe('500-600 Nm');
+  });
+});
+
+describe('secuencia de apriete', () => {
+  it('acepta solo 6, 8 y 10 tuercas', () => {
+    expect(isNutCount(6)).toBe(true);
+    expect(isNutCount(8)).toBe(true);
+    expect(isNutCount(10)).toBe(true);
+    expect(isNutCount(5)).toBe(false);
+    expect(isNutCount('8')).toBe(false);
+    expect(isNutCount(null)).toBe(false);
+  });
+
+  it('imprime el diagrama de la cantidad de tuercas elegida', () => {
+    expect(sequenceDiagramSrc(6, 'LIGHT')).toBe(TORQUE_SEQUENCE_DIAGRAMS[6]);
+    expect(sequenceDiagramSrc(10, 'BUS')).toBe(TORQUE_SEQUENCE_DIAGRAMS[10]);
+  });
+
+  it('cae al recorte con las tres secuencias si el certificado no tiene una elegida', () => {
+    expect(sequenceDiagramSrc(null, 'LIGHT')).toBe('/torque/secuencia-light.png');
+    expect(sequenceDiagramSrc(undefined, 'BUS')).toBe('/torque/secuencia-bus.png');
   });
 });

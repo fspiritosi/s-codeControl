@@ -23,7 +23,15 @@ import {
   type TorqueSpecOption,
   type TorqueVehicleOption,
 } from '../actions.server';
-import { formatTorqueRange, SHEET_FORMATS, TORQUE_CHECK_ITEMS, type TorqueCheckKey } from '../shared/torque-spec';
+import {
+  formatTorqueRange,
+  NUT_COUNTS,
+  type NutCount,
+  SHEET_FORMATS,
+  TORQUE_CHECK_ITEMS,
+  TORQUE_SEQUENCE_DIAGRAMS,
+  type TorqueCheckKey,
+} from '../shared/torque-spec';
 import { TorqueCertificateLayout, type TorqueCertificatePdfData } from './pdf/TorqueCertificateLayout';
 
 /**
@@ -125,6 +133,7 @@ export function TorqueCertificateForm({ vehicles }: { vehicles: TorqueVehicleOpt
     selectedVehicle && fetchedSpecs?.brandId === selectedVehicle.brand_id ? fetchedSpecs.rows : [];
 
   const [sheetFormat, setSheetFormat] = useState<torque_sheet_format>('LIGHT');
+  const [nutCount, setNutCount] = useState<NutCount | null>(null);
   const [date, setDate] = useState(today());
   const [driverName, setDriverName] = useState('');
   const [mechanicName, setMechanicName] = useState('');
@@ -184,6 +193,10 @@ export function TorqueCertificateForm({ vehicles }: { vehicles: TorqueVehicleOpt
       toast.error('Indicá la condición de perno y/o tuerca');
       return;
     }
+    if (nutCount === null) {
+      toast.error('Elegí la secuencia de apriete (cantidad de tuercas)');
+      return;
+    }
     const pending = TORQUE_CHECK_ITEMS.filter((item) => checks[item.key].value === null);
     if (pending.length > 0) {
       toast.error(`Faltan ${pending.length} ítem(s) del checklist por responder`);
@@ -201,6 +214,7 @@ export function TorqueCertificateForm({ vehicles }: { vehicles: TorqueVehicleOpt
       const result = await createTorqueCertificate({
         vehicleId,
         sheetFormat,
+        nutCount,
         date: new Date(date),
         driverName: driverName.trim(),
         mechanicName: mechanicName.trim(),
@@ -226,6 +240,7 @@ export function TorqueCertificateForm({ vehicles }: { vehicles: TorqueVehicleOpt
         const pdfData: TorqueCertificatePdfData = {
           fullNumber: result.fullNumber ?? '',
           sheetFormat,
+          nutCount,
           date,
           driverName: driverName.trim(),
           mechanicName: mechanicName.trim(),
@@ -487,18 +502,53 @@ export function TorqueCertificateForm({ vehicles }: { vehicles: TorqueVehicleOpt
       <Card>
         <CardHeader>
           <CardTitle>4. Secuencia de apriete</CardTitle>
-          <CardDescription>Los 8 checks de apriete, sin observaciones.</CardDescription>
+          <CardDescription>
+            La secuencia según la cantidad de tuercas de la rueda, y los 8 checks de apriete.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-          {tighteningItems.map((item) => (
-            <YesNoField
-              key={item.key}
-              id={item.key}
-              label={item.label}
-              value={checks[item.key].value}
-              onChange={(value) => updateCheckValue(item.key, value)}
-            />
-          ))}
+        <CardContent className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+            <div className="w-full space-y-1.5 sm:max-w-56">
+              <Label>Secuencia (cantidad de tuercas)</Label>
+              <Select
+                value={nutCount === null ? '' : String(nutCount)}
+                onValueChange={(v) => setNutCount(Number(v) as NutCount)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar secuencia" />
+                </SelectTrigger>
+                <SelectContent>
+                  {NUT_COUNTS.map((count) => (
+                    <SelectItem key={count} value={String(count)}>
+                      {count} tuercas
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Vista previa del mismo asset que imprime el PDF: el mecánico
+                confirma que eligió la secuencia correcta antes de guardar. */}
+            {nutCount !== null && (
+              <div className="rounded-md border bg-white p-2">
+                <img
+                  src={TORQUE_SEQUENCE_DIAGRAMS[nutCount]}
+                  alt={`Secuencia de apriete de ${nutCount} tuercas`}
+                  className="h-24 w-auto object-contain"
+                />
+              </div>
+            )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+            {tighteningItems.map((item) => (
+              <YesNoField
+                key={item.key}
+                id={item.key}
+                label={item.label}
+                value={checks[item.key].value}
+                onChange={(value) => updateCheckValue(item.key, value)}
+              />
+            ))}
+          </div>
         </CardContent>
       </Card>
 

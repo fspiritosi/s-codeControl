@@ -4,7 +4,7 @@ import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
 import { fetchCurrentUser } from '@/shared/actions/auth';
 import type { torque_bolt_condition, torque_sheet_format } from '@/generated/prisma/client';
-import type { TorqueCheckKey } from './shared/torque-spec';
+import { isNutCount, type NutCount, type TorqueCheckKey } from './shared/torque-spec';
 
 // ============================================================
 // Tipos
@@ -56,6 +56,8 @@ export type TorqueCertificateCheckInput = {
 export type TorqueCertificateInput = {
   vehicleId: string;
   sheetFormat: torque_sheet_format;
+  /** Cantidad de tuercas de la rueda: define la secuencia de apriete del PDF. */
+  nutCount: NutCount;
   date: Date;
   driverName: string;
   mechanicName: string;
@@ -236,6 +238,10 @@ export async function createTorqueCertificate(
   const { companyId } = await getActionContext();
   if (!companyId) return { success: false, error: 'No hay empresa seleccionada' };
 
+  if (!isNutCount(input.nutCount)) {
+    return { success: false, error: 'La cantidad de tuercas debe ser 6, 8 o 10' };
+  }
+
   if (input.checks.length !== EXPECTED_CHECK_COUNT) {
     return {
       success: false,
@@ -273,6 +279,7 @@ export async function createTorqueCertificate(
           full_number: fullNumber,
           vehicle_id: input.vehicleId,
           sheet_format: input.sheetFormat,
+          nut_count: input.nutCount,
           date: input.date,
           driver_name: input.driverName,
           mechanic_name: input.mechanicName,
