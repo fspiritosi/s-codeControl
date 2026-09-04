@@ -21,6 +21,7 @@ import { Calendar } from '@/shared/components/ui/calendar';
 import { Input } from '@/shared/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+import { stripNonAscii } from '@/shared/lib/utils/storage-path';
 
 export default function ReplaceDocument({
   documentName,
@@ -85,7 +86,7 @@ export default function ReplaceDocument({
     toast.promise(
       async () => {
         if (!documentName) return;
-        const newExtension = file.name.split('.').pop();
+        const newExtension = stripNonAscii(file.name.split('.').pop());
         let newDocumentName = documentName.split('.')[0];
 
         const dateRegex = /\((\d{2}-\d{2}-\d{4})\)\./;

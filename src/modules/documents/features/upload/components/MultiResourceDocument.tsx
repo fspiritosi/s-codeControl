@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { handleSupabaseError } from '@/shared/lib/errorHandler';
 import { cn } from '@/shared/lib/utils';
 import { formatDocumentTypeName } from '@/shared/lib/utils/utils';
+import { stripNonAscii } from '@/shared/lib/utils/storage-path';
 import { useLoggedUserStore } from '@/shared/store/loggedUser';
 import { addMonths, format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -150,7 +151,7 @@ export default function MultiResourceDocument({
                 return employee?.id;
               });
 
-        const fileExtension = file?.name.split('.').pop();
+        const fileExtension = stripNonAscii(file?.name.split('.').pop());
         const tableName = resource === 'equipo' ? 'documents_equipment' : 'documents_employees';
 
         const data = await storage.list('document_files', `${formatedCompanyName}-(${currentCompany?.company_cuit})/multirecursos/${formatedAppliesPath}/`, {

@@ -113,23 +113,8 @@ export async function getActualRole(companyId: string, profile: string) {
   }
 }
 
-export function calculateNameOFDocument(
-  company_name: string,
-  company_cuit: string,
-  applies: string,
-  document_name: string,
-  version: string,
-  file_extension: string,
-  resource: string
-) {
-  const formatedCompanyName = formatDocumentTypeName(company_name);
-  const formatedAppliesName = formatDocumentTypeName(applies);
-  const formatedDocumentTypeName = formatDocumentTypeName(document_name);
-  const formatedVersion = version.replace(/\./g, '-');
-  const formatedFileExtension = file_extension.replace(/\./g, '-');
+export { calculateNameOFDocument } from './utils/storage-path';
 
-  return `${formatedCompanyName}-(${company_cuit})/${resource}/${formatedAppliesName}/${formatedDocumentTypeName}-(${formatedVersion}).${formatedFileExtension}`;
-}
 export async function verifyDuplicatedDocument(
   company_name: string,
   company_cuit: any,
@@ -160,19 +145,7 @@ export async function verifyDuplicatedDocument(
 
   return false;
 }
-export const uploadDocumentFile = async (file: File, path: string) => {
-  try {
-    const data = await storage.upload('document_files', path, file, {
-      cacheControl: '3600',
-      upsert: false,
-      contentType: file.type,
-    });
-    return data;
-  } catch (error) {
-    console.error('error', error);
-    return [];
-  }
-};
+export { uploadDocumentFile } from './document-upload';
 export const uploadDocument = async (
   dataToUpdate: {
     created_at: string;

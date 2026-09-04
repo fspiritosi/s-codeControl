@@ -23,6 +23,7 @@ import { Calendar } from '@/shared/components/ui/calendar';
 import { Input } from '@/shared/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+import { stripNonAscii } from '@/shared/lib/utils/storage-path';
 
 export default function UpdateDocuments({
   documentName,
@@ -88,7 +89,7 @@ export default function UpdateDocuments({
         const periodRegex = /\((\d{4}-\d{2})\)/;
 
         let newDocumentName = documentName;
-        const newExtension = file.name.split('.').pop();
+        const newExtension = stripNonAscii(file.name.split('.').pop());
 
         if (versionRegex.test(documentName)) {
           const match = documentName.match(versionRegex);
