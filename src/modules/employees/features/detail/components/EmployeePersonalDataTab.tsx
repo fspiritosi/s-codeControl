@@ -14,21 +14,11 @@ import { cn } from '@/shared/lib/utils';
 import { names } from '@/shared/types/types';
 import { CalendarIcon } from '@radix-ui/react-icons';
 import { es } from 'date-fns/locale';
-import { parse as dateFnsParse, format, isValid as isValidDate } from 'date-fns';
+import { format } from 'date-fns';
 import { ChangeEvent } from 'react';
 import { UseFormReturn } from 'react-hook-form';
+import { parseEmployeeDate } from '@/modules/employees/shared/employee-dates';
 
-function normalizeDate(value: unknown): Date | null {
-  if (!value) return null;
-  if (value instanceof Date) return isValidDate(value) ? value : null;
-  if (typeof value === 'string') {
-    const iso = new Date(value);
-    if (isValidDate(iso)) return iso;
-    const parsed = dateFnsParse(value, 'yyyy-MM-dd', new Date());
-    return isValidDate(parsed) ? parsed : null;
-  }
-  return null;
-}
 
 interface EmployeePersonalDataTabProps {
   form: UseFormReturn<any>;
@@ -75,7 +65,7 @@ export function EmployeePersonalDataTab({
                   control={form.control}
                   name="born_date"
                   render={({ field }) => {
-                    const normalized = normalizeDate(field.value);
+                    const normalized = parseEmployeeDate(field.value);
                     return (
                       <FormItem className="flex flex-col">
                         <FormLabel>

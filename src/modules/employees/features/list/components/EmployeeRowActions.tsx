@@ -58,6 +58,7 @@ import { useRouter } from 'next/navigation';
 import { Fragment, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { parseEmployeeDate } from '@/modules/employees/shared/employee-dates';
 import { z } from 'zod';
 import {
   reactivateEmployeeByDocNumber,
@@ -216,7 +217,7 @@ export function EmployeeRowActions({ row }: EmployeeRowActionsProps) {
             <AlertDialogHeader>
               <AlertDialogTitle>Reintegrar empleado</AlertDialogTitle>
               <AlertDialogDescription>
-                {`Estás a punto de reintegrar al empleado ${user.full_name}, quien fue dado de baja por ${user.reason_for_termination} el día ${user.termination_date ? format(new Date(user.termination_date), 'dd/MM/yyyy') : '—'}. Se limpiarán los datos de baja.`}
+                {`Estás a punto de reintegrar al empleado ${user.full_name}, quien fue dado de baja por ${user.reason_for_termination} el día ${user.termination_date ? format(parseEmployeeDate(user.termination_date)!, 'dd/MM/yyyy') : '—'}. Se limpiarán los datos de baja.`}
               </AlertDialogDescription>
             </AlertDialogHeader>
 
@@ -233,7 +234,7 @@ export function EmployeeRowActions({ row }: EmployeeRowActionsProps) {
                   />
                   <span>
                     Mantener fecha original
-                    {user.date_of_admission ? ` (${format(new Date(user.date_of_admission), 'dd/MM/yyyy')})` : ''}
+                    {user.date_of_admission ? ` (${format(parseEmployeeDate(user.date_of_admission)!, 'dd/MM/yyyy')})` : ''}
                   </span>
                 </label>
                 <label className="flex items-center gap-2">

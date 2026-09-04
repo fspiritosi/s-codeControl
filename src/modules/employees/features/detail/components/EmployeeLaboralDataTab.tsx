@@ -17,19 +17,8 @@ import { cn } from '@/shared/lib/utils';
 import { names } from '@/shared/types/types';
 import { CalendarIcon } from '@radix-ui/react-icons';
 import { es } from 'date-fns/locale';
-import { parse as dateFnsParse, format, isValid as isValidDate, intervalToDuration } from 'date-fns';
+import { format, intervalToDuration } from 'date-fns';
 
-function normalizeDate(value: unknown): Date | null {
-  if (!value) return null;
-  if (value instanceof Date) return isValidDate(value) ? value : null;
-  if (typeof value === 'string') {
-    const iso = new Date(value);
-    if (isValidDate(iso)) return iso;
-    const parsed = dateFnsParse(value, 'yyyy-MM-dd', new Date());
-    return isValidDate(parsed) ? parsed : null;
-  }
-  return null;
-}
 
 function formatSeniority(start: Date | null, end: Date | null): string {
   if (!start) return '—';
@@ -44,6 +33,7 @@ function formatSeniority(start: Date | null, end: Date | null): string {
 }
 import { Check } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
+import { parseEmployeeDate } from '@/modules/employees/shared/employee-dates';
 
 interface EmployeeLaboralDataTabProps {
   form: UseFormReturn<any>;
@@ -93,8 +83,8 @@ export function EmployeeLaboralDataTab({
             const watchedAdmission = form.watch('date_of_admission');
             const watchedTermination = form.watch('termination_date');
             const seniority = formatSeniority(
-              normalizeDate(watchedAdmission),
-              normalizeDate(watchedTermination)
+              parseEmployeeDate(watchedAdmission),
+              parseEmployeeDate(watchedTermination)
             );
             return (
               <div key={data.name} className="w-[300px] flex flex-col gap-2">
@@ -102,7 +92,7 @@ export function EmployeeLaboralDataTab({
                   control={form.control}
                   name="date_of_admission"
                   render={({ field }) => {
-                    const normalized = normalizeDate(field.value);
+                    const normalized = parseEmployeeDate(field.value);
                     return (
                       <FormItem className="flex flex-col">
                         <FormLabel>

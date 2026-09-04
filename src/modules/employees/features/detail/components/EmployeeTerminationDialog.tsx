@@ -14,6 +14,7 @@ import { es } from 'date-fns/locale';
 import { cn } from '@/shared/lib/utils';
 import BackButton from '@/shared/components/common/BackButton';
 import { UseFormReturn } from 'react-hook-form';
+import { parseEmployeeDate } from '@/modules/employees/shared/employee-dates';
 
 interface EmployeeTerminationDialogProps {
   showModal: boolean;
@@ -90,8 +91,9 @@ export function EmployeeTerminationDialog({
                     render={({ field }) => {
                       // El campo arranca vacío: `new Date(undefined)` daba un
                       // Invalid Date que el Calendar recibía como `selected`.
-                      const parsed = field.value ? new Date(field.value) : null;
-                      const terminationDate = parsed && !isNaN(parsed.getTime()) ? parsed : null;
+                      // `parseEmployeeDate` además evita que un `yyyy-MM-dd` se
+                      // corra un día al interpretarse como medianoche UTC (tkt-648).
+                      const terminationDate = parseEmployeeDate(field.value);
                       return (
                       <FormItem className="flex flex-col">
                         <FormLabel>Fecha de baja</FormLabel>
