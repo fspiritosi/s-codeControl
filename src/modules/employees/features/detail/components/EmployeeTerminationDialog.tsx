@@ -14,6 +14,7 @@ import { es } from 'date-fns/locale';
 import { cn } from '@/shared/lib/utils';
 import BackButton from '@/shared/components/common/BackButton';
 import { UseFormReturn } from 'react-hook-form';
+import { parseEmployeeDate } from '@/modules/employees/shared/employee-dates';
 
 interface EmployeeTerminationDialogProps {
   showModal: boolean;
@@ -87,7 +88,13 @@ export function EmployeeTerminationDialog({
                   <FormField
                     control={form2.control}
                     name="termination_date"
-                    render={({ field }) => (
+                    render={({ field }) => {
+                      // El campo arranca vacío: `new Date(undefined)` daba un
+                      // Invalid Date que el Calendar recibía como `selected`.
+                      // `parseEmployeeDate` además evita que un `yyyy-MM-dd` se
+                      // corra un día al interpretarse como medianoche UTC (tkt-648).
+                      const terminationDate = parseEmployeeDate(field.value);
+                      return (
                       <FormItem className="flex flex-col">
                         <FormLabel>Fecha de baja</FormLabel>
                         <Popover>
@@ -148,8 +155,13 @@ export function EmployeeTerminationDialog({
                               locale={es}
                               mode="single"
                               disabled={(date) => date > new Date() || date < new Date('1900-01-01')}
-                              selected={new Date(field.value) || today}
+                              selected={terminationDate ?? today}
+                              // Misma guarda que en los tabs del legajo: sin esto,
+                              // reclickear el día elegido deselecciona y el campo
+                              // queda vacío en silencio (tkt-631).
+                              required
                               onSelect={(e) => {
+                                if (!e) return;
                                 field.onChange(e);
                               }}
                             />
@@ -158,7 +170,8 @@ export function EmployeeTerminationDialog({
                         <FormDescription>Fecha en la que se terminó el contrato</FormDescription>
                         <FormMessage />
                       </FormItem>
-                    )}
+                      );
+                    }}
                   />
                   <div className="flex gap-4 justify-end">
                     <Button variant="destructive" type="submit">

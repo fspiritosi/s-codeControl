@@ -14,6 +14,7 @@ import {
   getAllFilesForUpdate,
 } from '@/shared/zodSchemas/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { toISODate } from '@/modules/employees/shared/employee-update';
 import { PostgrestError } from '@supabase/supabase-js';
 import { addMonths, format } from 'date-fns';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -57,24 +58,6 @@ const toastErrorMessage = (error: unknown): string => {
   const lastLine = raw.split('\n').map((line) => line.trim()).filter(Boolean).at(-1);
   const message = lastLine || 'Ocurrió un error inesperado al guardar';
   return message.length > 200 ? `${message.slice(0, 200)}…` : message;
-};
-
-/**
- * Normaliza una fecha del form a ISO-8601 completo.
- *
- * El detalle del empleado carga `date_of_admission` como string `yyyy-MM-dd`
- * (ver `app/dashboard/employee/action/page.tsx`). Si el usuario edita cualquier
- * otro campo sin tocar el datepicker, ese string llega tal cual a Prisma y el
- * update falla con "Expected ISO-8601 DateTime", abortando todo el guardado.
- */
-const toISODate = (value: unknown): string | undefined => {
-  if (!value) return undefined;
-  if (value instanceof Date) return isNaN(value.getTime()) ? undefined : value.toISOString();
-  if (typeof value === 'string') {
-    const parsed = new Date(value);
-    return isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
-  }
-  return undefined;
 };
 
 export function useEmployeeFormLogic(user: any, guild: any, covenants: any, categories: any) {
