@@ -3,6 +3,7 @@ import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
 import { ensurePendingDocumentsForEmployee } from '@/shared/lib/documentAlerts';
 import { revalidatePath } from 'next/cache';
+import { findMissingRequiredFields } from '@/modules/employees/shared/employee-update';
 
 export const createEmployee = async (employee: Record<string, unknown>) => {
   try {
@@ -28,8 +29,27 @@ export const updateEmployeeByDocNumber = async (documentNumber: string, updateDa
   }
 };
 
+/**
+ * Update completo del legajo desde el formulario.
+ *
+ * Antes de tocar la base se verifica que estén todos los campos NOT NULL.
+ * Prisma trata `undefined` como "no toques este campo": un obligatorio vacío
+ * no rompe nada, simplemente desaparece del UPDATE y el resto se guarda como
+ * si todo hubiera salido bien. Eso es el tkt-631, donde la fecha de ingreso
+ * volvía al valor anterior con un cartel de éxito. Preferimos fallar fuerte
+ * antes que guardar un legajo a medias en silencio.
+ */
 export const updateEmployeeByDocNumberFull = async (documentNumber: string, employee: Record<string, unknown>) => {
   try {
+    const missing = findMissingRequiredFields(employee);
+    if (missing.length > 0) {
+      console.error('Update de empleado incompleto, faltan campos obligatorios:', missing);
+      return {
+        data: null,
+        error: `No se pudo guardar: faltan campos obligatorios (${missing.join(', ')}).`,
+      };
+    }
+
     const data = await prisma.employees.updateMany({
       where: { document_number: documentNumber },
       data: employee as any,

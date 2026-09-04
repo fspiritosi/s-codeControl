@@ -108,7 +108,19 @@ export function EmployeeLaboralDataTab({
                         <FormLabel>
                           Fecha de ingreso <span style={{ color: 'red' }}> *</span>
                         </FormLabel>
-                        <Popover>
+                        {/* `month` y `years` son estado compartido por los tres
+                            datepickers del legajo y arrancan en `today + 1 mes`
+                            —posterior a `toDate`, así que el calendario abría en
+                            un mes con todos los días deshabilitados—. Al abrir el
+                            popover se los reposiciona sobre la fecha ya cargada
+                            (tkt-631). */}
+                        <Popover
+                          onOpenChange={(open) => {
+                            if (!open || !normalized) return;
+                            setMonth(normalized);
+                            setYear(normalized.getFullYear().toString());
+                          }}
+                        >
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
@@ -165,7 +177,14 @@ export function EmployeeLaboralDataTab({
                               locale={es}
                               mode="single"
                               selected={normalized ?? today}
+                              // La columna es NOT NULL: sin `required`, volver a
+                              // clickear el día ya elegido lo deselecciona y emite
+                              // onSelect(undefined). Eso vaciaba el campo y Prisma
+                              // después descartaba la clave del UPDATE sin avisar,
+                              // dejando la fecha anterior con cartel de éxito (tkt-631).
+                              required
                               onSelect={(e) => {
+                                if (!e) return;
                                 field.onChange(e);
                               }}
                             />
