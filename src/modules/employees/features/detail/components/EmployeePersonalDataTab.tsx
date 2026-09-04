@@ -14,21 +14,11 @@ import { cn } from '@/shared/lib/utils';
 import { names } from '@/shared/types/types';
 import { CalendarIcon } from '@radix-ui/react-icons';
 import { es } from 'date-fns/locale';
-import { parse as dateFnsParse, format, isValid as isValidDate } from 'date-fns';
+import { format } from 'date-fns';
 import { ChangeEvent } from 'react';
 import { UseFormReturn } from 'react-hook-form';
+import { parseEmployeeDate } from '@/modules/employees/shared/employee-dates';
 
-function normalizeDate(value: unknown): Date | null {
-  if (!value) return null;
-  if (value instanceof Date) return isValidDate(value) ? value : null;
-  if (typeof value === 'string') {
-    const iso = new Date(value);
-    if (isValidDate(iso)) return iso;
-    const parsed = dateFnsParse(value, 'yyyy-MM-dd', new Date());
-    return isValidDate(parsed) ? parsed : null;
-  }
-  return null;
-}
 
 interface EmployeePersonalDataTabProps {
   form: UseFormReturn<any>;
@@ -75,13 +65,25 @@ export function EmployeePersonalDataTab({
                   control={form.control}
                   name="born_date"
                   render={({ field }) => {
-                    const normalized = normalizeDate(field.value);
+                    const normalized = parseEmployeeDate(field.value);
                     return (
                       <FormItem className="flex flex-col">
                         <FormLabel>
                           Fecha de nacimiento <span style={{ color: 'red' }}> *</span>
                         </FormLabel>
-                        <Popover>
+                        {/* `month` y `years` son estado compartido por los tres
+                            datepickers del legajo y arrancan en `today + 1 mes`
+                            —posterior a `toDate`, así que el calendario abría en
+                            un mes con todos los días deshabilitados—. Al abrir el
+                            popover se los reposiciona sobre la fecha ya cargada
+                            (tkt-631). */}
+                        <Popover
+                          onOpenChange={(open) => {
+                            if (!open || !normalized) return;
+                            setMonth(normalized);
+                            setYear(normalized.getFullYear().toString());
+                          }}
+                        >
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
@@ -138,7 +140,14 @@ export function EmployeePersonalDataTab({
                               locale={es}
                               mode="single"
                               selected={normalized ?? today}
+                              // La columna es NOT NULL: sin `required`, volver a
+                              // clickear el día ya elegido lo deselecciona y emite
+                              // onSelect(undefined). Eso vaciaba el campo y Prisma
+                              // después descartaba la clave del UPDATE sin avisar,
+                              // dejando la fecha anterior con cartel de éxito (tkt-631).
+                              required
                               onSelect={(e) => {
+                                if (!e) return;
                                 field.onChange(e);
                               }}
                             />

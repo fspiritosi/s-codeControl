@@ -17,19 +17,8 @@ import { cn } from '@/shared/lib/utils';
 import { names } from '@/shared/types/types';
 import { CalendarIcon } from '@radix-ui/react-icons';
 import { es } from 'date-fns/locale';
-import { parse as dateFnsParse, format, isValid as isValidDate, intervalToDuration } from 'date-fns';
+import { format, intervalToDuration } from 'date-fns';
 
-function normalizeDate(value: unknown): Date | null {
-  if (!value) return null;
-  if (value instanceof Date) return isValidDate(value) ? value : null;
-  if (typeof value === 'string') {
-    const iso = new Date(value);
-    if (isValidDate(iso)) return iso;
-    const parsed = dateFnsParse(value, 'yyyy-MM-dd', new Date());
-    return isValidDate(parsed) ? parsed : null;
-  }
-  return null;
-}
 
 function formatSeniority(start: Date | null, end: Date | null): string {
   if (!start) return '—';
@@ -44,6 +33,7 @@ function formatSeniority(start: Date | null, end: Date | null): string {
 }
 import { Check } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
+import { parseEmployeeDate } from '@/modules/employees/shared/employee-dates';
 
 interface EmployeeLaboralDataTabProps {
   form: UseFormReturn<any>;
@@ -93,8 +83,8 @@ export function EmployeeLaboralDataTab({
             const watchedAdmission = form.watch('date_of_admission');
             const watchedTermination = form.watch('termination_date');
             const seniority = formatSeniority(
-              normalizeDate(watchedAdmission),
-              normalizeDate(watchedTermination)
+              parseEmployeeDate(watchedAdmission),
+              parseEmployeeDate(watchedTermination)
             );
             return (
               <div key={data.name} className="w-[300px] flex flex-col gap-2">
@@ -102,13 +92,25 @@ export function EmployeeLaboralDataTab({
                   control={form.control}
                   name="date_of_admission"
                   render={({ field }) => {
-                    const normalized = normalizeDate(field.value);
+                    const normalized = parseEmployeeDate(field.value);
                     return (
                       <FormItem className="flex flex-col">
                         <FormLabel>
                           Fecha de ingreso <span style={{ color: 'red' }}> *</span>
                         </FormLabel>
-                        <Popover>
+                        {/* `month` y `years` son estado compartido por los tres
+                            datepickers del legajo y arrancan en `today + 1 mes`
+                            —posterior a `toDate`, así que el calendario abría en
+                            un mes con todos los días deshabilitados—. Al abrir el
+                            popover se los reposiciona sobre la fecha ya cargada
+                            (tkt-631). */}
+                        <Popover
+                          onOpenChange={(open) => {
+                            if (!open || !normalized) return;
+                            setMonth(normalized);
+                            setYear(normalized.getFullYear().toString());
+                          }}
+                        >
                           <PopoverTrigger asChild>
                             <FormControl>
                               <Button
@@ -165,7 +167,14 @@ export function EmployeeLaboralDataTab({
                               locale={es}
                               mode="single"
                               selected={normalized ?? today}
+                              // La columna es NOT NULL: sin `required`, volver a
+                              // clickear el día ya elegido lo deselecciona y emite
+                              // onSelect(undefined). Eso vaciaba el campo y Prisma
+                              // después descartaba la clave del UPDATE sin avisar,
+                              // dejando la fecha anterior con cartel de éxito (tkt-631).
+                              required
                               onSelect={(e) => {
+                                if (!e) return;
                                 field.onChange(e);
                               }}
                             />

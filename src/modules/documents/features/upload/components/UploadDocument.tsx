@@ -5,7 +5,8 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { fetchDocumentsByApplies } from '@/modules/documents/features/list/actions.server';
-import { calculateNameOFDocument, cn, uploadDocument, uploadDocumentFile } from '@/shared/lib/utils';
+import { calculateNameOFDocument, cn, uploadDocument } from '@/shared/lib/utils';
+import { uploadDocumentWithFile } from '@/shared/lib/document-upload';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { Check, ChevronsUpDown } from 'lucide-react';
@@ -121,11 +122,17 @@ function UploadDocument({
   };
 
   async function onSubmit(data: z.infer<typeof uploadDocumentSchema>) {
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      toast.error('Seleccione el documento que desea cargar');
+      return;
+    }
     const selectedDocumentType = allDocumentTypes.find((documentType) => documentType.id === data.id_document_types);
     try {
-      await uploadDocument(data, selectedDocumentType?.mandatory!, config.tableName, false);
-      await uploadDocumentFile(selectedFile, data.document_path);
+      await uploadDocumentWithFile({
+        file: selectedFile,
+        path: data.document_path,
+        saveDocument: () => uploadDocument(data, selectedDocumentType?.mandatory!, config.tableName, false),
+      });
       //Cerrar el modal y resetear el formulario y estados
       form.reset();
       setSelectedFile(undefined);
