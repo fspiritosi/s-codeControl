@@ -5,6 +5,7 @@ import {
   VehiclesTableOptions,
 } from '@/shared/types/types';
 import { Vehicle } from '@/shared/zodSchemas/schemas';
+import { formatPathSegment } from './storage-path';
 export const formatDate = (dateString: string) => {
   if (!dateString) return 'No vence';
   const [day, month, year] = dateString.split('/');
@@ -107,19 +108,15 @@ export const setEmployeesToShow = (employees: any) => {
 
   return employee;
 };
-export const formatDocumentTypeName = (documentType: string) => {
-  const formatedDocumentTypeName = documentType
-    .toLowerCase()
-    .replace(/[áäàâ]/g, 'a')
-    .replace(/[éëèê]/g, 'e')
-    .replace(/[íïìî]/g, 'i')
-    .replace(/[óöòô]/g, 'o')
-    .replace(/[úüùû]/g, 'u')
-    .replace(/ñ/g, 'n')
-    .replace(/['"]/g, '') // Elimina apóstrofes y comillas
-    .replace(/\s+/g, '-'); // Reemplaza espacios por guiones
-  return formatedDocumentTypeName;
-};
+/**
+ * @deprecated Usar `formatPathSegment` de `@/shared/lib/utils/storage-path`.
+ *
+ * Se mantiene como alias porque todos sus llamadores arman rutas de Supabase
+ * Storage. La lista de tildes precompuestas que tenia antes no alcanzaba a los
+ * nombres en forma NFD (la tilde como code point aparte) ni a ningun otro
+ * caracter no ascii, y Supabase respondia `InvalidKey`.
+ */
+export const formatDocumentTypeName = (documentType: string) => formatPathSegment(documentType);
 export const EMPLOYEES_TABLE: EmployeesTableOptions = {
   nationality: 'Nacionalidad',
   lastname: 'Apellido',

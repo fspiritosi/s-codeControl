@@ -17,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/
 import { ToggleGroup, ToggleGroupItem } from '@/shared/components/ui/toggle-group';
 import { handleSupabaseError } from '@/shared/lib/errorHandler';
 import { formatDocumentTypeName } from '@/shared/lib/utils/utils';
+import { stripNonAscii } from '@/shared/lib/utils/storage-path';
 import { useLoggedUserStore } from '@/shared/store/loggedUser';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -143,7 +144,7 @@ export default function SimpleDocument({
             ) as string) || (vehicles?.find((vehicle: any) => vehicle.id === document.applies) as string);
 
           if (!appliesName) throw new Error('No se encontro el recurso');
-          const fileExtension = document.file.split('.').pop();
+          const fileExtension = stripNonAscii(document.file.split('.').pop());
           const tableName =
             resource === 'empleado'
               ? 'documents_employees'
@@ -154,9 +155,12 @@ export default function SimpleDocument({
           const hasExpiredDate = updateEntries?.[index]?.validity?.replace(/\//g, '-') || period || 'v0';
           const documetType = documenTypes?.find((e) => e.id === documents[index].id_document_types);
           const formatedCompanyName = formatDocumentTypeName(actualCompany?.company_name || '');
+          // El identificador del recurso (DNI del empleado, serie o dominio del
+          // equipo) se interpola en la ruta: en equipos es texto libre y un
+          // caracter no ascii hace que Supabase rechace la clave (TKT-646).
           const formatedAppliesName = appliesName
-            ? `${formatDocumentTypeName(appliesName?.name)}-(${appliesName?.document})`
-            : `${formatDocumentTypeName(idAppliesUser?.name)}-(${idAppliesUser?.document})`;
+            ? `${formatDocumentTypeName(appliesName?.name)}-(${stripNonAscii(appliesName?.document)})`
+            : `${formatDocumentTypeName(idAppliesUser?.name)}-(${stripNonAscii(idAppliesUser?.document)})`;
           const formatedDocumentTypeName = formatDocumentTypeName(documetType?.name);
           const formatedAppliesPath = formatDocumentTypeName(documetType.applies);
 

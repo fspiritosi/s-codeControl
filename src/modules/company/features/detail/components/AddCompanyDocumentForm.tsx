@@ -16,6 +16,7 @@ import { storage } from '@/shared/lib/storage';
 import { updateDocumentCompanyByAppliesAndType } from '@/modules/company/features/detail/actions.server';
 import { cn } from '@/shared/lib/utils';
 import { formatDocumentTypeName } from '@/shared/lib/utils/utils';
+import { stripNonAscii } from '@/shared/lib/utils/storage-path';
 import { useCountriesStore } from '@/shared/store/countries';
 import { useLoggedUserStore } from '@/shared/store/loggedUser';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -79,7 +80,7 @@ function AddCompanyDocumentForm({
         if (DuplicatedDocument?.length && DuplicatedDocument?.length > 0) {
           throw new Error('Este documento ya se encuentra subido');
         }
-        const fileExtension = data.file.split('.').pop();
+        const fileExtension = stripNonAscii(data.file.split('.').pop());
         if (!file) throw new Error('No se ha subido el archivo');
         await storage.upload(
             'document_files',
