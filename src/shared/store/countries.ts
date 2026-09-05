@@ -26,6 +26,13 @@ interface State {
   workDiagram: generic[]
   customers: generic[]
   contacts: generic[]
+  /**
+   * @deprecated No usar para dar de alta recursos: arranca en `{}` y lo hidrata
+   * `InitEmployees`, así que puede estar frío. Un alta que lo leyera en ese
+   * momento creaba el recurso sin su documentación obligatoria y sin avisar.
+   * Para eso está `fetchMandatoryDocumentTypes`, que distingue "no hay
+   * obligatorios" de "no se pudieron obtener".
+   */
   mandatoryDocuments: MandatoryDocuments
   documentTypes: (company_id?: string) => void
   companyDocumentTypes: Equipo
