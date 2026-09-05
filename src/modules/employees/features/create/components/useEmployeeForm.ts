@@ -31,6 +31,8 @@ import {
 } from '@/modules/employees/features/create/actions.server';
 import { Province } from '@/modules/employees/shared/types';
 import { getPersonalDataFields, getContactDataFields, getLaboralDataFields } from './fieldDefinitions';
+import { fetchMandatoryDocumentTypes } from '@/modules/documents/features/upload/actions.server';
+import { buildMissingMandatoryDocuments } from '@/shared/lib/mandatory-documents';
 
 /**
  * Resuelve el id de una opción (FK) a string para campos REQUERIDOS.
@@ -88,7 +90,6 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
   const getEmployees = useLoggedUserStore((state: any) => state.getEmployees);
   const router = useRouter();
   const url = process.env.NEXT_PUBLIC_PROJECT_URL;
-  const mandatoryDocuments = useCountriesStore((state) => state.mandatoryDocuments);
 
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accion === 'new' ? accordionSchema : accordionSchemaUpdate),
@@ -201,6 +202,15 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
 
     toast.promise(
       async () => {
+        // Los tipos obligatorios se piden al servidor y antes de crear nada: si
+        // no se pueden obtener, es preferible no dar de alta el empleado a darlo
+        // de alta sin su documentación pendiente y sin avisar.
+        const { data: mandatoryTypes, error: mandatoryError } = await fetchMandatoryDocumentTypes(
+          actualCompany?.id,
+          'Persona'
+        );
+        if (mandatoryError) throw new Error(handleSupabaseError(mandatoryError));
+
         const { full_name, ...rest } = values;
         const fileExtension = imageFile?.name.split('.').pop();
         const finalValues = {
@@ -235,22 +245,11 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
           );
           const existingTypesSet = new Set(existingTypes);
 
-          const documentsMissing: {
-            applies: string;
-            id_document_types: string;
-            validity: string | null;
-            user_id: string | undefined;
-          }[] = [];
-
-          mandatoryDocuments?.Persona?.forEach((document: any) => {
-            if (!existingTypesSet.has(document.id)) {
-              documentsMissing.push({
-                applies: employeeId,
-                id_document_types: document.id,
-                validity: null,
-                user_id: loggedUser,
-              });
-            }
+          const documentsMissing = buildMissingMandatoryDocuments({
+            mandatoryTypes,
+            existingTypeIds: Array.from(existingTypesSet) as string[],
+            appliesId: employeeId,
+            userId: loggedUser,
           });
 
           const { error } = documentsMissing.length > 0

@@ -232,6 +232,41 @@ export const removeDocumentFile = async (bucket: string, paths: string[]) => {
   }
 };
 
+/**
+ * Tipos de documento obligatorios de una empresa, para crear la documentación
+ * pendiente al dar de alta un recurso.
+ *
+ * Devuelve `{ data: null, error }` cuando la consulta falla, en vez del `[]` que
+ * devuelven las otras lecturas de tipos de este archivo: quien la llama tiene
+ * que poder distinguir "esta empresa no tiene obligatorios" de "no pude
+ * averiguarlo", porque en el segundo caso crear el recurso igual lo deja sin su
+ * documentación y en silencio.
+ */
+export const fetchMandatoryDocumentTypes = async (
+  companyId: string | undefined,
+  applies: 'Persona' | 'Equipos'
+) => {
+  if (!companyId) {
+    return { data: null, error: 'No hay una empresa seleccionada' };
+  }
+
+  try {
+    const data = await prisma.document_types.findMany({
+      where: {
+        applies: applies as any,
+        mandatory: true,
+        is_active: true,
+        OR: [{ company_id: companyId }, { company_id: null }],
+      },
+      select: { id: true },
+    });
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error fetching mandatory document types:', error);
+    return { data: null, error: String(error) };
+  }
+};
+
 export const fetchDocumentTypesByAppliesForClient = async (
   applies: string,
   companyId: string,
