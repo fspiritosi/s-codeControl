@@ -22,6 +22,8 @@ import {
 } from '@/modules/equipment/features/create/actions.server';
 import { fetchTypesOfVehicles } from '@/modules/equipment/shared/utils';
 import { dataType, generic, VehicleType } from '@/modules/equipment/shared/types';
+import { fetchMandatoryDocumentTypes } from '@/modules/documents/features/upload/actions.server';
+import { buildMissingMandatoryDocuments } from '@/shared/lib/mandatory-documents';
 
 export function useVehicleForm(
   vehicle: any | null,
@@ -41,7 +43,6 @@ export function useVehicleForm(
   const [base64Image, setBase64Image] = useState<string>('');
   const url = process.env.NEXT_PUBLIC_PROJECT_URL;
   const URLQR = process.env.NEXT_PUBLIC_BASE_URL;
-  const mandatoryDocuments = useCountriesStore((state) => state.mandatoryDocuments);
   const loggedUser = useLoggedUserStore((state) => state.credentialUser?.id);
 
   useEffect(() => {
@@ -136,6 +137,15 @@ export function useVehicleForm(
   async function onCreate(values: z.infer<typeof vehicleSchema>) {
     toast.promise(
       async () => {
+        // Los tipos obligatorios se piden al servidor y antes de crear nada: si
+        // no se pueden obtener, es preferible no dar de alta el equipo a darlo
+        // de alta sin su documentación pendiente y sin avisar.
+        const { data: mandatoryTypes, error: mandatoryError } = await fetchMandatoryDocumentTypes(
+          actualCompany?.id,
+          'Equipos'
+        );
+        if (mandatoryError) throw new Error(handleSupabaseError(mandatoryError));
+
         const { type_of_vehicle, brand, model, domain, allocated_to, ...rest } = values;
         const { data: vehicleData, error } = await insertVehicle({
           ...rest,
@@ -164,11 +174,11 @@ export function useVehicleForm(
         );
         const existingTypesSet = new Set(existingTypes);
 
-        const documentsMissing: { applies: string; id_document_types: string; validity: string | null; user_id: string | undefined }[] = [];
-        mandatoryDocuments?.Equipos?.forEach((document: any) => {
-          if (!existingTypesSet.has(document.id)) {
-            documentsMissing.push({ applies: vehicleId, id_document_types: document.id, validity: null, user_id: loggedUser });
-          }
+        const documentsMissing = buildMissingMandatoryDocuments({
+          mandatoryTypes,
+          existingTypeIds: Array.from(existingTypesSet) as string[],
+          appliesId: vehicleId,
+          userId: loggedUser,
         });
         if (documentsMissing.length > 0) {
           const { error: documentError } = await insertDocumentsEquipment(documentsMissing);
