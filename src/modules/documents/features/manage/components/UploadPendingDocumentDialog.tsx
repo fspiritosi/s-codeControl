@@ -111,7 +111,10 @@ export function UploadPendingDocumentDialog({
   return (
     <Dialog open={open} onOpenChange={(v) => !isPending && setOpen(v)}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        {/* type="button" en los tres botones: en el legajo del empleado y en el
+            del equipo esta tabla vive dentro del <form> de la ficha, y un boton
+            sin type es submit y dispara el guardado del recurso. */}
+        <Button variant="outline" size="sm" type="button">
           <Upload className="size-4 mr-1.5" />
           Subir documento
         </Button>
@@ -164,10 +167,10 @@ export function UploadPendingDocumentDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={isPending}>
+          <Button variant="outline" type="button" onClick={() => setOpen(false)} disabled={isPending}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={isPending || !file}>
+          <Button type="button" onClick={handleSubmit} disabled={isPending || !file}>
             {isPending ? (
               <>
                 <Loader2 className="size-4 mr-1.5 animate-spin" />

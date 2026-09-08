@@ -2,11 +2,16 @@
 
 import dynamic from 'next/dynamic';
 import { DocumentHistoryDialog } from '@/modules/documents/shared/components/DocumentHistoryDialog';
-// Carga diferida: el formulario de carga (~768 LOC + react-hook-form) sale del bundle
-// inicial de la tabla; solo se descarga al abrir el diálogo "Subir documento".
-const SimpleDocument = dynamic(() => import('@/modules/documents/features/upload/components/SimpleDocument'), {
-  ssr: false,
-});
+import { pendingUploadPropsFromRow, type PendingUploadRow } from './pending-upload';
+// Carga diferida: el diálogo de carga sale del bundle inicial de la tabla; solo
+// se descarga al abrir "Subir documento".
+const UploadPendingDocumentDialog = dynamic(
+  () =>
+    import('@/modules/documents/features/manage/components/UploadPendingDocumentDialog').then(
+      (m) => m.UploadPendingDocumentDialog
+    ),
+  { ssr: false }
+);
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +21,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/shared/components/ui/alert-dialog';
 import { saveAs } from 'file-saver';
 import { resolveDownloadType } from '@/shared/lib/mime';
@@ -729,45 +733,15 @@ export const ExpiredColums: ColumnDef<any>[] = [
       const isNoPresented = row.getValue('state') === 'pendiente';
       const role = useLoggedUserStore?.getState?.().roleActualCompany;
 
-      const [open, setOpen] = useState(false);
-
-      const handleOpen = () => setOpen(!open);
-      const applies = row.original.applies === 'Persona' ? 'empleado' : 'equipo';
-
       if (isNoPresented) {
-        // El trigger usa asChild: si no hay botón que renderizar (Invitado), Radix
-        // recibiría `false` y rompería con React.Children.only.
         if (role === 'Invitado') return null;
 
-        return (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              {/* type="button": esta tabla vive dentro del <form> de la ficha del
-                  empleado/equipo y sin esto el click dispara su submit. */}
-              <Button variant="outline" type="button">
-                Subir documento
-              </Button>
-            </AlertDialogTrigger>
-            {/* Sin asChild: AlertDialogContent de Radix pasa dos hijos internos
-                (Slottable + DescriptionWarning) y el Slot rompe con Children.only. */}
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Subir documento</AlertDialogTitle>
-                <AlertDialogDescription className="sr-only">
-                  Formulario para cargar el documento pendiente
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <div className="max-h-[70vh] space-y-3 overflow-y-auto">
-                <SimpleDocument
-                  resource={applies}
-                  handleOpen={() => handleOpen()}
-                  defaultDocumentId={row.original.id_document_types}
-                  numberDocument={row.original.document_number || row.original.vehicle_id}
-                />
-              </div>
-            </AlertDialogContent>
-          </AlertDialog>
-        );
+        // Los datos de la carga salen de la propia fila: es el mismo diálogo que
+        // usa /dashboard/document y no depende de ningún store del cliente.
+        const uploadProps = pendingUploadPropsFromRow(row.original as PendingUploadRow);
+        if (!uploadProps) return null;
+
+        return <UploadPendingDocumentDialog {...uploadProps} />;
       }
 
       return (
