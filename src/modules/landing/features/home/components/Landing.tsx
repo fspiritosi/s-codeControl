@@ -1,5 +1,5 @@
-import CodeControlLanding from '@/modules/landing/features/home/components/Landing2';
+import MarketingLanding from './MarketingLanding';
 
 export default function Landing() {
-  return <CodeControlLanding />;
+  return <MarketingLanding />;
 }
