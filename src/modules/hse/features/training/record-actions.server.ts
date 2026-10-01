@@ -404,5 +404,3 @@ export const fetchTrainingTimeReport = async (trainingId: string) => {
     passed: attempt.passed,
   }));
 };
-
-export { SIGNATURES_PREFIX };
