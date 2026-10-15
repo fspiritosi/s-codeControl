@@ -1,4 +1,4 @@
-export const SITE_URL = 'https://codecontrol.com.ar';
+export const SITE_URL = 'https://www.codecontrol.com.ar';
 export const SITE_NAME = 'CodeControl';
 export const SITE_DESCRIPTION =
   'Software a medida y soluciones de gestión para conectar personas, información y operaciones. Conocé Alphataco, PyME Suite y Gestión de Taller.';
