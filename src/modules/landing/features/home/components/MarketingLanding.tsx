@@ -228,53 +228,39 @@ export default function MarketingLanding() {
             <article className={styles['product']}>
               <div>
                 <span className={styles['tag']}>Gestión operativa</span>
-                <h3>
-                  Tu gente y tus equipos,
-                  <br />
-                  mejor coordinados.
-                </h3>
-                <p>Centralizá la información que sostiene tu operación y facilitá el seguimiento del trabajo diario.</p>
+                <h3>Alphataco</h3>
+                <p>
+                  El sistema de la contratista: documentación, flota y partes diarios en un solo lugar, con vencimientos
+                  que avisan solos.
+                </p>
                 <ul>
-                  <li>Empleados, equipos y documentación</li>
-                  <li>Mantenimiento de vehículos y maquinaria</li>
-                  <li>Planificación y gestión de operaciones</li>
+                  <li>Documentación de personas y equipos siempre vigente</li>
+                  <li>Checklists con QR, taller y mantenimiento</li>
+                  <li>Partes diarios y factura electrónica ARCA</li>
                 </ul>
-                <a
-                  className={styles['button']}
-                  href="#contacto"
-                  onClick={() => {
-                    setInterest('Gestión operativa');
-                    setFeedback(null);
-                  }}
-                >
-                  Solicitar una demo
+                <a className={styles['button']} href="https://alphataco.com.ar/" target="_blank" rel="noopener">
+                  Conocer Alphataco
                 </a>
               </div>
               <div className={styles['module-list']}>
-                <div className={styles['product-name']}>CodeControl</div>
-                <p>Áreas de gestión conectadas</p>
-                <div className={styles['module-row']}>
-                  <span aria-hidden="true">◎</span>
-                  <div>
-                    Personas y equipos<small>Información de tus recursos</small>
-                  </div>
-                </div>
+                <div className={styles['product-name']}>Alphataco</div>
+                <p>Gestión operativa para contratistas</p>
                 <div className={styles['module-row']}>
                   <span aria-hidden="true">▤</span>
                   <div>
-                    Documentación<small>Archivos organizados y accesibles</small>
+                    Documentación<small>Vencimientos que avisan solos</small>
                   </div>
                 </div>
                 <div className={styles['module-row']}>
                   <span aria-hidden="true">↻</span>
                   <div>
-                    Mantenimiento<small>Seguimiento de equipos y vehículos</small>
+                    Flota y taller<small>Checklists con QR y mantenimiento</small>
                   </div>
                 </div>
                 <div className={styles['module-row']}>
-                  <span aria-hidden="true">⌘</span>
+                  <span aria-hidden="true">≋</span>
                   <div>
-                    Operaciones<small>Coordinación del trabajo diario</small>
+                    Partes y facturación<small>Partes diarios y factura ARCA</small>
                   </div>
                 </div>
               </div>
@@ -315,6 +301,46 @@ export default function MarketingLanding() {
                   <span aria-hidden="true">≋</span>
                   <div>
                     Caja y reportes<small>Información para tomar decisiones</small>
+                  </div>
+                </div>
+              </div>
+            </article>
+            <article className={styles['product'] + ' ' + styles['amber']}>
+              <div>
+                <span className={styles['tag']}>Talleres mecánicos</span>
+                <h3>Gestión de Taller</h3>
+                <p>
+                  Ordená la recepción, el trabajo y los presupuestos de tu taller, y mantené al cliente al tanto desde
+                  su celular.
+                </p>
+                <ul>
+                  <li>Recepción con fotos y daños del vehículo</li>
+                  <li>Tablero en vivo del trabajo en el taller</li>
+                  <li>Presupuestos que el cliente aprueba online</li>
+                </ul>
+                <a className={styles['button']} href="https://gt.codecontrol.com.ar/" target="_blank" rel="noopener">
+                  Ver la demo de Talleres
+                </a>
+              </div>
+              <div className={styles['module-list']}>
+                <div className={styles['product-name']}>Gestión de Taller</div>
+                <p>Del ingreso del vehículo a la entrega</p>
+                <div className={styles['module-row']}>
+                  <span aria-hidden="true">◎</span>
+                  <div>
+                    Recepción<small>Fotos, daños y datos del cliente</small>
+                  </div>
+                </div>
+                <div className={styles['module-row']}>
+                  <span aria-hidden="true">▦</span>
+                  <div>
+                    Tablero de trabajo<small>Estado de cada vehículo en vivo</small>
+                  </div>
+                </div>
+                <div className={styles['module-row']}>
+                  <span aria-hidden="true">≋</span>
+                  <div>
+                    Presupuestos y dueño<small>Aprobación del cliente y panel de resultados</small>
                   </div>
                 </div>
               </div>
@@ -395,8 +421,9 @@ export default function MarketingLanding() {
                         onChange={(event) => setInterest(event.target.value)}
                       >
                         <option>Software a medida</option>
-                        <option>Gestión operativa</option>
+                        <option>Alphataco</option>
                         <option>PyME Suite</option>
+                        <option>Talleres</option>
                         <option>Necesito orientación</option>
                       </select>
                     </label>
