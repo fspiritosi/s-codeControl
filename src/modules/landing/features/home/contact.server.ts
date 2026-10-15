@@ -23,7 +23,7 @@ const schema = z
       .email()
       .max(254)
       .regex(/^[^\r\n]+$/),
-    interes: z.enum(['Software a medida', 'Gestión operativa', 'PyME Suite', 'Necesito orientación']),
+    interes: z.enum(['Software a medida', 'Alphataco', 'PyME Suite', 'Talleres', 'Necesito orientación']),
     mensaje: z.string().trim().min(10).max(4000),
     website: z.string().max(200).optional().default(''),
   })

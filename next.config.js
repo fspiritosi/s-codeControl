@@ -10,6 +10,13 @@ const nextConfig = {
       '@radix-ui/react-icons'
     ]
   },
+  async headers() {
+    // Áreas privadas: nunca deben indexarse aunque alguien enlace a ellas.
+    const noindex = [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }]
+    return ['/dashboard', '/admin', '/api', '/login', '/register', '/reset_password', '/hse', '/maintenance'].map(
+      (base) => ({ source: `${base}/:path*`, headers: noindex })
+    )
+  },
   images: {
     // domains: ['zktcbhhlcksopklpnubj.supabase.co', 'th.bing.com'],
     remotePatterns: [

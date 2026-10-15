@@ -6,6 +6,7 @@
   --light: #edf3ff;
   --line: #dbe3ef;
   --green: #137e48;
+  --amber: #b45309;
   --white: #fff;
   font-family: 'Avenir Next', 'Segoe UI', sans-serif;
   color: var(--ink);
@@ -465,6 +466,14 @@
 .landing .green .button {
   background: var(--green);
 }
+.landing .amber .tag,
+.landing .amber li:before,
+.landing .amber .product-name {
+  color: var(--amber);
+}
+.landing .amber .button {
+  background: var(--amber);
+}
 .landing .product-name {
   color: var(--blue);
   font-size: 20px;
@@ -501,6 +510,15 @@
   color: var(--muted);
   font-size: 13px;
   margin-top: 5px;
+}
+.landing .amber .module-list {
+  background: #fdf4e7;
+}
+.landing .amber .module-row {
+  border-color: #f0dcc0;
+}
+.landing .amber .module-row span:first-child {
+  color: var(--amber);
 }
 .landing .green .module-list {
   background: #eef7f1;
