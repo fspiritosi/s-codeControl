@@ -1,4 +1,5 @@
 'use server';
+import { fetchCurrentUser } from '@/shared/actions/auth';
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
 import { ensurePendingDocumentsForEquipment } from '@/shared/lib/documentAlerts';
@@ -43,9 +44,7 @@ export const updateVehicleKilometerFromChecklist = async (vehicleId: string, kil
     const empleadoId = cookiesStore.get('empleado_id')?.value;
 
     const supabase = await supabaseServer();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await fetchCurrentUser();
 
     if (!empleadoId && !user?.id) {
       return { error: 'No autorizado' };

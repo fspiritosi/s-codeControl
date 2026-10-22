@@ -89,6 +89,17 @@ export async function sendEmail(options: EmailOptions) {
       ...(attachments && attachments.length > 0 ? { attachments } : {}),
     };
 
+    // MAIL_MODE=off no envía nada (clon de pruebas); MAIL_MODE=redirect manda todo a MAIL_REDIRECT_TO.
+    const mailMode = process.env.MAIL_MODE;
+    if (mailMode === 'off') {
+      console.warn(`[mail desactivado] ${mailOptions.to} · ${mailOptions.subject}`);
+      return { success: true, messageId: 'mail-disabled' };
+    }
+    if (mailMode === 'redirect' && process.env.MAIL_REDIRECT_TO) {
+      mailOptions.subject = `[para ${mailOptions.to}] ${mailOptions.subject}`;
+      mailOptions.to = process.env.MAIL_REDIRECT_TO;
+    }
+
     // Enviar el correo
     const info = await transporter.sendMail(mailOptions);
 

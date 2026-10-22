@@ -21,10 +21,10 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 // TODO: Phase 8+ — Remove supabase import once auth.admin.createUser() is replaced with server action
-import { supabaseBrowser } from '@/shared/lib/supabase/browser';
+import { registerUserWithPassword } from '@/shared/actions/auth-recovery';
 import { fetchCustomersByCompany } from '@/modules/commercial/features/customers/actions.server';
 import { fetchShareCompanyUsersByProfileAndCompany, insertShareCompanyUser } from '@/modules/company/features/users/actions.server';
-import { fetchRoles, fetchProfileByEmail, insertProfile } from '@/shared/actions/auth';
+import { fetchRoles, fetchProfileByEmail } from '@/shared/actions/auth';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
@@ -171,47 +171,24 @@ export const RegisterWithRole = () => {
           throw new Error('No se encontró un usuario con ese correo');
         }
         if (!profile || profile?.length === 0) {
-          // const { data, error } = await supabase.auth.signUp({
-          //   email: values.email,
-          //   password: values.password!,
-          
-          // });
-          
-          const supabase = supabaseBrowser();
-          const { data, error } = await supabase.auth.admin.createUser({
+          const { id: newProfileId, error: registerError } = await registerUserWithPassword({
             email: values.email,
             password: values.password!,
-            email_confirm:true
+            fullname: `${values.firstname} ${values.lastname}`,
+            role: 'CodeControlClient',
           });
-
-          if (error) {
-            throw new Error(handleSupabaseError(error.message));
+          if (registerError || !newProfileId) {
+            throw new Error(registerError ?? 'No se pudo crear el usuario');
           }
 
-          if (data) {
-            const { data: profileData, error: profileError } = await insertProfile({
-                  id: data.user?.id,
-                  email: values.email,
-                  fullname: `${values.firstname} ${values.lastname}`,
-                  role: 'CodeControlClient',
-                  credential_id: data.user?.id,
-            });
-
-            if (profileError) {
-              throw new Error(handleSupabaseError(profileError));
-            }
-
-            if (profileData) {
-              const { error: shareError } = await insertShareCompanyUser({
-                  company_id: company?.id,
-                  profile_id: profileData?.[0].id,
-                  role: values?.role,
-                  customer_id: values?.customer ? values?.customer : null,
-              });
-              if (shareError) {
-                throw new Error(handleSupabaseError(shareError));
-              }
-            }
+          const { error: shareError } = await insertShareCompanyUser({
+            company_id: company?.id,
+            profile_id: newProfileId,
+            role: values?.role,
+            customer_id: values?.customer ? values?.customer : null,
+          });
+          if (shareError) {
+            throw new Error(handleSupabaseError(shareError));
           }
         }
 

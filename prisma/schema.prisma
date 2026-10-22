@@ -330,7 +330,15 @@ model profile {
   role          String?
   modulos       modulos[]
   password_hash String?   @db.Text
+  // Campos que antes vivían en auth.users (Supabase Auth)
+  email_verified_at DateTime? @db.Timestamptz(6)
+  last_sign_in_at   DateTime? @db.Timestamptz(6)
+  cuil              String?
+  phone             String?
+  // raw_user_meta_data de Supabase: data_confirmed, verified, position, department del portal
+  metadata          Json      @default("{}")
 
+  auth_tokens                 auth_tokens[]
   owned_companies             company[]                 @relation("company_owner")
   share_company_users         share_company_users[]
   documents_employees         documents_employees[]     @relation("documents_employees_user")
@@ -347,6 +355,19 @@ model profile {
   notification_recipients     notification_recipients[]
   alert_acknowledgements      alert_acknowledgements[]  @relation("alert_ack_reviewer")
   torque_certificates_created torque_certificates[]     @relation("torque_certificates_created_by")
+}
+
+model auth_tokens {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profile_id String    @db.Uuid
+  type       String // password_reset | invite | email_verify
+  token_hash String    @unique
+  expires_at DateTime  @db.Timestamptz(6)
+  used_at    DateTime? @db.Timestamptz(6)
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  profile    profile   @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([profile_id, type])
 }
 
 model company {

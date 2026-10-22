@@ -1,4 +1,5 @@
 // TODO: Phase 8 — migrate auth to NextAuth
+import { fetchCurrentUser } from '@/shared/actions/auth';
 import { supabaseServer } from '@/shared/lib/supabase/server';
 import { setVehiclesToShow } from '@/shared/lib/utils/utils';
 import { TypeOfRepair } from '@/shared/types/types';
@@ -34,9 +35,7 @@ async function RepairTypes({
 }) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const supabase = await supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await fetchCurrentUser();
   const coockiesStore = await cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
   const repairsRes = await fetch(`${URL}/api/repairs?actual=${company_id}`).then((res) => res.json());

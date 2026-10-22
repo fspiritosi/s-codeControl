@@ -1,6 +1,6 @@
 import { prisma } from '@/shared/lib/prisma';
 // TODO: Phase 8 — migrate auth to NextAuth
-import { supabaseServer } from '@/shared/lib/supabase/server';
+import { fetchCurrentUser } from '@/shared/actions/auth';
 import { Inter } from 'next/font/google';
 import { cookies } from 'next/headers';
 import '../globals.css';
@@ -10,17 +10,14 @@ import AdminSideBar from '@/modules/admin/features/layout/components/AdminSideba
 const inter = Inter({ subsets: ['latin'] });
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await fetchCurrentUser();
 
   const cookiesStore = await cookies();
 
   const actualCompany = cookiesStore.get('actualComp');
 
   const profile = await prisma.profile.findMany({
-    where: { credential_id: user?.id || '' },
+    where: { id: user?.id || '' },
   });
 
   // Note: company and share_company_users data is fetched but not used in the layout template

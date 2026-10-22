@@ -1,18 +1,14 @@
-// TODO: Phase 8+ — Remove supabase browser import once all .auth.* calls are migrated
-import { supabaseBrowser } from '@/shared/lib/supabase/browser';
 import { login, singUp } from '@/shared/types/types';
-import { useEdgeFunctions } from './useEdgeFunctions';
+import { requestPasswordReset, resetPassword } from '@/shared/actions/auth-recovery';
 import { useSession } from 'next-auth/react';
 
 /**
  * Custom hook for handling authentication data.
- * Uses NextAuth as primary auth with Supabase fallback for password recovery flows.
+ * Login con NextAuth; recuperación de contraseña con tokens propios (auth_tokens).
  *
  * @returns An object containing the authentication functions.
  */
 export const useAuthData = () => {
-  const { errorTranslate } = useEdgeFunctions();
-  const supabase = supabaseBrowser();
   const { data: session } = useSession();
 
   return {
@@ -50,32 +46,14 @@ export const useAuthData = () => {
 
       return result;
     },
-    // TODO: Phase 8+ — Replace Supabase password recovery with custom token-based flow
     recoveryPassword: async (email: string) => {
-      localStorage.setItem('email', email);
-
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL!}/reset_password/update-user`,
-      });
-      if (error) {
-        const message = await errorTranslate(error.message);
-        throw new Error(String(message).replaceAll('"', ''));
-      }
-      return data;
+      await requestPasswordReset(email);
+      return { ok: true };
     },
-    // TODO: Phase 8+ — Replace Supabase password update with bcrypt hash update via server action
-    updateUser: async ({ password }: { password: string }) => {
-      const email = localStorage.getItem('email');
-      if (!email) throw new Error('Email no encontrado');
-
-      // Use Supabase admin API for now (password reset flow)
-      const { data, error } = await supabase.auth.updateUser({ password });
-      if (error) {
-        const message = await errorTranslate(error.message);
-        throw new Error(String(message).replaceAll('"', ''));
-      }
-      localStorage.removeItem('email');
-      return data;
+    updateUser: async ({ password, token }: { password: string; token: string }) => {
+      const result = await resetPassword(token, password);
+      if (!result.ok) throw new Error(result.error ?? 'No se pudo cambiar la contraseña');
+      return result;
     },
     googleLogin: async () => {
       const { signIn } = await import('next-auth/react');
@@ -83,21 +61,6 @@ export const useAuthData = () => {
         callbackUrl: '/dashboard',
       });
       return result;
-    },
-    loginOnlyEmail: async (email: string) => {
-      // TODO: Phase 8+ — Implement magic link via NextAuth Email provider
-      const { data, error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: window.location.origin + '/login/auth/callback',
-        },
-      });
-
-      if (error) {
-        const message = await errorTranslate(error.message);
-        throw new Error(String(message).replaceAll('"', ''));
-      }
-      return data;
     },
     getSession: async () => {
       return session?.user ?? null;

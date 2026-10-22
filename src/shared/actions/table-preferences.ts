@@ -1,5 +1,6 @@
 'use server';
 
+import { fetchCurrentUser } from '@/shared/actions/auth';
 import { supabaseServer } from '@/shared/lib/supabase/server';
 
 /**
@@ -27,9 +28,7 @@ type SupabaseAny = any;
  */
 export async function getTablePreferences(tableId: string) {
   const supabase = await supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await fetchCurrentUser();
   if (!user) return null;
 
   const { data } = await (supabase.from as SupabaseAny)('user_table_preferences')
@@ -57,9 +56,7 @@ export async function saveTableColumnVisibility(
   visibility: Record<string, boolean>,
 ) {
   const supabase = await supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await fetchCurrentUser();
   if (!user) return;
 
   await (supabase.from as SupabaseAny)('user_table_preferences').upsert(
@@ -81,9 +78,7 @@ export async function saveTableFilterVisibility(
   filters: Record<string, boolean>,
 ) {
   const supabase = await supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await fetchCurrentUser();
   if (!user) return;
 
   await (supabase.from as SupabaseAny)('user_table_preferences').upsert(

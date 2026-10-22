@@ -7,7 +7,6 @@ import { useAuthData } from '@/shared/hooks/useAuthData';
 import { loginSchema } from '@/shared/zodSchemas/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { EyeClosedIcon, EyeOpenIcon } from '@radix-ui/react-icons';
-import { AuthError } from '@supabase/supabase-js';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -62,7 +61,7 @@ export function LoginForm() {
     try {
       const user = await googleLogin();
       return user;
-    } catch (error: AuthError | any) {
+    } catch (error: any) {
       toast.error(error.message);
     }
   };

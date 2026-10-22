@@ -10,89 +10,68 @@ const DOCUMENT_COMPANY_FILTERS: DataTableFacetedFilterConfig[] = [
   { columnId: 'private', title: 'Acceso', type: 'text' },
   { columnId: 'vencimiento', title: 'Vencimiento', type: 'text' },
 ];
-// TODO: Phase 8 — migrate .from() queries to Prisma server actions and .auth to NextAuth
-import { supabaseServer } from '@/shared/lib/supabase/server';
+import { prisma } from '@/shared/lib/prisma';
+import { fetchCurrentUser } from '@/shared/actions/auth';
 import { cookies } from 'next/headers';
 
 export default async function DocumentTabComponent() {
-  const supabase = await supabaseServer();
   const cookiesStore = await cookies();
-  const user = await supabase.auth.getUser();
-
-  const { data: owner } = await supabase
-    .from('profile')
-    .select('*')
-    .eq('id', user?.data?.user?.id || '');
-  const ownerUser = owner;
-
-  const { data: userShared } = await supabase
-    .from('share_company_users')
-    .select('*')
-    .eq('profile_id', user?.data?.user?.id || '');
-  const sharedUsersAll = userShared;
-  const role: string | null = userShared?.[0]?.role || null;
+  const user = await fetchCurrentUser();
+  const userId = user?.id || '';
   const actualCompany = cookiesStore.get('actualComp')?.value;
 
-  let { data: documents_company, error: documents_company_error } = await supabase
-    .from('documents_company')
-    .select('*,id_document_types(*),user_id(*)')
-    .eq('applies', actualCompany || '');
+  const [ownerUser, userShared, documents_company] = await Promise.all([
+    prisma.profile.findMany({ where: { id: userId } }),
+    prisma.share_company_users.findMany({
+      where: { profile_id: userId },
+      include: { profile: true, customer: true },
+    }),
+    prisma.documents_company.findMany({
+      where: { applies: actualCompany || '' },
+      include: { document_type: true, user: true },
+    }),
+  ]);
 
-  const AllCompanyDocuments = documents_company;
-  const ownerData = ownerUser?.map((user) => {
-    return {
-      email: user.email,
-      fullname: user.fullname as string,
-      role: 'Propietario',
-      alta: user.created_at ? new Date(user.created_at) : new Date(),
-      id: user.id || '',
-      img: user.avatar || '',
-    };
-  });
-  const sharedUsers =
-    sharedUsersAll?.map((user: any) => {
-      return {
-        email: user.profile_id.email,
-        fullname: user.profile_id.fullname,
-        role: user?.role,
-        alta: user.created_at,
-        id: user.id,
-        img: user.profile_id.avatar || '',
-        customerName: user.customer_id?.name,
-      };
-    }) || [];
-  const guestsData =
-    sharedUsers
-      ?.filter((user) => user.role === 'Invitado') // Filtrar usuarios donde el rol no sea "Invitado"
-      ?.map((user) => ({
-        ...user,
-        fullname: user.fullname || '',
-      })) || [];
-  const data = owner?.concat(
-    (sharedUsers
-      ?.filter((user) => user.role !== 'Invitado') // Filtrar usuarios donde el rol no sea "Invitado"
-      ?.map((user) => ({
-        ...user,
-        fullname: user.fullname || '',
-      })) as any) || []
-  );
+  const ownerData = ownerUser.map((owner) => ({
+    email: owner.email,
+    fullname: owner.fullname as string,
+    role: 'Propietario',
+    alta: owner.created_at ? new Date(owner.created_at) : new Date(),
+    id: owner.id || '',
+    img: owner.avatar || '',
+  }));
+  const sharedUsers = userShared.map((shared) => ({
+    email: shared.profile?.email,
+    fullname: shared.profile?.fullname,
+    role: shared.role,
+    alta: shared.created_at,
+    id: shared.id,
+    img: shared.profile?.avatar || '',
+    customerName: shared.customer?.name,
+  }));
+  const data = [
+    ...ownerData,
+    ...sharedUsers
+      .filter((shared) => shared.role !== 'Invitado')
+      .map((shared) => ({ ...shared, fullname: shared.fullname || '' })),
+  ];
 
-  const documentCompany = AllCompanyDocuments?.map((document: any) => {
-    const sharedUserRole = data?.find((e) => e.email === document.user_id?.email)?.role;
+  const documentCompany = documents_company.map((document) => {
+    const sharedUserRole = data?.find((e) => e.email === document.user?.email)?.role;
     return {
-      email: document.user_id?.email ?? 'Documento pendiente',
-      fullname: document.id_document_types.name,
+      email: document.user?.email ?? 'Documento pendiente',
+      fullname: document.document_type?.name ?? '',
       role: sharedUserRole ?? 'Documento pendiente',
-      alta: (document.user_id?.email && document.created_at) ?? 'Documento pendiente',
-      id: document.id_document_types.id,
-      img: document.user_id?.avatar,
+      alta: (document.user?.email && document.created_at) ?? 'Documento pendiente',
+      id: document.document_type?.id ?? '',
+      img: document.user?.avatar ?? '',
       vencimiento: document.validity
         ? document.validity
-        : document.id_document_types.explired
+        : document.document_type?.explired
           ? 'Documento pendiente'
           : 'No expira',
       documentId: document.id,
-      private: document.id_document_types.private,
+      private: document.document_type?.private,
     };
   });
   return (

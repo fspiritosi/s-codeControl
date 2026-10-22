@@ -1,28 +1,17 @@
 'use server';
 import { prisma } from '@/shared/lib/prisma';
 import { auth } from '@/auth';
-import { supabaseServer } from '@/shared/lib/supabase/server';
 import { getActionContext } from '@/shared/lib/server-action-context';
 
 // --- From company/queries.ts ---
 
 export const fetchCurrentUser = async () => {
-  // Try NextAuth first
   const session = await auth();
-  if (session?.user?.profileId) {
-    return {
-      id: session.user.profileId,
-      email: session.user.email,
-    };
-  }
-
-  // Fallback to Supabase auth for legacy sessions
-  const supabase = await supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  return user;
+  if (!session?.user?.profileId) return null;
+  return {
+    id: session.user.profileId,
+    email: session.user.email,
+  };
 };
 
 export const getCurrentProfile = async () => {

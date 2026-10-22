@@ -1,3 +1,4 @@
+import { fetchCurrentUser } from '@/shared/actions/auth';
 import { fetchDiagrams, fetchDiagramsTypes } from '@/modules/employees/features/diagrams/actions.server';
 import { fetchAllActivesEmployees } from '@/modules/employees/features/list/actions.server';
 // TODO: Phase 8 — migrate auth to NextAuth
@@ -13,9 +14,7 @@ import DiagramTypeComponent from './DiagramTypeComponent';
 async function EmployesDiagram() {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
   const supabase = await supabaseServer();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await fetchCurrentUser();
   const coockiesStore = await cookies();
   const company_id = coockiesStore.get('actualComp')?.value;
   const employeesRes = await fetch(`${URL}/api/employees?actual=${company_id}&user=${user?.id}`).then((e) => e.json());

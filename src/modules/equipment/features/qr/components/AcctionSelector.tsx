@@ -1,11 +1,9 @@
 'use client';
 import { Button } from '@/shared/components/ui/button';
-// TODO: Phase 8+ — Remove supabase import once auth calls (.signOut) are replaced
-import { supabaseBrowser } from '@/shared/lib/supabase/browser';
 import { setVehiclesToShow } from '@/shared/lib/utils/utils';
 import { RepairsSolicituds, TypeOfRepair } from '@/shared/types/types';
 import { LapTimerIcon } from '@radix-ui/react-icons';
-import { User } from '@supabase/supabase-js';
+import { signOut } from 'next-auth/react';
 import cookies from 'js-cookie';
 import { ArrowLeft, ClipboardList } from 'lucide-react';
 import Image from 'next/image';
@@ -31,7 +29,7 @@ export default function QrActionSelector({
   equipmentsForComboBox,
 }: {
   empleado_name: string | undefined;
-  user: User | null;
+  user: { id: string; email?: string | null } | null;
   employee_id: string | undefined;
   tipo_de_mantenimiento: TypeOfRepair;
   equipment: ReturnType<typeof setVehiclesToShow>;
@@ -51,7 +49,6 @@ export default function QrActionSelector({
   }[];
 }) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const supabase = supabaseBrowser();
   const router = useRouter();
 
   if (!employee_id && !user?.id) {
@@ -59,7 +56,7 @@ export default function QrActionSelector({
   }
 
   const handleBack = async () => {
-    await supabase.auth.signOut();
+    await signOut({ redirect: false });
     cookies.remove('empleado_id');
     cookies.remove('empleado_name');
     router.push('/maintenance/thanks');

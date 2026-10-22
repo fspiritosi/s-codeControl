@@ -1,3 +1,4 @@
+import { fetchCurrentUser } from '@/shared/actions/auth';
 import { fetchCustomForms } from '@/modules/forms/features/custom-forms/actions.server';
 import QrActionSelector from '@/modules/equipment/features/qr/components/AcctionSelector';
 import { prisma } from '@/shared/lib/prisma';
@@ -33,9 +34,7 @@ export default async function Home({
   const employee = cookiesStore.get('empleado_id')?.value;
   const empleado_name = cookiesStore.get('empleado_name')?.value;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await fetchCurrentUser();
 
   if (!employee && !user?.id) {
     redirect('/maintenance');

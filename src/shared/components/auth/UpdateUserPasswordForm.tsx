@@ -3,7 +3,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useAuthData } from '@/shared/hooks/useAuthData';
 import { changePassSchema } from '@/shared/zodSchemas/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -19,6 +19,7 @@ export const UpdateUserPasswordForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
   const router = useRouter();
+  const token = useSearchParams().get('token') ?? '';
 
   const form = useForm<z.infer<typeof changePassSchema>>({
     resolver: zodResolver(changePassSchema),
@@ -33,7 +34,7 @@ export const UpdateUserPasswordForm = () => {
 
     toast.promise(
       async () => {
-        await updateUser(values);
+        await updateUser({ password: values.password, token });
       },
       {
         loading: 'Actualizada contraseña...',

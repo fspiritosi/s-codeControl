@@ -1,6 +1,5 @@
 import { setVehiclesToShow } from '@/shared/lib/utils/utils';
 import { TypeOfRepair } from '@/shared/types/types';
-import { User } from '@supabase/supabase-js';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { FiArrowLeft } from 'react-icons/fi';
@@ -21,7 +20,7 @@ function SolicitarMantenimiento({
   equipment: ReturnType<typeof setVehiclesToShow>;
   default_equipment_id?: string;
   employee_id: string | undefined;
-  user: User | null;
+  user: { id: string; email?: string | null } | null;
 }) {
   const router = useRouter();
   if (!employee_id && !user?.id) {

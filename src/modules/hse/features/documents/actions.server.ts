@@ -1,6 +1,7 @@
 'use server'
 
 // TODO: Phase 8 — migrate .from() queries to Prisma server actions and .auth to NextAuth
+import { fetchCurrentUser } from '@/shared/actions/auth';
 import { supabaseServer } from '@/shared/lib/supabase/server'
 import { storageServer } from '@/shared/lib/storage-server'
 
@@ -319,8 +320,8 @@ export async function prepareHseDocumentCreate(input: {
   if (!input.companyId) return { ok: false as const, error: 'Se requiere el ID de la compañía' };
   if (!input.title || !input.fileName) return { ok: false as const, error: 'Título y archivo son obligatorios' };
 
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) return { ok: false as const, error: 'No se pudo autenticar al usuario' };
+  const user = await fetchCurrentUser();
+  if (!user) return { ok: false as const, error: 'No se pudo autenticar al usuario' };
 
   const { data: existingDoc } = await supabase
     .from('hse_documents' as any)
@@ -359,8 +360,8 @@ export async function confirmHseDocumentCreate(input: {
   try {
     if (!company_id) throw new Error('Se requiere el ID de la compañía');
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) throw new Error('No se pudo autenticar al usuario');
+    const user = await fetchCurrentUser();
+    if (!user) throw new Error('No se pudo autenticar al usuario');
 
     const selectedPositions = Array.isArray(input.typeOfEmployee) ? input.typeOfEmployee : [];
     const assignToAll = selectedPositions.length === 0;
@@ -647,8 +648,8 @@ export async function prepareHseDocumentVersion(input: {
   if (!input.companyId) return { ok: false as const, error: 'Se requiere el ID de la compañía' };
   if (!input.fileName) return { ok: false as const, error: 'El archivo es obligatorio' };
 
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) return { ok: false as const, error: 'No se pudo autenticar al usuario' };
+  const user = await fetchCurrentUser();
+  if (!user) return { ok: false as const, error: 'No se pudo autenticar al usuario' };
 
   const { data: existingDoc, error: fetchError } = await supabase
     .from('hse_documents' as any)
@@ -692,8 +693,8 @@ export async function confirmHseDocumentVersion(input: {
   try {
     if (!company_id) throw new Error('Se requiere el ID de la compañía');
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) throw new Error('No se pudo autenticar al usuario');
+    const user = await fetchCurrentUser();
+    if (!user) throw new Error('No se pudo autenticar al usuario');
 
     const version = input.version;
     const expiryDate = input.expiryDate || '';
@@ -1275,7 +1276,7 @@ export async function deleteDocument(documentId: string) {
 //       error: userError,
 //     } = await supabase.auth.getUser();
 
-//     if (userError || !user) {
+//     if (!user) {
 //       throw new Error("No se pudo autenticar al usuario");
 //     }
 
@@ -1463,8 +1464,8 @@ export async function confirmHseDocumentUpdate(input: {
   const companyId = input.companyId;
 
   try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) throw new Error('No se pudo autenticar al usuario');
+    const user = await fetchCurrentUser();
+    if (!user) throw new Error('No se pudo autenticar al usuario');
 
     const documentId = input.documentId;
     const typeOfEmployee = Array.isArray(input.typeOfEmployee) ? input.typeOfEmployee : [];

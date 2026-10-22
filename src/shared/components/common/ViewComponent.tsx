@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 // TODO: Phase 8 — migrate auth to NextAuth
-import { supabaseServer } from '@/shared/lib/supabase/server';
+import { fetchCurrentUser } from '@/shared/actions/auth';
 import { getActualRole } from '@/shared/lib/utils';
 import { cookies } from 'next/headers';
 
@@ -22,11 +22,10 @@ interface ViewDataObj {
 }
 
 export default async function Viewcomponent({ viewData }: { viewData: ViewDataObj }) {
-  const supabase = await supabaseServer();
-  const user = await supabase.auth.getUser();
+  const user = await fetchCurrentUser();
   const cookiesStore = await cookies();
   const actualCompany = cookiesStore.get('actualComp')?.value;
-  const role = await getActualRole(actualCompany as string, user?.data?.user?.id as string);
+  const role = await getActualRole(actualCompany as string, user?.id as string);
 
   return (
     <div className="flex flex-col gap-6 py-4 px-6 h-full ">

@@ -1,8 +1,6 @@
 import { profileUser } from '@/shared/types/types';
 import { create } from 'zustand';
-// TODO: Phase 8+ — Remove supabase import once .auth.getUser() is replaced with NextAuth session
-import { supabaseBrowser } from '@/shared/lib/supabase/browser';
-import { fetchProfileByCredentialId } from '@/shared/actions/auth';
+import { fetchCurrentUser, fetchProfileByCredentialId } from '@/shared/actions/auth';
 
 type AuthUser = { id: string; email?: string; [key: string]: any } | null;
 
@@ -57,12 +55,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  // TODO: Phase 8+ — Replace with NextAuth session
   loggedUser: async () => {
-    const supabase = supabaseBrowser();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await fetchCurrentUser();
     if (user) {
       set({ credentialUser: user });
     }

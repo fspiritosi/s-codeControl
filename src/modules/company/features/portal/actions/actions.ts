@@ -1,8 +1,7 @@
 'use server';
-// TODO: Phase 8 — migrate .rpc() and .auth.admin to Prisma server actions and NextAuth
-import { adminSupabaseServer, supabaseServer } from '@/shared/lib/supabase/server';
+import { prisma } from '@/shared/lib/prisma';
+import { auth } from '@/auth';
 import { cookies } from 'next/headers';
-import type { Json } from '../../../../../../database.types';
 
 export interface CompanyUserByCuil {
   company_id: string;
@@ -15,52 +14,81 @@ export interface CompanyUserByCuil {
   last_name: string;
   last_sign_in_at: string;
   phone: string;
-  raw_user_meta_data: Json;
+  raw_user_meta_data: Record<string, unknown>;
   user_created_at: string;
   user_cuil: string;
   user_id: string;
   user_updated_at: string;
 }
 
+type PortalRow = Omit<
+  CompanyUserByCuil,
+  'confirmed_at' | 'last_sign_in_at' | 'user_created_at' | 'user_updated_at' | 'employee_created_at'
+> & {
+  confirmed_at: Date | null;
+  last_sign_in_at: Date | null;
+  user_created_at: Date | null;
+  user_updated_at: Date | null;
+  employee_created_at: Date | null;
+};
+
+const iso = (value: Date | null) => (value ? value.toISOString() : '');
+
+/** Usuarios del portal cuyo CUIL coincide con el de un empleado de la empresa actual. */
 export const getPendingRequests = async (): Promise<CompanyUserByCuil[]> => {
   const cookiesStore = await cookies();
   const company_id = cookiesStore.get('actualComp')?.value;
-  const supabase = await supabaseServer();
-
   if (!company_id) return [];
 
-  const { data, error } = await (supabase.rpc as any)('get_company_users_by_cuil', {
-    p_company_id: company_id,
-  });
-
-  if (error) {
+  try {
+    const rows = await prisma.$queryRaw<PortalRow[]>`
+      SELECT
+        p.id AS user_id,
+        p.email,
+        p.phone,
+        p.email_verified_at AS confirmed_at,
+        p.last_sign_in_at,
+        p.created_at AS user_created_at,
+        p.created_at AS user_updated_at,
+        p.cuil AS user_cuil,
+        e.id AS employee_id,
+        e.cuil AS employee_cuil,
+        e.company_id,
+        e.firstname AS first_name,
+        e.lastname AS last_name,
+        e.created_at AS employee_created_at,
+        p.metadata AS raw_user_meta_data
+      FROM public.profile p
+      JOIN public.employees e ON REPLACE(p.cuil, '-', '') = REPLACE(e.cuil, '-', '')
+      WHERE p.cuil IS NOT NULL
+        AND e.company_id = ${company_id}::uuid
+    `;
+    return rows.map((row) => ({
+      ...row,
+      confirmed_at: iso(row.confirmed_at),
+      last_sign_in_at: iso(row.last_sign_in_at),
+      user_created_at: iso(row.user_created_at),
+      user_updated_at: iso(row.user_updated_at),
+      employee_created_at: iso(row.employee_created_at),
+    }));
+  } catch (error) {
     console.error('Error fetching company users:', error);
     return [];
   }
-
-  return (data ?? []) as CompanyUserByCuil[];
 };
 
-export const approveUserRequest = async (userId: string) => {
-  const supabase = await adminSupabaseServer();
+async function setPortalVerified(userId: string, verified: boolean) {
+  const session = await auth();
+  if (!session?.user?.profileId) throw new Error('No autorizado');
 
-  const { error, data } = await supabase.auth.admin.updateUserById(userId, { user_metadata: { verified: true } });
+  await prisma.$executeRaw`
+    UPDATE public.profile
+    SET metadata = metadata || ${JSON.stringify({ verified })}::jsonb
+    WHERE id = ${userId}::uuid
+  `;
+  return { user: { id: userId } };
+}
 
-  if (error) {
-    throw error;
-  }
+export const approveUserRequest = async (userId: string) => setPortalVerified(userId, true);
 
-  return data;
-};
-
-export const removeUserAccess = async (userId: string) => {
-  const supabase = await adminSupabaseServer();
-
-  const { error, data } = await supabase.auth.admin.updateUserById(userId, { user_metadata: { verified: false } });
-  if (error) {
-    console.error(error);
-    throw error;
-  }
-
-  return data;
-};
+export const removeUserAccess = async (userId: string) => setPortalVerified(userId, false);

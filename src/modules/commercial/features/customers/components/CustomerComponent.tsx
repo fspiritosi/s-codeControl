@@ -19,8 +19,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Toaster, toast } from 'sonner';
 import { z } from 'zod';
-// TODO: Phase 8+ — Remove supabase import once auth.getUser() is replaced with NextAuth session
-import { supabaseBrowser } from '@/shared/lib/supabase/browser';
+import { fetchCurrentUser } from '@/shared/actions/auth';
 import { fetchCustomerById } from '@/modules/commercial/features/customers/actions.server';
 // import { columns } from '../app/dashboard/company/customers/action/columnsCustomers';
 import { EmployeesListColumns } from '@/modules/employees/features/list/components/columns';
@@ -108,11 +107,8 @@ export default function ClientRegister({ id, equipment }: { id: string; equipmen
   const filteredItems = items?.filter((item: any) => item.customer_service_id?.id === selectedService?.id);
 
   const fetchUser = async () => {
-    const supabase = supabaseBrowser();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    setUserId(user);
+    const user = await fetchCurrentUser();
+    setUserId(user?.id ?? null);
   };
   const fetchemploy = async () => {
     const res = await fetch(`${URL}/api/employees/table?actual=${actualCompany}&user=${userId}`).then((e) =>

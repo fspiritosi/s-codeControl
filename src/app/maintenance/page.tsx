@@ -11,10 +11,8 @@ import {
 } from '@/shared/components/ui/command';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form';
 import { Input } from '@/shared/components/ui/input';
-import { handleSupabaseError } from '@/shared/lib/errorHandler';
-// TODO: Phase 8+ — Remove supabase import once auth calls (.signOut, .signInWithPassword) are replaced
-import { supabaseBrowser } from '@/shared/lib/supabase/browser';
-import { fetchProfileBySupabaseUserId } from '@/shared/actions/auth';
+import { fetchCurrentUser, fetchProfileBySupabaseUserId } from '@/shared/actions/auth';
+import { signIn, signOut } from 'next-auth/react';
 import { fetchEmployeeByCuil } from '@/shared/actions/catalogs';
 import {
   fetchActiveEquipmentForPicker,
@@ -50,7 +48,6 @@ function CodeControlLogin() {
   const [step, setStep] = useState<'selection' | 'login' | 'pick-equipment'>('selection');
   const [loginType, setLoginType] = useState<'empleado' | 'invitado' | ''>('');
   const [equipmentList, setEquipmentList] = useState<PickerEquipment[]>([]);
-  const supabase = supabaseBrowser();
   const searchParams = useSearchParams();
   const equipment_id = searchParams.get('equipment');
   const router = useRouter();
@@ -101,7 +98,7 @@ function CodeControlLogin() {
   });
 
   useEffect(() => {
-    supabase.auth.signOut();
+    signOut({ redirect: false });
     cookies.remove('empleado_id');
     cookies.remove('empleado_name');
   }, []);
@@ -112,18 +109,20 @@ function CodeControlLogin() {
         let companyIdForPicker: string | null = null;
 
         if (loginType === 'invitado' && email && password) {
-          const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-          if (error) {
-            throw new Error(handleSupabaseError(error.message));
+          const result = await signIn('credentials', { email, password, redirect: false });
+          if (result?.error) {
+            throw new Error('Credenciales inválidas');
           }
-          const empleado = await fetchProfileBySupabaseUserId(data.user.id);
+          const currentUser = await fetchCurrentUser();
+          if (!currentUser) throw new Error('No se pudo iniciar sesión');
+          const empleado = await fetchProfileBySupabaseUserId(currentUser.id);
           cookies.set('empleado_name', `${empleado?.[0]?.fullname || ''}`, { expires: 1 / 24 });
 
           if (equipment_id) {
             router.push(`/maintenance/${equipment_id}`);
             return;
           }
-          companyIdForPicker = await getFirstCompanyIdForProfile(data.user.id);
+          companyIdForPicker = await getFirstCompanyIdForProfile(currentUser.id);
         } else {
           const employeeData = await fetchEmployeeByCuil(cuil || '');
 

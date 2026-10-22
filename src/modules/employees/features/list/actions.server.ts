@@ -1,6 +1,5 @@
 'use server';
 import { prisma } from '@/shared/lib/prisma';
-import { supabaseServer } from '@/shared/lib/supabase/server';
 import { getActionContext } from '@/shared/lib/server-action-context';
 import { fetchCurrentUser } from '@/shared/actions/auth';
 import type { status_type } from '@/generated/prisma/client';
@@ -18,12 +17,7 @@ export const fetchAllEmployeesWithRelations = async () => {
   if (!companyId) return [];
 
   try {
-    // La query principal (lo más caro) arranca en paralelo con auth y el cliente
-    // de Supabase, en vez de esperarlos en cascada.
-    const [user, supabase, data] = await Promise.all([
-      fetchCurrentUser(),
-      supabaseServer(),
-      prisma.employees.findMany({
+    const data = await prisma.employees.findMany({
         where: { company_id: companyId },
         include: {
           guild_rel: true,
@@ -39,15 +33,7 @@ export const fetchAllEmployeesWithRelations = async () => {
           },
         },
         orderBy: { lastname: 'asc' },
-      }),
-    ]);
-
-    // Update user metadata via supabase auth admin (fire-and-forget, no bloquea)
-    supabase.auth.admin.updateUserById(user?.id || '', {
-      app_metadata: {
-        company: companyId,
-      },
-    });
+      });
 
     return data ?? [];
   } catch (error) {

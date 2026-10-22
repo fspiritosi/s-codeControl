@@ -4,6 +4,7 @@ import RenderBanner from '@/shared/components/auth/RenderBanner';
 import { CardDescription, CardTitle } from '@/shared/components/ui/card';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Suspense } from 'react';
 export default function UpdateUserPassword() {
   return (
     <section className="min-h-screen overflow-hidden bg-white dark:bg-transparent">
@@ -29,7 +30,9 @@ export default function UpdateUserPassword() {
               recordar para ti. Asegúrate de que tu contraseña tenga al menos 6 caracteres, incluya una combinación de
               letras mayúsculas, minúsculas, números o símbolos.
             </CardDescription>
-            <UpdateUserPasswordForm />
+            <Suspense>
+              <UpdateUserPasswordForm />
+            </Suspense>
           </div>
         </div>
       </div>

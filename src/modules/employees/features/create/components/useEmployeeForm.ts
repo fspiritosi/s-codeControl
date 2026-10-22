@@ -15,7 +15,6 @@ import {
 } from '@/shared/zodSchemas/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toISODate } from '@/modules/employees/shared/employee-update';
-import { PostgrestError } from '@supabase/supabase-js';
 import { addMonths, format } from 'date-fns';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
@@ -262,13 +261,13 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
 
           try {
             await handleUpload();
-          } catch (error: PostgrestError | any) {
+          } catch (error: any) {
             throw new Error(handleSupabaseError(error.message));
           }
           getEmployees(true);
           router.refresh();
           router.push('/dashboard/employee');
-        } catch (error: PostgrestError | any) {
+        } catch (error: any) {
           throw new Error(handleSupabaseError(error.message));
         }
       },
@@ -350,7 +349,7 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
           await handleUpload();
           router.refresh();
           router.push('/dashboard/employee');
-        } catch (error: PostgrestError | any) {
+        } catch (error: any) {
           throw new Error(handleSupabaseError(error.message));
         }
       },
