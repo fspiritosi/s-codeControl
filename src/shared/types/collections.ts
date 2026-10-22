@@ -1,4 +1,4 @@
-import type { Database as DB } from '../../../database.types'
+import type { Database as DB } from './legacy-db.types'
 
 // EXPORTAR TIPOS GLOBALES
 declare global {

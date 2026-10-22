@@ -15,7 +15,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Database } from '../../../../../../database.types';
+import { Database } from '@/shared/types/legacy-db.types';
 import { CardTitle } from '@/shared/components/ui/card';
 import { EnhancedDatePicker } from '@/shared/components/ui/enhanced-datepicket';
 import { Input } from '@/shared/components/ui/input';

@@ -1,7 +1,6 @@
 // Storage abstraction layer (client-side)
-// Driver por NEXT_PUBLIC_STORAGE_DRIVER: 'supabase' (default) o 's3' (RustFS vía /api/storage).
+// Habla con /api/storage (RustFS/S3 en el servidor); las URLs públicas se arman con NEXT_PUBLIC_STORAGE_PUBLIC_URL.
 
-import { supabaseBrowser } from '@/shared/lib/supabase/browser'
 import {
   buildPublicUrl,
   type ListOptions,
@@ -11,8 +10,6 @@ import {
 } from '@/shared/lib/storage/types'
 
 export type { StorageBucket, UploadOptions, ListOptions }
-
-const useS3 = process.env.NEXT_PUBLIC_STORAGE_DRIVER === 's3'
 
 async function api<T>(op: string, bucket: StorageBucket, fields: Record<string, string | Blob> = {}): Promise<T> {
   const form = new FormData()
@@ -26,68 +23,37 @@ async function api<T>(op: string, bucket: StorageBucket, fields: Record<string, 
 }
 
 export const storage = {
-  async upload(bucket: StorageBucket, path: string, file: File | Blob, options?: UploadOptions) {
-    if (useS3) {
-      return api<{ path: string; id: string; fullPath: string }>('upload', bucket, {
-        path,
-        file,
-        options: JSON.stringify(options ?? {}),
-      })
-    }
-    const supabase = supabaseBrowser()
-    const { data, error } = await supabase.storage.from(bucket).upload(path, file, options)
-    if (error) throw error
-    return data
+  upload(bucket: StorageBucket, path: string, file: File | Blob, options?: UploadOptions) {
+    return api<{ path: string; id: string; fullPath: string }>('upload', bucket, {
+      path,
+      file,
+      options: JSON.stringify(options ?? {}),
+    })
   },
 
   async download(bucket: StorageBucket, path: string) {
-    if (useS3) {
-      const res = await fetch(`/api/storage?bucket=${encodeURIComponent(bucket)}&path=${encodeURIComponent(path)}`)
-      if (!res.ok) throw new Error('Object not found')
-      return res.blob()
-    }
-    const supabase = supabaseBrowser()
-    const { data, error } = await supabase.storage.from(bucket).download(path)
-    if (error) throw error
-    return data
+    const res = await fetch(`/api/storage?bucket=${encodeURIComponent(bucket)}&path=${encodeURIComponent(path)}`)
+    if (!res.ok) throw new Error('Object not found')
+    return res.blob()
   },
 
-  async remove(bucket: StorageBucket, paths: string[]) {
-    if (useS3) return api<{ name: string }[]>('remove', bucket, { paths: JSON.stringify(paths) })
-    const supabase = supabaseBrowser()
-    const { data, error } = await supabase.storage.from(bucket).remove(paths)
-    if (error) throw error
-    return data
+  remove(bucket: StorageBucket, paths: string[]) {
+    return api<{ name: string }[]>('remove', bucket, { paths: JSON.stringify(paths) })
   },
 
   getPublicUrl(bucket: StorageBucket, path: string) {
-    if (useS3) return buildPublicUrl(process.env.NEXT_PUBLIC_STORAGE_PUBLIC_URL!, bucket, path)
-    const supabase = supabaseBrowser()
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path)
-    return data.publicUrl
+    return buildPublicUrl(process.env.NEXT_PUBLIC_STORAGE_PUBLIC_URL!, bucket, path)
   },
 
-  async list(bucket: StorageBucket, path?: string, options?: ListOptions) {
-    if (useS3) {
-      return api<StorageObjectInfo[]>('list', bucket, {
-        path: path ?? '',
-        options: JSON.stringify(options ?? {}),
-      })
-    }
-    const supabase = supabaseBrowser()
-    const { data, error } = await supabase.storage.from(bucket).list(path, options)
-    if (error) throw error
-    return data
+  list(bucket: StorageBucket, path?: string, options?: ListOptions) {
+    return api<StorageObjectInfo[]>('list', bucket, {
+      path: path ?? '',
+      options: JSON.stringify(options ?? {}),
+    })
   },
 
   async createSignedUrl(bucket: StorageBucket, path: string, expiresInSec = 3600) {
-    if (useS3) {
-      const { url } = await api<{ url: string }>('signed-url', bucket, { path, expiresIn: String(expiresInSec) })
-      return url
-    }
-    const supabase = supabaseBrowser()
-    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresInSec)
-    if (error) throw error
-    return data.signedUrl
+    const { url } = await api<{ url: string }>('signed-url', bucket, { path, expiresIn: String(expiresInSec) })
+    return url
   },
 }

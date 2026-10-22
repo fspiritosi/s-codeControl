@@ -43,7 +43,6 @@ export interface StorageObjectInfo {
   metadata: { size: number; mimetype?: string } | null
 }
 
-export type StorageDriver = 'supabase' | 's3'
 
 /** S3 no admite guiones bajos en nombres de bucket: `document_files` pasa a `document-files`. */
 export function s3BucketName(bucket: StorageBucket): string {

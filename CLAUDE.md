@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**CodeControl** — Multi-tenant SaaS for managing employees, equipment, documents, daily reports, HSE/training, repair requests, and organizational diagrams. Built with Next.js 16 (App Router, Turbopack) + React 19 + Prisma (PostgreSQL) + NextAuth + TypeScript. Supabase se conserva para Storage (y aún como fallback parcial de auth — ver plan de optimización).
+**CodeControl** — Multi-tenant SaaS for managing employees, equipment, documents, daily reports, HSE/training, repair requests, and organizational diagrams. Built with Next.js 16 (App Router, Turbopack) + React 19 + Prisma (PostgreSQL) + NextAuth + TypeScript. Ya no usa Supabase: la base es un Postgres en Dokploy, los archivos viven en RustFS (S3) y la auth es propia (profile + bcrypt, NextAuth con JWT).
 
 ## Git Rules
 
@@ -19,10 +19,7 @@ npm run build        # Production build
 npm run lint         # ESLint
 npm run check-types  # TypeScript type checking (tsc --noEmit)
 npm run format       # Prettier format all files
-npm run gentypes     # Regenerate Supabase types from remote DB -> database.types.ts
-npm run genlocaltypes # Regenerate types from local Supabase
-npm run create-migration # Create DB migration: npm run create-migration -- migrationName
-npm run push-migrations  # Push migrations to production
+npm run prisma:generate # Regenerate Prisma client (src/generated/prisma)
 ```
 
 ## Architecture
@@ -104,7 +101,7 @@ modules/{module}/
 Server actions live in `src/modules/{domain}/features/{feature}/actions.server.ts`:
 - Each file declares `'use server'` at the top
 - Contains both queries and mutations for that feature
-- Uses `supabaseServer()` for DB access
+- Uses Prisma (`@/shared/lib/prisma`) for DB access and `fetchCurrentUser()` for the session
 - Reads `actualComp` from cookies for company-scoped queries
 - Named in camelCase: `metodoFiltroEntidad` (e.g., `getAllEmployees`, `fetchCurrentCompany`)
 
@@ -137,21 +134,15 @@ src/shared/
 └── zodSchemas/       # Zod validation schemas
 ```
 
-### Authentication & Middleware
+### Authentication
 
-Middleware (`src/middleware.ts`) protects `/dashboard/*` and `/admin/*`:
-1. Validates Supabase session
-2. Fetches user profile + company associations
-3. Enforces role-based access: Admin, CodeControlClient, Usuario, Invitado (guest), Auditor
-4. Guest users restricted to document/employees/equipment views only
-5. Auditors routed exclusively to `/auditor`
+NextAuth (`src/auth.ts`) con JWT: Credentials (bcrypt contra `profile.password_hash`) y Google (crea el `profile` en el primer ingreso). `fetchCurrentUser()` (`src/shared/actions/auth.ts`) devuelve `{ id, email }` del profile en sesión. Recuperación de contraseña e invitaciones: `src/shared/actions/auth-recovery.ts` (tabla `auth_tokens`). `src/proxy.ts` solo propaga `x-pathname`; los guards de permisos viven en los layouts.
 
 Cookie `actualComp` stores the current company ID, used extensively in server actions.
 
-### Supabase Client
+### Storage
 
-- **Server**: `src/shared/lib/supabase/server.ts` — `supabaseServer()` (anon key, RLS) and `adminSupabaseServer()` (service role key, bypasses RLS)
-- **Browser**: `src/shared/lib/supabase/browser.ts` — Client-side operations via `createBrowserClient`
+`@/shared/lib/storage` (cliente, vía `/api/storage`) y `@/shared/lib/storage-server` (servidor) sobre RustFS/S3. Los buckets son los de siempre con `_` cambiado por `-` (`document_files` → `document-files`). Las URLs públicas se arman con `STORAGE_PUBLIC_URL`.
 
 ### State Management
 
@@ -161,7 +152,7 @@ Cookie `actualComp` stores the current company ID, used extensively in server ac
 
 ### Type System
 
-- `database.types.ts` — Auto-generated Supabase types (do NOT edit manually, use `npm run gentypes`)
+- `src/shared/types/legacy-db.types.ts` — Tipos heredados del esquema de Supabase (solo lectura; el origen de verdad es `prisma/schema.prisma`)
 - `src/shared/types/collections.ts` — Global type declarations via `declare global {}` mapping Supabase table rows
 - `src/shared/types/types.ts` — Domain-specific type definitions
 - `src/shared/zodSchemas/schemas.ts` — Zod validation schemas for forms
@@ -185,26 +176,11 @@ Cookie `actualComp` stores the current company ID, used extensively in server ac
 1. **`src/app/` is routing only** — No components, business logic, or utilities in app/
 2. **No cross-module imports** — Modules must NOT import from other modules. If shared functionality is needed, extract it to `src/shared/`
 3. **Server actions in modules** — Each feature has its own `actions.server.ts`
-4. **`database.types.ts` is auto-generated** — Never edit manually
+4. **Esquema de la base**: `prisma/schema.prisma` es la fuente; los cambios van por migraciones de Prisma
 
 ## Environment Variables
 
-Required in `.env.local` (see `.env.example`):
-- `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase anon key (public)
-- `SUPABASE_SERVICE_ROLE_KEY` — Service role key (server-only, bypasses RLS)
-- `NEXT_PUBLIC_PROJECT_URL` — Project base URL
-- `RESEND_SUPABASE_API_KEY` — Email service key
-- SMTP config: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`
-
-## Database Workflow
-
-1. Pull latest migrations: `git pull origin dev`
-2. Apply locally: `npx supabase migration up`
-3. Make DB changes locally
-4. Create migration: `npm run create-migration -- migrationName`
-5. Push to production: `npm run push-migrations`
-6. Commit the migration file and create PR to dev
+Ver `.env.example` (base, auth, storage S3, SMTP, `CRON_SECRET`). Despliegue y variables de GitHub: `docs/deploy/runbook.md`. Corte desde Supabase: `prisma/cutover/README.md`. Crons: `docs/cron.md`.
 
 ## Path Alias
 
