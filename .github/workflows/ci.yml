@@ -1,0 +1,40 @@
+name: CI
+# Chequeo de tipos y lint. Sin tests ni jobs de base a pedido del dueño.
+# GO-LIVE: sumar `main` a las ramas.
+on:
+  pull_request:
+    branches: [dev, migracion/dokploy]
+  push:
+    branches: [dev, migracion/dokploy]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  types-and-lint:
+    # Variable de repo CI_RUNNER; vacia = runner de GitHub (ej. blacksmith-2vcpu-ubuntu-2404).
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # El cliente de Prisma (src/generated/prisma) no esta en git y tsc/eslint lo necesitan.
+      - run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+      - run: npm run check-types
+        env:
+          # tsc del proyecto completo pasa los ~2 GB del heap por defecto de Node (OOM, exit 134).
+          NODE_OPTIONS: --max-old-space-size=8192
+      # `npm run lint` (= `next lint`) ya no existe en Next 16, asi que se llama a eslint directo.
+      # El codigo trae 49 errores de las reglas nuevas de react-hooks (al 2026-10-22): el paso es
+      # informativo (continue-on-error) hasta limpiarlos; despues, quitar la linea.
+      - name: Lint (informativo)
+        continue-on-error: true
+        run: npx eslint src --quiet
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192

@@ -1,0 +1,125 @@
+name: _deploy
+on:
+  workflow_call:
+    inputs:
+      source_tag: { required: true, type: string }
+      target_tag: { required: true, type: string }
+      health_url: { required: true, type: string }
+      registry: { required: true, type: string }
+      registry_username: { required: true, type: string }
+      # Commit de la imagen que se despliega. El readiness compara contra este
+      # valor, nunca contra `github.sha` a secas.
+      expected_sha: { required: true, type: string }
+      # Titulo del deploy en Dokploy. Sin esto el panel muestra "NEW CHANGES".
+      commit_message: { required: false, type: string, default: '' }
+    secrets:
+      registry_password: { required: true }
+      deploy_webhook: { required: true }
+
+jobs:
+  # Se queda en ubuntu-latest a proposito: tiene el webhook de produccion.
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Validar configuración
+        env:
+          HEALTH_URL: ${{ inputs.health_url }}
+          REGISTRY_USERNAME: ${{ inputs.registry_username }}
+          WEBHOOK: ${{ secrets.deploy_webhook }}
+        run: |
+          case "$HEALTH_URL" in
+            http://*/api/health|https://*/api/health) ;;
+            *) echo "::error::La variable DOKPLOY_HEALTH_URL debe ser una URL HTTP(S) completa terminada en /api/health"; exit 1 ;;
+          esac
+          if [ -z "$REGISTRY_USERNAME" ]; then
+            echo "::error::Falta la variable de repo REGISTRY_USERNAME"; exit 1
+          fi
+          if [ -z "$WEBHOOK" ]; then
+            echo "::error::Falta el secret DOKPLOY_DEPLOY_WEBHOOK"; exit 1
+          fi
+
+      - name: Login al registry (retry)
+        env:
+          REGISTRY_USERNAME: ${{ inputs.registry_username }}
+          REGISTRY_PASSWORD: ${{ secrets.registry_password }}
+        run: |
+          for i in $(seq 1 8); do
+            printf '%s' "$REGISTRY_PASSWORD" | docker login "${{ inputs.registry }}" -u "$REGISTRY_USERNAME" --password-stdin && exit 0
+            wait=$(( i * 10 ))
+            echo "login intento $i fallo; reintento en ${wait}s..."; sleep "$wait"
+          done
+          echo "::error::login al registry fallo tras 8 intentos"; exit 1
+
+      # Retag en el registry, sin pull ni push de capas: el tag destino pasa a apuntar
+      # exactamente a la imagen construida para este commit.
+      - name: Promover tag (retry)
+        run: |
+          for i in $(seq 1 4); do
+            docker buildx imagetools create -t "${{ inputs.target_tag }}" "${{ inputs.source_tag }}" && exit 0
+            wait=$(( i * 15 ))
+            echo "retag intento $i fallo; reintento en ${wait}s..."; sleep "$wait"
+          done
+          echo "::error::retag fallo tras 4 intentos"; exit 1
+
+      - name: Trigger Dokploy (retry)
+        env:
+          WEBHOOK: ${{ secrets.deploy_webhook }}
+          DEPLOY_SHA: ${{ inputs.expected_sha }}
+          # toJSON escapa comillas y saltos de linea del mensaje: no hay que
+          # sanearlo a mano ni depender de jq para armar el cuerpo.
+          COMMIT_MSG_JSON: ${{ toJSON(inputs.commit_message) }}
+        run: |
+          # Dokploy titula el deploy con lo que venga en el webhook. Con el
+          # formato de push de GitHub toma el mensaje del commit como titulo y
+          # el hash como descripcion; un POST vacio queda como "NEW CHANGES".
+          mensaje="$COMMIT_MSG_JSON"
+          if [ -z "$mensaje" ] || [ "$mensaje" = '""' ] || [ "$mensaje" = 'null' ]; then
+            mensaje="\"Deploy $DEPLOY_SHA\""
+          fi
+          payload="{\"head_commit\":{\"id\":\"$DEPLOY_SHA\",\"message\":$mensaje}}"
+
+          for i in $(seq 1 4); do
+            curl -fsS -X POST "$WEBHOOK" \
+              -H 'Content-Type: application/json' \
+              -H 'x-github-event: push' \
+              -d "$payload" && exit 0
+            echo "webhook intento $i fallo; reintento en 12s..."; sleep 12
+          done
+          echo "::error::webhook de Dokploy fallo tras 4 intentos"; exit 1
+
+      - name: Esperar readiness
+        env:
+          HEALTH_URL: ${{ inputs.health_url }}
+          ESPERADO: ${{ inputs.expected_sha }}
+        run: |
+          # No alcanza con que la app responda sano: el contenedor viejo tambien
+          # responde "ok", y Dokploy rota el contenedor de forma asincrona
+          # despues del webhook. Se espera hasta que /api/health informe el
+          # commit que se acaba de desplegar.
+          #
+          # A diferencia de Ecokit no hay tolerancia para un health sin commit:
+          # este pipeline nace con GIT_SHA en la imagen, asi que un sha vacio
+          # es una imagen mal construida, no una version vieja.
+          INTENTOS=90
+          ultimo=""
+          for i in $(seq 1 "$INTENTOS"); do
+            respuesta=$(curl -fsS --max-time 10 "$HEALTH_URL" || true)
+            case "$respuesta" in
+              *'"status":"ok"'*)
+                # Sin jq a proposito: si faltara o fallara, el commit quedaria
+                # vacio y la comparacion podria dar verde sin comprobar nada.
+                actual=$(printf '%s' "$respuesta" | sed -n 's/.*"sha"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+                if [ -n "$actual" ] && [ "$actual" = "$ESPERADO" ]; then
+                  echo "healthy en $ESPERADO (intento $i)"; exit 0
+                fi
+                ultimo=${actual:-sin-commit}
+                echo "sano pero todavia responde $ultimo ($i/$INTENTOS)"
+                ;;
+              *) echo "esperando health... ($i/$INTENTOS)" ;;
+            esac
+            sleep 5
+          done
+          echo "::error::el contenedor no llego a responder $ESPERADO en 7,5 minutos (ultimo visto: ${ultimo:-ninguno})"
+          exit 1

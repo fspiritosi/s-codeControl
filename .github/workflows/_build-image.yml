@@ -1,0 +1,155 @@
+name: _build-image
+on:
+  workflow_call:
+    inputs:
+      image: { required: true, type: string }
+      registry: { required: true, type: string }
+      # Usuario del registry. Viene de la variable de repo REGISTRY_USERNAME: no
+      # va como secret porque GitHub enmascara sus substrings en todos los logs.
+      registry_username: { required: true, type: string }
+      # Commit que se construye y que la imagen lleva adentro (GIT_SHA).
+      sha: { required: false, type: string, default: '' }
+      # Build-args extra, uno por linea (NEXT_PUBLIC_*, que se hornean en el bundle).
+      build_args: { required: false, type: string, default: '' }
+      # Nombres de build-args (separados por espacio) que no pueden venir vacios.
+      # Se corta antes de gastar minutos de build; el Dockerfile repite el chequeo.
+      required_build_args: { required: false, type: string, default: '' }
+      # Si la imagen `sha-<sha>` ya esta en el registry, no se vuelve a construir
+      # (rerun o deploy manual del mismo commit).
+      skip_if_exists: { required: false, type: boolean, default: true }
+      # Runner. Con un label `blacksmith-*` se usa su builder persistente (cache
+      # de capas y de mounts en disco) en vez de exportar el cache al registry.
+      runs_on: { required: false, type: string, default: 'ubuntu-latest' }
+    secrets:
+      registry_password: { required: true }
+    outputs:
+      sha_tag:
+        value: ${{ jobs.build.outputs.sha_tag }}
+      built:
+        description: 'true si se construyo en este run; false si ya existia'
+        value: ${{ jobs.build.outputs.built }}
+
+jobs:
+  build:
+    runs-on: ${{ inputs.runs_on }}
+    permissions:
+      contents: read
+    outputs:
+      sha_tag: ${{ steps.meta.outputs.sha_tag }}
+      built: ${{ steps.exists.outputs.exists != 'true' }}
+    env:
+      SHA: ${{ inputs.sha != '' && inputs.sha || github.sha }}
+      ON_BLACKSMITH: ${{ startsWith(inputs.runs_on, 'blacksmith') }}
+    steps:
+      - name: Validar configuración
+        env:
+          REGISTRY_USERNAME: ${{ inputs.registry_username }}
+          BUILD_ARGS: ${{ inputs.build_args }}
+          REQUIRED: ${{ inputs.required_build_args }}
+        run: |
+          if [ -z "$REGISTRY_USERNAME" ]; then
+            echo "::error::Falta la variable de repo REGISTRY_USERNAME"; exit 1
+          fi
+          # Sin jq: un NAME=valor por linea; se exige que el valor no sea vacio.
+          for name in $REQUIRED; do
+            value=$(printf '%s\n' "$BUILD_ARGS" | sed -n "s/^${name}=//p" | head -1)
+            if [ -z "$value" ]; then
+              echo "::error::El build-arg $name viene vacio (cargar la variable de repo $name)"; exit 1
+            fi
+          done
+
+      - id: meta
+        run: echo "sha_tag=${{ inputs.image }}:sha-${SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Login al registry (retry)
+        env:
+          REGISTRY_USERNAME: ${{ inputs.registry_username }}
+          REGISTRY_PASSWORD: ${{ secrets.registry_password }}
+        run: |
+          # Espera progresiva: si el registry se cae tarda mas que un backoff
+          # plano, y el deploy se perdia por eso. Ventana total ~6 min.
+          for i in $(seq 1 8); do
+            printf '%s' "$REGISTRY_PASSWORD" | docker login "${{ inputs.registry }}" -u "$REGISTRY_USERNAME" --password-stdin && exit 0
+            wait=$(( i * 10 ))
+            echo "login intento $i fallo; reintento en ${wait}s..."; sleep "$wait"
+          done
+          echo "::error::login al registry fallo tras 8 intentos"; exit 1
+
+      # Se decide por exit code, no parseando salida (nada de jq para decidir).
+      - name: Verificar si la imagen ya existe
+        id: exists
+        env:
+          TAG: ${{ steps.meta.outputs.sha_tag }}
+        run: |
+          if [ "${{ inputs.skip_if_exists }}" = "true" ] && docker manifest inspect "$TAG" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "la imagen $TAG ya esta publicada; no se construye"; exit 0
+          fi
+          echo "exists=false" >> "$GITHUB_OUTPUT"
+
+      # El runner de GitHub arranca con ~14 GB libres y el build de Next necesita
+      # margen. Blacksmith trae disco de sobra.
+      - name: Liberar espacio en el runner
+        if: steps.exists.outputs.exists != 'true' && env.ON_BLACKSMITH != 'true'
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android \
+            /opt/hostedtoolcache/CodeQL /usr/local/share/powershell || true
+          df -h / | tail -1
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: steps.exists.outputs.exists != 'true'
+        with:
+          ref: ${{ env.SHA }}
+
+      # ── Builder ─────────────────────────────────────────────────────────
+      # En GitHub: buildx comun + cache de capas exportado al registry del VPS.
+      # Los RUN --mount=type=cache (npm, .next/cache) no viajan en ese export,
+      # asi que se persisten aparte con actions/cache + buildkit-cache-dance.
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        if: steps.exists.outputs.exists != 'true' && env.ON_BLACKSMITH != 'true'
+      - name: Cache de mounts (npm + Next)
+        if: steps.exists.outputs.exists != 'true' && env.ON_BLACKSMITH != 'true'
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            .buildcache-npm
+            .buildcache-next
+          key: buildmounts-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ env.SHA }}
+          restore-keys: |
+            buildmounts-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+            buildmounts-${{ runner.os }}-
+      - name: Inyectar mounts en BuildKit
+        if: steps.exists.outputs.exists != 'true' && env.ON_BLACKSMITH != 'true'
+        uses: reproducible-containers/buildkit-cache-dance@5b6db76d1da5c8b307d5d2e0706d266521b710de # v3.1.2
+        with:
+          cache-map: |
+            {
+              ".buildcache-npm": "/root/.npm",
+              ".buildcache-next": "/app/.next/cache"
+            }
+
+      # En Blacksmith: builder persistente. Guarda capas Y mounts de cache entre
+      # runs, asi que no hay nada que importar ni exportar.
+      - uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184 # v2
+        if: steps.exists.outputs.exists != 'true' && env.ON_BLACKSMITH == 'true'
+        with:
+          cache-key: Dockerfile
+
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        if: steps.exists.outputs.exists != 'true'
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.sha_tag }}
+          # GIT_SHA: /api/health lo devuelve y el deploy lo usa para saber que ya
+          # roto el contenedor.
+          build-args: |
+            GIT_SHA=${{ env.SHA }}
+            ${{ inputs.build_args }}
+          # Sin attestations: manifests y blobs extra que nadie consume y que le
+          # complican la vida al garbage-collect del registry.
+          provenance: false
+          # Cache de capas en el registry del VPS, no en el de GitHub (10 GB
+          # compartidos, evicta LRU).
+          cache-from: type=registry,ref=${{ inputs.image }}:buildcache
+          cache-to: ${{ env.ON_BLACKSMITH == 'true' && '' || format('type=registry,ref={0}:buildcache,mode=max', inputs.image) }}

@@ -1,0 +1,132 @@
+name: deploy
+# push a la rama de deploy (con cambios que afectan la imagen) → build `:sha-<commit>` →
+# promocion a `:dokploy` → webhook de Dokploy → readiness contra /api/health por commit.
+# Ver docs/deploy/runbook.md.
+#
+# GO-LIVE: hoy la rama de deploy es `migracion/dokploy`. Al pasar a produccion hay que cambiarla
+# a `main` en TRES lugares de este archivo (todos marcados con "RAMA DE DEPLOY") y decidir si el
+# tag promovido sigue siendo `:dokploy` o pasa a `:main` (hay que cambiar tambien la imagen de la
+# app en Dokploy).
+on:
+  push:
+    branches: [migracion/dokploy] # RAMA DE DEPLOY (1/3)
+  # Redeploy manual del commit actual de la rama (p. ej. tras cambiar una variable
+  # NEXT_PUBLIC_*, que obliga a reconstruir). Si la imagen ya existe no se rebuildea:
+  # para hornear variables nuevas hay que borrar el tag o pushear un commit.
+  workflow_dispatch:
+
+# Una sola cola por rama y SIN cancelar el run en curso: si un push de solo docs
+# cancelara un deploy de codigo en vuelo, su propio filtro no desplegaria nada y
+# la rama quedaria sin su ultimo cambio. GitHub descarta los pendientes intermedios.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      # `every`: un archivo cuenta solo si cumple TODOS los patrones, asi las
+      # negaciones excluyen de verdad. Filtro negativo a proposito: un archivo
+      # nuevo que afecte la imagen dispara deploy sin tener que acordarse de
+      # sumarlo aca; lo que se excluye es lo que seguro no entra en la imagen
+      # (ver .dockerignore).
+      - uses: dorny/paths-filter@d1c1ffe0248fe513906c8e24db8ea791d46f8590 # v3.0.3
+        id: filter
+        with:
+          predicate-quantifier: 'every'
+          filters: |
+            code:
+              - '**'
+              - '!docs/**'
+              - '!**/*.md'
+              - '!.claude/**'
+              - '!.agents/**'
+              - '!.planes/**'
+              - '!.zed/**'
+              - '!.vscode/**'
+              - '!.husky/**'
+              - '!.codegraph/**'
+              - '!cypress/**'
+              - '!supabase/**'
+              - '!.github/workflows/ci.yml'
+
+  # Mismo chequeo de tipos que ci.yml, dentro de este workflow: el deploy lo necesita como
+  # dependencia y un workflow no puede esperar a otro sin `workflow_run`. Corre en paralelo
+  # con el build, asi que no suma latencia. Sin tests ni lint a pedido del dueño.
+  verify:
+    needs: changes
+    # El dispatch se acepta solo sobre la rama de deploy: desde otra rama se desplegaria un
+    # commit que nunca paso por ella.
+    if: always() && ((github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/migracion/dokploy') || needs.changes.outputs.code == 'true') # RAMA DE DEPLOY (2/3)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # prisma generate: el cliente (src/generated/prisma) no esta en git y tsc lo necesita.
+      - run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+      - run: npm run check-types
+        env:
+          # tsc del proyecto completo pasa los ~2 GB del heap por defecto de Node (OOM, exit 134).
+          NODE_OPTIONS: --max-old-space-size=8192
+
+  build:
+    needs: changes
+    if: always() && ((github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/migracion/dokploy') || needs.changes.outputs.code == 'true') # RAMA DE DEPLOY (3/3)
+    uses: ./.github/workflows/_build-image.yml
+    with:
+      # `env` no llega a `with:` de un reusable: van literales.
+      image: registry-31-97-42-82.sslip.io/codecontrol
+      registry: registry-31-97-42-82.sslip.io
+      registry_username: ${{ vars.REGISTRY_USERNAME }}
+      sha: ${{ github.sha }}
+      # Las NEXT_PUBLIC_* se hornean en el bundle: cambiar una de estas
+      # variables exige una imagen nueva, no un redeploy.
+      build_args: |
+        NEXT_PUBLIC_BASE_URL=${{ vars.NEXT_PUBLIC_BASE_URL }}
+        NEXT_PUBLIC_PROJECT_URL=${{ vars.NEXT_PUBLIC_PROJECT_URL }}
+        NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL }}
+        NEXT_PUBLIC_SHOW_LOGS=${{ vars.NEXT_PUBLIC_SHOW_LOGS || 'false' }}
+        NEXT_PUBLIC_STORAGE_DRIVER=${{ vars.NEXT_PUBLIC_STORAGE_DRIVER }}
+        NEXT_PUBLIC_STORAGE_PUBLIC_URL=${{ vars.NEXT_PUBLIC_STORAGE_PUBLIC_URL }}
+        NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      required_build_args: NEXT_PUBLIC_BASE_URL NEXT_PUBLIC_PROJECT_URL NEXT_PUBLIC_APP_URL NEXT_PUBLIC_STORAGE_DRIVER NEXT_PUBLIC_STORAGE_PUBLIC_URL
+      skip_if_exists: true
+      # Variable de repo; vacia = runner de GitHub. Con un label `blacksmith-*`
+      # el build usa su builder persistente. El deploy no cambia de runner.
+      runs_on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    secrets:
+      registry_password: ${{ secrets.REGISTRY_PASSWORD }}
+
+  deploy:
+    needs: [verify, build]
+    # `always()` en los de arriba es solo para que un `changes` salteado (dispatch)
+    # no los saltee a ellos; aca se exige que ambos hayan pasado.
+    if: always() && needs.verify.result == 'success' && needs.build.result == 'success'
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      source_tag: ${{ needs.build.outputs.sha_tag }}
+      # GO-LIVE: `:dokploy` mientras es clon; decidir si pasa a `:main` (ver cabecera).
+      target_tag: registry-31-97-42-82.sslip.io/codecontrol:dokploy
+      health_url: ${{ vars.DOKPLOY_HEALTH_URL }}
+      registry: registry-31-97-42-82.sslip.io
+      registry_username: ${{ vars.REGISTRY_USERNAME }}
+      expected_sha: ${{ github.sha }}
+      commit_message: ${{ github.event.head_commit.message }}
+    secrets:
+      registry_password: ${{ secrets.REGISTRY_PASSWORD }}
+      deploy_webhook: ${{ secrets.DOKPLOY_DEPLOY_WEBHOOK }}
