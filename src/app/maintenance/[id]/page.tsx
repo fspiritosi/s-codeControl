@@ -2,7 +2,6 @@ import { fetchCurrentUser } from '@/shared/actions/auth';
 import { fetchCustomForms } from '@/modules/forms/features/custom-forms/actions.server';
 import QrActionSelector from '@/modules/equipment/features/qr/components/AcctionSelector';
 import { prisma } from '@/shared/lib/prisma';
-import { supabaseServer } from '@/shared/lib/supabase/server';
 import { serializeBigInt } from '@/shared/lib/utils';
 import { setVehiclesToShow } from '@/shared/lib/utils/utils';
 import { TypeOfRepair } from '@/shared/types/types';
@@ -30,7 +29,6 @@ export default async function Home({
 }) {
   const { id } = await params;
   const cookiesStore = await cookies();
-  const supabase = await supabaseServer();
   const employee = cookiesStore.get('empleado_id')?.value;
   const empleado_name = cookiesStore.get('empleado_name')?.value;
 

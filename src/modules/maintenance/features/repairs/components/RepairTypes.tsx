@@ -1,6 +1,5 @@
 // TODO: Phase 8 — migrate auth to NextAuth
 import { fetchCurrentUser } from '@/shared/actions/auth';
-import { supabaseServer } from '@/shared/lib/supabase/server';
 import { setVehiclesToShow } from '@/shared/lib/utils/utils';
 import { TypeOfRepair } from '@/shared/types/types';
 import { cookies } from 'next/headers';
@@ -34,7 +33,6 @@ async function RepairTypes({
   searchParams?: DataTableSearchParams;
 }) {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
-  const supabase = await supabaseServer();
   const user = await fetchCurrentUser();
   const coockiesStore = await cookies();
   const company_id = coockiesStore.get('actualComp')?.value;

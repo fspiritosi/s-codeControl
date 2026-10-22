@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Imagen Docker (Dokploy): server minimo en .next/standalone. En Vercel se ignora.
+  output: 'standalone',
   experimental: {
     // Tree-shaking selectivo: solo importa lo usado de estos paquetes, evita código muerto.
     optimizePackageImports: [
@@ -24,6 +26,11 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'zktcbhhlcksopklpnubj.supabase.co',
         pathname: '/storage/v1/object/public/**'
+      },
+      {
+        protocol: 'https',
+        hostname: 'cc-s3.31.97.42.82.sslip.io',
+        pathname: '/**'
       },
       {
         protocol: 'https',

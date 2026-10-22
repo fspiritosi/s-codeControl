@@ -3,7 +3,6 @@ import { fetchCurrentUser } from '@/shared/actions/auth';
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
 import { ensurePendingDocumentsForEquipment } from '@/shared/lib/documentAlerts';
-import { supabaseServer } from '@/shared/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 
@@ -43,7 +42,6 @@ export const updateVehicleKilometerFromChecklist = async (vehicleId: string, kil
     const cookiesStore = await cookies();
     const empleadoId = cookiesStore.get('empleado_id')?.value;
 
-    const supabase = await supabaseServer();
     const user = await fetchCurrentUser();
 
     if (!empleadoId && !user?.id) {

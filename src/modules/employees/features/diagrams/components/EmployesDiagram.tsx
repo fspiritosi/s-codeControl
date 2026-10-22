@@ -2,7 +2,6 @@ import { fetchCurrentUser } from '@/shared/actions/auth';
 import { fetchDiagrams, fetchDiagramsTypes } from '@/modules/employees/features/diagrams/actions.server';
 import { fetchAllActivesEmployees } from '@/modules/employees/features/list/actions.server';
 // TODO: Phase 8 — migrate auth to NextAuth
-import { supabaseServer } from '@/shared/lib/supabase/server';
 import { setEmployeesToShow } from '@/shared/lib/utils/utils';
 import { cookies } from 'next/headers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
@@ -13,7 +12,6 @@ import DiagramTypeComponent from './DiagramTypeComponent';
 
 async function EmployesDiagram() {
   const URL = process.env.NEXT_PUBLIC_BASE_URL;
-  const supabase = await supabaseServer();
   const user = await fetchCurrentUser();
   const coockiesStore = await cookies();
   const company_id = coockiesStore.get('actualComp')?.value;

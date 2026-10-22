@@ -78,7 +78,7 @@ export const EmailTemplateHelp: React.FC<Readonly<EmailTemplateHelpProps>> = ({ 
                               </td>
                               <td style={{ padding: '30px 10px' }}>
                                 <img
-                                  src="https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/logo/Logo%20Juegos%20gaming%20moderno%20azul%20y%20violeta%20(4).png"
+                                  src={`${process.env.NEXT_PUBLIC_BASE_URL}/logo-codecontrol.png`}
                                   style={{
                                     display: 'block',
                                     outline: 'none',

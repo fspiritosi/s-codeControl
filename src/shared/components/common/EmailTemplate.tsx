@@ -70,7 +70,7 @@ export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({ userEmai
                     </td>
                     <td style={{ padding: '30px' }}>
                       <img
-                        src="https://zktcbhhlcksopklpnubj.supabase.co/storage/v1/object/public/logo/24417298440.png"
+                        src={`${process.env.NEXT_PUBLIC_BASE_URL}/logo-codecontrol.png`}
                         style={{ display: 'block', maxWidth: '100%' }}
                         width="140"
                         alt="logo codecontrol"
