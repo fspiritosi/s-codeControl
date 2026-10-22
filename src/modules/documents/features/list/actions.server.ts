@@ -269,6 +269,7 @@ export const fetchEmployeeMonthlyDocuments = async () => {
 };
 
 export const fetchEmployeeMonthlyDocumentsByEmployeeId = async (employeeId: string) => {
+  if (!employeeId) return [];
   const { companyId } = await getActionContext();
   if (!companyId) return [];
 
@@ -323,6 +324,7 @@ export const fetchEmployeeMonthlyDocumentsByEmployeeId = async (employeeId: stri
 };
 
 export const fetchEmployeePermanentDocumentsByEmployeeId = async (employeeId: string) => {
+  if (!employeeId) return [];
   const { companyId } = await getActionContext();
   if (!companyId) return [];
 
