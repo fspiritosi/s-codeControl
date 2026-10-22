@@ -4,7 +4,6 @@ import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
 import { requirePermission } from '@/shared/lib/permissions';
 import { storageServer } from '@/shared/lib/storage-server';
-import { supabaseServer } from '@/shared/lib/supabase/server';
 import { CREDIT_NOTE_VOUCHER_TYPES } from '@/modules/purchasing/shared/types';
 import {
   PURCHASE_INVOICE_ATTACHMENT_ALLOWED_MIME,
@@ -388,10 +387,8 @@ export async function getPurchaseOrderAttachmentSignedUrl(attachmentId: string, 
   if (!attachment?.file_key) return { url: null, error: 'Adjunto no encontrado' };
 
   try {
-    const supabase = await supabaseServer();
-    const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(attachment.file_key, expiresInSec);
-    if (error) return { url: null, error: error.message };
-    return { url: data.signedUrl, error: null };
+    const url = await storageServer.createSignedUrl(BUCKET, attachment.file_key, expiresInSec);
+    return { url, error: null };
   } catch (error: any) {
     return { url: null, error: error?.message || String(error) };
   }

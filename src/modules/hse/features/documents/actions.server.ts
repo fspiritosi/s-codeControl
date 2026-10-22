@@ -1251,15 +1251,7 @@ export async function deleteDocument(documentId: string) {
     if (document.file_path) {
       
       try {
-        const { error: storageError } = await supabase.storage
-          .from('documents-hse')
-          .remove([document.file_path]);
-        
-        if (storageError) {
-          console.error('❌ Error al eliminar el archivo del almacenamiento:', storageError);
-          // No lanzamos error para no revertir la transacción
-        } else {
-        }
+        await storageServer.remove('documents-hse', [document.file_path]);
       } catch (storageError) {
         console.error('❌ Error inesperado al eliminar archivo del almacenamiento:', storageError);
       }

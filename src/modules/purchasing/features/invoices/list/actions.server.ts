@@ -4,7 +4,6 @@ import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
 import { isActiveUserOwner } from '@/shared/lib/permissions';
 import { storageServer } from '@/shared/lib/storage-server';
-import { supabaseServer } from '@/shared/lib/supabase/server';
 import {
   PURCHASE_INVOICE_ATTACHMENT_ALLOWED_MIME,
   PURCHASE_INVOICE_ATTACHMENT_MAX_BYTES,
@@ -443,12 +442,8 @@ export async function getPurchaseInvoiceAttachmentSignedUrl(invoiceId: string, e
   if (!invoice?.document_key) return { url: null, error: 'Sin adjunto' };
 
   try {
-    const supabase = await supabaseServer();
-    const { data, error } = await supabase.storage
-      .from('purchase_invoices')
-      .createSignedUrl(invoice.document_key, expiresInSec);
-    if (error) return { url: null, error: error.message };
-    return { url: data.signedUrl, error: null };
+    const url = await storageServer.createSignedUrl('purchase_invoices', invoice.document_key, expiresInSec);
+    return { url, error: null };
   } catch (error: any) {
     return { url: null, error: error?.message || String(error) };
   }
