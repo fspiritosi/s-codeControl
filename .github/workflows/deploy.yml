@@ -78,6 +78,8 @@ jobs:
       - run: npx prisma generate
         env:
           DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+      # next-env.d.ts está en .gitignore y lo genera `next build`: sin él tsc no resuelve los imports de imágenes.
+      - run: printf '/// <reference types="next" />\n/// <reference types="next/image-types/global" />\n' > next-env.d.ts
       - run: npm run check-types
         env:
           # tsc del proyecto completo pasa los ~2 GB del heap por defecto de Node (OOM, exit 134).
