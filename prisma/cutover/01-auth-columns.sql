@@ -16,3 +16,6 @@ CREATE TABLE IF NOT EXISTS public.auth_tokens (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS auth_tokens_profile_id_type_idx ON public.auth_tokens (profile_id, type);
+
+-- user_table_preferences: el FK a auth.users se reemplaza (user_id == profile.id)
+-- Se aplica después del restore, junto con el DROP de las FK a auth.users.

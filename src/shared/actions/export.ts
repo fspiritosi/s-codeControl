@@ -1,6 +1,6 @@
 'use server';
 
-import { supabaseServer } from '@/shared/lib/supabase/server';
+import { prisma } from '@/shared/lib/prisma';
 import { cookies } from 'next/headers';
 
 export interface CompanyBrandingResult {
@@ -28,14 +28,11 @@ export async function getCompanyBrandingForExport(): Promise<CompanyBrandingResu
     const companyId = cookieStore.get('actualComp')?.value;
     if (!companyId) return null;
 
-    const supabase = await supabaseServer();
-    const { data: company, error } = await supabase
-      .from('company')
-      .select('company_name, company_logo')
-      .eq('id', companyId)
-      .single();
-
-    if (error || !company) return null;
+    const company = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: { company_name: true, company_logo: true },
+    });
+    if (!company) return null;
 
     return {
       name: company.company_name,
@@ -58,16 +55,18 @@ export async function getCompanyDataForPDF(): Promise<CompanyPDFData | null> {
     const companyId = cookieStore.get('actualComp')?.value;
     if (!companyId) return null;
 
-    const supabase = await supabaseServer();
-    const { data: company, error } = await supabase
-      .from('company')
-      .select(
-        'company_name, company_logo, company_cuit, address, contact_phone, contact_email'
-      )
-      .eq('id', companyId)
-      .single();
-
-    if (error || !company) return null;
+    const company = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: {
+        company_name: true,
+        company_logo: true,
+        company_cuit: true,
+        address: true,
+        contact_phone: true,
+        contact_email: true,
+      },
+    });
+    if (!company) return null;
 
     return {
       name: company.company_name,

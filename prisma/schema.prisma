@@ -3856,3 +3856,15 @@ model torque_certificate_checks {
 
   @@index([certificate_id])
 }
+
+model user_table_preferences {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id           String    @db.Uuid
+  table_id          String
+  column_visibility Json?     @default("{}")
+  filter_visibility Json?     @default("{}")
+  created_at        DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@unique([user_id, table_id])
+}

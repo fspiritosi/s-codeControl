@@ -2,8 +2,7 @@
 import { clsx, type ClassValue } from 'clsx';
 import { format } from 'date-fns';
 import { twMerge } from 'tailwind-merge';
-// TODO: Phase 8 — migrate FetchSharedUsers .from() query to Prisma server action
-import { supabaseServer } from './supabase/server';
+import { fetchRoleInCompany } from '@/shared/actions/auth';
 import { storage } from './storage';
 import { formatDocumentTypeName } from './utils/utils';
 import { updateDocumentByAppliesAndType, updateDocumentsByAppliesArrayAndType } from '@/modules/documents/features/manage/actions.server';
@@ -46,71 +45,8 @@ export function validarCUIL(cuil: string) {
   return parseInt(cuil[10]) === digitoVerificador;
 }
 
-export const FetchSharedUsers = async (companyId: string) => {
-  const supabase = await supabaseServer();
-
-  const { data, error } = await supabase
-    .from('share_company_users')
-    .select(
-      `*,customer_id(*),profile_id(*),company_id(*,
-        owner_id(*),
-      share_company_users(*,
-        profile(*)
-      ),
-      city (
-        name,
-        id
-      ),
-      province_id (
-        name,
-        id
-      ),
-      companies_employees (
-        employees(
-          *,
-          city (
-            name
-          ),
-          province(
-            name
-          ),
-          workflow_diagram(
-            name
-          ),
-          hierarchical_position(
-            name
-          ),
-          birthplace(
-            name
-          ),
-          contractor_employee(
-            customers(
-              *
-            )
-          )
-        )
-      )
-    )`
-    )
-    .eq('company_id', companyId);
-
-  if (error) {
-    // return error;
-    return [];
-  } else {
-    return data;
-  }
-};
-
 export async function getActualRole(companyId: string, profile: string) {
-  const sharedUsers = (await FetchSharedUsers(companyId)) as any;
-  const user = sharedUsers?.find((e: any) => e.profile_id.id === profile);
-
-  if (user?.role) {
-    return user?.role;
-  } else {
-    return 'Owner';
-  }
+  return (await fetchRoleInCompany(companyId, profile)) || 'Owner';
 }
 
 export { calculateNameOFDocument } from './utils/storage-path';

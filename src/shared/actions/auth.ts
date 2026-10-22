@@ -163,3 +163,13 @@ export const fetchProfileBySupabaseUserId = async (userId: string) => {
     return [];
   }
 };
+
+/** Rol de un perfil dentro de una empresa (share_company_users). */
+export const fetchRoleInCompany = async (companyId: string, profileId: string) => {
+  if (!companyId || !profileId) return null;
+  const row = await prisma.share_company_users.findFirst({
+    where: { company_id: companyId, profile_id: profileId },
+    select: { role: true },
+  });
+  return row?.role ?? null;
+};
