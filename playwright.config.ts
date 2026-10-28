@@ -33,8 +33,22 @@ export default defineConfig({
     },
     {
       name: 'app',
-      testIgnore: [/public\//, /auth\.setup\.ts/],
+      testIgnore: [/public\//, /auth\.setup\.ts/, /costos\//],
       dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'], storageState: 'tests/e2e/.auth/user.json' },
+    },
+    // Los specs de costos comparten el mismo convenio y servicio de la empresa QA: si corren a la vez en distintos
+    // workers se pisan. Se ejecutan uno detrás del otro, cada uno en su proyecto encadenado.
+    {
+      name: 'costos-1',
+      testMatch: /costos\/(catalogo-equipos|pantallas)\.spec\.ts/,
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'], storageState: 'tests/e2e/.auth/user.json' },
+    },
+    {
+      name: 'costos-2',
+      testMatch: /costos\/servicio-composicion\.spec\.ts/,
+      dependencies: ['costos-1'], // depende del costo del tipo de equipo que deja catalogo-equipos
       use: { ...devices['Desktop Chrome'], storageState: 'tests/e2e/.auth/user.json' },
     },
   ],

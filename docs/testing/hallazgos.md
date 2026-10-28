@@ -492,3 +492,8 @@ La app no permite borrar estos elementos desde la UI; todos llevan el prefijo `Q
 - Servicio fijo `QA-E2E-Servicio` (cliente fijo `QA-E2E-Cliente-Ventas`, CCT fijo) con margen IIBB 3%, su **composición del período 2026-01** (se sobrescribe en cada corrida, igual que su PDF `<empresa>/composicion/<servicio>/2026-01.pdf` en `costos-pdfs`) y su **fórmula polinómica** (componentes I001-I004, descripción editada en cada corrida). Las asignaciones de chofer, equipo, combustible y los ítems OCP se quitan al final de cada corrida (el `afterAll` vacía lo que haya quedado de una corrida fallida).
 - Costo del tipo de equipo "Tractor" (creado una vez, no se puede borrar). Por corrida: un empleado (dado de baja) y dos equipos de prueba (dados de baja); el equipo del spec de catálogo conserva su costo.
 - Configuración: un puesto jerárquico `QA-E2E-Puesto-*` por corrida, **deshabilitado** (la app no los borra). El tipo de retención y la cotización de la prueba se eliminan; la retención fija `QA_E2E_RET` no se toca. El encabezado, el pie y los PDFs firmados de Configuración > PDF se restauran a los valores originales y la firma (objeto en `logo/pdf-signatures/`) se borra del bucket.
+
+### H-47 Los specs de costos son frágiles si corren en paralelo — resuelto en la suite
+
+- Los dos archivos de costos comparten el convenio, el servicio y la composición de la empresa QA: en paralelo se pisan y fallan de forma intermitente. Con un solo worker pasan 20/20.
+- Se ejecutan en proyectos encadenados (`costos-1` → `costos-2` en `playwright.config.ts`) y en CI en un job aparte con `--workers=1` (`e2e-costos`), fuera de los shards. Local: `npx playwright test --project=setup --project=costos-1 --project=costos-2 --workers=1`.
