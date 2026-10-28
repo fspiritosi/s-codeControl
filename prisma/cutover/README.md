@@ -13,7 +13,7 @@ Ensayado sobre el clon (`codecontrol-clon.31.97.42.82.sslip.io`). Cada paso es r
 1. **Congelar escrituras en prod.** Poner Vercel en modo mantenimiento (o pausar el dominio). Pausar los crons de Supabase: `update cron.job set active = false` (anotar cuáles estaban activos: ids 5, `documentos_vencidos`, `enviar mails documentos a vencer`, `check-expired-documents-daily`).
 2. **Dump de prod** (solo lectura): `pg_dump -Fc -n public --no-owner --no-privileges` con el cliente 15 y `\copy` de `auth.users` (id, email, phone, encrypted_password, email_confirmed_at, last_sign_in_at, raw_user_meta_data), como en `~/cc-migracion` del ensayo.
 3. **Restore en el Postgres de Dokploy** sobre un esquema `public` vacío, con los stubs previos (`auth.users(id)`, `auth.uid()`, roles `anon/authenticated/service_role`, `extensions.uuid_generate_v4()`).
-4. **Aplicar** `01-auth-columns.sql`, `02-supabase-to-standalone.sql` y `03-storage-urls.sql -v base=<URL pública de RustFS>`.
+4. **Aplicar** `01-auth-columns.sql`, `02-supabase-to-standalone.sql`, `03-storage-urls.sql -v base=<URL pública de RustFS>` y `04-fix-auth-references.sql` (funciones que aún usaban `auth.uid()`/`auth.jwt()`).
 5. **Delta de storage:** relanzar `sync.mjs` (idempotente; salta lo ya copiado) con un `objects.csv` regenerado desde `storage.objects`. Copiar a mano los buckets privados `costos-pdfs` y `purchase_orders`.
 6. **Verificar** conteos (profiles, employees, documentos, vehículos), objetos por bucket, login con un usuario real y con Google, subida y descarga de un archivo, `/api/health`.
 7. **Cambiar el DNS** (o el dominio de la app en Dokploy) al clon. Cambiar la rama de deploy a `main` si corresponde (3 lugares marcados `RAMA DE DEPLOY`).
