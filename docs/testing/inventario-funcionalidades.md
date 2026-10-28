@@ -126,3 +126,18 @@ Estado: ⬜ pendiente · ✅ hecho · ➖ justificado sin test.
 | Almacenes | Almacenes: desactivar (H-35) | ➖ la app no lo ofrece; el almacén de prueba queda activo |
 | Almacenes | Retiros (ORM): alta, enviar a aprobación > aprobar > completar (descuenta stock y genera el movimiento) y cancelar (`warehouse/retiros.spec.ts`) | ✅ |
 | Almacenes | Retiros: PDF de la orden, empleado y equipo asociados, rechazar | ➖ fuera del alcance acordado |
+| Ventas | Puntos de venta: alta, edición (nombre y estado), configurar numeración, eliminar un punto sin comprobantes (`sales/puntos-de-venta.spec.ts`) | ✅ |
+| Ventas | Facturas de venta: borrador, editar, confirmar (numeración interna del punto de venta; no se llama a ARCA/AFIP, el CAE es un campo manual que no se completa), PDF, anular, eliminar un borrador, cuenta corriente del cliente (`sales/facturas.spec.ts`) | ✅ |
+| Ventas | Facturas de venta: botón de PDF en la interfaz (H-38) | ➖ la ruta del PDF funciona pero ninguna pantalla la enlaza; igual que producción |
+| Ventas | Facturas de venta: notas de crédito/débito, factura B, moneda USD, percepciones, descuentos, otros cargos | ➖ fuera del alcance acordado |
+| Ventas | Recibos de cobro: crear contra una factura confirmada, confirmar (la factura pasa a Cobrada), detalle, PDF, anular (la factura vuelve a Confirmada), eliminar un borrador (`sales/recibos.spec.ts`) | ✅ |
+| Ventas | Recibos: medios de pago y retenciones informativos, editar, cobro parcial | ➖ fuera del alcance acordado |
+| Ventas | Cuenta corriente: la factura confirmada aparece en el estado de cuenta del cliente (dentro de `sales/facturas.spec.ts`) | ✅ |
+| Comercial | Clientes: alta con condición de IVA, listado, detalle con servicio y contacto, edición, baja (`commercial/clientes.spec.ts`) | ✅ (la app no borra clientes; el de prueba queda dado de baja. `QA-E2E-Cliente-Ventas` es fijo y queda activo) |
+| Comercial | Cotizaciones | ➖ pantalla "en desarrollo" (sin funciones): solo se comprueba el mensaje |
+| Tesorería | Cajas físicas: alta, edición, abrir sesión, ingreso, cerrar sesión, desactivar (`treasury/cajas.spec.ts`) | ✅ (la app no borra cajas; las de prueba quedan inactivas) |
+| Tesorería | Órdenes de pago: alta con pago a cuenta y retención en efectivo, editar, PDF, confirmar (egreso de caja + certificado de retención), marcar como pagada (proveedor fijo sin email: no hay mail), anular una confirmada (repone la caja) (`treasury/ordenes-pago.spec.ts`) | ✅ |
+| Tesorería | Retenciones: la retención de la orden aparece con su certificado y el PDF del certificado se genera (dentro de `treasury/ordenes-pago.spec.ts`; tipo fijo `QA_E2E_RET` en Configuración > Impuestos) | ✅ |
+| Tesorería | Saldos pendientes: factura de compra confirmada con su saldo, crear la orden desde la selección (queda "Programada"), anular la orden la devuelve a "Sin OP" (`treasury/saldos-pendientes.spec.ts`) | ✅ |
+| Tesorería | Cuentas bancarias, cheques, pago con transferencia/cheque, orden con facturas y notas de crédito, exportar Excel | ➖ fuera del alcance acordado |
+| Ventas / Tesorería | Archivos: la orden de pago, el certificado de retención y los PDF de factura y recibo de venta se generan al pedirlos; no se guardan en ningún bucket (no hay objetos para comprobar) | ✅ |

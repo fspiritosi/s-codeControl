@@ -427,3 +427,13 @@ La app no permite borrar estos elementos desde la UI; todos llevan el prefijo `Q
 - **Evidencia:** `purchasing/ordenes.spec.ts` > `eliminar una orden con adjunto borra también el archivo del bucket (H-37)` (fixme). Eliminar el adjunto desde el detalle sí lo borra.
 
 > **Nota sobre H-33, H-36 y H-37 (misma causa probable):** al eliminar un documento HSE, una factura o una OC con archivo, la acción llama a `storageServer.remove(...)` sin error en el log, pero el objeto sigue en el bucket. Se probó borrar objeto por objeto (`DeleteObjectCommand`) en vez de `DeleteObjects` y no cambió el resultado. El borrado desde el cliente (`/api/storage`, op `remove`) sí funciona. Pendiente de investigar (posible diferencia de clave entre lo guardado en la base y el objeto). Impacto: archivos huérfanos, no pérdida de datos.
+
+### H-38 Las facturas y los recibos de venta no tienen botón para ver o descargar su PDF — abierto (igual que producción, no se cambia)
+
+- **Obtenido:** las rutas `GET /api/sales/invoices/:id/pdf` y `GET /api/sales/receipts/:id/pdf` generan el PDF correctamente (200, `application/pdf`), pero ninguna pantalla de Ventas (listado, detalle de factura, detalle del recibo) enlaza a ellas. En Tesorería la orden de pago ("Descargar PDF") y el certificado de retención sí tienen enlace.
+- **Evidencia:** `git show origin/dev:` de `SalesInvoiceDetail.tsx` y `ReceiptDetailModal.tsx` no referencia `/api/sales`. `sales/facturas.spec.ts` y `sales/recibos.spec.ts` prueban el PDF pidiendo la ruta directamente. Los PDF no se guardan en ningún bucket (se generan al pedirlos).
+
+### H-39 En el listado de facturas, el menú de la fila queda abierto después de anular desde el diálogo — abierto (igual que producción, no se cambia)
+
+- **Pasos:** menú "..." de una factura confirmada > "Anular" > "Anular" en el diálogo.
+- **Obtenido:** la factura se anula ("Factura anulada") pero el menú de la fila reaparece abierto y, mientras está abierto, oculta el resto de la tabla (la fila deja de ser accesible). Es cosmético; el test recarga el listado para verificar el estado.
