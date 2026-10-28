@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui
 import { cn } from '@/shared/lib/utils'
 import { Download, ArrowLeft } from 'lucide-react'
 import cookies from 'js-cookie'
+import { storage } from '@/shared/lib/storage'
 import UploadDocument from './UploadDocument'
 import InfoComponent from '@/shared/components/common/InfoComponent'
 import { format } from 'date-fns'
@@ -131,8 +132,11 @@ export default function DocumentView({ documentUrl, row, rowId, customerName, co
                     <div className="flex justify-between mb-4">
                         {/* <Button variant="outline" className="flex items-center gap-2"> */}
                         <Button variant="outline" className="flex items-center gap-2" onClick={() => {
-                            fetch(documentUrl)
-                                .then(response => response.blob())
+                            // Se baja por /api/storage (mismo origen): el storage público no envía cabeceras CORS y un fetch directo falla.
+                            const download = row?.document_path
+                                ? storage.download('daily_reports', row.document_path)
+                                : fetch(documentUrl).then(response => response.blob());
+                            download
                                 .then(blob => {
                                     const link = document.createElement('a');
                                     link.href = window.URL.createObjectURL(blob);

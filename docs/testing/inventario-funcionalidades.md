@@ -26,7 +26,7 @@ Estado: ⬜ pendiente · ✅ hecho · ➖ justificado sin test.
 | Empresa | Convenios: árbol Sindicato > Convenio > Categoría, validación, uso en el alta de empleados (`convenios.spec.ts`) | ✅ |
 | Empresa | Convenios: crear tras recargar la pestaña (H-05) | ⬜ `test.fixme`: corregido en código, falta deploy |
 | Empresa | Convenios: dar de baja sindicato/convenio/categoría | ➖ el árbol no ofrece la acción (la jerarquía de prueba tiene nombres fijos y se reutiliza) |
-| Empresa | Servicios (alta, ítems, listado) | ➖ fuera del alcance de esta tanda |
+| Empresa | Servicios: ver Mantenimiento > Servicios (`maintenance/servicios.spec.ts`) | ✅ |
 | Empresa | Portal de empleados: contadores y solapas vacías | ✅ |
 | Empresa | Portal de empleados: aprobar/bloquear solicitudes | ➖ requiere un empleado con cuenta en el portal (envía mails) |
 | Empleados | Listado: pestañas, filtros por apellido/nombre/estado, "Limpiar", columnas, paginación, Excel, menú de fila, enlaces (`listado.spec.ts`) | ✅ |
@@ -81,3 +81,21 @@ Estado: ⬜ pendiente · ✅ hecho · ➖ justificado sin test.
 | Calendario | Calendario de vencimientos: documento del mes en su día y leyendas (`documents/vencimientos.spec.ts`) | ✅ |
 | VTV | Listado (documento tipo VTV), agendar turno, cancelar turno desde Gestionar | ✅ |
 | VTV | Gestionar: orden/turno/marcar realizada, pestaña Calendario | ➖ fuera del alcance acordado |
+| Mantenimiento | Tipos de reparación: crear, modificar, eliminar (limpieza) (`maintenance/solicitudes.spec.ts`) | ✅ |
+| Mantenimiento | Solicitud de reparación con foto: crear, queda pendiente en "Solicitudes activas", eventos del trigger `log_repair_changes` | ✅ |
+| Mantenimiento | Foto de la solicitud: imagen en `repair-images`, URL pública 200 `image/png`, mismo contenido y carga en el detalle (subida por la API en la ruta guardada) | ✅ |
+| Mantenimiento | Foto de la solicitud: que la app la suba al crear la solicitud (H-18) | ⬜ `test.fixme`: corregido en código, falta deploy |
+| Mantenimiento | Mecánico: pasar a "En reparación" y finalizar con imagen, aparece en "Solicitudes finalizadas", imagen del mecánico en `repair-images` | ✅ (la subida desde la app: H-18, `test.fixme`) |
+| Mantenimiento | Solicitud para un equipo "Otros" sin kilometraje (H-19) | ⬜ `test.fixme`: bug abierto, igual que producción |
+| Mantenimiento | Solicitudes: carga múltiple, cancelar desde el detalle de usuario, filtros, orden, paginación, Excel | ➖ fuera del alcance acordado (la carga múltiple usa el mismo flujo con varios equipos) |
+| Mantenimiento | Servicios: crear (cliente y servicio), editar nombre, dar de baja, ver en la tabla | ✅ (`maintenance/servicios.spec.ts`) |
+| Mantenimiento | Ítems de servicio: ver en la tabla y dar de baja | ✅ (creado por la API de la app) |
+| Mantenimiento | Ítems de servicio: crear y editar por el formulario (H-20, H-21) | ⬜ `test.fixme`: bugs abiertos, igual que producción |
+| Mantenimiento | Certificados de torqueo: crear (descarga del PDF), listado, detalle, reimprimir PDF (`maintenance/torque.spec.ts`) | ✅ |
+| Mantenimiento | Certificados de torqueo: borrar / editar | ➖ la app no lo permite (son registros emitidos) |
+| Operaciones | Partes diarios: crear un parte, listado "abierto", ver completo, cerrar (`operations/partes-diarios.spec.ts`) | ✅ |
+| Operaciones | Partes diarios: fecha mostrada, aviso y tabla al agregar la fila, jornada guardada (H-22, H-23, H-24) | ⬜ `test.fixme`: bugs abiertos, igual que producción |
+| Operaciones | Fila del parte: agregar, pasar a "ejecutado" (se comprueba reabriendo el parte) | ✅ |
+| Operaciones | Documento adjunto: subir (remito + archivo), "Ver Documento", objeto en `daily-reports`, URL pública con el mismo contenido | ✅ |
+| Operaciones | Documento adjunto: "Descargar" desde el visor (H-26) y carpeta con el nombre de la empresa (H-25) | ⬜ `test.fixme`: H-26 corregido en código (falta deploy), H-25 abierto |
+| Operaciones | Fila: eliminar, reprogramar, cancelar, reemplazar documento, "Detalle de Partes diarios", Excel, empleados y equipos de la fila | ➖ fuera del alcance acordado (el alta de empleados y equipos de la fila no corre por H-23) |

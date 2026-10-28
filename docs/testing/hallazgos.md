@@ -177,6 +177,83 @@ abajo el código es **idéntico en `origin/dev`** (se comparó con `git show ori
   antes que el listado. Reemplazar obliga a elegir de nuevo la fecha (el valor previo no pasa la validación): es el comportamiento actual.
 - En 1280 px el visor de PDF del detalle del documento tapa parte de la pestaña "Actualizar" (por eso esos tests usan una ventana de 1600 px).
 
+## Módulos Mantenimiento y Operaciones
+
+Mismo criterio que arriba. Se corrigió solo lo que es un resto de la migración (H-18, H-26); el resto es código **idéntico en `origin/dev`** y queda como
+"igual que producción — no se cambia" (con `test.fixme` en el spec). La función de base `log_repair_changes` ya no falla: crear, editar y cambiar de estado una
+solicitud escribe sus eventos sin errores de `auth`.
+
+### H-18 La foto de la solicitud de reparación nunca llega al bucket `repair-images` — corregido en código
+
+- **Pasos:** Mantenimiento > Solicitud de mantenimiento > elegir equipo y tipo > cargar una foto en la tarjeta 1 > "Agregar reparacion" > "Registrar solicitudes".
+- **Esperado:** la solicitud queda creada y la foto se guarda en `repair-images` (y se ve en el detalle).
+- **Obtenido:** la solicitud se crea y `user_images` guarda la ruta, pero la foto no se sube: `/api/storage` responde **400** ("Parámetros inválidos") porque la ruta
+  empieza con "/" (`/<dominio>/<tipo>-(<fecha>)/user-image/0`) y `isSafePath` rechaza las rutas con barra inicial. El error se pierde (la subida corre en un `forEach(async)` sin
+  `await`) y la URL pública da 404. Lo mismo pasa con las imágenes que adjunta el mecánico al finalizar (`/<dominio>/.../mechanic-images/0`). Supabase Storage
+  ignoraba las barras iniciales.
+- **Corrección:** `src/shared/lib/storage/handlers.server.ts` quita las barras iniciales de `path`/`paths` antes de validar (GET, upload, remove, list y signed-url). Falta deploy.
+- **Evidencia:** `maintenance/solicitudes.spec.ts` > `al crear la solicitud, la foto queda en repair-images...` y `al finalizar la solicitud, la imagen del mecánico...` (fixme).
+  Los tests que suben la imagen por la API en la ruta guardada (sin barra) sí pasan: bucket, URL pública 200 `image/png`, mismo contenido y carga en el detalle.
+
+### H-19 Un equipo sin kilometraje (tipo "Otros") no puede tener solicitudes de reparación — abierto (igual que producción, no se cambia)
+
+- **Pasos:** equipo de tipo "Otros" (guarda `kilometer = null`) > Mantenimiento > Solicitud de mantenimiento > equipo, tipo, descripción > "Agregar reparacion".
+- **Esperado:** la reparación se agrega a la lista.
+- **Obtenido:** no pasa nada y no hay aviso. El campo "Kilometraje" está oculto para equipos que no son vehículos, pero valida: al elegir el equipo se carga `null` y el
+  esquema falla con "Expected string, received null" (mensaje en un campo oculto). Con un vehículo con kilometraje funciona.
+- **Evidencia:** `maintenance/solicitudes.spec.ts` > `se puede agregar una solicitud para un equipo "Otros" sin kilometraje` (fixme). Los demás tests usan un vehículo con kilometraje.
+
+### H-20 En "Cargar Items" el selector de servicio queda vacío — abierto (igual que producción, no se cambia)
+
+- **Pasos:** Empresa > Servicios > Cargar Items > elegir cliente > abrir "Servicio".
+- **Esperado:** los servicios del cliente.
+- **Obtenido:** lista vacía, no se puede crear un ítem. `ServiceItemsForm` lee `responseData.services` pero la API responde `{ success, data: { services } }`.
+- **Evidencia:** `maintenance/servicios.spec.ts` > `alta de un ítem del servicio por el formulario...` (fixme). El ítem de prueba se crea por la API (`POST /api/services/items`).
+
+### H-21 Editar un ítem de servicio devuelve 500 — abierto (igual que producción, no se cambia)
+
+- **Pasos:** Cargar Items > "Editar" de un ítem > cambiar la descripción > "Editar".
+- **Obtenido:** `PUT /api/services/items` responde 500 ("Failed to update service item") y la pantalla no muestra el aviso de éxito. El formulario manda la unidad de medida como texto
+  (`"1"`) y Prisma espera un entero (con el número, la API responde 200).
+- **Evidencia:** `maintenance/servicios.spec.ts` > `se puede editar la descripción del ítem` (fixme). Dar de baja el ítem sí funciona.
+
+### H-22 El listado de partes diarios muestra la fecha un día antes — abierto (igual que producción, no se cambia)
+
+- **Pasos:** Operaciones > "Crear Parte Diario" > elegir una fecha > mirar el listado y el encabezado "Fecha:" del parte.
+- **Obtenido:** se ve el día anterior (el parte del 12/11 aparece como 11/11): la fecha `yyyy-MM-dd` se interpreta como medianoche UTC y se pinta en hora local (Argentina, UTC-3).
+  El filtro de fechas del listado usa la misma lectura.
+- **Evidencia:** `operations/partes-diarios.spec.ts` > `el parte diario se lista con la fecha que se eligió al crearlo` (fixme). Los demás tests buscan el parte por la fecha tal como se muestra (`listedDate`).
+
+### H-23 Al agregar o editar una fila del parte diario la pantalla falla aunque se guarda — abierto (igual que producción, no se cambia)
+
+- **Pasos:** abrir un parte ("Ver Completo") > "Agregar Fila" > completar > "Agregar Fila" (y luego editar la fila y "Guardar Cambios").
+- **Esperado:** aviso "Fila agregada correctamente al parte diario." y la fila en la tabla.
+- **Obtenido:** la fila se guarda (POST/PUT 200) pero la pantalla no la muestra ni avisa hasta reabrir el parte: las APIs responden `{ data: { data: [fila] } }` y el código lee
+  `data[0].id` (alta) o `.map` (edición), lo que falla (en consola: `Cannot read properties of undefined`). El alta de empleados y equipos de la fila (que sigue a ese paso) tampoco corre.
+  Lo mismo ocurre con el parte recién creado: su diálogo se abre sin id (`newDailyReport[0]` es `undefined`), y el aviso "Ya existe un parte diario para esta fecha" nunca aparece
+  (lee `exists` sin el sobre `data`), por lo que se pueden crear partes duplicados para una fecha.
+- **Evidencia:** `operations/partes-diarios.spec.ts` > `al agregar una fila se muestra en la tabla y avisa que se agregó` (fixme). Los tests reabren el parte para comprobar lo guardado.
+
+### H-24 La jornada elegida al agregar la fila no se guarda — abierto (igual que producción, no se cambia)
+
+- El POST de la fila no incluye `working_day`: la fila queda sin jornada y al editarla "Jornada" vuelve a ser obligatoria. El test la elige de nuevo antes de guardar.
+
+### H-25 La carpeta del documento del parte diario se llama "true" — abierto (igual que producción, no se cambia)
+
+- **Obtenido:** los documentos se guardan en `daily-reports` como `true/<cliente>/<servicio>/<ítem>/<dd-mm-aaaa>-<remito>.<ext>` en vez de `<empresa>/...`: `DailyReport.tsx` llama a
+  `dailyColumns(..., canEdit, customers, services, items, companyName)` y la función espera `(..., companyName, customers, services, items, canEdit)`. Además `canEdit`
+  (la regla de 6 días) queda siempre verdadero.
+- **Evidencia:** `operations/partes-diarios.spec.ts` > `el documento se guarda en la carpeta con el nombre de la empresa` (fixme). El test de bucket acepta cualquier carpeta inicial.
+
+### H-26 "Descargar" del visor del documento del parte diario no baja nada — corregido en código
+
+- **Pasos:** Operaciones > parte > fila con documento > "Ver Documento" > "Descargar".
+- **Obtenido:** no pasa nada. El botón hace `fetch(<URL pública de RustFS>)` desde el navegador y el storage **no envía cabeceras CORS** (con Supabase sí): el navegador lo bloquea
+  (`Failed to fetch`). La URL pública directa (enlaces, visor) sí funciona. Si hay otras pantallas que hagan `fetch` a la URL pública, fallan igual; la causa de fondo es la configuración
+  CORS de RustFS (infraestructura).
+- **Corrección:** `DocumentView.tsx` baja el archivo por `/api/storage` (mismo origen) con `storage.download('daily_reports', row.document_path)`. Falta deploy.
+- **Evidencia:** `operations/partes-diarios.spec.ts` > `"Descargar" baja el mismo archivo que se subió` (fixme).
+
 ## Observaciones (no son bugs confirmados; condicionan cómo se escriben los tests)
 
 - **Clics anteriores a la hidratación se pierden en silencio** y varias pantallas se "resetean" al terminar de cargar su estado: el listado de empleados
@@ -224,6 +301,17 @@ La app no permite borrar estos elementos desde la UI; todos llevan el prefijo `Q
 - Empleados `QA-E2E-doc*`: quedan dados de baja. Documentos eliminados desde el detalle vuelven a estado pendiente (no desaparecen la fila).
 - VTV: el turno agendado queda **cancelado**.
 - De la exploración inicial quedaron (también limpios) el equipo `QA-E2E-Nmvs5q7vr` y los tipos `QA-E2E-explore-*`.
+
+## Datos que los tests de Mantenimiento y Operaciones dejan en la empresa QA E2E
+
+- Certificados de torqueo: **uno por corrida** (la app no permite borrarlos); quedan asociados a un vehículo `QA-E2E-Torque-*` dado de baja. Su PDF se genera en el navegador, no se guarda.
+- Vehículos `QA-E2E-Rep-*` y `QA-E2E-Torque-*`: quedan dados de baja (motivo "Fundido"). Los tipos de reparación `QA-E2E-Reparacion-*` se **eliminan** al final y la app borra en cascada
+  sus solicitudes; las imágenes subidas por los tests a `repair-images` se borran del bucket.
+- Servicios `QA-E2E-Servicio*` e ítems `QA-E2E-Item*` y sus clientes `QA-E2E-ClienteSrv-*` / `QA-E2E-ClienteOp-*`: quedan **desactivados / dados de baja**.
+- Partes diarios: **uno por corrida** (la app no permite borrarlos); el de prueba queda "cerrado", con una fila `Fila de prueba QA` ejecutada y su documento en `daily-reports`
+  (`true/QA-E2E-ClienteOp-*/.../<dd-mm-aaaa>-<remito>.pdf`). Cada corrida usa el primer día libre entre 5 días atrás y 60 días adelante: con ~65 partes acumulados el test avisa que no hay fechas libres.
+- El selector de archivos de las solicitudes lo abre un `<input>` creado al hacer clic en la tarjeta: los tests contestan el evento `filechooser` y reintentan el clic hasta ver la vista previa.
+- Con una imagen de 1x1 píxel el optimizador de Next (`/_next/image`) devuelve un archivo que el navegador no decodifica (`naturalWidth` 0): las pruebas de "carga en pantalla" usan una imagen real de 48x48 generada en el test (`solidPng`).
 
 ## Riesgos conocidos de la suite
 

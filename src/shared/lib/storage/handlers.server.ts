@@ -33,6 +33,11 @@ function isBucket(value: unknown): value is StorageBucket {
   return typeof value === 'string' && (BUCKETS as readonly string[]).includes(value)
 }
 
+/** Supabase Storage ignoraba las barras iniciales (`/a/b` == `a/b`) y la app guarda rutas así: se normalizan antes de validar. */
+function stripLeadingSlashes<T>(value: T): T | string {
+  return typeof value === 'string' ? value.replace(/^\/+/, '') : value
+}
+
 function isSafePath(path: unknown): path is string {
   return typeof path === 'string' && path.length > 0 && !path.includes('..') && !path.startsWith('/')
 }
@@ -52,7 +57,7 @@ function fail(message: string, status: number) {
 /** GET /api/storage?bucket=&path=  → descarga el objeto (stream). */
 export async function handleStorageGet(req: NextRequest) {
   const bucket = req.nextUrl.searchParams.get('bucket')
-  const path = req.nextUrl.searchParams.get('path')
+  const path = stripLeadingSlashes(req.nextUrl.searchParams.get('path'))
   if (!isBucket(bucket) || !isSafePath(path)) return fail('Parámetros inválidos', 400)
   if (!(await isAllowed(req, bucket))) return fail('No autorizado', 401)
 
@@ -75,25 +80,25 @@ export async function handleStoragePost(req: NextRequest) {
   try {
     switch (op) {
       case 'upload': {
-        const path = form.get('path')
+        const path = stripLeadingSlashes(form.get('path'))
         const file = form.get('file')
         if (!isSafePath(path) || !(file instanceof Blob)) return fail('Parámetros inválidos', 400)
         const options = JSON.parse(String(form.get('options') ?? '{}')) as UploadOptions
         return NextResponse.json(await s3Storage.upload(bucket, path, file, options))
       }
       case 'remove': {
-        const paths = JSON.parse(String(form.get('paths') ?? '[]')) as unknown[]
+        const paths = (JSON.parse(String(form.get('paths') ?? '[]')) as unknown[]).map(stripLeadingSlashes)
         if (!paths.every(isSafePath)) return fail('Parámetros inválidos', 400)
         return NextResponse.json(await s3Storage.remove(bucket, paths as string[]))
       }
       case 'list': {
-        const path = form.get('path')
+        const path = stripLeadingSlashes(form.get('path'))
         const options = JSON.parse(String(form.get('options') ?? '{}')) as ListOptions
         if (path && !isSafePath(path)) return fail('Parámetros inválidos', 400)
         return NextResponse.json(await s3Storage.list(bucket, path ? String(path) : undefined, options))
       }
       case 'signed-url': {
-        const path = form.get('path')
+        const path = stripLeadingSlashes(form.get('path'))
         if (!isSafePath(path)) return fail('Parámetros inválidos', 400)
         if (!PRIVATE_BUCKETS.includes(bucket) && !(await auth())) return fail('No autorizado', 401)
         const expiresIn = Number(form.get('expiresIn') ?? 3600)
