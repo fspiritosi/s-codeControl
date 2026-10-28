@@ -109,3 +109,20 @@ Estado: ⬜ pendiente · ✅ hecho · ➖ justificado sin test.
 | HSE | Capacitaciones: asignación a empleados, recordatorios, intentos y evaluación del empleado, ruta pública `/hse/training`, estadísticas, etiquetas, tipos de documento HSE | ➖ fuera del alcance acordado (los recordatorios envían mails) |
 | Formularios | Pantallas `/dashboard/forms` y `/dashboard/forms/new` cargan (`hse/formularios.spec.ts`) | ✅ |
 | Formularios | Crear un tipo de checklist, completarlo, ver respuestas, eliminar (H-32) | ⬜ sin alta por pantalla y sin tipos de checklist en la empresa QA: hace falta ampliar el seed |
+| Compras | Proveedores: alta con cheque y cuenta bancaria, detalle con los métodos de pago, edición (`purchasing/proveedores.spec.ts`) | ✅ |
+| Compras | Proveedores: baja / eliminar (H-35) | ➖ la app no lo ofrece; el proveedor de prueba queda activo |
+| Compras | Órdenes de compra: alta, estados enviar a aprobación > aprobar (sin email del proveedor: no hay mail) > cancelar, eliminar un borrador (`purchasing/ordenes.spec.ts`) | ✅ |
+| Compras | Órdenes de compra: adjunto PDF en el bucket privado `purchase-orders`: objeto en la ruta `<empresa>/<orden>/`, "Ver" abre la URL firmada con el mismo contenido, la ruta sin firma no se lee, eliminar el adjunto lo borra del bucket | ✅ |
+| Compras | Órdenes de compra: rechazar, imputar facturas/gastos, PDF de la orden, revisión de precios | ➖ fuera del alcance acordado |
+| Compras | Órdenes de compra: eliminar una orden con adjunto borra el archivo (H-37) | ⬜ `test.fixme`: igual que producción |
+| Compras | Facturas de compra: alta con PDF (sin usar la lectura por IA), objeto en `purchase-invoices`, URL pública 200 con el mismo contenido, "Ver PDF" firmada, reemplazar y quitar el adjunto, confirmar, eliminar (`purchasing/facturas.spec.ts`) | ✅ |
+| Compras | Facturas de compra: "Cargar desde factura" (IA), notas de crédito, editar, percepciones, descuentos | ➖ la IA envía el archivo a un proveedor externo; el resto fuera del alcance acordado |
+| Compras | Facturas de compra: eliminar una factura con adjunto borra el PDF (H-36) | ⬜ `test.fixme`: igual que producción |
+| Compras | Remitos de recepción: alta manual, confirmar (ingresa stock) y anular (revierte stock) (`purchasing/recepciones.spec.ts`) | ✅ |
+| Compras | Remitos de recepción: recibir desde una orden o factura, detalle, fecha mostrada (H-34) | ➖ fuera del alcance acordado / H-34 igual que producción |
+| Compras | Gastos, cuenta corriente del proveedor, pagos | ➖ fuera del alcance acordado |
+| Almacenes | Productos: alta, edición y desactivación (`warehouse/productos.spec.ts`) | ✅ |
+| Almacenes | Almacenes: alta, edición, ajuste de stock con su movimiento y transferencia entre almacenes (`warehouse/almacenes.spec.ts`) | ✅ |
+| Almacenes | Almacenes: desactivar (H-35) | ➖ la app no lo ofrece; el almacén de prueba queda activo |
+| Almacenes | Retiros (ORM): alta, enviar a aprobación > aprobar > completar (descuenta stock y genera el movimiento) y cancelar (`warehouse/retiros.spec.ts`) | ✅ |
+| Almacenes | Retiros: PDF de la orden, empleado y equipo asociados, rechazar | ➖ fuera del alcance acordado |

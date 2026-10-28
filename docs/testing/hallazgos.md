@@ -375,10 +375,21 @@ La app no permite borrar estos elementos desde la UI; todos llevan el prefijo `Q
 - Los documentos y capacitaciones de prueba en borrador se eliminan (con su archivo, y el original huérfano que deja H-28); los materiales de `training-materials` los borra el test (H-31).
 - Los documentos se cargan "a todos los empleados activos" de la empresa QA E2E: solo hay empleados de prueba, no se envía ningún mail.
 
+## Datos que los tests de Compras y Almacenes dejan en la empresa QA E2E
+
+- Proveedor fijo `QA-E2E-Proveedor` (sin email: aprobar una orden no envía mails) y almacenes fijos `QA-E2E-Almacen-A` / `QA-E2E-Almacen-B`: se crean una vez y se reutilizan (H-35).
+- Proveedor `QA-E2E-Prov-*` (**uno por corrida**, con cheque y cuenta bancaria) y almacén `QA-E2E-Almacen-*` (**uno por corrida**, con stock transferido): no se pueden dar de baja (H-35). El producto de prueba de cada spec se **desactiva**.
+- Orden de compra del flujo de estados: **una por corrida**, queda "Cancelada" (aprobada y cancelada); la del adjunto se elimina. Sus adjuntos en `purchase-orders` los borra el test.
+- Facturas de compra: se confirman y se **eliminan**; sus PDF en `purchase-invoices` los borra el test (H-36).
+- Remito de recepción: **uno por corrida**, queda "Anulado" (se confirmó y se anuló: el stock vuelve a 0). Orden de retiro: **dos por corrida**, una "Completada" (descontó 3 unidades del almacén A) y una "Cancelada".
+- Stock de productos de prueba (desactivados) en los almacenes fijos y movimientos de ajuste/transferencia/retiro/recepción asociados.
+
 ## Riesgos conocidos de la suite
 
 - **Preparación compartida:** `detalle-edicion.spec.ts` y `convenios.spec.ts` llaman a `ensureCovenantTree` desde workers distintos. En un clon recién
   sembrado (sin la jerarquía) podrían crearla dos veces y romper los selectores estrictos. Hoy la jerarquía ya existe.
+- **Detalle de almacén bajo carga:** con varios workers, a veces la app vuelve sola al listado justo después de abrir el detalle de un almacén (visto 4 veces en ~10 corridas, sin causa clara);
+  `openStockDialog` repite el recorrido completo. Los almacenes fijos acumulan un producto por corrida y sus tablas paginan de a 10: los tests filtran por `?search=`.
 - **Carga del servidor:** con varios workers (y otras suites corriendo contra el mismo clon) algunas pantallas vuelven a montar sus formularios; los
   helpers reintentan lo idempotente. Un fallo que aparezca solo bajo carga se reporta, no se tapa subiendo timeouts.
 
@@ -388,3 +399,29 @@ La app no permite borrar estos elementos desde la UI; todos llevan el prefijo `Q
 - **Esperado:** el documento sale del listado y el objeto desaparece de `documents-hse`.
 - **Obtenido (desde el deploy 24d955fa):** sale del listado, pero el objeto sigue en el bucket. Antes del deploy el test pasaba; no hay errores en el log del servidor.
 - **Impacto:** archivos huérfanos en el bucket; el documento se elimina bien. Test en `test.fixme` hasta investigarlo.
+
+### H-34 Las fechas de los listados de remitos de recepción y de órdenes de retiro se ven un día antes — abierto (igual que producción, no se cambia)
+
+- **Pasos:** crear un remito (fecha 2026-10-28) o una orden de retiro con la fecha por defecto y mirar la columna "Fecha recepción" / "Fecha" del listado, con el navegador en hora de Argentina.
+- **Obtenido:** muestra 27/10/2026. `columns.tsx` hace `format(new Date(row.original.reception_date), 'dd/MM/yyyy')` (y lo mismo con `request_date`) sobre una fecha guardada a medianoche UTC: en UTC-3 cae el día anterior.
+  Las facturas y las órdenes de compra sí usan `formatDateUTC` y se ven bien.
+- **Arreglo sugerido (chico):** usar `formatDateUTC` en las dos columnas. Cambia lo que ve el usuario en producción, por eso no se aplica.
+- **Evidencia:** visto en el listado durante `purchasing/recepciones.spec.ts`; los tests no comprueban la fecha.
+
+### H-35 La app no permite dar de baja ni eliminar proveedores y almacenes — abierto (igual que producción, no se cambia)
+
+- **Obtenido:** `deleteSupplier` (proveedores) y `toggleWarehouseActive` (almacenes) existen en el código pero ninguna pantalla los usa; el formulario de edición tampoco cambia el estado. Las órdenes de compra aprobadas y los
+  remitos y retiros confirmados solo se cancelan/anulan (no se eliminan); solo el borrador se elimina.
+- **Impacto:** los datos de prueba no se pueden limpiar por la interfaz. La suite usa un proveedor fijo (`QA-E2E-Proveedor`) y dos almacenes fijos (`QA-E2E-ALM-A`, `QA-E2E-ALM-B`) que se crean una vez y se reutilizan.
+
+### H-36 Eliminar una factura de compra no borra su PDF del bucket — abierto (igual que producción, no se cambia)
+
+- **Pasos:** crear una factura con PDF > "Eliminar" desde el listado (dueño de la empresa).
+- **Obtenido:** la factura desaparece pero el objeto sigue en `purchase-invoices` (`deletePurchaseInvoice` no llama a `storageServer.remove`). Medido en el clon. "Quitar" el adjunto desde el detalle sí borra el archivo.
+- **Evidencia:** `purchasing/facturas.spec.ts` > `eliminar una factura con adjunto borra también el PDF del bucket (H-36)` (fixme). El test de flujo quita el adjunto antes de eliminar y limpia el bucket.
+
+### H-37 Eliminar una orden de compra con adjuntos no borra sus archivos del bucket — abierto (igual que producción, no se cambia)
+
+- **Pasos:** orden en borrador con un adjunto > "Eliminar" desde el listado.
+- **Obtenido:** la orden y sus filas de adjuntos (cascada en la base) se eliminan, pero el objeto sigue en `purchase-orders`. Medido en el clon.
+- **Evidencia:** `purchasing/ordenes.spec.ts` > `eliminar una orden con adjunto borra también el archivo del bucket (H-37)` (fixme). Eliminar el adjunto desde el detalle sí lo borra.

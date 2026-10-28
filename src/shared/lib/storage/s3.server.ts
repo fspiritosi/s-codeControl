@@ -1,7 +1,7 @@
 // Backend S3 (RustFS/MinIO/R2). Solo se importa desde el servidor.
 
 import {
-  DeleteObjectsCommand,
+  DeleteObjectCommand,
   GetObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
@@ -72,11 +72,10 @@ export const s3Storage = {
 
   async remove(bucket: StorageBucket, paths: string[]) {
     if (paths.length === 0) return []
-    await client().send(
-      new DeleteObjectsCommand({
-        Bucket: s3BucketName(bucket),
-        Delete: { Objects: paths.map((Key) => ({ Key })), Quiet: true },
-      })
+    // Se borra objeto por objeto: DeleteObjects en modo Quiet devuelve los fallos en `Errors` sin lanzar, y RustFS los deja
+    // sin borrar en silencio (el archivo queda huérfano en el bucket aunque la app diga que lo eliminó).
+    await Promise.all(
+      paths.map((Key) => client().send(new DeleteObjectCommand({ Bucket: s3BucketName(bucket), Key })))
     )
     return paths.map((name) => ({ name }))
   },
