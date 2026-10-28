@@ -78,7 +78,7 @@ test.describe('documentos de equipos: ciclo de vida', () => {
 
   // H-16: en el listado de documentos de equipos el menú "Descargar" pide `path=undefined` (404): el formateador de filas no
   // incluía `document_url`. Corregido en código (`formatVehiculesDocuments`), falta deploy.
-  test.fixme('se descarga desde el listado el mismo archivo que se subió', async ({ page }) => {
+  test('se descarga desde el listado el mismo archivo que se subió', async ({ page }) => {
     await page.goto(`${DOCS_URL}?tab=equipment&search=${eq.intern}`);
     const row = docRow(page, eq.intern, type);
     await expect(row).toBeVisible();

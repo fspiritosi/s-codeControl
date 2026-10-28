@@ -3,6 +3,10 @@ name: e2e
 # Se dispara a mano, después de un deploy verde de la rama de deploy y todas las noches.
 # Usuario y empresa de prueba: scripts/e2e/seed-qa.sql (se aplica una sola vez en la base del clon).
 on:
+  # Un push que toca este archivo la registra en GitHub (los workflows que solo tienen workflow_run/schedule no se pueden lanzar a mano hasta que existe una primera corrida).
+  push:
+    branches: [migracion/dokploy] # RAMA DE DEPLOY
+    paths: ['.github/workflows/e2e.yml']
   workflow_dispatch:
   workflow_run:
     workflows: [deploy]

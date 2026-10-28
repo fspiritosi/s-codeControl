@@ -77,8 +77,8 @@ test.describe('equipos: ciclo de vida', () => {
     expect(signed.headers()['content-type']).toMatch(/image\//);
   });
 
-  // H-13: `picture` se guarda con la URL de la app (NEXT_PUBLIC_PROJECT_URL) y no con la del storage: da 404. Corregido en código.
-  test.fixme('el detalle del equipo muestra la foto cargada', async ({ page }) => {
+  // H-13: `picture` se guarda con la URL de la app (NEXT_PUBLIC_PROJECT_URL) y no con la del storage: da 404. Corregido en código y verificado en el clon desplegado.
+  test('el detalle del equipo muestra la foto cargada', async ({ page }) => {
     await page.goto(`${EQUIPMENT_URL}/action?action=view&id=${id}`);
     const img = page.getByRole('img', { name: 'Imagen del empleado' });
     await expect(img).toBeVisible();
@@ -98,7 +98,7 @@ test.describe('equipos: ciclo de vida', () => {
 
   // H-14: al editar un equipo sin dominio ("Otros") el formulario manda `domain: ''` y choca con la restricción UNIQUE de
   // `vehicles.domain` (ya existe otro con ''): la app dice "equipo editado" pero no guarda. Corregido en código, falta deploy.
-  test.fixme('se puede editar el equipo y los cambios persisten', async ({ page }) => {
+  test('se puede editar el equipo y los cambios persisten', async ({ page }) => {
     await page.goto(`${EQUIPMENT_URL}/action?action=view&id=${id}`);
     await clickHydrated(page.getByRole('button', { name: 'Habilitar edicion' }));
     const engine = page.getByRole('textbox', { name: 'Ingrese el tipo de motor' });
@@ -125,8 +125,8 @@ test.describe('equipos: ciclo de vida', () => {
     await expect(panel.getByRole('button', { name: 'Copiar url' })).toBeVisible();
   });
 
-  // H-15: la URL del QR se arma como `${NEXT_PUBLIC_BASE_URL}maintenance?...` (sin "/"): queda `...sslip.iomaintenance?...`. Corregido en código.
-  test.fixme('el QR apunta a la pantalla pública de mantenimiento del equipo', async ({ page, context, baseURL }) => {
+  // H-15: la URL del QR se arma como `${NEXT_PUBLIC_BASE_URL}maintenance?...` (sin "/"): queda `...sslip.iomaintenance?...`. Corregido en código y verificado en el clon desplegado.
+  test('el QR apunta a la pantalla pública de mantenimiento del equipo', async ({ page, context, baseURL }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await page.goto(`${EQUIPMENT_URL}/action?action=view&id=${id}`);
     const tab = page.getByRole('tab', { name: 'QR', exact: true });
