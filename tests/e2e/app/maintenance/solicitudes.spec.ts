@@ -116,7 +116,7 @@ test.describe('mantenimiento: solicitudes de reparación', () => {
 
   // H-18: la app sube la foto con una ruta que empieza con "/" y /api/storage la rechaza (400); la solicitud se crea pero la foto
   // nunca llega al bucket. Corregido en código (handlers.server.ts normaliza las barras iniciales), falta deploy.
-  test.fixme('al crear la solicitud, la foto queda en repair-images y se sirve por su URL pública', async ({ page }) => {
+  test('al crear la solicitud, la foto queda en repair-images y se sirve por su URL pública', async ({ page }) => {
     const list = await gotoMaintenanceTab(page, 'Solicitudes activas');
     await clickHydrated(list.getByRole('row').filter({ hasText: typeName }).getByRole('button', { name: 'Reparar equipo' }));
     const link = page.getByRole('dialog', { name: 'Reparación de equipo' }).getByRole('link', { name: 'Imagen 1' });
@@ -232,7 +232,7 @@ test.describe('mantenimiento: solicitudes de reparación', () => {
   }
 
   // H-18 (mismo defecto con la imagen que adjunta el mecánico): la ruta empieza con "/" y /api/storage la rechaza.
-  test.fixme('al finalizar la solicitud, la imagen del mecánico queda en repair-images', async ({ page }) => {
+  test('al finalizar la solicitud, la imagen del mecánico queda en repair-images', async ({ page }) => {
     const { link } = await openFinishedMechanicImage(page);
     await expectImageInBucket(page, (await link.getAttribute('href')) ?? '');
   });

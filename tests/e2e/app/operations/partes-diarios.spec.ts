@@ -204,7 +204,7 @@ test.describe('operaciones: partes diarios', () => {
 
   // H-26: "Descargar" hacía un fetch directo a la URL pública de RustFS, que no envía cabeceras CORS: el navegador lo bloquea y no
   // baja nada (con Supabase sí las enviaba). Corregido en código (DocumentView baja por /api/storage), falta deploy.
-  test.fixme('"Descargar" baja el mismo archivo que se subió', async ({ page }) => {
+  test('"Descargar" baja el mismo archivo que se subió', async ({ page }) => {
     const dialog = await openReport(page);
     await clickHydrated(dialog.getByRole('row').filter({ hasText: 'Fila de prueba QA' }).getByRole('button', { name: 'Ver Documento' }));
     const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Descargar' }).click()]);
