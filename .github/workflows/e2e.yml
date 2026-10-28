@@ -1,0 +1,90 @@
+name: e2e
+# Suite E2E (Playwright) contra el sistema desplegado (clon en Dokploy). No levanta nada: prueba lo que está en producción de la VPS.
+# Se dispara a mano, después de un deploy verde de la rama de deploy y todas las noches.
+# Usuario y empresa de prueba: scripts/e2e/seed-qa.sql (se aplica una sola vez en la base del clon).
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [deploy]
+    types: [completed]
+    branches: [migracion/dokploy] # RAMA DE DEPLOY
+  schedule:
+    - cron: '0 6 * * *'
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+        env:
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+      - run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+      - run: npm test
+
+  e2e:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+        env:
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+      - name: Cache de browsers de Playwright
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npx playwright install --with-deps chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+      - run: npx playwright install-deps chromium
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+      - name: Esperar a que el sistema responda
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf "${{ vars.E2E_BASE_URL }}/api/health" && exit 0
+            sleep 10
+          done
+          echo "::error::el sistema no responde en ${{ vars.E2E_BASE_URL }}"; exit 1
+      - run: npx playwright test --shard=${{ matrix.shard }}/3
+        env:
+          CI: 'true'
+          E2E_BASE_URL: ${{ vars.E2E_BASE_URL }}
+          E2E_USER: ${{ vars.E2E_USER }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ matrix.shard }}
+          path: |
+            playwright-report
+            blob-report
+            test-results
+          retention-days: 14

@@ -56,3 +56,9 @@ cypress.config.ts
 # Material de referencia local (planillas Excel del cliente con datos sensibles)
 .planes/incorporacion_cotizaciones/referencias/*
 !.planes/incorporacion_cotizaciones/referencias/README.md
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+tests/e2e/.auth/
