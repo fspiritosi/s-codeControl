@@ -254,6 +254,59 @@ solicitud escribe sus eventos sin errores de `auth`.
 - **Corrección:** `DocumentView.tsx` baja el archivo por `/api/storage` (mismo origen) con `storage.download('daily_reports', row.document_path)`. Falta deploy.
 - **Evidencia:** `operations/partes-diarios.spec.ts` > `"Descargar" baja el mismo archivo que se subió` (fixme).
 
+## Módulos HSE y Formularios
+
+Mismo criterio: todo lo que sigue es código **idéntico en `origin/dev`** (lo de `modules/hse` y `modules/forms` salvo las actions migradas a Prisma), así que queda como
+"igual que producción — no se cambia" con `test.fixme`, salvo H-27 (cosmético, arreglo de una línea que no cambia el comportamiento). Los archivos de HSE sí funcionan por
+`/api/storage`: subir (documento y material), servirlos por su URL pública con el mismo contenido y descargar desde la tarjeta del listado.
+
+### H-27 El diálogo "Editar Documento" no entra en una pantalla de 720 px de alto — corregido en código
+
+- **Pasos:** HSE > Documentos > Borradores > "Editar" en una pantalla de 1280x720.
+- **Obtenido:** con el archivo actual el diálogo es más alto que la pantalla y no se desplaza: "Guardar Cambios" queda fuera de la vista y no se puede pulsar.
+- **Corrección:** `Document-upload-dialog.tsx`: `max-h-[90vh] overflow-y-auto` en el `DialogContent` (solo estilo). Falta deploy y verlo en pantalla.
+- **Evidencia:** `hse/documentos.spec.ts` > `el diálogo de edición se puede usar en una pantalla de 720 px de alto (H-27)` (fixme); el test de edición usa una pantalla de 1000 px.
+
+### H-28 Editar un documento HSE sin tocar el archivo lo reemplaza por uno vacío — abierto (igual que producción, no se cambia)
+
+- **Pasos:** HSE > Documentos > un borrador > "Editar" > cambiar título o descripción > "Guardar Cambios" (sin elegir archivo).
+- **Obtenido:** al abrir el diálogo en modo edición se arma un `File` vacío con el nombre y el tamaño del original (`Document-upload-dialog.tsx`, efecto de `initialData`) y el envío lo toma
+  como archivo nuevo (`size > 0` por el tamaño falseado): sube un objeto de **0 bytes** a `documents/<ts>.pdf`, el documento pasa a apuntar a él y el archivo original queda huérfano en el bucket.
+  Medido en el clon: el objeto nuevo responde 200 con 0 bytes. Producción tiene el mismo código y la misma ruta `documents/`.
+- **Arreglo sugerido (chico):** no cargar ese `File` falso en el formulario y tratar como archivo nuevo solo el que elige la persona. No se aplicó porque cambia lo que pasa hoy en producción.
+- **Evidencia:** `hse/documentos.spec.ts` > `editar un documento sin cambiar el archivo conserva su contenido (H-28)` (fixme). El test de edición pasa (título y descripción cambian) y la limpieza borra el original y el vacío.
+
+### H-29 "Descargar" del detalle del documento HSE (pestaña Versiones) no baja nada — abierto (igual que producción, no se cambia)
+
+- **Pasos:** HSE > Documentos > "Ver Detalle" > Versiones > "Descargar" (versión actual o anterior).
+- **Obtenido:** `DocumentDetail.tsx` arma un enlace `<a download>` con la ruta del archivo (`<empresa>/<ts>.pdf`) en vez de bajarlo por `/api/storage`: el navegador pide
+  `/dashboard/hse/document/<id>/<empresa>/<ts>.pdf` y la descarga se cancela. La tarjeta del listado sí descarga bien (usa `storage.download`). En producción `file_path` también es una ruta.
+- **Arreglo sugerido (chico):** usar `storage.download('documents-hse', path)` como el listado.
+- **Evidencia:** `hse/documentos.spec.ts` > `versiones: Descargar en el detalle entrega el archivo de la versión actual (H-29)` (fixme).
+
+### H-30 Guardar la lista de materiales de una capacitación borra del bucket los archivos de los materiales anteriores — abierto (igual que producción, no se cambia)
+
+- **Pasos:** capacitación > Materiales > agregar un material y guardar > agregar otro y guardar.
+- **Obtenido:** `updateTrainingMaterials` borra de `training-materials` los archivos de **todos** los materiales que ya existían (también los que no se reemplazan) y vuelve a insertar sus filas con
+  la misma URL: el material 1 queda con su fila pero el objeto ya no está (404 en su URL pública y en "Ver Material"). Medido en el clon.
+- **Evidencia:** `hse/capacitaciones.spec.ts` > `guardar un material nuevo conserva el archivo de los materiales anteriores (H-30)` (fixme).
+
+### H-31 Eliminar una capacitación no borra sus materiales del bucket — abierto (igual que producción, no se cambia)
+
+- **Pasos:** capacitación en borrador con materiales > "Eliminar".
+- **Obtenido:** `deleteTraining` llama a `storageServer.remove('documents', <URLs completas>)`: bucket equivocado y URLs en vez de rutas. Los objetos de `training-materials` quedan huérfanos. Medido en el clon.
+- **Evidencia:** `hse/capacitaciones.spec.ts` > `eliminar la capacitación borra sus materiales del bucket training-materials (H-31)` (fixme). El test limpia los objetos por la API de storage.
+
+### H-32 El flujo de formularios no se puede certificar: sin alta por pantalla y sin datos en la empresa QA E2E — abierto (sin test del flujo)
+
+- Los formularios son tipos de checklist (`custom_form`, la columna `form` es un **objeto**: "Transporte SP-ANAY - CHK - HYS - 01/03/04" y "CHK - HYS - 01/03/04" en las empresas reales). El alta por pantalla (`NewForm`/`CreatedForm`/`FormDisplay`)
+  no tiene ruta (la pestaña "Crear nuevo formulario" está comentada en `app/dashboard/forms/page.tsx`) y la empresa QA E2E no tiene ninguno (`/dashboard/forms` muestra "Sin resultados"),
+  así que no hay formulario que completar, ver ni eliminar. Tampoco hay acción de eliminar. Para certificarlo hace falta que `scripts/e2e/seed-qa.sql` copie un tipo de checklist a la empresa QA.
+- **`form.find is not a function`:** viene de `FormCardContainer.tsx:91` (`curr.form.find(...)`, pensado para una columna `form` en forma de arreglo): con una empresa que tiene tipos de checklist y la
+  columna como objeto lanza ese error en `/dashboard/forms/new`. Código idéntico a `origin/dev`. No se reprodujo con la empresa QA (sin formularios) en `/dashboard/forms/new`, `/dashboard/help` ni `/dashboard/hse`
+  (el log del servidor no registró el error en esas visitas), y no afecta a las pantallas de checklist (`/dashboard/forms/[id]`), que no usan ese componente.
+- **Evidencia:** `hse/formularios.spec.ts` solo verifica que `/dashboard/forms` y `/dashboard/forms/new` cargan.
+
 ## Observaciones (no son bugs confirmados; condicionan cómo se escriben los tests)
 
 - **Clics anteriores a la hidratación se pierden en silencio** y varias pantallas se "resetean" al terminar de cargar su estado: el listado de empleados
@@ -312,6 +365,15 @@ La app no permite borrar estos elementos desde la UI; todos llevan el prefijo `Q
   (`true/QA-E2E-ClienteOp-*/.../<dd-mm-aaaa>-<remito>.pdf`). Cada corrida usa el primer día libre entre 5 días atrás y 60 días adelante: con ~65 partes acumulados el test avisa que no hay fechas libres.
 - El selector de archivos de las solicitudes lo abre un `<input>` creado al hacer clic en la tarjeta: los tests contestan el evento `filechooser` y reintentan el clic hasta ver la vista previa.
 - Con una imagen de 1x1 píxel el optimizador de Next (`/_next/image`) devuelve un archivo que el navegador no decodifica (`naturalWidth` 0): las pruebas de "carga en pantalla" usan una imagen real de 48x48 generada en el test (`solidPng`).
+
+## Datos que los tests de HSE y Formularios dejan en la empresa QA E2E
+
+- Tipo de documento HSE `QA-E2E-HSE-Tipo` y capacitador `QA-E2E-Capacitador`: fijos, se crean la primera vez y se reutilizan (la app no permite eliminarlos).
+- Documento `QA-E2E-HseVersiones` (**uno solo**): se publica la primera vez y cada corrida le suma una versión (no se puede eliminar un documento vigente); sus archivos (uno por versión) quedan en `documents-hse/<empresa>/`.
+  Durante el desarrollo de la suite quedaron además 7 documentos vigentes `QA-E2E-HseVer-*` (uno por corrida de prueba) que la app no deja borrar.
+- Capacitación `QA-E2E-CapCiclo` (**una sola**, con el acta completa): cada corrida pasa de Archivado a Publicado y vuelve a Archivado, y queda archivada.
+- Los documentos y capacitaciones de prueba en borrador se eliminan (con su archivo, y el original huérfano que deja H-28); los materiales de `training-materials` los borra el test (H-31).
+- Los documentos se cargan "a todos los empleados activos" de la empresa QA E2E: solo hay empleados de prueba, no se envía ningún mail.
 
 ## Riesgos conocidos de la suite
 

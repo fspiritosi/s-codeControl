@@ -99,3 +99,13 @@ Estado: ⬜ pendiente · ✅ hecho · ➖ justificado sin test.
 | Operaciones | Documento adjunto: subir (remito + archivo), "Ver Documento", objeto en `daily-reports`, URL pública con el mismo contenido | ✅ |
 | Operaciones | Documento adjunto: "Descargar" desde el visor (H-26) y carpeta con el nombre de la empresa (H-25) | ⬜ `test.fixme`: H-26 corregido en código (falta deploy), H-25 abierto |
 | Operaciones | Fila: eliminar, reprogramar, cancelar, reemplazar documento, "Detalle de Partes diarios", Excel, empleados y equipos de la fila | ➖ fuera del alcance acordado (el alta de empleados y equipos de la fila no corre por H-23) |
+| HSE | Documentos: tipo de documento fijo, subir (PDF) a Borradores, archivo en `documents-hse`, URL pública 200 con el mismo contenido, vista previa y descarga desde la tarjeta por `/api/storage` (`hse/documentos.spec.ts`) | ✅ |
+| HSE | Documentos: editar un borrador, eliminarlo (el archivo sale del bucket) | ✅ |
+| HSE | Documentos: publicar y nueva versión (archivo nuevo en el bucket, el anterior se conserva, historial en "Versiones") | ✅ |
+| HSE | Documentos: editar sin cambiar el archivo, descargar desde el detalle, diálogo en pantalla chica (H-28, H-29, H-27) | ⬜ `test.fixme`: H-28 y H-29 igual que producción; H-27 corregido en código, falta deploy |
+| HSE | Capacitaciones: crear, subir materiales (PDF) a `training-materials` con URL pública 200, "Ver Material" y "Descargar" del visor, pregunta de evaluación, editar, eliminar borrador (`hse/capacitaciones.spec.ts`) | ✅ |
+| HSE | Capacitaciones: publicar y archivar (una capacitación fija con acta completa; Archivado -> Publicado -> Archivado) | ✅ |
+| HSE | Capacitaciones: conservar los materiales anteriores al guardar y borrar los archivos al eliminar (H-30, H-31) | ⬜ `test.fixme`: igual que producción |
+| HSE | Capacitaciones: asignación a empleados, recordatorios, intentos y evaluación del empleado, ruta pública `/hse/training`, estadísticas, etiquetas, tipos de documento HSE | ➖ fuera del alcance acordado (los recordatorios envían mails) |
+| Formularios | Pantallas `/dashboard/forms` y `/dashboard/forms/new` cargan (`hse/formularios.spec.ts`) | ✅ |
+| Formularios | Crear un tipo de checklist, completarlo, ver respuestas, eliminar (H-32) | ⬜ sin alta por pantalla y sin tipos de checklist en la empresa QA: hace falta ampliar el seed |

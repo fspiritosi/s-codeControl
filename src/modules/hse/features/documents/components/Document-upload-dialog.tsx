@@ -421,7 +421,7 @@ export function DocumentUploadDialog({
         </DialogTrigger>
       )}
 
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{mode === 'edit' ? 'Editar Documento' : 'Subir Nuevo Documento'}</DialogTitle>
           <DialogDescription>
