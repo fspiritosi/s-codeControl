@@ -2,6 +2,7 @@
 
 import { useEmployeesData } from '@/shared/hooks/useEmployeesData';
 import { useImageUpload } from '@/shared/hooks/useUploadImage';
+import { storage } from '@/shared/lib/storage';
 import { handleSupabaseError } from '@/shared/lib/errorHandler';
 import { useCountriesStore } from '@/shared/store/countries';
 import { useLoggedUserStore } from '@/shared/store/loggedUser';
@@ -88,7 +89,6 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
   const { updateEmployee, createEmployee } = useEmployeesData();
   const getEmployees = useLoggedUserStore((state: any) => state.getEmployees);
   const router = useRouter();
-  const url = process.env.NEXT_PUBLIC_PROJECT_URL;
 
   const form = useForm<z.infer<typeof accordionSchema>>({
     resolver: zodResolver(accion === 'new' ? accordionSchema : accordionSchemaUpdate),
@@ -228,7 +228,7 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
           covenants_id: values.covenants_id || null,
           category_id: values.category_id || null,
           picture: fileExtension
-            ? `${url}/${values.document_number}.${fileExtension}`.trim()
+            ? storage.getPublicUrl('employee_photos', `${values.document_number}.${fileExtension}`).trim()
             : values.gender === 'Masculino'
               ? 'https://ui.shadcn.com/avatars/02.png'
               : 'https://ui.shadcn.com/avatars/05.png',
@@ -384,7 +384,9 @@ export function useEmployeeFormLogic(user: any, guild: any, covenants: any, cate
           type: `image/${fileExtension?.replace(/\s/g, '')}`,
         });
         await uploadImage(renamedFile, 'employee_photos');
-        const employeeImage = `${url}/employee_photos/${document_number}.${fileExtension}?timestamp=${Date.now()}`
+        // La URL pública sale del storage (NEXT_PUBLIC_STORAGE_PUBLIC_URL), no de la URL de la app: con
+        // NEXT_PUBLIC_PROJECT_URL la foto apuntaba a una ruta que no existe y daba 404 (hallazgo H-04).
+        const employeeImage = `${storage.getPublicUrl('employee_photos', renamedFile.name)}?timestamp=${Date.now()}`
           .trim()
           .replace(/\s/g, '');
         await updateEmployeeByDocNumber(document_number, { picture: employeeImage });

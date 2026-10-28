@@ -53,7 +53,9 @@ export default function AddCovenantModal({
   async function onSubmit({ name, company_id, guild_id }: z.infer<typeof formSchema>) {
     toast.promise(
       async () => {
-        const { error } = await insertCovenant(name, company_id, guild_id);
+        // Ver AddGuildModal: tras recargar, el valor por defecto de company_id queda vacío (hallazgo H-05).
+        const companyId = company_id || useLoggedUserStore.getState().actualCompany?.id || '';
+        const { error } = await insertCovenant(name, companyId, guild_id);
         if (error) throw new Error(error);
         document.getElementById('close-covenant-modal')?.click();
         router.refresh();

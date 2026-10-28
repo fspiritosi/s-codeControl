@@ -121,8 +121,8 @@ export const RegisterWithRole = () => {
   useEffect(() => {
     const fetchCustomersData = async () => {
       if (!company?.id) return;
-      const data = await fetchCustomersByCompany(company.id);
-      setClientData(data);
+      const { data } = await fetchCustomersByCompany(company.id);
+      setClientData(data ?? []);
     };
     getRoles();
     fetchCustomersData();

@@ -44,7 +44,10 @@ export default function AddGuildModal({ fromEmployee: fromEmployee = false }) {
   async function onSubmit({ name, company_id }: z.infer<typeof formSchema>) {
     toast.promise(
       async () => {
-        const { error } = await insertGuild(name.slice(0, 1).toUpperCase() + name.slice(1), company_id || '');
+        // Tras recargar la página el store se hidrata después del primer render: el valor por defecto del
+        // formulario queda vacío, así que se lee la empresa activa al momento de enviar (hallazgo H-05).
+        const companyId = company_id || useLoggedUserStore.getState().actualCompany?.id || '';
+        const { error } = await insertGuild(name.slice(0, 1).toUpperCase() + name.slice(1), companyId);
         if (error) throw new Error(error);
         document.getElementById('close-guild-modal')?.click();
         router.refresh();

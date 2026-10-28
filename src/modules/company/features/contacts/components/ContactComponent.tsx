@@ -63,8 +63,8 @@ export default function ContactRegister({ id }: { id: string }) {
 
     const fetchCustomersData = async () => {
       try {
-        const data = await fetchCustomersByCompany(actualCompany || '');
-        setClientData(data);
+        const { data } = await fetchCustomersByCompany(actualCompany || '');
+        setClientData(data ?? []);
       } catch (error) {
         console.error('Error fetching customers:', error);
       }

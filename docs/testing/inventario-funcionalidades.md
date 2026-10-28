@@ -6,3 +6,46 @@ Estado: ⬜ pendiente · ✅ hecho · ➖ justificado sin test.
 | Módulo | Pantallas / acciones | Estado |
 |---|---|---|
 | Auth | login ok/error, ruta protegida, sesión, health, crons sin secreto, storage sin sesión | ✅ |
+| Empresa | Listado de compañías: pestañas Compañías / Grupos compartidos, tarjeta QA E2E (`empresas.spec.ts`) | ✅ |
+| Empresa | Listado de compañías: mostrar solo las propias (H-03, fuga entre empresas) | ⬜ `test.fixme`: bug abierto |
+| Empresa | Grupos compartidos: crear/asignar/quitar empresas de un grupo | ➖ opera sobre empresas de otros clientes; solo se verifica que la vista cargue |
+| Empresa | Alta de empresa (`/dashboard/company/new`): formulario y validaciones | ✅ |
+| Empresa | Alta de empresa: crear una compañía y eliminarla | ➖ no hay borrado confiable y crear/cambiar de empresa mueve la cookie `actualComp` |
+| Empresa | Detalle: pestaña General, las 8 pestañas por `?tab=`, Documentación (listado y columnas) (`detalle.spec.ts`) | ✅ |
+| Empresa | Editar compañía: abrir con datos, validación de CUIT, cancelar | ✅ |
+| Empresa | Editar compañía: guardar cambios | ➖ el CUIT del seed no valida y la empresa QA no tiene provincia; guardar cambiaría datos que no se pueden restaurar |
+| Empresa | Zona peligrosa: abrir y cerrar el diálogo | ✅ |
+| Empresa | Eliminar empresa | ➖ destructivo (el botón "Eliminar" del diálogo tampoco tiene acción) |
+| Empresa | Documentos de la empresa: subir/descargar | ➖ la pestaña Documentación solo lista; los documentos de empresa se cargan desde el módulo Documentos |
+| Empresa | Usuarios: tabla del dueño, invitados, diálogos Agregar Usuario/Invitado, validaciones, no compartir con uno mismo (`usuarios-portal.spec.ts`) | ✅ |
+| Empresa | Usuarios: crear usuario / invitar por mail / eliminar acceso | ➖ envía mails y crea perfiles reales |
+| Empresa | Clientes: listado, alta, validaciones, duplicado, edición, baja, "Ver dados de baja", reintegro (`clientes.spec.ts`) | ✅ (la edición pasa por el formulario del módulo Comercial) |
+| Empresa | Clientes: borrar | ➖ la UI solo permite dar de baja; los clientes de prueba quedan dados de baja |
+| Empresa | Contactos: listado y columnas | ✅ |
+| Empresa | Contactos: registrar, editar, baja, reintegro | ⬜ `test.fixme`: H-06 (enlace 404) y H-07 (formulario roto), corregidos en código, falta deploy |
+| Empresa | Convenios: árbol Sindicato > Convenio > Categoría, validación, uso en el alta de empleados (`convenios.spec.ts`) | ✅ |
+| Empresa | Convenios: crear tras recargar la pestaña (H-05) | ⬜ `test.fixme`: corregido en código, falta deploy |
+| Empresa | Convenios: dar de baja sindicato/convenio/categoría | ➖ el árbol no ofrece la acción (la jerarquía de prueba tiene nombres fijos y se reutiliza) |
+| Empresa | Servicios (alta, ítems, listado) | ➖ fuera del alcance de esta tanda |
+| Empresa | Portal de empleados: contadores y solapas vacías | ✅ |
+| Empresa | Portal de empleados: aprobar/bloquear solicitudes | ➖ requiere un empleado con cuenta en el portal (envía mails) |
+| Empleados | Listado: pestañas, filtros por apellido/nombre/estado, "Limpiar", columnas, paginación, Excel, menú de fila, enlaces (`listado.spec.ts`) | ✅ |
+| Empleados | Alta: validaciones (vacío, CUIL, longitudes, dependencias), alta completa, duplicados de CUIL y legajo (`alta.spec.ts`) | ✅ |
+| Empleados | Alta con foto: subida al storage y descarga | ✅ |
+| Empleados | Alta con foto: el avatar del detalle (H-04) | ⬜ `test.fixme`: corregido en código, falta deploy |
+| Empleados | Alta/edición: quedarse en el listado después de guardar (H-01) | ⬜ `test.fixme`: bug abierto |
+| Empleados | Detalle en solo lectura y edición en las tres pestañas (`detalle-edicion.spec.ts`) | ✅ (con sindicato/convenio/categoría) |
+| Empleados | Edición de un empleado sin sindicato (H-02) | ⬜ `test.fixme`: corregido en código, falta deploy |
+| Empleados | Baja desde el listado y desde el detalle, empleados inactivos, reintegro (`baja-reactivacion.spec.ts`) | ✅ |
+| Empleados | Borrar un empleado | ➖ el sistema no lo permite; los de prueba quedan dados de baja (DNI 99.xxx.xxx) |
+| Empleados | Edición con el mismo DNI en otra empresa (H-08) | ➖ habría que escribir en datos de otra empresa |
+| Empleados | Documentos del legajo: crear tipo, cargar, listar, descargar, historial en el menú, pestaña Documentación del detalle (`documentos-legajo.spec.ts`) | ✅ |
+| Empleados | Tipos de documentos: crear, validar nombre, eliminar sin documentos | ✅ (desactivar solo se usa como limpieza, sin aserción; editar un tipo ⬜ pendiente) |
+| Empleados | Tipo de documento obligatorio: crear (H-09, corregido en la base) | ✅ |
+| Empleados | Alertas/documentos pendientes tras el alta con tipos obligatorios | ⬜ pendiente |
+| Empleados | Documentos: multirecurso, mensuales, de baja, reemplazar/eliminar, "Ver historial" abierto | ⬜ pendiente de una segunda tanda |
+| Empleados | Diagramas: crear novedad, cargar días desde el detalle, listarlos (`diagramas.spec.ts`) | ✅ |
+| Empleados | Diagramas: grilla "Diagrama Cargados" (H-11) y rótulo de fechas (H-12) | ⬜ `test.fixme`: bugs abiertos |
+| Empleados | Diagramas: tabla de Tipos de Novedades, editar/borrar novedades (H-10) | ⬜ la tabla no lista las novedades |
+| Empleados | Convenios colectivos (pestaña de Empleados) | ✅ (mismo árbol que en Empresa) |
+

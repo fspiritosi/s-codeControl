@@ -554,9 +554,9 @@ export const accordionSchemaUpdate = z
       required_error: 'El tipo de contrato es requerido',
     }),
     allocated_to: z.array(z.string().optional()).optional().nullable(),
-    guild_id: z.string().optional(),
-    covenants_id: z.string().optional(),
-    category_id: z.string().optional(),
+    guild_id: z.string().nullish(),
+    covenants_id: z.string().nullish(),
+    category_id: z.string().nullish(),
     date_of_admission: z
       .date({
         required_error: 'La fecha de ingreso es requerida',

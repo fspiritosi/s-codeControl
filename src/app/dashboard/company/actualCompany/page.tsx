@@ -127,7 +127,7 @@ export default async function CompanyPage({
                   <CardDescription>Lista de contactos de la empresa</CardDescription>
                 </div>
                 <Link
-                  href="/dashboard/company/contact/action?action=new"
+                  href="/dashboard/company/actualCompany/contact/action?action=new"
                   className={buttonVariants({ variant: 'default' })}
                 >
                   Registrar Contacto
