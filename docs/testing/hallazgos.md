@@ -425,3 +425,5 @@ La app no permite borrar estos elementos desde la UI; todos llevan el prefijo `Q
 - **Pasos:** orden en borrador con un adjunto > "Eliminar" desde el listado.
 - **Obtenido:** la orden y sus filas de adjuntos (cascada en la base) se eliminan, pero el objeto sigue en `purchase-orders`. Medido en el clon.
 - **Evidencia:** `purchasing/ordenes.spec.ts` > `eliminar una orden con adjunto borra también el archivo del bucket (H-37)` (fixme). Eliminar el adjunto desde el detalle sí lo borra.
+
+> **Nota sobre H-33, H-36 y H-37 (misma causa probable):** al eliminar un documento HSE, una factura o una OC con archivo, la acción llama a `storageServer.remove(...)` sin error en el log, pero el objeto sigue en el bucket. Se probó borrar objeto por objeto (`DeleteObjectCommand`) en vez de `DeleteObjects` y no cambió el resultado. El borrado desde el cliente (`/api/storage`, op `remove`) sí funciona. Pendiente de investigar (posible diferencia de clave entre lo guardado en la base y el objeto). Impacto: archivos huérfanos, no pérdida de datos.
