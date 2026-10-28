@@ -88,6 +88,9 @@ export async function createdCustomer(formData: FormData) {
   redirect('/dashboard/company/actualCompany');
 }
 
+// cuit y client_phone son BigInt en la base: Prisma 7 no acepta el string crudo del FormData.
+const toBigInt = (v: FormDataEntryValue | null) => (v && /^\d+$/.test(String(v).trim()) ? BigInt(String(v).trim()) : undefined);
+
 export async function updateCustomer(formData: FormData) {
   revalidatePath('/dashboard/company/actualCompany');
 
@@ -95,9 +98,9 @@ export async function updateCustomer(formData: FormData) {
 
   const clientData = {
     name: formData.get('company_name') as string | null,
-    cuit: formData.get('client_cuit') as string | null,
+    cuit: toBigInt(formData.get('client_cuit')),
     client_email: formData.get('client_email') as string | null,
-    client_phone: formData.get('client_phone') as string | null,
+    client_phone: toBigInt(formData.get('client_phone')),
     address: formData.get('address') as string | null,
     company_id: formData.get('company_id') as string | null,
     ...buildFiscalData(formData),

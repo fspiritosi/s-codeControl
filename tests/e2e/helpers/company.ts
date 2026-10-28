@@ -103,11 +103,23 @@ export async function ensureCovenantTree(page: Page) {
   await reveal(page, panel, [root, TREE.guild, TREE.covenant, TREE.category]);
 }
 
+/**
+ * Fila de un cliente en la pestaña Clientes. La tabla pagina de a 10 y ordena por CUIT, así que un cliente recién creado
+ * puede estar en cualquier página: se avanza hasta encontrarlo (o se llega a la última).
+ */
+export async function customerRow(panel: Locator, name: string) {
+  const row = panel.getByRole('row').filter({ hasText: name });
+  const next = panel.getByRole('button', { name: 'Ir a pagina siguiente' });
+  while (!(await row.first().isVisible()) && (await next.isEnabled())) await next.click();
+  return row;
+}
+
 /** Da de baja a un cliente de la pestaña Clientes (la UI no permite borrarlos). Si ya está de baja o no existe, no hace nada. */
 export async function deactivateCustomerIfActive(page: Page, name: string, reason = 'Limpieza E2E') {
   const panel = await gotoCompanyTab(page, 'Clientes');
-  const row = panel.getByRole('row').filter({ hasText: name });
-  if (!(await row.first().isVisible({ timeout: 5_000 }).catch(() => false))) return;
+  await panel.getByRole('row').nth(1).waitFor({ timeout: 5_000 }).catch(() => undefined);
+  const row = await customerRow(panel, name);
+  if (!(await row.first().isVisible({ timeout: 2_000 }).catch(() => false))) return;
   await row.getByRole('button', { name: 'Open menu' }).click();
   await page.getByRole('menuitem', { name: 'Dar de baja Cliente' }).click();
   const dialog = page.getByRole('dialog').filter({ hasText: 'Dar de baja Cliente' });

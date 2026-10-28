@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { cuilFor, uniqueIdentity } from '../../helpers/employees';
-import { deactivateCustomerIfActive, gotoCompanyTab } from '../../helpers/company';
+import { customerRow, deactivateCustomerIfActive, gotoCompanyTab } from '../../helpers/company';
 import { hydrated } from '../../helpers/ui';
 import { uniq } from '../../helpers/env';
 
@@ -108,7 +108,7 @@ async function cicloDeVidaDelCliente(page: Page, name: string, cuit: string) {
 
     await test.step('aparece en la tabla de clientes con sus datos', async () => {
       const panel = await gotoCompanyTab(page, 'Clientes');
-      const row = rowOf(panel);
+      const row = (await customerRow(panel, name));
       await expect(row).toContainText(cuit);
       await expect(row).toContainText('cliente-qa@codecontrol.test');
       await expect(row).toContainText('1144445555');
@@ -121,7 +121,7 @@ async function cicloDeVidaDelCliente(page: Page, name: string, cuit: string) {
 
     await test.step('editar el teléfono desde el menú de la fila', async () => {
       const panel = await gotoCompanyTab(page, 'Clientes');
-      await rowOf(panel).getByRole('button', { name: 'Open menu' }).click();
+      await (await customerRow(panel, name)).getByRole('button', { name: 'Open menu' }).click();
       await page.getByRole('menuitem', { name: 'Editar Cliente' }).click();
       await expect(page).toHaveURL(/customers\/action\?action=edit&id=/);
       // El formulario de edición es el del módulo Comercial (CustomerDataForm): sus campos se identifican por placeholder.
@@ -131,13 +131,13 @@ async function cicloDeVidaDelCliente(page: Page, name: string, cuit: string) {
       await page.getByRole('button', { name: 'Guardar cambios' }).click();
       await expect(async () => {
         const panel2 = await gotoCompanyTab(page, 'Clientes');
-        await expect(rowOf(panel2)).toContainText('1166667777', { timeout: 3_000 });
+        await expect((await customerRow(panel2, name))).toContainText('1166667777', { timeout: 3_000 });
       }).toPass({ timeout: 30_000 });
     });
 
     await test.step('dar de baja lo saca de la lista y lo muestra en "Ver dados de baja"', async () => {
       const panel = await gotoCompanyTab(page, 'Clientes');
-      await rowOf(panel).getByRole('button', { name: 'Open menu' }).click();
+      await (await customerRow(panel, name)).getByRole('button', { name: 'Open menu' }).click();
       await page.getByRole('menuitem', { name: 'Dar de baja Cliente' }).click();
       const dialog = page.getByRole('dialog').filter({ hasText: 'Dar de baja Cliente' });
       await dialog.getByPlaceholder('Escribe el motivo').fill('Cierre de prueba E2E');
@@ -162,10 +162,10 @@ async function cicloDeVidaDelCliente(page: Page, name: string, cuit: string) {
         await page.getByRole('textbox', { name: /Buscar nombre/ }).fill(name, { timeout: 3_000 });
         await page.getByRole('button', { name: 'Aplicar' }).click({ timeout: 3_000 });
         await page.keyboard.press('Escape');
-        await expect(rowOf(fresh)).toBeVisible({ timeout: 8_000 });
+        await expect((await customerRow(fresh, name))).toBeVisible({ timeout: 8_000 });
       }).toPass({ timeout: 60_000 });
       const panelBajas = page.getByRole('tabpanel', { name: 'Clientes' });
-      await rowOf(panelBajas).getByRole('button', { name: 'Open menu' }).click();
+      await (await customerRow(panelBajas, name)).getByRole('button', { name: 'Open menu' }).click();
       await page.getByRole('menuitem', { name: 'Reintegrar Cliente' }).click();
       await page.getByRole('alertdialog').getByRole('button', { name: 'Continuar' }).click();
       await expect(page.getByText('Cliente reintegrado').first()).toBeVisible();
