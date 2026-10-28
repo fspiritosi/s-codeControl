@@ -437,3 +437,58 @@ La app no permite borrar estos elementos desde la UI; todos llevan el prefijo `Q
 
 - **Pasos:** menú "..." de una factura confirmada > "Anular" > "Anular" en el diálogo.
 - **Obtenido:** la factura se anula ("Factura anulada") pero el menú de la fila reaparece abierto y, mientras está abierto, oculta el resto de la tabla (la fila deja de ser accesible). Es cosmético; el test recarga el listado para verificar el estado.
+
+## Costos, configuración, notificaciones, ayuda y admin
+
+### H-40 "Eliminar firma" (Configuración > PDF) no borra el archivo del bucket — abierto (igual que producción, no se cambia)
+
+- **Pasos:** Configuración > PDF > subir una firma PNG > "Eliminar firma".
+- **Obtenido:** la firma desaparece de la pantalla (`pdf_settings.signature_image_url` queda en null), pero el objeto `pdf-signatures/<empresa>.png` sigue en el bucket público `logo` y su URL sigue respondiendo 200. `removeSignatureImage` solo toca la base. Medido en el clon.
+- **Evidencia:** `settings/pdf.spec.ts` (fixme "eliminar la firma borra también el objeto del bucket"); el `afterAll` del spec borra el objeto por la API de storage. Misma causa de fondo que H-33/H-36/H-37 (archivos huérfanos).
+
+### H-41 En Costos > Configuración CCT, un concepto desactivado desaparece y no se puede reactivar — abierto (igual que producción, no se cambia)
+
+- **Pasos:** pestaña Conceptos de un convenio > desactivar un concepto (ícono del ojo) > activar el filtro "Inactivos".
+- **Obtenido:** `listarCCTs` trae solo `conceptos` con `is_active: true`, así que "Inactivos" nunca muestra nada y el concepto no se puede volver a activar desde la pantalla (solo por base). Además los conceptos del convenio no se pueden borrar.
+- **Arreglo sugerido (chico):** quitar el filtro `where: { is_active: true }` del `include` de `listarCCTs` (la pantalla ya filtra por activo). No se aplica porque cambia lo que ve el usuario en producción.
+- **Evidencia:** `costos/servicio-composicion.spec.ts` (fixme H-41). Por esto la suite crea un concepto nuevo por corrida y lo deja desactivado (invisible en la pantalla).
+
+### H-42 Topes imponibles: tabla global y `crearTope`/`actualizarTope` sin control de permisos — abierto (igual que producción, no se cambia)
+
+- **Obtenido:** `tope_imponible` no tiene `company_id` y las acciones `crearTope` y `actualizarTope` no validan rol ni permiso: cualquier usuario autenticado de cualquier empresa puede crear un tope desde `/dashboard/costos/topes-imponibles` (el texto de la pantalla dice "solo administradores del sistema pueden modificar"). El valor entra en los cálculos de todas las empresas. La pantalla no ofrece editar ni borrar.
+- **Por qué no se prueba el alta:** un tope creado por la prueba sería global y no se puede borrar. `costos/pantallas.spec.ts` solo comprueba que la pantalla y el diálogo abren.
+
+### H-43 Costos: no hay pantalla para borrar servicios, composiciones, fórmulas, el costo de un tipo ni el de un equipo — abierto (igual que producción, no se cambia)
+
+- **Obtenido:** existen `deleteServicio` y `eliminarCostoTipoEquipo` pero ninguna pantalla los usa; no hay acción de borrado para composiciones ni fórmulas (la fórmula polinómica de un servicio solo se crea una vez y se edita); un CCT, sus conceptos y el costo de un equipo tampoco se borran. Mismo patrón que H-35.
+- **Impacto en la suite:** hay datos fijos que quedan en la empresa QA (ver "Datos que quedan"): CCT, categoría, servicio con su composición, fórmula y costo del tipo "Tractor". El PDF de la composición se sobrescribe en la misma ruta (upsert).
+
+### H-44 El layout de `/admin` no valida el rol: un usuario cliente entra al panel de plataforma — abierto (igual que producción, no se cambia)
+
+- **Pasos:** con el usuario QA (rol `CodeControlClient`) abrir `/admin/panel` y `/admin/tablas`.
+- **Obtenido:** ambas cargan sin redirigir (el panel con datos de ejemplo y el botón "Crear Usuario"; tablas con los catálogos globales de industria, puesto, etc. y menús de acción). El layout solo lee al usuario y no comprueba el rol. Sin sesión, las rutas devuelven 500 (`prisma.profile.findMany` con id vacío) en vez de redirigir al login.
+- **Impacto:** exposición de pantallas (y acciones de escritura sobre catálogos globales, como `CreateDialog`) a clientes. No se probó ninguna escritura.
+- **Evidencia:** `admin/admin.spec.ts` (fixme "un usuario cliente no puede entrar al panel de administración").
+
+### H-45 El auditor (`/admin/auditor`) lista documentos de todas las empresas y la tabla se rompe — abierto (igual que producción, no se cambia)
+
+- **Obtenido:** `fetchPresentedDocumentsForAuditor` trae los documentos "presentado" sin filtrar por empresa (886 de equipos y 2.139 de empleados en el clon, copia de producción). En el cliente, `AuditorPage` ya formatea la fecha como `dd/MM/yyyy` y la columna `date` la vuelve a pasar por `new Date(...)`: con un día mayor a 12 lanza `RangeError: Invalid time value` y la pantalla cae en "Error en administracion". Se ve con cualquier usuario que llegue a esa ruta (H-44).
+- **Arreglo sugerido (chico):** no volver a parsear el valor ya formateado en `AuditorColumns` (o guardar la fecha ISO y formatear una sola vez). Se corrige un error en producción, por eso no se aplica.
+- **Evidencia:** `admin/admin.spec.ts` (fixme "el auditor muestra la tabla…" y un test que documenta la pantalla de error actual).
+
+### H-46 Ayuda: crear un ticket depende del servicio externo TASKAPP, no configurado en el clon — nota
+
+- La pantalla `/dashboard/help` carga (contadores en 0, formulario, adjuntos). "Enviar reporte" llama a TASKAPP y por eso no se prueba. `help.spec`: solo carga.
+
+### Notas de la corrida de costos/configuración
+
+- **Logo de la empresa:** "Editar Compañía" no se puede guardar con la empresa QA (el CUIT del seed no valida y no tiene provincia, ver el hallazgo previo) y otros specs dependen de ese CUIT, así que no se cambió. Se prueba la vista previa del formulario y la subida al bucket `logo` con la misma operación que usa el formulario (`/api/storage`, op `upload`), con un objeto de prueba que se borra.
+- **Notificaciones:** la empresa QA tiene un solo usuario y el evento nunca notifica a quien lo dispara; no hay forma de generarlas por pantalla. Solo se prueba el estado vacío.
+- No se vieron errores de base del tipo `schema "auth" does not exist` en ninguna de las pantallas probadas.
+
+## Datos que los tests de costos y configuración dejan en la empresa QA E2E
+
+- CCT fijo `QA-E2E-CCT` (convenio "QA-E2E-Convenio", desde 2026-01) con la categoría fija `QA-FIJA` (H-43: no se borran). Cada corrida crea un concepto de convenio `QAE2E_<id>` y lo deja **desactivado** (invisible en pantalla, H-41); las categorías de prueba por corrida se eliminan.
+- Servicio fijo `QA-E2E-Servicio` (cliente fijo `QA-E2E-Cliente-Ventas`, CCT fijo) con margen IIBB 3%, su **composición del período 2026-01** (se sobrescribe en cada corrida, igual que su PDF `<empresa>/composicion/<servicio>/2026-01.pdf` en `costos-pdfs`) y su **fórmula polinómica** (componentes I001-I004, descripción editada en cada corrida). Las asignaciones de chofer, equipo, combustible y los ítems OCP se quitan al final de cada corrida (el `afterAll` vacía lo que haya quedado de una corrida fallida).
+- Costo del tipo de equipo "Tractor" (creado una vez, no se puede borrar). Por corrida: un empleado (dado de baja) y dos equipos de prueba (dados de baja); el equipo del spec de catálogo conserva su costo.
+- Configuración: un puesto jerárquico `QA-E2E-Puesto-*` por corrida, **deshabilitado** (la app no los borra). El tipo de retención y la cotización de la prueba se eliminan; la retención fija `QA_E2E_RET` no se toca. El encabezado, el pie y los PDFs firmados de Configuración > PDF se restauran a los valores originales y la firma (objeto en `logo/pdf-signatures/`) se borra del bucket.

@@ -141,3 +141,34 @@ Estado: ⬜ pendiente · ✅ hecho · ➖ justificado sin test.
 | Tesorería | Saldos pendientes: factura de compra confirmada con su saldo, crear la orden desde la selección (queda "Programada"), anular la orden la devuelve a "Sin OP" (`treasury/saldos-pendientes.spec.ts`) | ✅ |
 | Tesorería | Cuentas bancarias, cheques, pago con transferencia/cheque, orden con facturas y notas de crédito, exportar Excel | ➖ fuera del alcance acordado |
 | Ventas / Tesorería | Archivos: la orden de pago, el certificado de retención y los PDF de factura y recibo de venta se generan al pedirlos; no se guardan en ningún bucket (no hay objetos para comprobar) | ✅ |
+| Costos | Tablero con accesos a cada pantalla y topes imponibles (solo carga y diálogo, sin guardar: tabla global, H-42) (`costos/pantallas.spec.ts`) | ✅ |
+| Costos | Configuración CCT: convenio fijo `QA-E2E-CCT`, categorías (crear, editar, eliminar), conceptos (crear, editar, desactivar) (`costos/servicio-composicion.spec.ts`) | ✅ |
+| Costos | Configuración CCT: reactivar un concepto desactivado (H-41), valores por categoría, nueva paritaria | ⬜ `test.fixme` H-41 igual que producción / ➖ fuera del alcance acordado |
+| Costos | Conceptos de equipo: crear, editar, eliminar (`costos/catalogo-equipos.spec.ts`) | ✅ |
+| Costos | Tipos de equipo: costear el tipo "Tractor", asociar y sacar un concepto | ✅ (el costo del tipo no se puede borrar, H-43) |
+| Costos | Equipos: cargar y editar el costo de un equipo, costo mensual en el listado | ✅ (el equipo se da de baja; su costo queda) |
+| Costos | Servicios: servicio fijo `QA-E2E-Servicio` (cliente y CCT fijos), editar márgenes, listado | ✅ (no se puede borrar, H-43) |
+| Costos | Otros costos de personal (OCP): agregar y editar un ítem, pantalla transversal, eliminar | ✅ |
+| Costos | Mano de obra: asignar un chofer con la categoría fija, editar, pantalla transversal, quitar | ✅ |
+| Costos | Equipos del servicio: asignar y quitar un vehículo | ✅ |
+| Costos | Combustible: cargar un registro de un vehículo y período, eliminar | ✅ |
+| Costos | Composición: generar el período fijo 2026-01 (upsert), detalle, listado, recalcular | ✅ |
+| Costos | Archivos: PDF de la composición en el bucket PRIVADO `costos-pdfs` (`<empresa>/composicion/<servicio>/<período>.pdf`): "Exportar PDF" entrega una URL firmada (200, `%PDF-`), la ruta sin firma no se lee, recalcular lo reescribe en el mismo objeto | ✅ |
+| Costos | Fórmula polinómica: inicializar desde la composición (componentes I001-I004), editar la descripción | ✅ (no se puede borrar, H-43) |
+| Costos | Fórmula polinómica: componentes, índices mensuales, retroactivos; salidas (outputs) de la composición; liquidación de sueldos | ➖ fuera del alcance acordado (flujo principal) |
+| Configuración | PDF: subir la firma PNG al bucket público `logo` (`pdf-signatures/<empresa>.png`, URL pública 200 con los mismos bytes, la imagen carga), conservar tras recargar, encabezado/pie/PDFs firmados (se restauran), eliminar la firma (`settings/pdf.spec.ts`) | ✅ |
+| Configuración | PDF: eliminar la firma borra el objeto del bucket (H-40) | ⬜ `test.fixme`: igual que producción |
+| Configuración | PDF: email por tipo de PDF | ➖ fuera del alcance acordado |
+| Configuración | Logo de la empresa: vista previa en "Editar Compañía" y subida al bucket `logo` con URL pública 200, objeto de prueba borrado (`settings/empresa-logo.spec.ts`) | ✅ |
+| Configuración | Logo de la empresa: guardar desde el formulario | ➖ la empresa QA no se puede guardar (CUIT inválido y sin provincia, ver hallazgos) y cambiarlos no se puede deshacer |
+| Configuración | Parámetros de empleados: puesto jerárquico (crear, editar, deshabilitar) (`settings/parametros-impuestos.spec.ts`) | ✅ (los puestos no se borran: queda deshabilitado) |
+| Configuración | Impuestos: tipo de retención (crear, editar, desactivar, eliminar); Cálculos: cotización del dólar (crear, editar, eliminar) | ✅ |
+| Configuración | IA / Proveedores: el formulario carga, sin guardar claves (configuración global) | ✅ |
+| Configuración | Roles y permisos, diagramas de trabajo, tipos de contrato, percepciones, índices | ➖ fuera del alcance acordado |
+| Notificaciones | Listado vacío, pestaña "Sin leer", campana del encabezado (`notifications/notificaciones.spec.ts`) | ✅ |
+| Notificaciones | Marcar leída / limpiar | ➖ la empresa QA tiene un solo usuario y no se generan notificaciones por pantalla (el cron no se dispara) |
+| Ayuda | La pantalla carga con el formulario de reporte (`notifications/ayuda.spec.ts`) | ✅ |
+| Ayuda | Crear ticket | ➖ llama al servicio externo TASKAPP, no configurado en el clon (H-46) |
+| Admin | `/admin/panel` y `/admin/tablas` cargan para el usuario QA sin redirigir (`admin/admin.spec.ts`) | ✅ (el layout no valida el rol: H-44) |
+| Admin | `/admin/auditor`: hoy cae en "Error en administracion" (H-45); redirección de clientes (H-44) | ⬜ `test.fixme`: igual que producción |
+| Admin | Acciones de escritura (crear usuario, alterar catálogos globales) | ➖ afectan datos globales de la plataforma |

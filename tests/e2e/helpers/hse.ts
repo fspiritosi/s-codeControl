@@ -41,8 +41,9 @@ export const objectPathOf = (url: string, bucket: string) => decodeURIComponent(
 
 /** ¿Está el objeto en el bucket? Lo consulta la API de storage de la app (la misma que usa la interfaz). */
 export async function objectInBucket(page: Page, bucket: string, path: string): Promise<boolean> {
-  const dir = path.slice(0, path.lastIndexOf('/'));
-  const name = path.slice(path.lastIndexOf('/') + 1);
+  const slash = path.lastIndexOf('/');
+  const dir = slash < 0 ? '' : path.slice(0, slash);
+  const name = path.slice(slash + 1);
   const res = await page.request.post('/api/storage', { multipart: { op: 'list', bucket, path: dir, options: '{}' } });
   if (!res.ok()) return false;
   const objects = (await res.json()) as { name: string }[];
