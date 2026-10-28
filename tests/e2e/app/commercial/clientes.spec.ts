@@ -16,7 +16,13 @@ test.describe('comercial: clientes', () => {
   const cuit = uniqueCustomerCuit();
   let customerId = '';
 
-  const rowOf = (page: Page) => page.getByRole('row').filter({ hasText: name });
+  // La tabla pagina de a 10 y ordena por CUIT: el cliente nuevo puede estar en cualquier página.
+  const rowOf = async (page: Page) => {
+    const row = page.getByRole('row').filter({ hasText: name });
+    const next = page.getByRole('button', { name: 'Ir a pagina siguiente' });
+    while (!(await row.first().isVisible()) && (await next.isEnabled().catch(() => false))) await next.click();
+    return row;
+  };
 
   async function openDetail(page: Page) {
     await page.goto(`${CUSTOMERS_URL}/${customerId}`);
@@ -30,14 +36,14 @@ test.describe('comercial: clientes', () => {
     try {
       await page.goto(CUSTOMERS_URL);
       await expect(page.getByRole('table')).toBeVisible();
-      if (await rowOf(page).isVisible({ timeout: 3_000 }).catch(() => false)) await deactivate(page);
+      if (await (await rowOf(page)).isVisible({ timeout: 3_000 }).catch(() => false)) await deactivate(page);
     } finally {
       await context.close();
     }
   });
 
   async function deactivate(page: Page) {
-    await rowOf(page).getByRole('button', { name: 'Open menu' }).click();
+    (await rowOf(page)).getByRole('button', { name: 'Open menu' }).click();
     await page.getByRole('button', { name: 'Dar de baja Cliente' }).click();
     const dialog = page.getByRole('dialog').filter({ hasText: 'Dar de baja Cliente' });
     await dialog.getByPlaceholder('Escribe el motivo').fill('Cierre de prueba E2E');
@@ -49,7 +55,7 @@ test.describe('comercial: clientes', () => {
 
   test('alta de un cliente con condición de IVA lo deja en el listado', async ({ page }) => {
     await createCustomerViaUi(page, { name, cuit, taxCondition: 'Monotributo' });
-    const row = rowOf(page);
+    const row = (await rowOf(page));
     await expect(row).toContainText(cuit);
     await expect(row).toContainText('cliente-ventas@codecontrol.test');
     const href = await row.getByRole('link', { name }).getAttribute('href');
@@ -92,11 +98,11 @@ test.describe('comercial: clientes', () => {
 
   test('dar de baja el cliente lo saca del listado', async ({ page }) => {
     await page.goto(CUSTOMERS_URL);
-    await expect(rowOf(page)).toBeVisible();
+    await expect((await rowOf(page))).toBeVisible();
     await deactivate(page);
     await page.goto(CUSTOMERS_URL);
     await expect(page.getByRole('table')).toBeVisible();
-    await expect(rowOf(page)).toHaveCount(0);
+    await expect((await rowOf(page))).toHaveCount(0);
   });
 
   test('Cotizaciones avisa que el módulo está en desarrollo', async ({ page }) => {

@@ -127,6 +127,8 @@ async function cicloDeVidaDelCliente(page: Page, name: string, cuit: string) {
       // El formulario de edición es el del módulo Comercial (CustomerDataForm): sus campos se identifican por placeholder.
       const phone = page.getByPlaceholder('1155551234');
       await expect(phone).toHaveValue('1144445555');
+      // Sin esperar la hidratación, el formulario toma el valor antes de registrar el campo y la validación lo rechaza.
+      await page.waitForLoadState('networkidle');
       await phone.fill('1166667777');
       await page.getByRole('button', { name: 'Guardar cambios' }).click();
       await expect(async () => {

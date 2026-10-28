@@ -30,7 +30,13 @@ export async function gotoCompanyTab(page: Page, tab: string, opts: { soft?: boo
     }).toPass({ timeout: 20_000 });
   } else {
     await page.goto(`${COMPANY_URL}?tab=${TAB_PARAM[tab]}`);
-    await expect(trigger).toHaveAttribute('aria-selected', 'true');
+    // Servicios y otras pestañas piden datos a la propia API por la URL pública: un ECONNRESET ocasional muestra el
+    // panel de error de la app (mismo comportamiento que en producción) y "Reintentar" lo recupera.
+    await expect(async () => {
+      if (await page.getByRole('button', { name: 'Reintentar' }).isVisible()) await page.reload();
+      await expect(trigger).toHaveAttribute('aria-selected', 'true', { timeout: 5_000 });
+      await expect(page.getByRole('tabpanel', { name: tab })).toBeVisible({ timeout: 5_000 });
+    }).toPass({ timeout: 30_000 });
   }
   const panel = page.getByRole('tabpanel', { name: tab });
   await expect(panel).toBeVisible();

@@ -497,3 +497,15 @@ La app no permite borrar estos elementos desde la UI; todos llevan el prefijo `Q
 
 - Los dos archivos de costos comparten el convenio, el servicio y la composición de la empresa QA: en paralelo se pisan y fallan de forma intermitente. Con un solo worker pasan 20/20.
 - Se ejecutan en proyectos encadenados (`costos-1` → `costos-2` en `playwright.config.ts`) y en CI en un job aparte con `--workers=1` (`e2e-costos`), fuera de los shards. Local: `npx playwright test --project=setup --project=costos-1 --project=costos-2 --workers=1`.
+
+### H-48 Editar un cliente desde Comercial no guardaba (500) — corregido
+
+- `updateCustomer` pasaba `cuit` y `client_phone` como string crudo del `FormData` a columnas `BigInt`: Prisma 7 lo rechaza y devolvía "Internal Server Error". Se convierten a `BigInt` antes de actualizar (no cambia ningún flujo, solo hace posible guardar).
+
+### H-49 La pestaña Servicios de la empresa falla de forma intermitente en el clon — igual que producción en el código, no se cambia
+
+- `ServiceComponent` pide tres endpoints propios por la URL pública (`NEXT_PUBLIC_BASE_URL`) desde el servidor; a veces el panel muestra "Error al cargar el panel" (visto ECONNRESET). Solo, el tab carga en 0,5–2 s. Los tests recargan y la suite corre con 2 reintentos en CI.
+
+### H-50 Las tablas de clientes paginan de a 10 y ordenan por CUIT
+
+- Con muchos clientes QA acumulados, el recién creado cae en otra página: los helpers (`customerRow`) avanzan de página hasta encontrarlo. Limpieza aplicada a la base del clon (solo `QA-E2E-cliente-*` de la empresa QA).
