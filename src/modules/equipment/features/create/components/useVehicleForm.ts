@@ -1,6 +1,7 @@
 'use client';
 
 import { useImageUpload } from '@/shared/hooks/useUploadImage';
+import { storage } from '@/shared/lib/storage';
 import { handleSupabaseError } from '@/shared/lib/errorHandler';
 import { useCountriesStore } from '@/shared/store/countries';
 import { useLoggedUserStore } from '@/shared/store/loggedUser';
@@ -41,7 +42,6 @@ export function useVehicleForm(
   const { uploadImage } = useImageUpload();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [base64Image, setBase64Image] = useState<string>('');
-  const url = process.env.NEXT_PUBLIC_PROJECT_URL;
   const URLQR = process.env.NEXT_PUBLIC_BASE_URL;
   const loggedUser = useLoggedUserStore((state) => state.credentialUser?.id);
 
@@ -191,7 +191,7 @@ export function useVehicleForm(
             const renamedFile = new File([imageFile], `${id.replace(/\s/g, '')}.${fileExtension}`, { type: `image/${fileExtension}` });
             await uploadImage(renamedFile, 'vehicle_photos');
             try {
-              const vehicleImage = `${url}/vehicle_photos/${id}.${fileExtension}`.trim().replace(/\s/g, '');
+              const vehicleImage = storage.getPublicUrl('vehicle_photos', `${id}.${fileExtension}`).trim().replace(/\s/g, '');
               await updateVehicleByIdAndCompany(id, actualCompany?.id || '', { picture: vehicleImage });
             } catch (error) {}
           } catch (error: any) {
@@ -239,7 +239,7 @@ export function useVehicleForm(
           brand: brand_vehicles?.find((e: any) => e.name === values.brand)?.id,
           model: data.models.find((e) => e.name === values.model)?.id,
           year: values.year, engine: values.engine, chassis: values.chassis,
-          serie: values.serie, domain: values.domain?.toUpperCase(), intern_number: values.intern_number,
+          serie: values.serie, domain: values.domain?.toUpperCase() || null, intern_number: values.intern_number,
           picture: values.picture, allocated_to: values.allocated_to, kilometer: values.kilometer,
           type: vehicleType.find((e) => e.name === values.type)?.id,
         });
@@ -253,7 +253,7 @@ export function useVehicleForm(
               const renamedFile = new File([imageFile], `${id?.replace(/\s/g, '')}.${fileExtension}`, { type: `image/${fileExtension}` });
               await uploadImage(renamedFile, 'vehicle_photos');
               try {
-                const vehicleImage = `${url}/vehicle_photos/${id}.${fileExtension}?timestamp=${Date.now()}`.trim().replace(/\s/g, '');
+                const vehicleImage = `${storage.getPublicUrl('vehicle_photos', `${id}.${fileExtension}`)}?timestamp=${Date.now()}`.trim().replace(/\s/g, '');
                 await updateVehicleByIdAndCompany(id, actualCompany?.id || '', { picture: vehicleImage });
               } catch (error) {}
             } catch (error: any) {
@@ -283,7 +283,7 @@ export function useVehicleForm(
     }
   };
 
-  const qrUrl = `${URLQR}maintenance?equipment=${vehicle?.id}`;
+  const qrUrl = `${(URLQR ?? '').replace(/\/+$/, '')}/maintenance?equipment=${vehicle?.id}`;
   const qrCodeRef = useRef<HTMLDivElement>(null);
 
   const downloadQR = async () => {

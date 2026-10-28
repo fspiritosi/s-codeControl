@@ -32,6 +32,8 @@ deploy: al desplegar, se quita el `test.fixme` y el test debe pasar).
 
 ### H-03 Cualquier usuario ve las compañías de todos los clientes — abierto (seguridad)
 
+> **Decisión:** igual que producción (el código es idéntico en `origin/dev`) — no se cambia en esta rama. Arreglarlo cambiaría el comportamiento que hoy tiene producción; queda para decidir aparte.
+
 - **Pasos:** iniciar sesión con el usuario QA (dueño de una sola empresa) > `/dashboard/company`.
 - **Esperado:** solo "QA E2E".
 - **Obtenido:** se listan las 19 compañías de la base (LA NUEVA16, EMERGENCIAS SA, RUCSO S.A., ...). La pestaña "Grupos compartidos"
@@ -82,6 +84,8 @@ deploy: al desplegar, se quita el `test.fixme` y el test debe pasar).
 
 ### H-08 La edición del legajo actualiza por DNI sin filtrar por empresa — abierto (seguridad, por lectura de código)
 
+> **Decisión:** igual que producción — no se cambia en esta rama.
+
 - `updateEmployeeByDocNumber` y `updateEmployeeByDocNumberFull` (`modules/employees/features/create/actions.server.ts`) usan
   `updateMany({ where: { document_number } })` sin `company_id`. Un empleado de otra empresa con el mismo DNI se modificaría junto con el propio
   (la baja y el reintegro, en cambio, sí filtran por empresa).
@@ -122,6 +126,57 @@ deploy: al desplegar, se quita el `test.fixme` y el test debe pasar).
 - Empleados > Diagramas: el botón del rango muestra `28/10/02026 - 27/11/02026` (formato de fecha con `yyyyy` o relleno de ceros).
 - **Evidencia:** `diagramas.spec.ts` > `el rango de fechas de la grilla se muestra con años de cuatro dígitos` (fixme).
 
+## Módulos Equipos y Documentos
+
+Criterio: se corrige solo lo que impide una funcionalidad, con un arreglo chico que no cambia el comportamiento de producción. En todos los casos de
+abajo el código es **idéntico en `origin/dev`** (se comparó con `git show origin/dev:<archivo>`): son restos del cambio de Supabase a Prisma/RustFS.
+
+### H-13 La foto del equipo se guarda con una URL que da 404 — corregido en código
+
+- **Pasos:** alta de equipo con "Subir foto" > abrir el detalle del equipo.
+- **Esperado:** el avatar muestra la foto.
+- **Obtenido:** la subida a `/api/storage` responde 200 y el objeto queda en `vehicle-photos` (se sirve bien en `<STORAGE_PUBLIC_URL>/vehicle-photos/<id>.png`),
+  pero `vehicles.picture` se guarda como `<URL de la app>/vehicle_photos/<id>.png` (armada con `NEXT_PUBLIC_PROJECT_URL`), que devuelve 404. Es el mismo
+  defecto que H-04, en el formulario de equipos.
+- **Corrección:** `useVehicleForm.ts` arma la URL con `storage.getPublicUrl('vehicle_photos', ...)` (alta y edición). Falta deploy.
+- **Evidencia:** `equipment/equipos.spec.ts` > `el detalle del equipo muestra la foto cargada` (fixme). Los tests de bucket y de URL firmada sí pasan.
+
+### H-14 Editar un equipo sin dominio no guarda y la app avisa "equipo editado" — corregido en código
+
+- **Pasos:** alta de un equipo de tipo "Otros" (sin dominio) > detalle > "Habilitar edicion" > cambiar el motor > "Guardar cambios".
+- **Esperado:** el cambio persiste.
+- **Obtenido:** aparece el aviso "equipo editado" pero nada se guarda. El formulario envía `domain: ''` (el alta guarda `null`) y choca con la restricción UNIQUE
+  de `vehicles.domain` porque ya existe otro equipo con `''` (log del servidor: `P2002 Unique constraint failed on the fields: (domain)`). El error solo se
+  escribe en consola: la pantalla muestra éxito.
+- **Corrección:** `domain: values.domain?.toUpperCase() || null` en `onUpdate`. **Sigue pendiente** (cambiaría el flujo): propagar `updatedERROR` en vez de ignorarlo.
+- **Evidencia:** `equipment/equipos.spec.ts` > `se puede editar el equipo y los cambios persisten` (fixme).
+
+### H-15 La URL del QR del equipo queda mal armada — corregido en código
+
+- **Pasos:** detalle del equipo > pestaña QR > "Copiar url".
+- **Esperado:** `https://<app>/maintenance?equipment=<id>`.
+- **Obtenido:** `https://<app>maintenance?equipment=<id>` (sin "/"): `NEXT_PUBLIC_BASE_URL` no lleva barra final y el código no la agrega. Los QR impresos con
+  esa URL no abren la pantalla de mantenimiento.
+- **Corrección:** `useVehicleForm.ts` quita barras finales y agrega "/". Con la variable con barra final también sirve.
+- **Evidencia:** `equipment/equipos.spec.ts` > `el QR apunta a la pantalla pública de mantenimiento del equipo` (fixme).
+
+### H-16 "Descargar" del listado de documentos de equipos da 404 — corregido en código
+
+- **Pasos:** Documentos > Documentos de equipos > menú de una fila con documento cargado > "Descargar".
+- **Esperado:** se baja el archivo.
+- **Obtenido:** no pasa nada (toast vacío). El menú llama a `/api/storage?bucket=document_files&path=undefined`: `formatVehiculesDocuments` no incluye `document_url`
+  (el de empleados sí). La descarga desde el detalle del documento funciona.
+- **Corrección:** `src/shared/lib/utils.ts` agrega `document_url: doc.document_path`. Falta deploy.
+- **Evidencia:** `documents/equipos.spec.ts` > `se descarga desde el listado el mismo archivo que se subió` (fixme).
+
+### H-17 Detalles visuales de equipos y documentos — abierto (cosmético, igual que dev, no se cambia)
+
+- Los equipos sin dominio aparecen como `null` en la columna "Equipo (Dominio)" de los documentos y en "Copiar dominio" (`resource: \`${veh?.domain}\``).
+- El encabezado del detalle del equipo muestra "Tipo de equipo:" vacío (usa `vehicle.type?.name` y `type` ya es el nombre).
+- El diálogo "Reemplazar documento" muestra la fecha de vencimiento como ISO crudo (`2027-10-15T03:00:00+00:00`), y el detalle del documento muestra el vencimiento un día
+  antes que el listado. Reemplazar obliga a elegir de nuevo la fecha (el valor previo no pasa la validación): es el comportamiento actual.
+- En 1280 px el visor de PDF del detalle del documento tapa parte de la pestaña "Actualizar" (por eso esos tests usan una ventana de 1600 px).
+
 ## Observaciones (no son bugs confirmados; condicionan cómo se escriben los tests)
 
 - **Clics anteriores a la hidratación se pierden en silencio** y varias pantallas se "resetean" al terminar de cargar su estado: el listado de empleados
@@ -141,6 +196,11 @@ deploy: al desplegar, se quita el `test.fixme` y el test debe pasar).
 - Los clientes dados de baja se acumulan en "Ver dados de baja" (paginado): los tests filtran por su nombre único.
 - El filtro de apellido del listado de empleados queda en la URL (`?lastname=`), por lo que "Volver" regresa a `/dashboard/employee?lastname=...`.
 
+- **Documentos multirecurso (empleados y equipos):** el formulario no muestra ningún aviso: al terminar cierra el diálogo (los tests esperan eso).
+- **Tipo "Documento de baja":** el formulario lo fuerza a obligatorio y, al crearlo, genera un pendiente por **todos** los empleados de la empresa (activos e
+  inactivos). Los tests lo crean y lo desactivan dentro del mismo test; las filas de "Documentos de baja" están paginadas, por eso se busca por apellido.
+- **"Renovar" (detalle de un documento):** el botón existe junto a "Reemplazar" y "Eliminar", pero no se probó.
+
 ## Datos que los tests dejan en la empresa QA E2E
 
 La app no permite borrar estos elementos desde la UI; todos llevan el prefijo `QA-E2E-`.
@@ -155,6 +215,15 @@ La app no permite borrar estos elementos desde la UI; todos llevan el prefijo `Q
 - Documentos cargados a empleados de prueba (en RustFS, bucket de documentos) quedan con ellos.
 - Durante la exploración inicial se crearon y se dieron de baja a mano ~20 empleados `QA-E2E-*` huérfanos; esa limpieza puntual pudo alcanzar también
   empleados `QA-E2E-*` de otras tandas de tests que corrieran en ese momento.
+
+## Datos que los tests de Equipos y Documentos dejan en la empresa QA E2E
+
+- Equipos `QA-E2E-*` (Eq, DocEq, DocMA, DocMB, Vtv): quedan **dados de baja** (motivo "Fundido"). Sus documentos cargados siguen en RustFS (`document-files`) y la foto de
+  `QA-E2E-Eq-*` en `vehicle-photos`.
+- Tipos de documento `QA-E2E-Doc*`: quedan **desactivados** (con documentos cargados la app no permite eliminarlos). Ninguno queda obligatorio y activo.
+- Empleados `QA-E2E-doc*`: quedan dados de baja. Documentos eliminados desde el detalle vuelven a estado pendiente (no desaparecen la fila).
+- VTV: el turno agendado queda **cancelado**.
+- De la exploración inicial quedaron (también limpios) el equipo `QA-E2E-Nmvs5q7vr` y los tipos `QA-E2E-explore-*`.
 
 ## Riesgos conocidos de la suite
 

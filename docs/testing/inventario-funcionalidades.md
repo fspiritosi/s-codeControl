@@ -42,10 +42,42 @@ Estado: ⬜ pendiente · ✅ hecho · ➖ justificado sin test.
 | Empleados | Documentos del legajo: crear tipo, cargar, listar, descargar, historial en el menú, pestaña Documentación del detalle (`documentos-legajo.spec.ts`) | ✅ |
 | Empleados | Tipos de documentos: crear, validar nombre, eliminar sin documentos | ✅ (desactivar solo se usa como limpieza, sin aserción; editar un tipo ⬜ pendiente) |
 | Empleados | Tipo de documento obligatorio: crear (H-09, corregido en la base) | ✅ |
-| Empleados | Alertas/documentos pendientes tras el alta con tipos obligatorios | ⬜ pendiente |
-| Empleados | Documentos: multirecurso, mensuales, de baja, reemplazar/eliminar, "Ver historial" abierto | ⬜ pendiente de una segunda tanda |
+| Empleados | Alertas/documentos pendientes tras el alta con tipos obligatorios | ➖ un tipo obligatorio activo contamina a otras suites; solo se prueba el de baja (creado y desactivado en el mismo test) |
+| Empleados | Documentos: mensual, multirecurso, historial, reemplazar, eliminar y documentos de baja (`documents/empleados.spec.ts`) | ✅ |
 | Empleados | Diagramas: crear novedad, cargar días desde el detalle, listarlos (`diagramas.spec.ts`) | ✅ |
 | Empleados | Diagramas: grilla "Diagrama Cargados" (H-11) y rótulo de fechas (H-12) | ⬜ `test.fixme`: bugs abiertos |
 | Empleados | Diagramas: tabla de Tipos de Novedades, editar/borrar novedades (H-10) | ⬜ la tabla no lista las novedades |
 | Empleados | Convenios colectivos (pestaña de Empleados) | ✅ (mismo árbol que en Empresa) |
-
+| Equipos | Pantalla Equipos: pestañas y acceso al alta, validación del alta vacía (`equipment/equipos.spec.ts`) | ✅ |
+| Equipos | Alta con foto, listado de activos con búsqueda | ✅ |
+| Equipos | Foto: objeto en `vehicle-photos`, URL pública 200, URL firmada sin sesión (RustFS) | ✅ |
+| Equipos | Foto en el detalle (H-13) | ⬜ `test.fixme`: corregido en código, falta deploy |
+| Equipos | Detalle en solo lectura y pestañas (Equipo, Valor de compra, Documentos, Reparaciones, QR) | ✅ |
+| Equipos | Editar y guardar (H-14) | ⬜ `test.fixme`: corregido en código, falta deploy |
+| Equipos | QR: pestaña con descargar/imprimir/copiar | ✅ |
+| Equipos | QR: URL copiada correcta (H-15) | ⬜ `test.fixme`: corregido en código, falta deploy |
+| Equipos | Baja (inactivos) y reintegro desde el menú de la fila | ✅ |
+| Equipos | Borrar un equipo | ➖ la app solo permite dar de baja; los de prueba quedan dados de baja |
+| Equipos | Filtros por columna, orden, paginación, Excel, columnas | ➖ fuera del alcance acordado (certificar flujos principales) |
+| Equipos | Alta de marca, modelo y tipo desde el formulario | ➖ marcas y modelos son catálogos globales sin borrado: crearlos dejaría datos permanentes para otras empresas |
+| Equipos | Valor de compra, Reparaciones, Mantenimiento (pestaña) | ➖ pertenecen al módulo de mantenimiento/costos; solo se verifica que el detalle abra |
+| Equipos | "Afectado a" (asignar a clientes) | ➖ requiere clientes activos; se cubre en Empresa > Clientes |
+| Documentos | Pantalla Documentos: pestañas, columnas y accesos de carga de empleados, equipos y empresa (`documents/pantallas.spec.ts`) | ✅ |
+| Documentos | Tipos de documento de equipos: crear con vencimiento, editar, desactivar (`documents/equipos.spec.ts`) | ✅ |
+| Documentos | Tipos de documento: mensual, multirecurso, VTV y de baja | ✅ (se crean y se desactivan; ninguno queda obligatorio y activo) |
+| Documentos | Tipos de documento: eliminar con documentos cargados | ➖ la app no lo permite (solo desactivar) |
+| Documentos | Equipos: cargar documento no multirecurso con vencimiento, estado "presentado" | ✅ |
+| Documentos | Equipos: descarga desde RustFS (se compara el contenido) desde el detalle | ✅ |
+| Documentos | Equipos: descarga desde el menú del listado (H-16) | ⬜ `test.fixme`: corregido en código, falta deploy |
+| Documentos | Equipos: historial, detalle del documento, reemplazar, eliminar (vuelve a pendiente) | ✅ |
+| Documentos | Equipos: mensual con período y solapa "Documentos mensuales" (`documents/equipos-mensual-multi.spec.ts`) | ✅ |
+| Documentos | Equipos: multirecurso a dos equipos y descarga desde el detalle | ✅ |
+| Documentos | Empleados: mensual, multirecurso, historial, reemplazar, eliminar, documentos de baja (`documents/empleados.spec.ts`) | ✅ |
+| Documentos | Empresa: listado y columnas | ✅ |
+| Documentos | Empresa: subir/reemplazar/eliminar | ➖ solo existen pendientes de tipos "Empresa" obligatorios (contaminan a otras suites) |
+| Documentos | Documentos pendientes: subir un faltante desde "Documento No Multirecurso" | ✅ (carga de tipos opcionales; los pendientes obligatorios no se generan en las pruebas) |
+| Documentos | "Auditar alertas" (Empleados/Equipos) | ➖ dispara el envío de avisos por mail |
+| Documentos | Renovar documento (detalle) | ⬜ pendiente |
+| Calendario | Calendario de vencimientos: documento del mes en su día y leyendas (`documents/vencimientos.spec.ts`) | ✅ |
+| VTV | Listado (documento tipo VTV), agendar turno, cancelar turno desde Gestionar | ✅ |
+| VTV | Gestionar: orden/turno/marcar realizada, pestaña Calendario | ➖ fuera del alcance acordado |

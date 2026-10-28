@@ -260,6 +260,7 @@ export const formatVehiculesDocuments = (doc: any) => {
     period: doc.period,
     applies: docType?.applies,
     resource_id: veh?.id,
+    document_url: doc.document_path,
     id_document_types: docType?.id,
     intern_number: `${veh?.intern_number}`,
     serie: veh?.serie,
