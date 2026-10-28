@@ -381,3 +381,10 @@ La app no permite borrar estos elementos desde la UI; todos llevan el prefijo `Q
   sembrado (sin la jerarquía) podrían crearla dos veces y romper los selectores estrictos. Hoy la jerarquía ya existe.
 - **Carga del servidor:** con varios workers (y otras suites corriendo contra el mismo clon) algunas pantallas vuelven a montar sus formularios; los
   helpers reintentan lo idempotente. Un fallo que aparezca solo bajo carga se reporta, no se tapa subiendo timeouts.
+
+### H-33 Eliminar un borrador HSE ya no borra el archivo del bucket — abierto (pendiente de investigar)
+
+- **Pasos:** HSE > Documentos > Borradores > "Eliminar" en un borrador con archivo.
+- **Esperado:** el documento sale del listado y el objeto desaparece de `documents-hse`.
+- **Obtenido (desde el deploy 24d955fa):** sale del listado, pero el objeto sigue en el bucket. Antes del deploy el test pasaba; no hay errores en el log del servidor.
+- **Impacto:** archivos huérfanos en el bucket; el documento se elimina bien. Test en `test.fixme` hasta investigarlo.
