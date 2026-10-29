@@ -20,6 +20,7 @@ type PurchaseOrderRaw = {
   vat_amount: any;
   total: any;
   status: string;
+  currency: string;
   payment_conditions: string | null;
   delivery_address: string | null;
   delivery_notes: string | null;
@@ -78,6 +79,7 @@ export function mapPurchaseOrderDataForPDF(
       issueDate: order.issue_date,
       expectedDeliveryDate: order.expected_delivery_date || undefined,
       status: order.status,
+      currency: order.currency || 'ARS',
     },
 
     supplier: {

@@ -333,20 +333,21 @@ async function fetchPurchasingDashboardCounts(companyId: string): Promise<Purcha
       prisma.purchase_invoices.count({
         where: { company_id: companyId, status: { notIn: ['PAID', 'CANCELLED'] } },
       }),
-      prisma.purchase_orders.aggregate({
-        _sum: { total: true },
-        where: {
-          company_id: companyId,
-          status: { in: ['PENDING_APPROVAL', 'APPROVED', 'PARTIALLY_RECEIVED'] },
-        },
-      }),
+      // En pesos: las OC en dólares se convierten a su TC de referencia (las
+      // en pesos tienen TC 1).
+      prisma.$queryRaw<[{ total: unknown }]>`
+        SELECT COALESCE(SUM(total * exchange_rate), 0) AS total
+        FROM purchase_orders
+        WHERE company_id = ${companyId}::uuid
+          AND status IN ('PENDING_APPROVAL', 'APPROVED', 'PARTIALLY_RECEIVED')
+      `,
     ]);
 
   return {
     ocPendingApproval,
     ocWithoutReceiving,
     invoicesPendingPayment,
-    committedAmount: Number(committedAgg._sum.total ?? 0),
+    committedAmount: Number(committedAgg[0]?.total ?? 0),
   };
 }
 
@@ -456,7 +457,7 @@ async function fetchSupplierDashboardCounts(companyId: string): Promise<Supplier
         AND s.credit_limit IS NOT NULL
         AND s.credit_limit > 0
         AND (
-          SELECT COALESCE(SUM(po.total), 0)
+          SELECT COALESCE(SUM(po.total * po.exchange_rate), 0)
           FROM purchase_orders po
           WHERE po.supplier_id = s.id
             AND po.status IN ('PENDING_APPROVAL', 'APPROVED', 'PARTIALLY_RECEIVED')

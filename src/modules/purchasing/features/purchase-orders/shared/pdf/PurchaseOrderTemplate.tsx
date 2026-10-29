@@ -24,9 +24,15 @@ function formatDate(date: Date | string): string {
   return format(new Date(date), 'dd/MM/yyyy', { locale: es });
 }
 
-function formatAmount(value: number): string {
-  return `$${value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+function formatAmount(value: number, currency: string): string {
+  const symbol = currency === 'USD' ? 'US$' : '$';
+  return `${symbol}${value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
+
+const CURRENCY_LABELS: Record<string, string> = {
+  ARS: 'Pesos argentinos (ARS)',
+  USD: 'Dólares estadounidenses (USD)',
+};
 
 interface PurchaseOrderTemplateProps {
   data: PurchaseOrderPDFData;
@@ -49,6 +55,8 @@ export function PurchaseOrderTemplate({ data }: PurchaseOrderTemplateProps) {
     linkedDocuments,
     pdfSettings,
   } = data;
+  const currency = purchaseOrder.currency || 'ARS';
+  const money = (value: number) => formatAmount(value, currency);
 
   return (
     <Document>
@@ -167,6 +175,12 @@ export function PurchaseOrderTemplate({ data }: PurchaseOrderTemplateProps) {
         {/* LINEAS DE PRODUCTOS */}
         <View>
           <Text style={styles.sectionTitle}>DETALLE</Text>
+          {currency !== 'ARS' && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Moneda:</Text>
+              <Text style={styles.infoValue}>{CURRENCY_LABELS[currency] ?? currency}</Text>
+            </View>
+          )}
           <View style={styles.table}>
             <View style={styles.tableHeader}>
               <Text style={styles.colCode}>Codigo</Text>
@@ -186,14 +200,14 @@ export function PurchaseOrderTemplate({ data }: PurchaseOrderTemplateProps) {
                 <Text style={styles.colDesc}>{line.description}</Text>
                 <Text style={styles.colQty}>{line.quantity}</Text>
                 <Text style={styles.colUnit}>
-                  {formatAmount(line.unitCost)}
+                  {money(line.unitCost)}
                 </Text>
                 <Text style={styles.colVat}>{line.vatRate}%</Text>
                 <Text style={styles.colSubtotal}>
-                  {formatAmount(line.subtotal)}
+                  {money(line.subtotal)}
                 </Text>
                 <Text style={styles.colTotal}>
-                  {formatAmount(line.total)}
+                  {money(line.total)}
                 </Text>
               </View>
             ))}
@@ -204,17 +218,17 @@ export function PurchaseOrderTemplate({ data }: PurchaseOrderTemplateProps) {
         <View style={styles.totalsSection}>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Subtotal:</Text>
-            <Text style={styles.totalValue}>{formatAmount(subtotal)}</Text>
+            <Text style={styles.totalValue}>{money(subtotal)}</Text>
           </View>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>IVA:</Text>
-            <Text style={styles.totalValue}>{formatAmount(vatAmount)}</Text>
+            <Text style={styles.totalValue}>{money(vatAmount)}</Text>
           </View>
         </View>
 
         <View style={styles.grandTotal}>
           <Text>TOTAL:</Text>
-          <Text>{formatAmount(total)}</Text>
+          <Text>{money(total)}</Text>
         </View>
 
         {/* CUOTAS / ENTREGAS */}
@@ -235,7 +249,7 @@ export function PurchaseOrderTemplate({ data }: PurchaseOrderTemplateProps) {
                     {formatDate(inst.dueDate)}
                   </Text>
                   <Text style={styles.colTotal}>
-                    {formatAmount(inst.amount)}
+                    {money(inst.amount)}
                   </Text>
                   <Text style={styles.colDesc}>{inst.notes || ''}</Text>
                 </View>

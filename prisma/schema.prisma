@@ -2145,6 +2145,12 @@ model purchase_orders {
   payment_conditions     String?
   delivery_address       String?
   delivery_notes         String?
+  /// Moneda de la orden. subtotal, vat_amount, total, las líneas y las cuotas
+  /// están expresados en esta moneda.
+  currency               String                          @default("ARS")
+  /// Tipo de cambio de referencia (ARS por unidad de `currency`) al emitir la
+  /// orden. 1 para ARS. Es el que usan las sumas que convierten a pesos.
+  exchange_rate          Decimal                         @default(1) @db.Decimal(15, 4)
   subtotal               Decimal                         @default(0) @db.Decimal(12, 2)
   vat_amount             Decimal                         @default(0) @db.Decimal(12, 2)
   total                  Decimal                         @default(0) @db.Decimal(12, 2)

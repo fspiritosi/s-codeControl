@@ -17,15 +17,19 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2 } from 'lucide-react';
 import { useMemo } from 'react';
+import { BASE_CURRENCY, convertAmount } from '@/shared/lib/currency-conversion';
+import { formatCurrencyIn } from '@/shared/lib/utils/formatters';
 
 type FormValues = z.infer<typeof purchaseOrderSchema>;
 
 interface Props {
   suppliers: { id: string; code: string; business_name: string }[];
   products: { id: string; code: string; name: string; cost_price: any; vat_rate: any; unit_of_measure: string }[];
+  /** Última cotización USD de la empresa, para precargar el TC de una OC en dólares. */
+  latestUsdRate?: number | null;
 }
 
-export default function PurchaseOrderForm({ suppliers, products }: Props) {
+export default function PurchaseOrderForm({ suppliers, products, latestUsdRate }: Props) {
   const router = useRouter();
 
   const form = useForm<FormValues>({
@@ -37,12 +41,17 @@ export default function PurchaseOrderForm({ suppliers, products }: Props) {
       payment_conditions: '',
       delivery_address: '',
       notes: '',
+      currency: 'ARS',
+      exchange_rate: 1,
       lines: [{ product_id: '', description: '', quantity: 1, unit_cost: 0, vat_rate: 21 }],
     },
   });
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: 'lines' });
   const watchedLines = useWatch({ control: form.control, name: 'lines' });
+  const currency = useWatch({ control: form.control, name: 'currency' }) ?? BASE_CURRENCY;
+  const exchangeRate = Number(useWatch({ control: form.control, name: 'exchange_rate' })) || 0;
+  const fmt = (n: number) => formatCurrencyIn(n, currency);
 
   const totals = useMemo(() => {
     let subtotal = 0;
@@ -60,7 +69,17 @@ export default function PurchaseOrderForm({ suppliers, products }: Props) {
     const product = products.find((p) => p.id === productId);
     if (product) {
       form.setValue(`lines.${index}.description`, product.name);
-      form.setValue(`lines.${index}.unit_cost`, Number(product.cost_price));
+      // El costo del producto está en pesos: en una OC en dólares se precarga
+      // convertido al TC de la orden (sin TC queda en 0 para cargarlo a mano).
+      const cost = Number(product.cost_price);
+      form.setValue(
+        `lines.${index}.unit_cost`,
+        currency === BASE_CURRENCY
+          ? cost
+          : exchangeRate > 1
+            ? convertAmount({ amount: cost, from: BASE_CURRENCY, to: currency, rate: exchangeRate })
+            : 0
+      );
       form.setValue(`lines.${index}.vat_rate`, Number(product.vat_rate));
     }
   };
@@ -114,6 +133,49 @@ export default function PurchaseOrderForm({ suppliers, products }: Props) {
                 <FormMessage />
               </FormItem>
             )} />
+            <FormField control={form.control} name="currency" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Moneda</FormLabel>
+                <Select
+                  value={field.value}
+                  onValueChange={(v) => {
+                    field.onChange(v);
+                    form.setValue('exchange_rate', v === 'ARS' ? 1 : latestUsdRate && latestUsdRate > 1 ? latestUsdRate : 0);
+                  }}
+                >
+                  <FormControl>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="ARS">Peso (ARS)</SelectItem>
+                    <SelectItem value="USD">Dólar (USD)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+            {currency === 'USD' && (
+              <FormField control={form.control} name="exchange_rate" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo de cambio de referencia (ARS por USD) *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.0001"
+                      min="0"
+                      placeholder="1200.0000"
+                      {...field}
+                      value={field.value || ''}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    Los precios van en dólares. El pago puede hacerse en pesos al tipo de cambio del día del pago.
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            )}
             <FormField control={form.control} name="payment_conditions" render={({ field }) => (
               <FormItem>
                 <FormLabel>Condiciones de pago</FormLabel>
@@ -157,7 +219,7 @@ export default function PurchaseOrderForm({ suppliers, products }: Props) {
                   <TableHead className="w-[200px]">Producto</TableHead>
                   <TableHead>Descripción</TableHead>
                   <TableHead className="w-[100px]">Cantidad</TableHead>
-                  <TableHead className="w-[120px]">Costo unit.</TableHead>
+                  <TableHead className="w-[120px]">Costo unit. ({currency})</TableHead>
                   <TableHead className="w-[80px]">IVA %</TableHead>
                   <TableHead className="w-[120px] text-right">Subtotal</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
@@ -196,7 +258,7 @@ export default function PurchaseOrderForm({ suppliers, products }: Props) {
                       <TableCell>
                         <Input className="h-8 text-sm" type="number" step="0.5" min="0" max="100" {...form.register(`lines.${index}.vat_rate`, { valueAsNumber: true })} />
                       </TableCell>
-                      <TableCell className="text-right font-mono text-sm">${lineSubtotal.toFixed(2)}</TableCell>
+                      <TableCell className="text-right font-mono text-sm">{fmt(lineSubtotal)}</TableCell>
                       <TableCell>
                         {fields.length > 1 && (
                           <Button type="button" variant="ghost" size="icon" className="size-7" onClick={() => remove(index)}>
@@ -215,9 +277,14 @@ export default function PurchaseOrderForm({ suppliers, products }: Props) {
 
             <div className="flex justify-end mt-4 space-y-1">
               <div className="text-sm space-y-1 text-right">
-                <p>Subtotal: <span className="font-mono font-medium">${totals.subtotal.toFixed(2)}</span></p>
-                <p>IVA: <span className="font-mono font-medium">${totals.vatAmount.toFixed(2)}</span></p>
-                <p className="text-lg font-bold">Total: <span className="font-mono">${totals.total.toFixed(2)}</span></p>
+                <p>Subtotal: <span className="font-mono font-medium">{fmt(totals.subtotal)}</span></p>
+                <p>IVA: <span className="font-mono font-medium">{fmt(totals.vatAmount)}</span></p>
+                <p className="text-lg font-bold">Total: <span className="font-mono">{fmt(totals.total)}</span></p>
+                {currency !== BASE_CURRENCY && exchangeRate > 1 && (
+                  <p className="text-xs text-muted-foreground">
+                    Referencia: {formatCurrencyIn(convertAmount({ amount: totals.total, from: currency, to: BASE_CURRENCY, rate: exchangeRate }), BASE_CURRENCY)} al TC {exchangeRate}
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>

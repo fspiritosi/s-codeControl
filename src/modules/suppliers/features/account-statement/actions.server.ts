@@ -34,9 +34,12 @@ export interface InvoicesSummary {
 }
 
 export interface PurchaseOrdersSummary {
+  /** En pesos: las OC en dólares van convertidas a su TC de referencia. */
   totalAmount: number;
   countByStatus: Record<string, number>;
   total: number;
+  /** Hay OC en moneda extranjera: la UI aclara que el total está convertido. */
+  hasForeignCurrency: boolean;
 }
 
 export interface ReceivingNotesSummary {
@@ -194,33 +197,50 @@ export async function getSupplierPurchaseOrders(supplierId: string) {
       issue_date: true,
       expected_delivery_date: true,
       total: true,
+      currency: true,
+      exchange_rate: true,
       status: true,
       invoicing_status: true,
     },
     orderBy: { issue_date: 'desc' },
   });
 
-  const rows = data.map((po) => ({
-    id: po.id,
-    full_number: po.full_number,
-    issue_date: po.issue_date,
-    expected_delivery_date: po.expected_delivery_date,
-    total: Number(po.total),
-    status: po.status as string,
-    invoicing_status: po.invoicing_status as string,
-  }));
+  const rows = data.map((po) => {
+    const total = Number(po.total);
+    const currency = po.currency ?? BASE_CURRENCY;
+    return {
+      id: po.id,
+      full_number: po.full_number,
+      issue_date: po.issue_date,
+      expected_delivery_date: po.expected_delivery_date,
+      total,
+      currency,
+      /** `total` convertido a pesos con el TC de referencia de la OC. */
+      total_in_base: convertAmount({
+        amount: total,
+        from: currency,
+        to: BASE_CURRENCY,
+        rate: Number(po.exchange_rate ?? 1),
+      }),
+      status: po.status as string,
+      invoicing_status: po.invoicing_status as string,
+    };
+  });
 
   const countByStatus: Record<string, number> = {};
   let totalAmount = 0;
+  let hasForeignCurrency = false;
   for (const r of rows) {
     countByStatus[r.status] = (countByStatus[r.status] ?? 0) + 1;
-    if (r.status !== 'CANCELLED') totalAmount += r.total;
+    if (r.currency !== BASE_CURRENCY) hasForeignCurrency = true;
+    if (r.status !== 'CANCELLED') totalAmount += r.total_in_base;
   }
 
   const summary: PurchaseOrdersSummary = {
     totalAmount: Math.round(totalAmount * 100) / 100,
     countByStatus,
     total: rows.length,
+    hasForeignCurrency,
   };
 
   return { rows, summary };

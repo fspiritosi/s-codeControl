@@ -18,7 +18,7 @@ import {
   cancelPurchaseOrder,
   deletePurchaseOrder,
 } from '../actions.server';
-import { formatDateUTC } from '@/shared/lib/utils/formatters';
+import { formatCurrencyIn, formatDateUTC } from '@/shared/lib/utils/formatters';
 import { MoreHorizontal, Eye, Send, CheckCircle, XCircle, Ban, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -154,7 +154,9 @@ export const purchaseOrderColumns: ColumnDef<any>[] = [
     accessorKey: 'total',
     header: 'Total',
     meta: { title: 'Total' },
-    cell: ({ row }) => <span className="font-medium">${row.original.total.toFixed(2)}</span>,
+    cell: ({ row }) => (
+      <span className="font-medium">{formatCurrencyIn(row.original.total, row.original.currency)}</span>
+    ),
   },
   {
     accessorKey: 'status',

@@ -11,6 +11,7 @@ import {
   PURCHASE_INVOICE_ATTACHMENT_MAX_BYTES,
 } from '@/modules/purchasing/shared/validators';
 import { recalcInvoicingStatus } from '@/modules/purchasing/shared/recalc-invoicing-status';
+import { BASE_CURRENCY, sumInOrderCurrency } from '@/shared/lib/currency-conversion';
 import { revalidatePath } from 'next/cache';
 
 const ALLOWED_MIME_SET = new Set<string>(PURCHASE_INVOICE_ATTACHMENT_ALLOWED_MIME as readonly string[]);
@@ -56,7 +57,7 @@ export async function getImputableInvoices(orderId: string) {
       original_invoice_id: null,
       status: { not: 'CANCELLED' },
     },
-    select: { id: true, full_number: true, total: true, issue_date: true, status: true },
+    select: { id: true, full_number: true, total: true, currency: true, issue_date: true, status: true },
     orderBy: { issue_date: 'desc' },
   });
 
@@ -88,21 +89,25 @@ export async function getImputableExpenses(orderId: string) {
   return expenses.map((e) => ({ ...e, amount: Number(e.amount) }));
 }
 
-/** Resumen de imputación: total OC vs total imputado (facturas + gastos) y excedente. */
+/**
+ * Resumen de imputación: total OC vs total imputado (facturas + gastos) y
+ * excedente, todo en la moneda de la OC. Una factura en otra moneda se convierte
+ * con su propio TC; los gastos (siempre en pesos) con el TC de referencia de la OC.
+ */
 export async function getOrderImputationSummary(orderId: string) {
   const { companyId } = await getActionContext();
   if (!companyId) return null;
 
   const order = await prisma.purchase_orders.findFirst({
     where: { id: orderId, company_id: companyId },
-    select: { id: true, total: true },
+    select: { id: true, total: true, currency: true, exchange_rate: true },
   });
   if (!order) return null;
 
-  const [invAgg, expAgg] = await Promise.all([
-    prisma.purchase_invoices.aggregate({
+  const [invoices, expAgg] = await Promise.all([
+    prisma.purchase_invoices.findMany({
       where: { purchase_order_id: orderId, status: { not: 'CANCELLED' } },
-      _sum: { total: true },
+      select: { total: true, currency: true, exchange_rate: true },
     }),
     prisma.expenses.aggregate({
       where: { purchase_order_id: orderId, status: { not: 'CANCELLED' } },
@@ -110,12 +115,24 @@ export async function getOrderImputationSummary(orderId: string) {
     }),
   ]);
 
+  const orderRef = { currency: order.currency, exchange_rate: Number(order.exchange_rate) };
   const orderTotal = Number(order.total);
-  const invoicesTotal = Number(invAgg._sum.total ?? 0);
-  const expensesTotal = Number(expAgg._sum.amount ?? 0);
-  const imputedTotal = invoicesTotal + expensesTotal;
+  const invoicesTotal = sumInOrderCurrency(
+    invoices.map((inv) => ({
+      amount: Number(inv.total),
+      currency: inv.currency ?? BASE_CURRENCY,
+      exchange_rate: Number(inv.exchange_rate ?? 1),
+    })),
+    orderRef
+  );
+  const expensesTotal = sumInOrderCurrency(
+    [{ amount: Number(expAgg._sum.amount ?? 0), currency: BASE_CURRENCY, exchange_rate: 1 }],
+    orderRef
+  );
+  const imputedTotal = Math.round((invoicesTotal + expensesTotal) * 100) / 100;
 
   return {
+    currency: order.currency,
     orderTotal,
     invoicesTotal,
     expensesTotal,

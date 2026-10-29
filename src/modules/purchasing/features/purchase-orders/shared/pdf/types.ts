@@ -22,6 +22,8 @@ export interface PurchaseOrderPDFData {
     issueDate: Date;
     expectedDeliveryDate?: Date;
     status: string;
+    /** Moneda en la que están expresados líneas, totales y cuotas. */
+    currency: string;
   };
 
   // Datos del proveedor

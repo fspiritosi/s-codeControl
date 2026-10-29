@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatDateUTC } from '@/shared/lib/utils/formatters';
@@ -51,6 +51,7 @@ import {
   effectiveRate,
   SUPPORTED_CURRENCIES,
 } from '@/shared/lib/currency-conversion';
+import { getLatestExchangeRate } from '@/shared/actions/exchange-rates';
 import { CheckPaymentField } from './CheckPaymentField';
 import { formatCbu } from './CopyableCbu';
 
@@ -358,9 +359,9 @@ export function NewPaymentOrderForm({
   const [orderCurrency, setOrderCurrency] = useState<string>(
     initialData?.currency ?? BASE_CURRENCY
   );
-  // Tipo de cambio de la orden. Solo hace falta cuando la orden está en moneda
-  // extranjera y hay comprobantes en pesos: una factura en pesos trae rate 1 y
-  // no alcanza para convertirla (tsk-576).
+  // Tipo de cambio del día del pago. Hace falta siempre que haya comprobantes en
+  // otra moneda que la orden: una factura en dólares pagada en pesos se convierte
+  // a este TC, no al de la factura.
   const [orderExchangeRate, setOrderExchangeRate] = useState<number>(
     initialData?.exchange_rate ?? 1
   );
@@ -598,6 +599,24 @@ export function NewPaymentOrderForm({
     () => items.some((i) => i.currency !== orderCurrency),
     [items, orderCurrency]
   );
+  const needsOrderRate =
+    orderCurrency !== BASE_CURRENCY ||
+    hasForeignItems ||
+    credits.some((c) => c.credit_note_id && c.currency !== orderCurrency);
+
+  // Al crear, el TC del día arranca con la última cotización de la empresa. En
+  // edición no se toca: una OP vieja en pesos guardó TC 1 y se convirtió con el
+  // de cada factura, y pisarlo le cambiaría los importes.
+  const ratePrefilledRef = useRef(false);
+  useEffect(() => {
+    if (isEdit || !needsOrderRate || ratePrefilledRef.current) return;
+    ratePrefilledRef.current = true;
+    getLatestExchangeRate('USD').then((rate) => {
+      if (rate && rate.valor > 1) {
+        setOrderExchangeRate((prev) => (prev > 1 ? prev : rate.valor));
+      }
+    });
+  }, [isEdit, needsOrderRate]);
 
   /**
    * Créditos de NC convertidos a la moneda de la orden. No tocan el total de
@@ -892,6 +911,10 @@ export function NewPaymentOrderForm({
       toast.error('Agregá al menos un ítem');
       return;
     }
+    if (needsOrderRate && !isEdit && !(orderExchangeRate > 1)) {
+      toast.error('Cargá el tipo de cambio del día del pago');
+      return;
+    }
     // Con el crédito de las NC cubriendo todo el neto no queda plata por
     // transferir: la orden se guarda sin pagos (TKT-586). El formulario arranca
     // con una línea de pago en blanco, y esa línea vacía no es un pago: si viaja
@@ -1049,25 +1072,27 @@ export function NewPaymentOrderForm({
             </Select>
             {hasForeignItems && orderCurrency === BASE_CURRENCY && (
               <p className="text-xs text-muted-foreground">
-                Hay comprobantes en otra moneda. Se convierten con el tipo de cambio de cada factura.
+                Hay comprobantes en dólares: se pagan en pesos al tipo de cambio del día del pago.
               </p>
             )}
           </div>
 
-          {/* Una factura en pesos trae tipo de cambio 1 y no alcanza para
-              convertirla si la orden está en dólares: ahí lo pone la orden. */}
-          {orderCurrency !== BASE_CURRENCY && (
+          {/* TC del día del pago: convierte todo comprobante en otra moneda que
+              la orden, en las dos direcciones. */}
+          {needsOrderRate && (
             <div className="space-y-1.5">
-              <Label>Tipo de cambio (1 {orderCurrency} = ? {BASE_CURRENCY})</Label>
+              <Label>Tipo de cambio del día del pago (1 USD = ? {BASE_CURRENCY})</Label>
               <Input
                 type="number"
                 step="0.0001"
                 min="0"
-                value={orderExchangeRate || ''}
+                value={orderExchangeRate > 1 ? orderExchangeRate : ''}
                 onChange={(e) => setOrderExchangeRate(parseFloat(e.target.value) || 0)}
               />
               <p className="text-xs text-muted-foreground">
-                Se aplica a los comprobantes en {BASE_CURRENCY}.
+                {isEdit && orderExchangeRate <= 1
+                  ? 'Sin cargar: se usa el tipo de cambio de cada factura.'
+                  : 'Se aplica a los comprobantes en otra moneda que la orden.'}
               </p>
             </div>
           )}
