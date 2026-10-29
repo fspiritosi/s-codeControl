@@ -1197,12 +1197,12 @@ export const deleteTraining = async (trainingId: string) => {
     }
 
     const documentsUrl = materials
-      .map((material) => material.file_url)
-      .filter((url): url is string => Boolean(url));
+      .map((material) => material.file_url?.split('training-materials/')[1])
+      .filter((path): path is string => Boolean(path));
     // Supabase Storage rechaza un array vacío (body/prefixes must NOT have fewer
     // than 1 items), así que solo intentamos borrar si hay archivos.
     if (documentsUrl.length > 0) {
-      await storageServer.remove('documents', documentsUrl);
+      await storageServer.remove('training-materials', documentsUrl);
     }
 
     // 5. Finalmente eliminar la capacitación

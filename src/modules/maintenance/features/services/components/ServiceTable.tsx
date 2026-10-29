@@ -156,8 +156,8 @@ const ServiceTable = ({ services, customers, company_id }: ServiceTableProps) =>
                           {service.is_active ? 'Activo' : 'Inactivo'}
                         </Badge>
                       </TableCell>
-                      <TableCell>{format(service.service_start?.toString(), 'dd/MM/yyyy')}</TableCell>
-                      <TableCell>{format(service.service_validity, 'dd/MM/yyyy')}</TableCell>
+                      <TableCell>{service.service_start ? format(service.service_start.toString(), 'dd/MM/yyyy') : '-'}</TableCell>
+                      <TableCell>{service.service_validity ? format(service.service_validity, 'dd/MM/yyyy') : '-'}</TableCell>
                       <TableCell>
                         {
                           customers.find(

@@ -75,7 +75,10 @@ export const s3Storage = {
     // Se borra objeto por objeto: DeleteObjects en modo Quiet devuelve los fallos en `Errors` sin lanzar, y RustFS los deja
     // sin borrar en silencio (el archivo queda huérfano en el bucket aunque la app diga que lo eliminó).
     await Promise.all(
-      paths.map((Key) => client().send(new DeleteObjectCommand({ Bucket: s3BucketName(bucket), Key })))
+      paths.map((path) =>
+        // Supabase ignoraba las barras iniciales y la app guarda rutas como `/a/b`: S3 las rechaza ("Invalid object key").
+        client().send(new DeleteObjectCommand({ Bucket: s3BucketName(bucket), Key: path.replace(/^\/+/, '') }))
+      )
     )
     return paths.map((name) => ({ name }))
   },
