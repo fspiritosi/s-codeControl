@@ -31,3 +31,11 @@ Antes de que entren escrituras en la base nueva: volver el DNS a Vercel, reactiv
 
 ## Cuentas sin contraseña
 Las 8 cuentas sin `password_hash` entran solo con Google (3 Admin y 5 CodeControlClient): sin las credenciales de Google no pueden ingresar. Alternativa: `requestPasswordReset` con SMTP real.
+
+## Ensayo (probado el 2026-10-29)
+`ensayo.sh <base_destino>` (en `~/cc-ensayo` de la VPS, con `sql/` = los `.sql` de este directorio y `prod.url` modo 600) hace dump de prod, restore en una base nueva del Postgres del clon (`codecontrol_ensayo`), aplica `00`–`04` y deja los conteos por tabla en `conteos_<base>.txt`. No toca la base del clon ni la de prod (solo lectura).
+- **Duración medida:** dump + restore + scripts = **86 s** (dump de 23 MB). Archivos: sincronización incremental (`sync.mjs`, 11.927 objetos) = **62 s** con 145 copiados y 0 fallos. Total de la parte de datos ≈ 3 min; el resto de la ventana es cambiar variables, redeploy y verificar.
+- **Resultado:** 0 diferencias en las 129 tablas con datos; 1 vista (`company_users_by_cuil`, depende de `auth.users`) no se restaura y no se usa; el restore da 3 errores sin impacto (`schema public already exists`, rol `pgsodium_keyiduser`, esa vista).
+- **Apuntar las apps a la base nueva:** cambiar solo el nombre de la base en `DATABASE_URL` (la app y el portal). Cuidado al reemplazar texto: el usuario también se llama `codecontrol` (usar `/codecontrol$` y no un reemplazo global). Con la API de Dokploy, `application.saveEnvironment` exige `buildArgs`, `buildSecrets` y `createEnvFile`, y luego `application.redeploy`.
+- **Resultado de la suite sobre la copia fresca:** 291 tests pasan, 30 saltados (`fixme`/`skip` documentados), 2 intermitentes que pasan con reintento; el único fallo fue el flujo portal ↔ CodeControl porque el portal seguía en la base vieja (resuelto al apuntar el portal también).
+- **Volver atrás:** `~/cc-ensayo/app-env.orig` y `portal-env.orig` guardan el `env` original de cada app.
