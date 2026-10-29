@@ -11,7 +11,7 @@ import {
   PURCHASE_INVOICE_ATTACHMENT_MAX_BYTES,
 } from '@/modules/purchasing/shared/validators';
 import { recalcInvoicingStatus } from '@/modules/purchasing/shared/recalc-invoicing-status';
-import { BASE_CURRENCY, sumInOrderCurrency } from '@/shared/lib/currency-conversion';
+import { BASE_CURRENCY, invoiceAmountInOrderCurrency, sumInOrderCurrency } from '@/shared/lib/currency-conversion';
 import { revalidatePath } from 'next/cache';
 
 const ALLOWED_MIME_SET = new Set<string>(PURCHASE_INVOICE_ATTACHMENT_ALLOWED_MIME as readonly string[]);
@@ -92,7 +92,8 @@ export async function getImputableExpenses(orderId: string) {
 /**
  * Resumen de imputación: total OC vs total imputado (facturas + gastos) y
  * excedente, todo en la moneda de la OC. Una factura en otra moneda se convierte
- * con su propio TC; los gastos (siempre en pesos) con el TC de referencia de la OC.
+ * al TC de la factura (ver invoiceAmountInOrderCurrency); los gastos (siempre en
+ * pesos) al TC de referencia de la OC.
  */
 export async function getOrderImputationSummary(orderId: string) {
   const { companyId } = await getActionContext();
@@ -107,7 +108,7 @@ export async function getOrderImputationSummary(orderId: string) {
   const [invoices, expAgg] = await Promise.all([
     prisma.purchase_invoices.findMany({
       where: { purchase_order_id: orderId, status: { not: 'CANCELLED' } },
-      select: { total: true, currency: true, exchange_rate: true },
+      select: { total: true, currency: true, exchange_rate: true, order_exchange_rate: true },
     }),
     prisma.expenses.aggregate({
       where: { purchase_order_id: orderId, status: { not: 'CANCELLED' } },
@@ -117,14 +118,23 @@ export async function getOrderImputationSummary(orderId: string) {
 
   const orderRef = { currency: order.currency, exchange_rate: Number(order.exchange_rate) };
   const orderTotal = Number(order.total);
-  const invoicesTotal = sumInOrderCurrency(
-    invoices.map((inv) => ({
-      amount: Number(inv.total),
-      currency: inv.currency ?? BASE_CURRENCY,
-      exchange_rate: Number(inv.exchange_rate ?? 1),
-    })),
-    orderRef
-  );
+  const invoicesTotal =
+    Math.round(
+      invoices.reduce(
+        (acc, inv) =>
+          acc +
+          invoiceAmountInOrderCurrency(
+            Number(inv.total),
+            {
+              currency: inv.currency ?? BASE_CURRENCY,
+              exchange_rate: Number(inv.exchange_rate ?? 1),
+              order_exchange_rate: inv.order_exchange_rate != null ? Number(inv.order_exchange_rate) : null,
+            },
+            orderRef
+          ),
+        0
+      ) * 100
+    ) / 100;
   const expensesTotal = sumInOrderCurrency(
     [{ amount: Number(expAgg._sum.amount ?? 0), currency: BASE_CURRENCY, exchange_rate: 1 }],
     orderRef

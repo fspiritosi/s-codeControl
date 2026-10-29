@@ -2248,6 +2248,10 @@ model purchase_invoices {
   cae                   String?
   currency              String                            @default("ARS")
   exchange_rate         Decimal                           @default(1) @db.Decimal(12, 4)
+  /// TC (ARS por USD) con el que se convirtieron las líneas de una OC en otra
+  /// moneda; con él la factura descuenta el saldo de la OC. Null si la factura y
+  /// la OC están en la misma moneda o si la factura es anterior a este dato.
+  order_exchange_rate   Decimal?                          @db.Decimal(15, 4)
   subtotal              Decimal                           @default(0) @db.Decimal(12, 2)
   vat_amount            Decimal                           @default(0) @db.Decimal(12, 2)
   other_taxes           Decimal                           @default(0) @db.Decimal(12, 2)

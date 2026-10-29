@@ -1,4 +1,5 @@
 import { prisma } from '@/shared/lib/prisma';
+import { BASE_CURRENCY, invoiceAmountInOrderCurrency } from '@/shared/lib/currency-conversion';
 
 /**
  * Recálculo unificado del estado de facturación (invoicing_status) de una OC.
@@ -24,13 +25,18 @@ const EPS = 0.01;
 export type InvoicingStatus = 'NOT_INVOICED' | 'PARTIALLY_INVOICED' | 'FULLY_INVOICED';
 
 export async function recalcInvoicingStatus(orderId: string): Promise<InvoicingStatus | null> {
-  const [order, lines, invoicedAgg, confirmedInvoiceLines] = await Promise.all([
-    prisma.purchase_orders.findUnique({ where: { id: orderId }, select: { total: true } }),
+  const [order, lines, invoicedRows, confirmedInvoiceLines] = await Promise.all([
+    prisma.purchase_orders.findUnique({
+      where: { id: orderId },
+      select: { total: true, currency: true, exchange_rate: true },
+    }),
     prisma.purchase_order_lines.findMany({
       where: { order_id: orderId },
       select: { id: true, quantity: true, invoiced_qty: true },
     }),
-    prisma.purchase_invoices.aggregate({
+    // Sin aggregate: cada factura puede estar en otra moneda que la OC y hay que
+    // convertirla antes de sumar.
+    prisma.purchase_invoices.findMany({
       where: {
         status: 'CONFIRMED',
         OR: [
@@ -38,7 +44,7 @@ export async function recalcInvoicingStatus(orderId: string): Promise<InvoicingS
           { lines: { some: { purchase_order_line: { order_id: orderId } } } },
         ],
       },
-      _sum: { total: true },
+      select: { total: true, currency: true, exchange_rate: true, order_exchange_rate: true },
     }),
     prisma.purchase_invoice_lines.findMany({
       where: {
@@ -52,7 +58,21 @@ export async function recalcInvoicingStatus(orderId: string): Promise<InvoicingS
   if (!order) return null;
 
   const orderTotal = Number(order.total ?? 0);
-  const invoicedTotal = Number(invoicedAgg._sum.total ?? 0);
+  const orderRef = { currency: order.currency, exchange_rate: Number(order.exchange_rate) };
+  const invoicedTotal = invoicedRows.reduce(
+    (acc, inv) =>
+      acc +
+      invoiceAmountInOrderCurrency(
+        Number(inv.total),
+        {
+          currency: inv.currency ?? BASE_CURRENCY,
+          exchange_rate: Number(inv.exchange_rate ?? 1),
+          order_exchange_rate: inv.order_exchange_rate != null ? Number(inv.order_exchange_rate) : null,
+        },
+        orderRef
+      ),
+    0
+  );
 
   // Cantidad facturada (confirmada) acumulada por línea de OC, desde la fuente.
   const qtyByLine = new Map<string, number>();

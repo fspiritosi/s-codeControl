@@ -76,6 +76,7 @@ export async function getPurchaseInvoicesPaginated(searchParams: DataTableSearch
         other_charges: Number(inv.other_charges),
         total: Number(inv.total),
         exchange_rate: Number(inv.exchange_rate),
+        order_exchange_rate: inv.order_exchange_rate != null ? Number(inv.order_exchange_rate) : null,
         discount_amount: Number(inv.discount_amount),
         global_discount_value:
           inv.global_discount_value !== null ? Number(inv.global_discount_value) : null,
@@ -119,6 +120,8 @@ export async function createPurchaseInvoice(data: {
   cae?: string;
   currency?: string;
   exchange_rate?: number;
+  /** TC con el que se convirtieron las líneas de una OC en otra moneda. */
+  order_exchange_rate?: number | null;
   notes?: string;
   original_invoice_id?: string | null;
   purchase_order_id?: string;
@@ -278,6 +281,7 @@ export async function createPurchaseInvoice(data: {
         cae: data.cae || null,
         currency: data.currency || 'ARS',
         exchange_rate: data.currency === 'ARS' ? 1 : (data.exchange_rate ?? 1),
+        order_exchange_rate: data.order_exchange_rate && data.order_exchange_rate > 1 ? data.order_exchange_rate : null,
         notes: data.notes || null,
         original_invoice_id: creditNoteOriginalId,
         purchase_order_id: primaryOrderId,
@@ -508,6 +512,7 @@ export async function getPurchaseInvoiceForEdit(invoiceId: string) {
     cae: invoice.cae || '',
     currency: invoice.currency || 'ARS',
     exchange_rate: invoice.exchange_rate != null ? Number(invoice.exchange_rate) : 1,
+    order_exchange_rate: invoice.order_exchange_rate != null ? Number(invoice.order_exchange_rate) : null,
     notes: invoice.notes || '',
     original_invoice_id: invoice.original_invoice_id ?? null,
     purchase_order_ids: orderIds,
@@ -550,6 +555,8 @@ export async function updatePurchaseInvoice(
     cae?: string;
     currency?: string;
     exchange_rate?: number;
+    /** TC con el que se convirtieron las líneas de una OC en otra moneda. */
+    order_exchange_rate?: number | null;
     notes?: string;
     original_invoice_id?: string | null;
     purchase_order_ids?: string[];
@@ -737,6 +744,7 @@ export async function updatePurchaseInvoice(
           cae: data.cae || null,
           currency: data.currency || 'ARS',
           exchange_rate: data.currency === 'ARS' ? 1 : (data.exchange_rate ?? 1),
+          order_exchange_rate: data.order_exchange_rate && data.order_exchange_rate > 1 ? data.order_exchange_rate : null,
           notes: data.notes || null,
           original_invoice_id: creditNoteOriginalId,
           purchase_order_id: primaryOrderId,
