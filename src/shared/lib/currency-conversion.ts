@@ -65,23 +65,28 @@ export function isValidExchangeRate(rate: unknown): rate is number {
 /**
  * Tipo de cambio que hay que aplicarle realmente a un ítem.
  *
- * El rate sale de la factura, pero una factura EN PESOS trae rate = 1, que no
- * alcanza para convertirla cuando la orden está en dólares. En ese caso el rate
- * lo aporta la orden. Los tres casos:
+ * Una factura en dólares se puede pagar en pesos al tipo de cambio del día del
+ * pago, no al de la factura: ese TC lo carga la orden. Los casos:
  *
- *   ítem y orden en la misma moneda        -> 1 (no se convierte)
- *   ítem en moneda extranjera              -> el de la factura
- *   ítem en la base, orden en extranjera   -> el de la orden
+ *   ítem y orden en la misma moneda          -> 1 (no se convierte)
+ *   monedas distintas, la orden trae TC      -> el de la orden (día del pago)
+ *   monedas distintas, la orden no trae TC   -> el de la factura
+ *
+ * El último caso son las OP en pesos anteriores a este cambio: se guardaron con
+ * TC 1 y se convirtieron con el de la factura, y así tienen que seguir.
  */
 export function effectiveRate(
   item: { currency: string; exchange_rate: number },
   order: { currency: string; exchange_rate: number }
 ): number {
   if (item.currency === order.currency) return 1;
+  if (isValidExchangeRate(order.exchange_rate) && order.exchange_rate > 1) {
+    return order.exchange_rate;
+  }
   if (item.currency !== BASE_CURRENCY && isValidExchangeRate(item.exchange_rate) && item.exchange_rate > 1) {
     return item.exchange_rate;
   }
-  return isValidExchangeRate(order.exchange_rate) ? order.exchange_rate : 1;
+  return 1;
 }
 
 /**

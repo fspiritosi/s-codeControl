@@ -3,6 +3,7 @@
 import { prisma } from '@/shared/lib/prisma';
 import { getActionContext } from '@/shared/lib/server-action-context';
 import { revalidatePath } from 'next/cache';
+import { BASE_CURRENCY, convertAmount } from '@/shared/lib/currency-conversion';
 
 export interface PriceDifference {
   lineId: string;
@@ -20,6 +21,24 @@ const PRICE_TOLERANCE = 0.01;
 
 function round3(n: number): number {
   return Math.round(n * 1000) / 1000;
+}
+
+/**
+ * El costo del producto está en pesos. En una OC en dólares se compara (y se
+ * aplica) convertido al TC de referencia de la orden.
+ */
+function productCostInOrderCurrency(
+  costPrice: unknown,
+  order: { currency: string; exchange_rate: unknown }
+): number {
+  const cost = Number(costPrice);
+  if (order.currency === BASE_CURRENCY) return cost;
+  return convertAmount({
+    amount: cost,
+    from: BASE_CURRENCY,
+    to: order.currency,
+    rate: Number(order.exchange_rate),
+  });
 }
 
 function computeLineTotals(quantity: number, unitCost: number, vatRate: number) {
@@ -40,6 +59,8 @@ export async function reviewPurchaseOrderPrices(
       where: { id: orderId, company_id: companyId },
       select: {
         id: true,
+        currency: true,
+        exchange_rate: true,
         lines: {
           select: {
             id: true,
@@ -58,7 +79,7 @@ export async function reviewPurchaseOrderPrices(
     for (const line of order.lines) {
       if (!line.product || !line.product_id) continue;
       const currentPrice = Number(line.unit_cost);
-      const newPrice = Number(line.product.cost_price);
+      const newPrice = productCostInOrderCurrency(line.product.cost_price, order);
       const diff = round3(newPrice - currentPrice);
       if (Math.abs(diff) < PRICE_TOLERANCE) continue;
       const diffPercent = currentPrice === 0 ? 100 : round3((diff / currentPrice) * 100);
@@ -146,7 +167,7 @@ export async function applyPurchaseOrderPriceUpdates(
   try {
     const order = await prisma.purchase_orders.findFirst({
       where: { id: orderId, company_id: companyId },
-      select: { id: true, status: true },
+      select: { id: true, status: true, currency: true, exchange_rate: true },
     });
     if (!order) return { ok: false, error: 'Orden no encontrada' };
     if (order.status !== 'DRAFT' && order.status !== 'PENDING_APPROVAL') {
@@ -177,7 +198,7 @@ export async function applyPurchaseOrderPriceUpdates(
         let unitCost = Number(line.unit_cost);
 
         if (targetIds.has(line.id) && line.product) {
-          unitCost = Number(line.product.cost_price);
+          unitCost = productCostInOrderCurrency(line.product.cost_price, order);
           const totals = computeLineTotals(quantity, unitCost, vatRate);
           await tx.purchase_order_lines.update({
             where: { id: line.id },

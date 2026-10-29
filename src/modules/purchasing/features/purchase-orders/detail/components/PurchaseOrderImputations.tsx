@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/components/ui/dialog';
-import { formatCurrencyARS, formatDateUTC } from '@/shared/lib/utils/formatters';
+import { formatCurrencyARS, formatCurrencyIn, formatDateUTC } from '@/shared/lib/utils/formatters';
 import {
   getImputableInvoices,
   getImputableExpenses,
@@ -27,9 +27,11 @@ import {
   removeExpenseFromOrder,
 } from '../actions.server';
 
-type LinkedInvoice = { id: string; full_number: string; status: string; total: number };
+type LinkedInvoice = { id: string; full_number: string; status: string; total: number; currency?: string | null };
 type LinkedExpense = { id: string; full_number: string; description: string; amount: number; status: string };
 type ImputationSummary = {
+  /** Moneda de la OC: todos los importes del resumen están en ella. */
+  currency: string;
   orderTotal: number;
   invoicesTotal: number;
   expensesTotal: number;
@@ -45,7 +47,7 @@ interface Props {
   summary: ImputationSummary;
 }
 
-type Candidate = { id: string; primary: string; secondary: string; amount: number };
+type Candidate = { id: string; primary: string; secondary: string; amount: number; currency?: string | null };
 
 export default function PurchaseOrderImputations({
   orderId,
@@ -75,6 +77,7 @@ export default function PurchaseOrderImputations({
             primary: i.full_number,
             secondary: formatDateUTC(i.issue_date),
             amount: i.total,
+            currency: i.currency,
           }))
         );
       } else {
@@ -117,7 +120,7 @@ export default function PurchaseOrderImputations({
         return;
       }
       if (res.summary && res.summary.over > 0) {
-        toast.warning(`El total imputado supera el de la OC en ${formatCurrencyARS(res.summary.over)}`);
+        toast.warning(`El total imputado supera el de la OC en ${formatCurrencyIn(res.summary.over, res.summary.currency)}`);
       } else {
         toast.success('Comprobantes imputados');
       }
@@ -153,20 +156,20 @@ export default function PurchaseOrderImputations({
           <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
               <p className="text-muted-foreground">Total OC</p>
-              <p className="font-mono font-medium">{formatCurrencyARS(summary.orderTotal)}</p>
+              <p className="font-mono font-medium">{formatCurrencyIn(summary.orderTotal, summary.currency)}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Facturas imputadas</p>
-              <p className="font-mono">{formatCurrencyARS(summary.invoicesTotal)}</p>
+              <p className="font-mono">{formatCurrencyIn(summary.invoicesTotal, summary.currency)}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Gastos imputados</p>
-              <p className="font-mono">{formatCurrencyARS(summary.expensesTotal)}</p>
+              <p className="font-mono">{formatCurrencyIn(summary.expensesTotal, summary.currency)}</p>
             </div>
             <div>
               <p className="text-muted-foreground">{pendingAmount >= 0 ? 'Saldo pendiente' : 'Excedente'}</p>
               <p className={pendingAmount < 0 ? 'font-mono font-semibold text-red-600' : 'font-mono font-semibold'}>
-                {formatCurrencyARS(Math.abs(pendingAmount))}
+                {formatCurrencyIn(Math.abs(pendingAmount), summary.currency)}
               </p>
             </div>
           </CardContent>
@@ -177,9 +180,9 @@ export default function PurchaseOrderImputations({
         <div className="flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
           <AlertTriangle className="size-4 shrink-0" />
           <span>
-            El total imputado ({formatCurrencyARS(summary.imputedTotal)}) supera el total de la OC (
-            {formatCurrencyARS(summary.orderTotal)}) en{' '}
-            <strong>{formatCurrencyARS(summary.over)}</strong>.
+            El total imputado ({formatCurrencyIn(summary.imputedTotal, summary.currency)}) supera el total de la OC (
+            {formatCurrencyIn(summary.orderTotal, summary.currency)}) en{' '}
+            <strong>{formatCurrencyIn(summary.over, summary.currency)}</strong>.
           </span>
         </div>
       )}
@@ -214,7 +217,7 @@ export default function PurchaseOrderImputations({
                     <TableCell>
                       <Badge variant={inv.status === 'CONFIRMED' ? 'default' : 'secondary'}>{inv.status}</Badge>
                     </TableCell>
-                    <TableCell className="text-right">{formatCurrencyARS(Number(inv.total))}</TableCell>
+                    <TableCell className="text-right">{formatCurrencyIn(Number(inv.total), inv.currency)}</TableCell>
                     {canUpdate && (
                       <TableCell>
                         <Button
@@ -314,7 +317,7 @@ export default function PurchaseOrderImputations({
                       <p className="font-mono text-sm">{c.primary}</p>
                       <p className="text-xs text-muted-foreground truncate">{c.secondary}</p>
                     </div>
-                    <span className="font-mono text-sm">{formatCurrencyARS(c.amount)}</span>
+                    <span className="font-mono text-sm">{formatCurrencyIn(c.amount, c.currency)}</span>
                   </label>
                 ))}
               </div>

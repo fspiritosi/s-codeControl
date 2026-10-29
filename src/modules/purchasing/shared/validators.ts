@@ -20,7 +20,14 @@ export const purchaseOrderSchema = z.object({
   delivery_address: z.string().optional().or(z.literal('')),
   delivery_notes: z.string().optional().or(z.literal('')),
   notes: z.string().optional().or(z.literal('')),
+  /** Moneda de la orden. Líneas, totales y cuotas se expresan en esta moneda. */
+  currency: z.enum(['ARS', 'USD']).default('ARS'),
+  /** TC de referencia al emitir (ARS por USD). Solo se usa si la orden es en USD. */
+  exchange_rate: z.coerce.number().positive('El tipo de cambio debe ser mayor a 0').default(1),
   lines: z.array(purchaseOrderLineSchema).min(1, 'Debe agregar al menos una línea'),
+}).refine((data) => data.currency === 'ARS' || data.exchange_rate > 1, {
+  message: 'Ingresá el tipo de cambio de la orden',
+  path: ['exchange_rate'],
 });
 
 // ============================================================

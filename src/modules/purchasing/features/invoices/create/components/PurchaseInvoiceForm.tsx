@@ -32,6 +32,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { toast } from 'sonner';
+import { formatCurrencyIn } from '@/shared/lib/utils/formatters';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, LinkIcon, Paperclip, X, PackagePlus, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useMemo, useState, useEffect, useRef } from 'react';
@@ -269,6 +270,15 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
     const addedIds = newIds.filter((id) => !oldIds.includes(id));
     const removedIds = oldIds.filter((id) => !newIds.includes(id));
 
+    // "Seleccionar todas" puede juntar OCs en pesos y en dólares.
+    const currencies = new Set(
+      availableOrders.filter((o) => newIds.includes(o.id)).map((o) => o.currency ?? 'ARS')
+    );
+    if (currencies.size > 1) {
+      toast.error('No se pueden facturar juntas OCs en monedas distintas');
+      return;
+    }
+
     // 1) Remover líneas de OCs deseleccionadas (preservar manuales y de otras OCs)
     if (removedIds.length > 0) {
       const currentLines = form.getValues('lines') as LineField[];
@@ -287,6 +297,17 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
 
     // 2) Agregar líneas de OCs nuevas (append, no replace)
     if (addedIds.length > 0) {
+      // Las líneas de la OC vienen en su moneda: la factura la toma. El TC se
+      // precarga con el de referencia de la OC, pero el de la factura manda.
+      const orderCurrency = availableOrders.find((o) => o.id === addedIds[0])?.currency ?? 'ARS';
+      if (form.getValues('currency') !== orderCurrency) {
+        form.setValue('currency', orderCurrency, { shouldDirty: true });
+        const orderRate = Number(availableOrders.find((o) => o.id === addedIds[0])?.exchange_rate) || 1;
+        form.setValue('exchange_rate', orderCurrency === 'ARS' ? 1 : orderRate, { shouldDirty: true });
+        if (orderCurrency !== 'ARS') {
+          toast.info(`La OC está en ${orderCurrency}: la factura pasa a ${orderCurrency}. Revisá el tipo de cambio.`);
+        }
+      }
       const bulkLines = await getPurchaseOrderLinesForInvoicingBulk(addedIds);
       const currentLines = form.getValues('lines') as LineField[];
       const hasOnlyPlaceholder =
@@ -792,10 +813,17 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
             </CardHeader>
             <CardContent>
               <MultiSelectCombobox
-                options={availableOrders.map((o) => ({
-                  label: `${o.full_number} — $${o.total.toFixed(2)}`,
-                  value: o.id,
-                }))}
+                options={availableOrders
+                  // Una factura tiene una sola moneda: con una OC elegida solo
+                  // se ofrecen las de su misma moneda.
+                  .filter((o) => {
+                    const first = availableOrders.find((x) => watchedOrderIds.includes(x.id));
+                    return !first || watchedOrderIds.includes(o.id) || (o.currency ?? 'ARS') === (first.currency ?? 'ARS');
+                  })
+                  .map((o) => ({
+                    label: `${o.full_number} — ${formatCurrencyIn(o.total, o.currency)}`,
+                    value: o.id,
+                  }))}
                 placeholder="Seleccionar OCs (opcional — carga líneas pendientes de facturar)"
                 emptyMessage="No hay OCs facturables para este proveedor"
                 selectedValues={watchedOrderIds}

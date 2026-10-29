@@ -8,6 +8,7 @@ import {
   PO_STATUS_LABELS,
   PO_INVOICING_STATUS_LABELS,
 } from '@/modules/purchasing/shared/types';
+import { formatCurrencyIn } from '@/shared/lib/utils/formatters';
 import { PaginatedTable, StatBlock, StatusFilterToolbar, SummaryGrid } from './SectionShell';
 
 interface Row {
@@ -16,6 +17,7 @@ interface Row {
   issue_date: Date | string;
   expected_delivery_date: Date | string | null;
   total: number;
+  currency: string;
   status: string;
   invoicing_status: string;
 }
@@ -24,6 +26,7 @@ interface Summary {
   totalAmount: number;
   countByStatus: Record<string, number>;
   total: number;
+  hasForeignCurrency: boolean;
 }
 
 const fmt = (n: number) =>
@@ -56,7 +59,10 @@ export function PurchaseOrdersSection({ rows, summary }: { rows: Row[]; summary:
   return (
     <div className="space-y-4 pt-2">
       <SummaryGrid>
-        <StatBlock label="Monto total (no anuladas)" value={fmt(summary?.totalAmount ?? 0)} />
+        <StatBlock
+          label={summary?.hasForeignCurrency ? 'Monto total en pesos (no anuladas)' : 'Monto total (no anuladas)'}
+          value={fmt(summary?.totalAmount ?? 0)}
+        />
         <StatBlock label="Aprobadas" value={summary?.countByStatus['APPROVED'] ?? 0} />
         <StatBlock label="Recibidas parcialmente" value={summary?.countByStatus['PARTIALLY_RECEIVED'] ?? 0} />
         <StatBlock label="Completadas" value={summary?.countByStatus['COMPLETED'] ?? 0} />
@@ -90,7 +96,7 @@ export function PurchaseOrdersSection({ rows, summary }: { rows: Row[]; summary:
           },
           {
             header: 'Total',
-            cell: (r) => <span className="font-medium">{fmt(r.total)}</span>,
+            cell: (r) => <span className="font-medium">{formatCurrencyIn(r.total, r.currency)}</span>,
             className: 'text-right',
           },
           {

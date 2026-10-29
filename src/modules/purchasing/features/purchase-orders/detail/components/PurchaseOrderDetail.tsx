@@ -12,7 +12,7 @@ import {
   rejectPurchaseOrder,
   cancelPurchaseOrder,
 } from '@/modules/purchasing/features/purchase-orders/list/actions.server';
-import { formatDateUTC } from '@/shared/lib/utils/formatters';
+import { formatCurrencyIn, formatDateUTC } from '@/shared/lib/utils/formatters';
 import { Send, CheckCircle, XCircle, Ban } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -141,8 +141,10 @@ export default function PurchaseOrderDetail({ order, linkedExpenses = [], attach
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Total</CardDescription>
-            <CardTitle className="text-lg">${order.total.toFixed(2)}</CardTitle>
+            <CardDescription>
+              Total{order.currency && order.currency !== 'ARS' ? ` en ${order.currency} · TC ref. ${order.exchange_rate}` : ''}
+            </CardDescription>
+            <CardTitle className="text-lg">{formatCurrencyIn(order.total, order.currency)}</CardTitle>
           </CardHeader>
         </Card>
       </div>
@@ -191,9 +193,9 @@ export default function PurchaseOrderDetail({ order, linkedExpenses = [], attach
                   <TableCell className="font-mono text-xs">{line.product?.code || '-'}</TableCell>
                   <TableCell>{line.description}</TableCell>
                   <TableCell className="text-right">{line.quantity}</TableCell>
-                  <TableCell className="text-right">${line.unit_cost.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">{formatCurrencyIn(line.unit_cost, order.currency)}</TableCell>
                   <TableCell className="text-right">{line.vat_rate}%</TableCell>
-                  <TableCell className="text-right">${line.subtotal.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">{formatCurrencyIn(line.subtotal, order.currency)}</TableCell>
                   <TableCell className="text-right font-medium">{line.received_qty}</TableCell>
                   <TableCell className="text-right font-medium">{line.invoiced_qty}</TableCell>
                   <TableCell className={pendingQty > 0 ? 'text-right font-medium text-amber-600' : 'text-right font-medium text-muted-foreground'}>
@@ -206,9 +208,9 @@ export default function PurchaseOrderDetail({ order, linkedExpenses = [], attach
           </Table>
           <Separator className="my-4" />
           <div className="flex justify-end text-sm space-x-8">
-            <div>Subtotal: <span className="font-mono font-medium">${order.subtotal.toFixed(2)}</span></div>
-            <div>IVA: <span className="font-mono font-medium">${order.vat_amount.toFixed(2)}</span></div>
-            <div className="text-lg font-bold">Total: <span className="font-mono">${order.total.toFixed(2)}</span></div>
+            <div>Subtotal: <span className="font-mono font-medium">{formatCurrencyIn(order.subtotal, order.currency)}</span></div>
+            <div>IVA: <span className="font-mono font-medium">{formatCurrencyIn(order.vat_amount, order.currency)}</span></div>
+            <div className="text-lg font-bold">Total: <span className="font-mono">{formatCurrencyIn(order.total, order.currency)}</span></div>
           </div>
         </CardContent>
       </Card>

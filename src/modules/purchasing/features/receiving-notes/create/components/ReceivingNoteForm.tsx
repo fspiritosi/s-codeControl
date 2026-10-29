@@ -16,6 +16,7 @@ import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { toast } from 'sonner';
+import { formatCurrencyIn } from '@/shared/lib/utils/formatters';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, LinkIcon, FileText, ShoppingCart } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -202,7 +203,7 @@ export default function ReceivingNoteForm({ suppliers, products, warehouses }: P
                 <Select onValueChange={handleOrderSelect} value={form.watch('purchase_order_id') || ''}>
                   <SelectTrigger><SelectValue placeholder="Seleccionar OC (carga productos pendientes de recibir)" /></SelectTrigger>
                   <SelectContent>
-                    {availableOrders.map((o) => <SelectItem key={o.id} value={o.id}>{o.full_number} — ${o.total.toFixed(2)}</SelectItem>)}
+                    {availableOrders.map((o) => <SelectItem key={o.id} value={o.id}>{o.full_number} — {formatCurrencyIn(o.total, o.currency)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               )}

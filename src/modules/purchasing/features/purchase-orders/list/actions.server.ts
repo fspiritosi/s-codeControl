@@ -63,6 +63,7 @@ export async function getPurchaseOrdersPaginated(searchParams: DataTableSearchPa
 
     const formatted = data.map((po) => ({
       ...po,
+      exchange_rate: Number(po.exchange_rate),
       subtotal: Number(po.subtotal),
       vat_amount: Number(po.vat_amount),
       total: Number(po.total),
@@ -113,6 +114,7 @@ export async function getPurchaseOrderById(id: string) {
 
   return {
     ...order,
+    exchange_rate: Number(order.exchange_rate),
     subtotal: Number(order.subtotal),
     vat_amount: Number(order.vat_amount),
     total: Number(order.total),
@@ -167,7 +169,7 @@ export async function getOrdersForReceiving(supplierId: string) {
       supplier_id: supplierId,
       status: { in: ['APPROVED', 'PARTIALLY_RECEIVED'] },
     },
-    select: { id: true, full_number: true, total: true, issue_date: true },
+    select: { id: true, full_number: true, total: true, currency: true, issue_date: true },
     orderBy: { created_at: 'desc' },
   });
 
@@ -185,11 +187,20 @@ export async function getOrdersForInvoicing(supplierId: string) {
       status: { in: ['APPROVED', 'PARTIALLY_RECEIVED', 'COMPLETED'] },
       invoicing_status: { in: ['NOT_INVOICED', 'PARTIALLY_INVOICED'] },
     },
-    select: { id: true, full_number: true, total: true, issue_date: true, status: true, invoicing_status: true },
+    select: {
+      id: true,
+      full_number: true,
+      total: true,
+      currency: true,
+      exchange_rate: true,
+      issue_date: true,
+      status: true,
+      invoicing_status: true,
+    },
     orderBy: { created_at: 'desc' },
   });
 
-  return orders.map((o) => ({ ...o, total: Number(o.total) }));
+  return orders.map((o) => ({ ...o, total: Number(o.total), exchange_rate: Number(o.exchange_rate) }));
 }
 
 export async function getPurchaseOrderLinesForInvoicing(orderId: string) {
@@ -255,7 +266,7 @@ export async function getInvoicesByOrderId(orderId: string) {
         { lines: { some: { purchase_order_line: { order_id: orderId } } } },
       ],
     },
-    select: { id: true, full_number: true, status: true, total: true },
+    select: { id: true, full_number: true, status: true, total: true, currency: true },
     orderBy: { created_at: 'desc' },
   });
 
@@ -274,6 +285,8 @@ export async function createPurchaseOrder(data: {
   delivery_address?: string;
   delivery_notes?: string;
   notes?: string;
+  currency?: 'ARS' | 'USD';
+  exchange_rate?: number;
   lines: { product_id?: string; description: string; quantity: number; unit_cost: number; vat_rate: number }[];
 }) {
   const { companyId } = await getActionContext();
@@ -281,6 +294,11 @@ export async function createPurchaseOrder(data: {
 
   try {
     await requirePermission('compras.create');
+    const currency = data.currency ?? 'ARS';
+    const exchangeRate = currency === 'ARS' ? 1 : Number(data.exchange_rate);
+    if (currency !== 'ARS' && !(exchangeRate > 1)) {
+      return { data: null, error: 'Ingresá el tipo de cambio de la orden' };
+    }
     // Auto-generate number
     const lastOrder = await prisma.purchase_orders.findFirst({
       where: { company_id: companyId },
@@ -322,6 +340,8 @@ export async function createPurchaseOrder(data: {
         delivery_address: data.delivery_address || null,
         delivery_notes: data.delivery_notes || null,
         notes: data.notes || null,
+        currency,
+        exchange_rate: exchangeRate,
         subtotal,
         vat_amount: vatAmount,
         total,
