@@ -146,7 +146,9 @@ export function useDailyReport({ reportData, allReport }: DailyReportProps) {
 
   async function fetchDiagrams() {
     const res = await fetch(`${URL}/api/employees/diagrams`).then((e) => e.json());
-    const diagrams = res?.data?.diagrams ?? res?.data ?? res?.diagrams ?? [];
+    // La API responde `{ data: { data: [...] } }`: sin tomar el arreglo interno, `diagram.some` revienta al elegir un cliente.
+    const raw = res?.data?.diagrams ?? res?.data?.data ?? res?.data ?? res?.diagrams ?? [];
+    const diagrams = Array.isArray(raw) ? raw : [];
     setDiagram(diagrams);
     return diagrams;
   }

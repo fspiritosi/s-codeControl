@@ -509,3 +509,15 @@ La app no permite borrar estos elementos desde la UI; todos llevan el prefijo `Q
 ### H-50 Las tablas de clientes paginan de a 10 y ordenan por CUIT
 
 - Con muchos clientes QA acumulados, el recién creado cae en otra página: los helpers (`customerRow`) avanzan de página hasta encontrarlo. Limpieza aplicada a la base del clon (solo `QA-E2E-cliente-*` de la empresa QA).
+
+### H-51 Servicios sin fechas rompían la pestaña Servicios de la empresa — corregido
+
+- Un servicio creado desde el detalle del cliente (Comercial) queda sin `service_start`/`service_validity`; la tabla hacía `format()` sobre null y toda la pestaña mostraba "Error al cargar el panel". Ahora muestra `-`.
+
+### H-52 Borrar una capacitación con materiales falló y dejaba archivos huérfanos — corregido
+
+- Se pasaba la URL completa al bucket `documents`. Ahora se borra por ruta en `training-materials` (igual que la edición) y `storage.remove` ignora la barra inicial.
+
+### H-53 "Agregar Fila" del parte diario reventaba al elegir un cliente — corregido
+
+- `/api/employees/diagrams` responde `{ data: { data: [...] } }` y el hook usaba el objeto como arreglo (`diagram.some is not a function`). Se toma el arreglo interno.
