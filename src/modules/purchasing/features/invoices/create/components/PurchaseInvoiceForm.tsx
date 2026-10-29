@@ -33,6 +33,7 @@ import { SearchableSelect } from '@/shared/components/ui/searchable-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { toast } from 'sonner';
 import { formatCurrencyIn } from '@/shared/lib/utils/formatters';
+import { getLatestExchangeRate } from '@/shared/actions/exchange-rates';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, LinkIcon, Paperclip, X, PackagePlus, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useMemo, useState, useEffect, useRef } from 'react';
@@ -103,6 +104,7 @@ export type InvoiceInitialData = {
   cae: string;
   currency: string;
   exchange_rate: number;
+  order_exchange_rate: number | null;
   notes: string;
   original_invoice_id: string | null;
   purchase_order_ids: string[];
@@ -157,6 +159,7 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
           cae: initialData.cae,
           currency: (initialData.currency as 'ARS' | 'USD') ?? 'ARS',
           exchange_rate: initialData.exchange_rate ?? 1,
+          order_exchange_rate: initialData.order_exchange_rate ?? null,
           notes: initialData.notes,
           original_invoice_id: initialData.original_invoice_id ?? null,
           purchase_order_id: '',
@@ -170,7 +173,7 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
       : {
           supplier_id: '', voucher_type: 'FACTURA_A', point_of_sale: '00001', number: '',
           issue_date: new Date().toISOString().split('T')[0], due_date: '', cae: '',
-          currency: 'ARS', exchange_rate: 1, notes: '',
+          currency: 'ARS', exchange_rate: 1, order_exchange_rate: null, notes: '',
           original_invoice_id: null,
           purchase_order_id: '',
           purchase_order_ids: [],
@@ -221,6 +224,49 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
 
   // Índice line_id → order_id para poder filtrar al deseleccionar OCs
   const poLineToOrderRef = useRef<Map<string, string>>(new Map());
+  // Costo de cada línea traída de una OC, en la moneda de la OC. Es la base para
+  // reconvertir el precio cuando cambian la moneda o el TC de la factura.
+  const poLineCostRef = useRef<Map<string, { cost: number; currency: string }>>(new Map());
+
+  const watchedCurrency = useWatch({ control: form.control, name: 'currency' });
+  const watchedRate = useWatch({ control: form.control, name: 'exchange_rate' });
+  const watchedOrderRate = useWatch({ control: form.control, name: 'order_exchange_rate' });
+  const linkedOrderCurrency: string | null = useMemo(() => {
+    const linked = availableOrders.find((o) => watchedOrderIds.includes(o.id));
+    if (linked) return linked.currency ?? 'ARS';
+    // En edición la OC puede ya no figurar entre las facturables.
+    return initialData?.order_exchange_rate ? 'USD' : null;
+  }, [availableOrders, watchedOrderIds, initialData?.order_exchange_rate]);
+  // Caso típico: OC en dólares, el proveedor factura en pesos al TC de la fecha
+  // de la factura. Ese TC convierte las líneas y descuenta el saldo de la OC.
+  const needsOrderRate = watchedCurrency === 'ARS' && !!linkedOrderCurrency && linkedOrderCurrency !== 'ARS';
+
+  /** Costo de una línea de OC expresado en la moneda de la factura. */
+  const toInvoiceCost = (cost: number, fromCurrency: string): number => {
+    const invoiceCurrency = form.getValues('currency');
+    if (fromCurrency === invoiceCurrency) return cost;
+    const rate =
+      invoiceCurrency === 'ARS'
+        ? Number(form.getValues('order_exchange_rate'))
+        : Number(form.getValues('exchange_rate'));
+    if (!(rate > 1)) return cost;
+    const converted = invoiceCurrency === 'ARS' ? cost * rate : cost / rate;
+    return Math.round(converted * 1000) / 1000;
+  };
+
+  // Al cambiar la moneda o el TC se reconvierten los precios de las líneas que
+  // vinieron de una OC (las manuales no se tocan).
+  useEffect(() => {
+    const lines = form.getValues('lines') as LineField[];
+    lines.forEach((l, index) => {
+      const original = l.purchase_order_line_id ? poLineCostRef.current.get(l.purchase_order_line_id) : undefined;
+      if (!original) return;
+      const next = toInvoiceCost(original.cost, original.currency);
+      if (Math.abs(next - (Number(l.unit_cost) || 0)) > 0.0005) {
+        form.setValue(`lines.${index}.unit_cost`, next, { shouldDirty: true });
+      }
+    });
+  }, [watchedCurrency, watchedRate, watchedOrderRate]);
   const initialSupplierRef = useRef(initialData?.supplier_id || '');
   const didMountRef = useRef(false);
 
@@ -297,16 +343,20 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
 
     // 2) Agregar líneas de OCs nuevas (append, no replace)
     if (addedIds.length > 0) {
-      // Las líneas de la OC vienen en su moneda: la factura la toma. El TC se
-      // precarga con el de referencia de la OC, pero el de la factura manda.
-      const orderCurrency = availableOrders.find((o) => o.id === addedIds[0])?.currency ?? 'ARS';
-      if (form.getValues('currency') !== orderCurrency) {
-        form.setValue('currency', orderCurrency, { shouldDirty: true });
-        const orderRate = Number(availableOrders.find((o) => o.id === addedIds[0])?.exchange_rate) || 1;
-        form.setValue('exchange_rate', orderCurrency === 'ARS' ? 1 : orderRate, { shouldDirty: true });
-        if (orderCurrency !== 'ARS') {
-          toast.info(`La OC está en ${orderCurrency}: la factura pasa a ${orderCurrency}. Revisá el tipo de cambio.`);
-        }
+      // La moneda de la factura es la del comprobante del proveedor, no la de la
+      // OC. Si la OC está en dólares y la factura en pesos, se precarga el TC de
+      // la factura con la última cotización (o el de referencia de la OC).
+      const addedOrder = availableOrders.find((o) => o.id === addedIds[0]);
+      const orderCurrency = addedOrder?.currency ?? 'ARS';
+      if (
+        orderCurrency !== 'ARS' &&
+        form.getValues('currency') === 'ARS' &&
+        !(Number(form.getValues('order_exchange_rate')) > 1)
+      ) {
+        const latest = await getLatestExchangeRate(orderCurrency);
+        const rate = latest && latest.valor > 1 ? latest.valor : Number(addedOrder?.exchange_rate) || null;
+        form.setValue('order_exchange_rate', rate, { shouldDirty: true });
+        toast.info(`La OC está en ${orderCurrency}: los precios se convierten a pesos. Revisá el tipo de cambio de la factura.`);
       }
       const bulkLines = await getPurchaseOrderLinesForInvoicingBulk(addedIds);
       const currentLines = form.getValues('lines') as LineField[];
@@ -319,11 +369,12 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
 
       for (const l of bulkLines) {
         poLineToOrderRef.current.set(l.id, l.order_id);
+        poLineCostRef.current.set(l.id, { cost: l.unit_cost, currency: l.order_currency });
         append({
           product_id: l.product?.id || '',
           description: l.description,
           quantity: l.pending_qty,
-          unit_cost: l.unit_cost,
+          unit_cost: toInvoiceCost(l.unit_cost, l.order_currency),
           vat_rate: l.vat_rate,
           discount_type: null,
           discount_value: null,
@@ -535,6 +586,10 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
   };
 
   const onSubmit = async (values: FormValues) => {
+    if (needsOrderRate && !(Number(values.order_exchange_rate) > 1)) {
+      toast.error('Ingresá el tipo de cambio de la factura para convertir la OC en dólares');
+      return;
+    }
     const sanitizedLines = (values.lines as LineField[]).map((l) => ({
       product_id: l.product_id,
       description: l.description,
@@ -565,6 +620,7 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
       cae: values.cae,
       currency: values.currency,
       exchange_rate: values.currency === 'ARS' ? 1 : Number(values.exchange_rate) || 1,
+      order_exchange_rate: needsOrderRate ? Number(values.order_exchange_rate) : null,
       notes: values.notes,
       original_invoice_id: isCreditNote ? (values.original_invoice_id || null) : null,
       purchase_order_ids: values.purchase_order_ids || [],
@@ -797,6 +853,28 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
                       onChange={(e) => field.onChange(e.target.value)}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            )}
+            {needsOrderRate && (
+              <FormField control={form.control} name="order_exchange_rate" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo de cambio de la factura (1 {linkedOrderCurrency} = ? ARS) *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.0001"
+                      min="0"
+                      placeholder="1200.0000"
+                      {...field}
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : e.target.value)}
+                    />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    La OC está en {linkedOrderCurrency}: sus precios se pasan a pesos con este tipo de cambio, y la factura descuenta el saldo de la OC al mismo valor.
+                  </p>
                   <FormMessage />
                 </FormItem>
               )} />

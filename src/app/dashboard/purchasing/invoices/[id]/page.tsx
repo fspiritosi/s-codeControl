@@ -156,6 +156,12 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                 = ${(Number(invoice.total) * Number(invoice.exchange_rate)).toFixed(2)} ARS
               </CardDescription>
             )}
+            {invoice.currency === 'ARS' && invoice.order_exchange_rate != null && (
+              <CardDescription className="mt-1">
+                OC en USD convertida a TC {Number(invoice.order_exchange_rate).toFixed(2)} = US${' '}
+                {(Number(invoice.total) / Number(invoice.order_exchange_rate)).toFixed(2)}
+              </CardDescription>
+            )}
           </CardHeader>
         </Card>
       </div>

@@ -119,3 +119,26 @@ export function sumInOrderCurrency(
     )
   );
 }
+
+/**
+ * Importe de una factura de compra expresado en la moneda de su OC: es lo que la
+ * factura le descuenta al saldo (en montos) de la orden.
+ *
+ * El TC sale de la factura, porque el proveedor factura al cambio de su fecha:
+ *   misma moneda                      -> el importe tal cual
+ *   factura en USD, OC en pesos       -> `exchange_rate` de la factura
+ *   factura en pesos, OC en USD       -> `order_exchange_rate` de la factura
+ * Si la factura no trae TC (facturas cargadas antes de guardarlo), se usa el TC
+ * de referencia de la OC.
+ */
+export function invoiceAmountInOrderCurrency(
+  amount: number,
+  invoice: { currency: string; exchange_rate: number; order_exchange_rate?: number | null },
+  order: { currency: string; exchange_rate: number }
+): number {
+  if (invoice.currency === order.currency) return round2(amount);
+  const invoiceRate =
+    invoice.currency === BASE_CURRENCY ? Number(invoice.order_exchange_rate) : Number(invoice.exchange_rate);
+  const rate = isValidExchangeRate(invoiceRate) && invoiceRate > 1 ? invoiceRate : order.exchange_rate;
+  return convertAmount({ amount, from: invoice.currency, to: order.currency, rate });
+}

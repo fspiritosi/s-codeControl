@@ -232,7 +232,7 @@ export async function getPurchaseOrderLinesForInvoicingBulk(orderIds: string[]) 
     where: { order_id: { in: orderIds } },
     include: {
       product: { select: { id: true, code: true, name: true } },
-      order: { select: { id: true, full_number: true } },
+      order: { select: { id: true, full_number: true, currency: true } },
     },
   });
 
@@ -249,6 +249,7 @@ export async function getPurchaseOrderLinesForInvoicingBulk(orderIds: string[]) 
       total: Number(l.total),
       order_id: l.order_id,
       order_full_number: l.order?.full_number ?? '',
+      order_currency: l.order?.currency ?? 'ARS',
     }))
     .filter((l) => l.pending_qty > 0);
 }
