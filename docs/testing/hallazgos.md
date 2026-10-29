@@ -521,3 +521,7 @@ La app no permite borrar estos elementos desde la UI; todos llevan el prefijo `Q
 ### H-53 "Agregar Fila" del parte diario reventaba al elegir un cliente — corregido
 
 - `/api/employees/diagrams` responde `{ data: { data: [...] } }` y el hook usaba el objeto como arreglo (`diagram.some is not a function`). Se toma el arreglo interno.
+
+### H-54 Los buckets `sales_invoices` y `receipts` no existen — igual que producción, no se cambia
+
+- Están en la lista de buckets del código pero no en `storage.buckets` de Supabase prod ni en RustFS: subir a ellos devuelve 500. Los otros 14 buckets completan subir → listar → bajar → URL pública/firmada → borrar (`tests/e2e/app/storage/buckets.spec.ts`, 2 marcados `fixme`). Si algún flujo los necesita, hay que crearlos en RustFS.
