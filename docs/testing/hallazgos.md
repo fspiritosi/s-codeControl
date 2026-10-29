@@ -525,3 +525,9 @@ La app no permite borrar estos elementos desde la UI; todos llevan el prefijo `Q
 ### H-54 Los buckets `sales_invoices` y `receipts` no existen — igual que producción, no se cambia
 
 - Están en la lista de buckets del código pero no en `storage.buckets` de Supabase prod ni en RustFS: subir a ellos devuelve 500. Los otros 14 buckets completan subir → listar → bajar → URL pública/firmada → borrar (`tests/e2e/app/storage/buckets.spec.ts`, 2 marcados `fixme`). Si algún flujo los necesita, hay que crearlos en RustFS.
+
+### H-55 Flujo cruzado portal de empleados ↔ CodeControl verificado
+
+- `tests/e2e/app/portal/integracion.spec.ts` (serial, dos navegadores): alta del empleado y publicación de un documento HSE en CodeControl → registro del empleado en el portal con su CUIL → confirmación de datos → solicitud visible y aprobada en CodeControl → el documento aparece en "Mis Documentos" del portal y se acepta con contraseña → CodeControl lo muestra aceptado. Pasa 6/6 contra los dos clones.
+- Un empleado nuevo recibe también los documentos HSE vigentes anteriores (queda con varios pendientes); el test acepta el documento de su corrida, no el primero de la lista.
+- Cada corrida deja un perfil `qa-portal-*@codecontrol.test` (portal) que no se puede borrar desde la UI: se limpia por SQL en la base del clon.
