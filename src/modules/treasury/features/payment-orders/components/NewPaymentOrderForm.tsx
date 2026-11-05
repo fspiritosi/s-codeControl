@@ -19,6 +19,8 @@ import {
   SelectValue,
 } from '@/shared/components/ui/select';
 import { SearchableSelect } from '@/shared/components/ui/searchable-select';
+import { SupplierCuitHint } from '@/shared/components/common/SupplierCuitHint';
+import { supplierOption } from '@/shared/lib/cuit';
 import {
   Card,
   CardContent,
@@ -906,6 +908,11 @@ export function NewPaymentOrderForm({
       prev.map((p, i) => (i === index ? ({ ...p, ...patch } as PaymentDraft) : p))
     );
 
+  const supplierOptions = useMemo(
+    () => suppliers.map((s) => supplierOption(s, `${s.code} — ${s.business_name}`)),
+    [suppliers]
+  );
+
   const handleSubmit = async () => {
     if (items.length === 0) {
       toast.error('Agregá al menos un ítem');
@@ -1034,13 +1041,14 @@ export function NewPaymentOrderForm({
           <div className="space-y-1.5">
             <Label>Proveedor</Label>
             <SearchableSelect
-              options={suppliers.map((s) => ({ value: s.id, label: `${s.code} — ${s.business_name}` }))}
+              options={supplierOptions}
               value={supplierId}
               onValueChange={handleSupplierChange}
               placeholder="Seleccionar proveedor"
-              searchPlaceholder="Buscar proveedor..."
+              searchPlaceholder="Buscar por razón social o CUIT…"
               emptyMessage="No se encontró el proveedor."
             />
+            <SupplierCuitHint taxId={suppliers.find((s) => s.id === supplierId)?.tax_id} />
           </div>
           <div className="space-y-1.5">
             <Label>Fecha</Label>
