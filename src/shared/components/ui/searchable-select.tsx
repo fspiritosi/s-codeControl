@@ -20,6 +20,10 @@ import {
 export interface SearchableSelectOption {
   value: string;
   label: string;
+  /** Segunda línea opcional debajo de la etiqueta (p. ej. el CUIT). */
+  description?: string;
+  /** Términos extra por los que también se encuentra la opción. */
+  keywords?: string[];
 }
 
 interface SearchableSelectProps {
@@ -69,7 +73,7 @@ export function SearchableSelect({
             {options.map((option) => (
               <CommandItem
                 key={option.value}
-                value={option.label}
+                value={[option.label, ...(option.keywords ?? [])].join(' ')}
                 onSelect={() => {
                   onValueChange(option.value === value ? '' : option.value);
                   setOpen(false);
@@ -78,7 +82,14 @@ export function SearchableSelect({
                 <Check
                   className={cn('mr-2 h-4 w-4', value === option.value ? 'opacity-100' : 'opacity-0')}
                 />
-                {option.label}
+                {option.description ? (
+                  <div className="min-w-0">
+                    <p className="truncate">{option.label}</p>
+                    <p className="truncate text-xs text-muted-foreground">{option.description}</p>
+                  </div>
+                ) : (
+                  option.label
+                )}
               </CommandItem>
             ))}
           </CommandGroup>

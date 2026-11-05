@@ -30,6 +30,8 @@ import { Input } from '@/shared/components/ui/input';
 import { MultiSelectCombobox } from '@/shared/components/ui/multi-select-combobox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
 import { SearchableSelect } from '@/shared/components/ui/searchable-select';
+import { SupplierCuitHint } from '@/shared/components/common/SupplierCuitHint';
+import { formatCuit, supplierOption } from '@/shared/lib/cuit';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 import { toast } from 'sonner';
 import { formatCurrencyIn } from '@/shared/lib/utils/formatters';
@@ -42,16 +44,6 @@ import InvoiceAIUpload, { type InvoiceExtractionResult } from './InvoiceAIUpload
 import QuickCreateSupplierModal, { type QuickCreatedSupplier } from './_QuickCreateSupplierModal';
 
 type FormValues = z.infer<typeof purchaseInvoiceSchema>;
-
-/** Formatea 11 dígitos a XX-XXXXXXXX-X para mostrar; si no, devuelve tal cual. */
-function formatCuitDisplay(cuit: string | null): string {
-  if (!cuit) return '';
-  const clean = cuit.replace(/\D/g, '');
-  if (clean.length === 11) {
-    return `${clean.slice(0, 2)}-${clean.slice(2, 10)}-${clean.slice(10)}`;
-  }
-  return cuit;
-}
 
 /** Badge de estado de extracción AI para un campo. */
 function FieldStatusBadge({ status }: { status: 'extracted' | 'review' | null }) {
@@ -186,6 +178,7 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
   });
 
   const { fields, append, remove, replace } = useFieldArray({ control: form.control, name: 'lines' });
+  const supplierOptions = useMemo(() => suppliers.map((s) => supplierOption(s)), [suppliers]);
   const {
     fields: perceptionFields,
     append: appendPerception,
@@ -717,13 +710,14 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
                   />
                 ) : (
                   <SearchableSelect
-                    options={suppliers.map((s) => ({ value: s.id, label: s.business_name }))}
+                    options={supplierOptions}
                     value={field.value}
                     onValueChange={field.onChange}
                     placeholder="Seleccionar proveedor"
-                    searchPlaceholder="Buscar proveedor..."
+                    searchPlaceholder="Buscar por razón social o CUIT…"
                   />
                 )}
+                <SupplierCuitHint taxId={suppliers.find((s) => s.id === field.value)?.tax_id} />
                 {!isEditMode &&
                   !supplierAlertDismissed &&
                   (pendingSupplierData.cuit || pendingSupplierData.razonSocial) &&
@@ -735,7 +729,7 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
                         <p>
                           No encontramos un proveedor con CUIT{' '}
                           <span className="font-mono font-medium">
-                            {formatCuitDisplay(pendingSupplierData.cuit) || '(sin CUIT)'}
+                            {formatCuit(pendingSupplierData.cuit) || '(sin CUIT)'}
                           </span>
                           .
                         </p>
