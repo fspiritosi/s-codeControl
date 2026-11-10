@@ -1407,11 +1407,21 @@ export const updateTrainingStatus = async (trainingId: string, status: 'Borrador
       }
     }
 
-    const { error: updateError } = await supabase.from('trainings').update({ status }).eq('id', trainingId);
+    const { data: updated, error: updateError } = await supabase
+      .from('trainings')
+      .update({ status })
+      .eq('id', trainingId)
+      .select('id');
 
     if (updateError) {
       console.error('Error al actualizar estado de capacitación:', updateError);
       return { success: false, error: `Error al actualizar estado: ${updateError.message}` };
+    }
+
+    // Un update que no matchea filas (o que RLS filtra) no devuelve error:
+    // sin esto se informaba éxito con el estado sin cambiar (TKT-826).
+    if (!updated?.length) {
+      return { success: false, error: 'No se pudo actualizar el estado de la capacitación' };
     }
 
     revalidatePath('/dashboard/hse');

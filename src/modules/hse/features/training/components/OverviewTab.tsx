@@ -141,19 +141,33 @@ function OverviewTab({ training }: { training: Awaited<ReturnType<typeof fetchTr
     );
   };
 
+  // La server action no lanza: devuelve { success: false, error }. Si no se
+  // convierte en rechazo, toast.promise muestra éxito aunque el estado no haya
+  // cambiado (TKT-826: publicar sin los datos del acta quedaba en Borrador).
+  const changeStatus = async (status: 'Archivado' | 'Publicado') => {
+    const result = await updateTrainingStatus(training?.id || '', status);
+    if (!result.success) throw new Error(result.error);
+    return result;
+  };
+
   const archiveTraining = async () => {
-    toast.promise(updateTrainingStatus(training?.id || '', 'Archivado'), {
+    toast.promise(changeStatus('Archivado'), {
       loading: 'Archivando capacitación...',
       success: 'Capacitación archivada exitosamente',
-      error: 'Error al archivar capacitación',
+      error: (err: Error) => err.message || 'Error al archivar capacitación',
     });
   };
 
   const publishTraining = async () => {
-    toast.promise(updateTrainingStatus(training?.id || '', 'Publicado'), {
+    toast.promise(changeStatus('Publicado'), {
+      // La lista de campos faltantes puede ser larga: más tiempo para leerla.
+      duration: 10000,
       loading: 'Publicando capacitación...',
       success: 'Capacitación publicada exitosamente',
-      error: 'Error al publicar capacitación',
+      error: (err: Error) =>
+        err.message?.startsWith('No se puede publicar')
+          ? `${err.message}. Completalos desde "Editar Capacitación" y volvé a publicar.`
+          : err.message || 'Error al publicar capacitación',
     });
   };
 
