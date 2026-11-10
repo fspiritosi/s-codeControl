@@ -3,6 +3,7 @@ import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Eye, GraduationCap, Tag as TagIcon, Users } from 'lucide-react';
 import { fetchTrainings } from '../actions.server';
+import { TrainingVersionBadge, TrainingVersionLinks } from './TrainingVersionInfo';
 
 interface TrainingMaterial {
   type: string;
@@ -75,6 +76,7 @@ export function TrainingList({
               <div className="flex items-center gap-2 flex-wrap truncate">
                 <GraduationCap className="h-5 w-5 text-purple-600 flex-shrink-0" />
                 <span className="font-medium text-base truncate">{training.title}</span>
+                <TrainingVersionBadge training={training} />
                 <Badge variant={status === 'Publicado' ? 'default' : 'secondary'}>{status}</Badge>
                 {/* Tags */}
                 {tags.length > 0 && (
@@ -161,6 +163,7 @@ export function TrainingList({
                   )}
                 </div>
               </div>
+              <TrainingVersionLinks training={training} />
             </div>
 
             {/* Actions */}
