@@ -48,6 +48,8 @@ export type TrainingRecordHeader = {
   effectiveness_method: string | null;
   requires_new_actions: boolean | null;
   new_actions_detail: string | null;
+  /** "Cerrada por cambio de versión (reemplazada por la versión N)" (TKT-827). */
+  closure_note: string | null;
 };
 
 const styles = StyleSheet.create({
@@ -203,6 +205,11 @@ export function TrainingRecordLayout({
                 <Text style={styles.label}>Título de capacitación: </Text>
                 {header.title}
               </Text>
+              {/* Una versión reemplazada lo dice siempre, aunque el referente de
+                  HSE haya cargado los campos de cierre a mano (TKT-827). */}
+              {header.closure_note ? (
+                <Text style={[styles.label, { marginTop: 2 }]}>{header.closure_note}</Text>
+              ) : null}
             </View>
 
             <View style={styles.block}>

@@ -16,7 +16,7 @@ import { cookies } from 'next/headers';
 import type { TrainingCertificateData } from './components/pdf/TrainingCertificateLayout';
 import type { TrainingEvaluationData } from './components/pdf/TrainingEvaluationLayout';
 import type { TrainingRecordHeader, TrainingRecordRow } from './components/pdf/TrainingRecordLayout';
-import { certificatePath } from './shared/versioning';
+import { certificatePath, supersededClosureNote, versionedTitle } from './shared/versioning';
 
 /**
  * Las firmas viven en el bucket `documents` bajo este prefijo. No se creó un
@@ -99,8 +99,13 @@ export const buildTrainingRecord = async (trainingId: string): Promise<TrainingR
     }))
   );
 
+  // El número de versión se muestra solo cuando la capacitación tiene más de
+  // una: así no cambian los PDF de las que nunca se versionaron (TKT-827).
+  const isVersioned = training.version_number > 1 || training.superseded_at !== null;
+
   const header: TrainingRecordHeader = {
-    title: training.title,
+    title: versionedTitle(training.title, training.version_number, isVersioned),
+    closure_note: training.superseded_at ? supersededClosureNote(training.version_number + 1) : null,
     dictated_at: toIsoDate(training.dictated_at),
     deadline_at: toIsoDate(training.deadline_at),
     estimated_duration_minutes: training.estimated_duration_minutes,
@@ -179,7 +184,11 @@ export const buildTrainingCertificate = async (
         `${attempt.employee.lastname ?? ''} ${attempt.employee.firstname ?? ''}`.trim(),
       employee_document: attempt.employee.document_number,
       employee_position: attempt.signer_position ?? attempt.employee.hierarchy_rel?.name ?? null,
-      training_title: training.title,
+      training_title: versionedTitle(
+        training.title,
+        training.version_number,
+        training.version_number > 1 || training.superseded_at !== null
+      ),
       topics: training.topics,
       dictated_at: toIsoDate(training.dictated_at),
       completed_at: toIsoDate(attempt.completed_at),
