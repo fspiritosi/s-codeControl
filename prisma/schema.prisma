@@ -1402,6 +1402,21 @@ model trainings {
   new_actions_detail         String?
   validity_months            Int?
 
+  // Versionado (TKT-827). Cada versión es una fila; el grupo de versiones es
+  // root_training_id ?? id. previous_version_id es UNIQUE: una versión tiene a
+  // lo sumo una sucesora, así no hay dos versiones en preparación a la vez.
+  // superseded_at marca el cierre por cambio de versión.
+  version_number             Int                          @default(1)
+  root_training_id           String?                      @db.Uuid
+  previous_version_id        String?                      @unique @db.Uuid
+  superseded_at              DateTime?                    @db.Timestamptz
+  published_at               DateTime?                    @db.Timestamptz
+
+  root_training              trainings?                   @relation("training_root", fields: [root_training_id], references: [id])
+  version_descendants        trainings[]                  @relation("training_root")
+  previous_version           trainings?                   @relation("training_previous_version", fields: [previous_version_id], references: [id])
+  next_version               trainings?                   @relation("training_previous_version")
+
   company                    company                      @relation(fields: [company_id], references: [id])
   instructor                 training_instructors?        @relation(fields: [instructor_id], references: [id])
   closed_by_profile          profile?                     @relation("trainings_closed_by", fields: [closed_by], references: [id])

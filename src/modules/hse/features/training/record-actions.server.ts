@@ -16,6 +16,7 @@ import { cookies } from 'next/headers';
 import type { TrainingCertificateData } from './components/pdf/TrainingCertificateLayout';
 import type { TrainingEvaluationData } from './components/pdf/TrainingEvaluationLayout';
 import type { TrainingRecordHeader, TrainingRecordRow } from './components/pdf/TrainingRecordLayout';
+import { certificatePath } from './shared/versioning';
 
 /**
  * Las firmas viven en el bucket `documents` bajo este prefijo. No se creó un
@@ -338,7 +339,7 @@ export const archiveCertificateInEmployeeFile = async (attemptId: string, pdf: B
 
     // document_path es UNIQUE: el id del intento garantiza que no colisione
     // entre capacitaciones ni entre reintentos del mismo empleado.
-    const path = `capacitaciones/${company_id}/${attempt.employee_id}/${attemptId}.pdf`;
+    const path = certificatePath(company_id, attempt.employee_id, attemptId);
 
     const already = await prisma.documents_employees.findFirst({ where: { document_path: path } });
     if (already) return { success: true as const, alreadyArchived: true, documentId: already.id };
