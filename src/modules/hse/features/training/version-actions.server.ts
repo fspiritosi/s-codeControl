@@ -200,6 +200,7 @@ export const publishTrainingVersion = async (trainingId: string): Promise<Result
       select: {
         id: true,
         status: true,
+        superseded_at: true,
         effectiveness_method: true,
         requires_new_actions: true,
         new_actions_detail: true,
@@ -216,25 +217,28 @@ export const publishTrainingVersion = async (trainingId: string): Promise<Result
     }
 
     const now = new Date();
-    const certificatePaths = certificatePathsForAttempts(company_id, previous.training_attempts);
+    // null si la anterior ya fue reemplazada (se republica la nueva): en ese
+    // caso no se toca ni la anterior ni sus constancias.
+    const supersede = buildSupersedeUpdate(
+      {
+        status: previous.status,
+        superseded_at: previous.superseded_at,
+        close: {
+          effectiveness_method: previous.effectiveness_method,
+          requires_new_actions: previous.requires_new_actions,
+          new_actions_detail: previous.new_actions_detail,
+        },
+      },
+      version.version_number,
+      now,
+      user.id
+    );
+    const certificatePaths = supersede ? certificatePathsForAttempts(company_id, previous.training_attempts) : [];
 
     await prisma.$transaction(async (tx) => {
-      await tx.trainings.update({
-        where: { id: previous.id },
-        data: buildSupersedeUpdate(
-          {
-            status: previous.status,
-            close: {
-              effectiveness_method: previous.effectiveness_method,
-              requires_new_actions: previous.requires_new_actions,
-              new_actions_detail: previous.new_actions_detail,
-            },
-          },
-          version.version_number,
-          now,
-          user.id
-        ),
-      });
+      if (supersede) {
+        await tx.trainings.update({ where: { id: previous.id }, data: supersede });
+      }
 
       if (certificatePaths.length) {
         await tx.documents_employees.updateMany({
@@ -246,7 +250,7 @@ export const publishTrainingVersion = async (trainingId: string): Promise<Result
 
       await tx.trainings.update({
         where: { id: version.id },
-        data: { status: 'Publicado', published_at: now, updated_at: now },
+        data: { status: 'Publicado', published_at: version.published_at ?? now, updated_at: now },
       });
     });
 

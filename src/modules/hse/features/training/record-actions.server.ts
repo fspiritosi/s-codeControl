@@ -16,7 +16,13 @@ import { cookies } from 'next/headers';
 import type { TrainingCertificateData } from './components/pdf/TrainingCertificateLayout';
 import type { TrainingEvaluationData } from './components/pdf/TrainingEvaluationLayout';
 import type { TrainingRecordHeader, TrainingRecordRow } from './components/pdf/TrainingRecordLayout';
-import { certificatePath, supersededClosureNote, versionedTitle } from './shared/versioning';
+import {
+  certificateArchiveState,
+  certificatePath,
+  isWithinRecordCutoff,
+  supersededClosureNote,
+  versionedTitle,
+} from './shared/versioning';
 
 /**
  * Las firmas viven en el bucket `documents` bajo este prefijo. No se creó un
@@ -75,10 +81,16 @@ export const buildTrainingRecord = async (trainingId: string): Promise<TrainingR
     orderBy: [{ completed_at: 'asc' }],
   });
 
+  // El registro de una versión reemplazada no incorpora a quien aprobó después
+  // del reemplazo (TKT-827).
+  const attemptsInRecord = attempts.filter((attempt) =>
+    isWithinRecordCutoff(attempt.completed_at, training.superseded_at)
+  );
+
   // Un empleado puede tener varios intentos aprobados si rehizo la
   // capacitación: en la planilla va solo el último, que es el definitivo.
   const latestByEmployee = new Map<string, (typeof attempts)[number]>();
-  for (const attempt of attempts) {
+  for (const attempt of attemptsInRecord) {
     const previous = latestByEmployee.get(attempt.employee_id);
     if (!previous || attempt.attempt_number >= previous.attempt_number) {
       latestByEmployee.set(attempt.employee_id, attempt);
@@ -329,7 +341,7 @@ export const archiveCertificateInEmployeeFile = async (attemptId: string, pdf: B
 
     const attempt = await prisma.training_attempts.findFirst({
       where: { id: attemptId, passed: true, training: { company_id } },
-      include: { training: { select: { title: true, validity_months: true } } },
+      include: { training: { select: { title: true, validity_months: true, superseded_at: true } } },
     });
 
     if (!attempt?.training) {
@@ -367,9 +379,9 @@ export const archiveCertificateInEmployeeFile = async (attemptId: string, pdf: B
         id_document_types: documentType.id,
         applies: attempt.employee_id,
         document_path: path,
-        state: 'presentado',
-        // validity es string en esta tabla, no date.
-        validity,
+        // validity es string en esta tabla, no date. Una constancia de una
+        // versión reemplazada nace vencida (TKT-827).
+        ...certificateArchiveState(attempt.training.superseded_at, validity),
         user_id: user.id,
         is_active: true,
       },

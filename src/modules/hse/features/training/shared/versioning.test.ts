@@ -8,6 +8,8 @@ import {
   supersededClosureNote,
   versionedTitle,
   versionLinks,
+  certificateArchiveState,
+  isWithinRecordCutoff,
 } from './versioning';
 
 const empty = { effectiveness_method: null, requires_new_actions: null, new_actions_detail: null };
@@ -130,5 +132,51 @@ describe('versionLinks', () => {
 
   it('una sucesora ya publicada no cuenta como versión en preparación', () => {
     expect(versionLinks([v1, v2], 'v1').draftVersion).toBeNull();
+  });
+});
+
+describe('correcciones de la revisión final', () => {
+  const now = new Date('2026-11-10T12:00:00Z');
+  const empty = { effectiveness_method: null, requires_new_actions: null, new_actions_detail: null };
+
+  it('I2: una versión ya reemplazada no se vuelve a tocar', () => {
+    expect(
+      buildSupersedeUpdate({ status: 'Cerrada', close: empty, superseded_at: new Date('2026-11-01') }, 2, now, 'u1')
+    ).toBeNull();
+  });
+
+  it('I3: una versión archivada mientras la nueva estaba en preparación también se cierra', () => {
+    expect(buildSupersedeUpdate({ status: 'Archivado', close: empty }, 2, now, 'u1')).toMatchObject({
+      status: 'Cerrada',
+      closed_at: now,
+      superseded_at: now,
+      effectiveness_method: 'Cerrada por cambio de versión',
+    });
+  });
+
+  it('I1: la constancia de una versión reemplazada se archiva vencida', () => {
+    const superseded = new Date('2026-11-10T12:00:00Z');
+    expect(certificateArchiveState(superseded, '2027-11-01T00:00:00.000Z')).toEqual({
+      state: 'vencido',
+      validity: '2026-11-10T12:00:00.000Z',
+    });
+    expect(certificateArchiveState(null, '2027-11-01T00:00:00.000Z')).toEqual({
+      state: 'presentado',
+      validity: '2027-11-01T00:00:00.000Z',
+    });
+  });
+
+  it('I4: el registro de una versión reemplazada no suma aprobados posteriores al reemplazo', () => {
+    const superseded = new Date('2026-11-10T12:00:00Z');
+    expect(isWithinRecordCutoff(new Date('2026-11-09T10:00:00Z'), superseded)).toBe(true);
+    expect(isWithinRecordCutoff(new Date('2026-11-11T10:00:00Z'), superseded)).toBe(false);
+    expect(isWithinRecordCutoff(null, superseded)).toBe(false);
+    expect(isWithinRecordCutoff(new Date('2030-01-01'), null)).toBe(true);
+  });
+
+  it('M5: un borrador no dice que reemplaza a la anterior hasta que se publica', () => {
+    const v1 = { id: 'v1', version_number: 1, previous_version_id: null, status: 'Publicado', closed_at: null, approved: 3 };
+    const v2 = { id: 'v2', version_number: 2, previous_version_id: 'v1', status: 'Borrador', closed_at: null, approved: 0 };
+    expect(versionLinks([v1, v2], 'v2').previousVersion).toBeNull();
   });
 });

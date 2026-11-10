@@ -42,17 +42,23 @@ export function buildSupersededCloseFields(current: CloseFields, nextVersion: nu
 }
 
 /**
- * Datos del update de la versión reemplazada. Si sigue publicada se cierra; si
- * ya se cerró o archivó a mano mientras la nueva estaba en preparación, no se
- * toca ese cierre y solo se marca como reemplazada.
+ * Datos del update de la versión reemplazada.
+ *
+ * - Ya reemplazada (se republicó la nueva): null, no se toca. La versión
+ *   anterior no cambia después de que existe la nueva.
+ * - Publicada o archivada mientras la nueva estaba en preparación: se cierra,
+ *   así su registro queda definitivo.
+ * - Cerrada a mano: no se pisa ese cierre, solo se marca como reemplazada.
  */
 export function buildSupersedeUpdate(
-  input: { status: string | null; close: CloseFields },
+  input: { status: string | null; close: CloseFields; superseded_at?: Date | null },
   nextVersion: number,
   now: Date,
   userId: string | null
 ) {
-  if (input.status !== 'Publicado') {
+  if (input.superseded_at) return null;
+
+  if (input.status !== 'Publicado' && input.status !== 'Archivado') {
     return { superseded_at: now, updated_at: now };
   }
 
@@ -96,6 +102,29 @@ export function certificatePathsForAttempts(
   return attempts.map((attempt) => certificatePath(companyId, attempt.employee_id, attempt.id));
 }
 
+/**
+ * Estado con que se archiva una constancia en el legajo. Si la versión ya fue
+ * reemplazada, la constancia nace vencida a la fecha del reemplazo: igual que
+ * las que se vencieron al publicar la nueva.
+ */
+export function certificateArchiveState(
+  supersededAt: Date | null,
+  validity: string | null
+): { state: 'presentado' | 'vencido'; validity: string | null } {
+  return supersededAt
+    ? { state: 'vencido', validity: supersededAt.toISOString() }
+    : { state: 'presentado', validity };
+}
+
+/**
+ * El registro de una versión reemplazada no incorpora gente: solo cuentan los
+ * aprobados hasta el reemplazo. Sin reemplazo no hay corte.
+ */
+export function isWithinRecordCutoff(completedAt: Date | null, supersededAt: Date | null): boolean {
+  if (!supersededAt) return true;
+  return completedAt !== null && completedAt <= supersededAt;
+}
+
 export type VersionNode = {
   id: string;
   version_number: number;
@@ -117,9 +146,11 @@ export function versionLinks(
   draftVersion: { id: string; version_number: number } | null;
 } {
   const current = nodes.find((node) => node.id === id);
-  const previous = current?.previous_version_id
-    ? nodes.find((node) => node.id === current.previous_version_id)
-    : undefined;
+  // Un borrador todavía no reemplaza a nadie: la anterior sigue vigente.
+  const previous =
+    current?.previous_version_id && current.status !== 'Borrador'
+      ? nodes.find((node) => node.id === current.previous_version_id)
+      : undefined;
   const draft = nodes.find((node) => node.previous_version_id === id && node.status === 'Borrador');
 
   return {
