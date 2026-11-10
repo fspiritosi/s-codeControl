@@ -45,6 +45,9 @@ export const getStatusBadge = (status: string) => {
       return <Badge className="bg-yellow-100 text-yellow-800">Pendiente</Badge>;
     case 'failed':
       return <Badge className="bg-red-100 text-red-800">Desaprobado</Badge>;
+    // La versión se reemplazó antes de que el empleado la aprobara (TKT-827).
+    case 'superseded':
+      return <Badge variant="outline">No realizada por cambio de versión</Badge>;
     default:
       return <Badge variant="outline">Desconocido</Badge>;
   }
@@ -153,8 +156,12 @@ export function getAreaColums(
     // },
   ];
 }
-export function getPendingColums(handleEdit: (email: string) => Promise<void>): ColumnDef<Employee[number]>[] {
-  return [
+export function getPendingColums(
+  handleEdit: (email: string) => Promise<void>,
+  // En una versión reemplazada ya no se puede rendir: no hay recordatorio (TKT-827).
+  allowReminder = true
+): ColumnDef<Employee[number]>[] {
+  const columns: ColumnDef<Employee[number]>[] = [
     {
       accessorKey: 'name',
       id: 'Nombre',
@@ -207,6 +214,8 @@ export function getPendingColums(handleEdit: (email: string) => Promise<void>): 
       },
     },
   ];
+
+  return allowReminder ? columns : columns.filter((column) => column.id !== 'Acciones');
 }
 
 function EmployeesTab({ training }: EmployeesTabProps) {
@@ -242,9 +251,12 @@ function EmployeesTab({ training }: EmployeesTabProps) {
   });
 
   const completedEmployees = filteredEmployees.filter((e: { status: string }) => e.status === 'completed');
-  const pendingEmployees = filteredEmployees.filter(
-    (e: { status: string }) => e.status === 'pending' || e.status === 'failed'
-  );
+  // En una versión reemplazada, los que no la aprobaron quedan como "No
+  // realizada por cambio de versión", no como pendientes (TKT-827).
+  const superseded = Boolean(training?.superseded_at);
+  const pendingEmployees = filteredEmployees
+    .filter((e: { status: string }) => e.status === 'pending' || e.status === 'failed')
+    .map((e) => (superseded ? { ...e, status: 'superseded' } : e));
 
   const handleSendInvitation = async (email: string) => {
     toast.promise(
@@ -384,7 +396,9 @@ function EmployeesTab({ training }: EmployeesTabProps) {
         <Tabs defaultValue="completed">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="completed">Completados ({completedEmployees.length})</TabsTrigger>
-            <TabsTrigger value="pending">Pendientes ({pendingEmployees.length})</TabsTrigger>
+            <TabsTrigger value="pending">
+              {superseded ? 'No realizada' : 'Pendientes'} ({pendingEmployees.length})
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="completed" className="pt-4">
@@ -417,7 +431,7 @@ function EmployeesTab({ training }: EmployeesTabProps) {
           <TabsContent value="pending" className="pt-4">
             <div className="">
               <DataTable
-                columns={getPendingColums(handleSendInvitation) as ColumnDef<Record<string, unknown>>[]}
+                columns={getPendingColums(handleSendInvitation, !superseded) as ColumnDef<Record<string, unknown>>[]}
                 data={pendingEmployees as unknown as Record<string, unknown>[]}
                 tableId="areaTable"
                 showFilterToggle

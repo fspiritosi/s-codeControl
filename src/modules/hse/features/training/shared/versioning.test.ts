@@ -1,0 +1,182 @@
+import { describe, expect, it } from 'vitest';
+import {
+  buildSupersedeUpdate,
+  buildSupersededCloseFields,
+  canCreateVersion,
+  certificatePathsForAttempts,
+  materialPathsSafeToDelete,
+  supersededClosureNote,
+  versionedTitle,
+  versionLinks,
+  certificateArchiveState,
+  isWithinRecordCutoff,
+} from './versioning';
+
+const empty = { effectiveness_method: null, requires_new_actions: null, new_actions_detail: null };
+
+describe('canCreateVersion', () => {
+  it('solo una capacitación publicada con intentos se versiona', () => {
+    expect(canCreateVersion({ status: 'Publicado', attemptsCount: 1 })).toBe(true);
+    expect(canCreateVersion({ status: 'Publicado', attemptsCount: 0 })).toBe(false);
+    expect(canCreateVersion({ status: 'Borrador', attemptsCount: 3 })).toBe(false);
+    expect(canCreateVersion({ status: 'Cerrada', attemptsCount: 3 })).toBe(false);
+  });
+});
+
+describe('buildSupersededCloseFields', () => {
+  it('completa los campos vacíos', () => {
+    expect(buildSupersededCloseFields(empty, 2)).toEqual({
+      effectiveness_method: 'Cerrada por cambio de versión',
+      requires_new_actions: true,
+      new_actions_detail: 'Se emite la versión 2',
+    });
+  });
+
+  it('trata el texto en blanco como vacío', () => {
+    expect(
+      buildSupersededCloseFields({ effectiveness_method: '  ', requires_new_actions: null, new_actions_detail: null }, 2)
+        .effectiveness_method
+    ).toBe('Cerrada por cambio de versión');
+  });
+
+  it('no pisa lo cargado a mano', () => {
+    const manual = { effectiveness_method: 'Encuesta', requires_new_actions: false, new_actions_detail: null };
+    expect(buildSupersededCloseFields(manual, 3)).toEqual(manual);
+
+    const conAcciones = { effectiveness_method: 'Encuesta', requires_new_actions: true, new_actions_detail: 'Charla' };
+    expect(buildSupersededCloseFields(conAcciones, 3)).toEqual(conAcciones);
+  });
+
+  it('con nuevas acciones en Sí y sin detalle, completa solo el detalle', () => {
+    expect(
+      buildSupersededCloseFields({ effectiveness_method: 'X', requires_new_actions: true, new_actions_detail: null }, 2)
+    ).toEqual({ effectiveness_method: 'X', requires_new_actions: true, new_actions_detail: 'Se emite la versión 2' });
+  });
+});
+
+describe('buildSupersedeUpdate', () => {
+  const now = new Date('2026-11-10T12:00:00Z');
+
+  it('una versión publicada se cierra y queda marcada como reemplazada', () => {
+    expect(buildSupersedeUpdate({ status: 'Publicado', close: empty }, 2, now, 'u1')).toEqual({
+      status: 'Cerrada',
+      closed_at: now,
+      closed_by: 'u1',
+      superseded_at: now,
+      updated_at: now,
+      effectiveness_method: 'Cerrada por cambio de versión',
+      requires_new_actions: true,
+      new_actions_detail: 'Se emite la versión 2',
+    });
+  });
+
+  it('una versión ya cerrada a mano solo se marca como reemplazada', () => {
+    expect(buildSupersedeUpdate({ status: 'Cerrada', close: empty }, 2, now, 'u1')).toEqual({
+      superseded_at: now,
+      updated_at: now,
+    });
+  });
+});
+
+describe('versionedTitle / supersededClosureNote', () => {
+  it('agrega la versión solo si la capacitación está versionada', () => {
+    expect(versionedTitle('Difusión', 2, true)).toBe('Difusión (versión 2)');
+    expect(versionedTitle('Difusión', 1, true)).toBe('Difusión (versión 1)');
+    expect(versionedTitle('Difusión', 1, false)).toBe('Difusión');
+  });
+
+  it('arma la nota de cierre por cambio de versión', () => {
+    expect(supersededClosureNote(2)).toBe('Cerrada por cambio de versión (reemplazada por la versión 2)');
+  });
+});
+
+describe('materialPathsSafeToDelete', () => {
+  it('excluye los archivos que otra versión sigue usando y deduplica', () => {
+    expect(materialPathsSafeToDelete(['a', 'b', 'b', 'c'], ['b'])).toEqual(['a', 'c']);
+  });
+
+  it('descarta rutas vacías', () => {
+    expect(materialPathsSafeToDelete(['', 'a', '  '], [])).toEqual(['a']);
+  });
+});
+
+describe('certificatePathsForAttempts', () => {
+  it('arma el document_path con que se archiva cada constancia', () => {
+    expect(
+      certificatePathsForAttempts('c1', [
+        { id: 'a1', employee_id: 'e1' },
+        { id: 'a2', employee_id: 'e1' },
+      ])
+    ).toEqual(['capacitaciones/c1/e1/a1.pdf', 'capacitaciones/c1/e1/a2.pdf']);
+  });
+});
+
+describe('versionLinks', () => {
+  const v1 = { id: 'v1', version_number: 1, previous_version_id: null, status: 'Cerrada', closed_at: '2026-11-10T12:00:00.000Z', approved: 3 };
+  const v2 = { id: 'v2', version_number: 2, previous_version_id: 'v1', status: 'Publicado', closed_at: null, approved: 0 };
+  const v3 = { id: 'v3', version_number: 3, previous_version_id: 'v2', status: 'Borrador', closed_at: null, approved: 0 };
+
+  it('la versión vigente conoce a la anterior y a la que está en preparación', () => {
+    expect(versionLinks([v1, v2, v3], 'v2')).toEqual({
+      previousVersion: { version_number: 1, closed_at: '2026-11-10T12:00:00.000Z', approved: 3 },
+      draftVersion: { id: 'v3', version_number: 3 },
+    });
+  });
+
+  it('una capacitación sin versiones no tiene vínculos', () => {
+    expect(versionLinks([{ ...v1, status: 'Publicado', closed_at: null }], 'v1')).toEqual({
+      previousVersion: null,
+      draftVersion: null,
+    });
+  });
+
+  it('una sucesora ya publicada no cuenta como versión en preparación', () => {
+    expect(versionLinks([v1, v2], 'v1').draftVersion).toBeNull();
+  });
+});
+
+describe('correcciones de la revisión final', () => {
+  const now = new Date('2026-11-10T12:00:00Z');
+  const empty = { effectiveness_method: null, requires_new_actions: null, new_actions_detail: null };
+
+  it('I2: una versión ya reemplazada no se vuelve a tocar', () => {
+    expect(
+      buildSupersedeUpdate({ status: 'Cerrada', close: empty, superseded_at: new Date('2026-11-01') }, 2, now, 'u1')
+    ).toBeNull();
+  });
+
+  it('I3: una versión archivada mientras la nueva estaba en preparación también se cierra', () => {
+    expect(buildSupersedeUpdate({ status: 'Archivado', close: empty }, 2, now, 'u1')).toMatchObject({
+      status: 'Cerrada',
+      closed_at: now,
+      superseded_at: now,
+      effectiveness_method: 'Cerrada por cambio de versión',
+    });
+  });
+
+  it('I1: la constancia de una versión reemplazada se archiva vencida', () => {
+    const superseded = new Date('2026-11-10T12:00:00Z');
+    expect(certificateArchiveState(superseded, '2027-11-01T00:00:00.000Z')).toEqual({
+      state: 'vencido',
+      validity: '2026-11-10T12:00:00.000Z',
+    });
+    expect(certificateArchiveState(null, '2027-11-01T00:00:00.000Z')).toEqual({
+      state: 'presentado',
+      validity: '2027-11-01T00:00:00.000Z',
+    });
+  });
+
+  it('I4: el registro de una versión reemplazada no suma aprobados posteriores al reemplazo', () => {
+    const superseded = new Date('2026-11-10T12:00:00Z');
+    expect(isWithinRecordCutoff(new Date('2026-11-09T10:00:00Z'), superseded)).toBe(true);
+    expect(isWithinRecordCutoff(new Date('2026-11-11T10:00:00Z'), superseded)).toBe(false);
+    expect(isWithinRecordCutoff(null, superseded)).toBe(false);
+    expect(isWithinRecordCutoff(new Date('2030-01-01'), null)).toBe(true);
+  });
+
+  it('M5: un borrador no dice que reemplaza a la anterior hasta que se publica', () => {
+    const v1 = { id: 'v1', version_number: 1, previous_version_id: null, status: 'Publicado', closed_at: null, approved: 3 };
+    const v2 = { id: 'v2', version_number: 2, previous_version_id: 'v1', status: 'Borrador', closed_at: null, approved: 0 };
+    expect(versionLinks([v1, v2], 'v2').previousVersion).toBeNull();
+  });
+});

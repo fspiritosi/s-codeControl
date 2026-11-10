@@ -163,7 +163,9 @@ function OverviewTab({ training }: { training: Awaited<ReturnType<typeof fetchTr
       // La lista de campos faltantes puede ser larga: más tiempo para leerla.
       duration: 10000,
       loading: 'Publicando capacitación...',
-      success: 'Capacitación publicada exitosamente',
+      success: training?.previous_version_id
+        ? 'Versión publicada. La versión anterior quedó cerrada por cambio de versión.'
+        : 'Capacitación publicada exitosamente',
       error: (err: Error) =>
         err.message?.startsWith('No se puede publicar')
           ? `${err.message}. Completalos desde "Editar Capacitación" y volvé a publicar.`
@@ -184,7 +186,9 @@ function OverviewTab({ training }: { training: Awaited<ReturnType<typeof fetchTr
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Estado:</span>
-            <Badge variant={training?.status === 'Publicado' ? 'default' : 'secondary'}>{training?.status}</Badge>
+            <Badge variant={training?.status === 'Publicado' ? 'default' : 'secondary'}>
+              {training?.superseded_at ? 'Cerrada por cambio de versión' : training?.status}
+            </Badge>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Materiales:</span>
@@ -242,10 +246,13 @@ function OverviewTab({ training }: { training: Awaited<ReturnType<typeof fetchTr
           <CardTitle>Acciones Rápidas</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <Button variant="outline" onClick={sendReminder} className="w-full justify-start">
-            <Send className="h-4 w-4 mr-2" />
-            Enviar recordatorio a todos
-          </Button>
+          {/* Una versión reemplazada ya no se puede rendir (TKT-827). */}
+          {!training?.superseded_at && (
+            <Button variant="outline" onClick={sendReminder} className="w-full justify-start">
+              <Send className="h-4 w-4 mr-2" />
+              Enviar recordatorio a todos
+            </Button>
+          )}
           {training?.status === 'Publicado' && (
             <Button variant="outline" onClick={archiveTraining} className="w-full justify-start">
               <CheckCircle className="h-4 w-4 mr-2" />

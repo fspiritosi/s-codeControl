@@ -4,6 +4,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Eye, GraduationCap, Tag as TagIcon, Trash2, Users } from 'lucide-react';
 import { fetchTrainings } from '../actions.server';
+import { TrainingVersionBadge, TrainingVersionLinks } from './TrainingVersionInfo';
 
 interface TrainingMaterial {
   type: string;
@@ -73,12 +74,16 @@ export function TrainingGrid({
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <GraduationCap className="h-8 w-8 text-purple-600" />
-                <Badge variant={status === 'Publicado' ? 'default' : status === 'Borrador' ? 'outline' : 'destructive'}>
-                  {status}
-                </Badge>
+                <div className="flex items-center gap-1">
+                  <TrainingVersionBadge training={training} />
+                  <Badge variant={status === 'Publicado' ? 'default' : status === 'Borrador' ? 'outline' : 'destructive'}>
+                    {status}
+                  </Badge>
+                </div>
               </div>
               <CardTitle className="text-lg">{training.title}</CardTitle>
               <CardDescription className="line-clamp-2">{training.description}</CardDescription>
+              <TrainingVersionLinks training={training} />
               <div className="flex flex-wrap gap-1 mt-2">
                 {tags.map((tag: any) => (
                   <Badge

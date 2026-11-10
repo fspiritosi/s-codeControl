@@ -7,7 +7,8 @@ import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Separator } from '@/shared/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
-import { ArrowLeft, Copy, Edit, Loader2, Save, Tag } from 'lucide-react';
+import { ArrowLeft, Edit, GitBranch, Loader2, Save, Tag } from 'lucide-react';
+import { useLoggedUserStore } from '@/shared/store/loggedUser';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react'; // Importa useEffect
@@ -22,6 +23,9 @@ import { updateTrainingEvaluation, type fetchAllTags, type fetchTrainingById } f
 import EmployeesTab from './EmployeesTab';
 import MaterialsTab from './MaterialsTab';
 import OverviewTab from './OverviewTab';
+import VersionsTab from './VersionsTab';
+import { createTrainingVersion } from '../version-actions.server';
+import { canCreateVersion } from '../shared/versioning';
 
 export default function TrainingDetail({
   training,
@@ -32,6 +36,10 @@ export default function TrainingDetail({
 }) {
   const router = useRouter();
   const [showEditDialog, setShowEditDialog] = useState(false);
+  // Versionar es una tarea de administración: Invitado y Auditor no (TKT-827).
+  const role = useLoggedUserStore((state) => state.roleActualCompany);
+  const isAdmin = role !== 'Invitado' && role !== 'Auditor';
+  const [isCreatingVersion, setIsCreatingVersion] = useState(false);
   const [selectedTab, setSelectedTab] = useState('basic');
 
   // Estado para la evaluación
@@ -129,6 +137,34 @@ export default function TrainingDetail({
     return;
   }
 
+  const showVersion = training.version_number > 1 || Boolean(training.superseded_at);
+  const canVersion =
+    isAdmin &&
+    !training.superseded_at &&
+    (Boolean(training.draftVersion) ||
+      canCreateVersion({ status: training.status ?? null, attemptsCount: training.attempts.length }));
+
+  // Si ya hay una versión en preparación, se abre esa en lugar de crear otra.
+  const openNewVersion = async () => {
+    if (training.draftVersion) {
+      router.push(`/dashboard/hse/detail/${training.draftVersion.id}`);
+      return;
+    }
+
+    setIsCreatingVersion(true);
+    try {
+      const result = await createTrainingVersion(training.id);
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success(`Se creó la versión ${training.version_number + 1} como borrador`);
+      router.push(`/dashboard/hse/detail/${result.id}`);
+    } finally {
+      setIsCreatingVersion(false);
+    }
+  };
+
   return (
     <Card className="mx-7">
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
@@ -151,6 +187,7 @@ export default function TrainingDetail({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold">{training.title}</h1>
+              {showVersion && <Badge variant="outline">v{training.version_number}</Badge>}
               {training.tags.map((tag: any, index: any) => (
                 <Badge key={index} variant="outline" className="flex items-center gap-1">
                   <Tag className="h-3 w-3" />
@@ -162,10 +199,18 @@ export default function TrainingDetail({
           </div>
           <div className="flex flex-wrap gap-2">
             {training.attempts.length > 0 ? (
-              <Button disabled>
-                <Copy className="h-4 w-4 mr-2" />
-                Clonar capacitación
-              </Button>
+              canVersion && (
+                <Button variant="outline" onClick={openNewVersion} disabled={isCreatingVersion}>
+                  {isCreatingVersion ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <GitBranch className="h-4 w-4 mr-2" />
+                  )}
+                  {training.draftVersion
+                    ? `Ver v${training.draftVersion.version_number} en preparación`
+                    : 'Nueva versión'}
+                </Button>
+              )
             ) : (
               <Button
                 variant="outline"
@@ -181,12 +226,13 @@ export default function TrainingDetail({
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-6">
             <TabsTrigger value="overview">Resumen</TabsTrigger>
             <TabsTrigger value="materials">Materiales</TabsTrigger>
             <TabsTrigger value="employees">Empleados</TabsTrigger>
             <TabsTrigger value="evaluation">Evaluación</TabsTrigger>
             <TabsTrigger value="statistics">Estadísticas</TabsTrigger>
+            <TabsTrigger value="versions">Versiones</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -286,6 +332,11 @@ export default function TrainingDetail({
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Versions Tab (TKT-827) */}
+          <TabsContent value="versions" className="space-y-6">
+            <VersionsTab trainingId={training.id} />
           </TabsContent>
 
           {/* Statistics Tab */}
