@@ -7,6 +7,7 @@ import {
   materialPathsSafeToDelete,
   supersededClosureNote,
   versionedTitle,
+  versionLinks,
 } from './versioning';
 
 const empty = { effectiveness_method: null, requires_new_actions: null, new_actions_detail: null };
@@ -105,5 +106,29 @@ describe('certificatePathsForAttempts', () => {
         { id: 'a2', employee_id: 'e1' },
       ])
     ).toEqual(['capacitaciones/c1/e1/a1.pdf', 'capacitaciones/c1/e1/a2.pdf']);
+  });
+});
+
+describe('versionLinks', () => {
+  const v1 = { id: 'v1', version_number: 1, previous_version_id: null, status: 'Cerrada', closed_at: '2026-11-10T12:00:00.000Z', approved: 3 };
+  const v2 = { id: 'v2', version_number: 2, previous_version_id: 'v1', status: 'Publicado', closed_at: null, approved: 0 };
+  const v3 = { id: 'v3', version_number: 3, previous_version_id: 'v2', status: 'Borrador', closed_at: null, approved: 0 };
+
+  it('la versión vigente conoce a la anterior y a la que está en preparación', () => {
+    expect(versionLinks([v1, v2, v3], 'v2')).toEqual({
+      previousVersion: { version_number: 1, closed_at: '2026-11-10T12:00:00.000Z', approved: 3 },
+      draftVersion: { id: 'v3', version_number: 3 },
+    });
+  });
+
+  it('una capacitación sin versiones no tiene vínculos', () => {
+    expect(versionLinks([{ ...v1, status: 'Publicado', closed_at: null }], 'v1')).toEqual({
+      previousVersion: null,
+      draftVersion: null,
+    });
+  });
+
+  it('una sucesora ya publicada no cuenta como versión en preparación', () => {
+    expect(versionLinks([v1, v2], 'v1').draftVersion).toBeNull();
   });
 });

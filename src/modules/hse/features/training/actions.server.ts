@@ -8,7 +8,7 @@ import { supabaseServer } from '@/shared/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { validateForClose, validateForPublish, type TrainingRecordData } from './shared/record-fields';
-import { materialPathsSafeToDelete } from './shared/versioning';
+import { materialPathsSafeToDelete, versionLinks, type VersionNode } from './shared/versioning';
 import { publishTrainingVersion } from './version-actions.server';
 
 /**
@@ -345,8 +345,26 @@ export const fetchTrainings = async () => {
       .eq('status', 'completed') as unknown as { data: any[] | null; error: any };
 
 
+    // Versiones (TKT-827): cada tarjeta sabe a qué versión reemplaza y si hay
+    // una nueva en preparación. Las reemplazadas no tienen tarjeta propia: se
+    // consultan desde la pestaña Versiones del detalle.
+    const versionNodes: VersionNode[] = data.map((training: any) => ({
+      id: training.id,
+      version_number: training.version_number ?? 1,
+      previous_version_id: training.previous_version_id ?? null,
+      status: training.status ?? null,
+      closed_at: training.closed_at ?? null,
+      approved: new Set(
+        (training.training_attempts ?? [])
+          .filter((attempt: any) => attempt.passed)
+          .map((attempt: any) => attempt.employee_id)
+      ).size,
+    }));
+
     // Procesar los datos para el formato que espera el componente TrainingSection
-    const formattedTrainings = data.map((training: any) => {
+    const formattedTrainings = data
+      .filter((training: any) => !training.superseded_at)
+      .map((training: any) => {
       // Por defecto, todas las capacitaciones se aplican a todos los empleados
       const totalEmployeesCount = totalEmployees || 0;
 
@@ -392,6 +410,8 @@ export const fetchTrainings = async () => {
         completedCount: Number(completedCount) || 0,
         totalEmployees: Number(totalEmployeesCount) || 0,
         status: training.status || 'draft',
+        version_number: (training.version_number ?? 1) as number,
+        ...versionLinks(versionNodes, training.id),
       };
     });
 
@@ -401,6 +421,40 @@ export const fetchTrainings = async () => {
     console.error('Error inesperado al obtener capacitaciones:', error);
     return [];
   }
+};
+
+/** Versión anterior y versión en preparación de una capacitación (TKT-827). */
+const fetchVersionLinks = async (trainingId: string, company_id: string) => {
+  const training = await prisma.trainings.findFirst({
+    where: { id: trainingId, company_id },
+    select: { id: true, root_training_id: true },
+  });
+  if (!training) return versionLinks([], trainingId);
+
+  const group = training.root_training_id ?? training.id;
+  const versions = await prisma.trainings.findMany({
+    where: { company_id, OR: [{ id: group }, { root_training_id: group }] },
+    select: {
+      id: true,
+      version_number: true,
+      previous_version_id: true,
+      status: true,
+      closed_at: true,
+      training_attempts: { where: { passed: true }, select: { employee_id: true } },
+    },
+  });
+
+  return versionLinks(
+    versions.map((version) => ({
+      id: version.id,
+      version_number: version.version_number,
+      previous_version_id: version.previous_version_id,
+      status: version.status,
+      closed_at: version.closed_at?.toISOString() ?? null,
+      approved: new Set(version.training_attempts.map((attempt) => attempt.employee_id)).size,
+    })),
+    trainingId
+  );
 };
 
 /**
@@ -633,6 +687,11 @@ export const fetchTrainingById = async (id: string) => {
         },
       },
       status: trainingData.status,
+      // Versionado (TKT-827).
+      version_number: (trainingData.version_number ?? 1) as number,
+      previous_version_id: (trainingData.previous_version_id ?? null) as string | null,
+      superseded_at: (trainingData.superseded_at ?? null) as string | null,
+      ...(await fetchVersionLinks(trainingData.id, company_id)),
     };
 
     return formattedTraining;

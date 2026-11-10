@@ -95,3 +95,37 @@ export function certificatePathsForAttempts(
 ): string[] {
   return attempts.map((attempt) => certificatePath(companyId, attempt.employee_id, attempt.id));
 }
+
+export type VersionNode = {
+  id: string;
+  version_number: number;
+  previous_version_id: string | null;
+  status: string | null;
+  closed_at: string | null;
+  approved: number;
+};
+
+/**
+ * Vínculos de una versión con sus vecinas, para la tarjeta del listado:
+ * "Reemplaza a la v{n}" y "v{n} en preparación".
+ */
+export function versionLinks(
+  nodes: VersionNode[],
+  id: string
+): {
+  previousVersion: { version_number: number; closed_at: string | null; approved: number } | null;
+  draftVersion: { id: string; version_number: number } | null;
+} {
+  const current = nodes.find((node) => node.id === id);
+  const previous = current?.previous_version_id
+    ? nodes.find((node) => node.id === current.previous_version_id)
+    : undefined;
+  const draft = nodes.find((node) => node.previous_version_id === id && node.status === 'Borrador');
+
+  return {
+    previousVersion: previous
+      ? { version_number: previous.version_number, closed_at: previous.closed_at, approved: previous.approved }
+      : null,
+    draftVersion: draft ? { id: draft.id, version_number: draft.version_number } : null,
+  };
+}

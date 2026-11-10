@@ -90,19 +90,27 @@ export function TrainingEditDialog({ training, allTags, open, onOpenChange, sele
         return;
       }
 
-      await toast.promise(
-        updateTraining(training?.id || '', {
-          title: formData.title,
-          description: formData.description,
-          status: formData.status,
-          tags: formData.tags,
-        }),
-        {
-          loading: 'Actualizando capacitación...',
-          success: 'Capacitación actualizada correctamente',
-          error: 'Error al actualizar la capacitación',
-        }
-      );
+      // updateTraining no lanza: devuelve { success: false, error }. Publicar una
+      // versión nueva puede fallar acá (TKT-827), así que se convierte en
+      // rechazo para que el toast no muestre éxito.
+      await toast
+        .promise(
+          updateTraining(training?.id || '', {
+            title: formData.title,
+            description: formData.description,
+            status: formData.status,
+            tags: formData.tags,
+          }).then((result) => {
+            if (!result.success) throw new Error(('error' in result && result.error) || undefined);
+            return result;
+          }),
+          {
+            loading: 'Actualizando capacitación...',
+            success: 'Capacitación actualizada correctamente',
+            error: (err: Error) => err.message || 'Error al actualizar la capacitación',
+          }
+        )
+        .unwrap();
 
       onOpenChange(false);
     } catch (error) {
