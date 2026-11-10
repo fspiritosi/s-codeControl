@@ -8,6 +8,8 @@ import { supabaseServer } from '@/shared/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
 import { validateForClose, validateForPublish, type TrainingRecordData } from './shared/record-fields';
+import { materialPathsSafeToDelete } from './shared/versioning';
+import { publishTrainingVersion } from './version-actions.server';
 
 /**
  * Crea una nueva capacitación
@@ -725,13 +727,25 @@ export const updateTrainingMaterials = async (
 
     // Eliminar los archivos del storage si existen
     if (existingMaterials && existingMaterials.length > 0) {
-      const filePathsToDelete = existingMaterials
-        .map((material: any) => {
-          // Extraer la ruta del archivo del final de la URL pública
-          const parts = material.file_url.split('training-materials/');
-          return parts.length > 1 ? parts[1] : null;
-        })
-        .filter((path: any): path is string => path !== null && path.trim() !== ''); // Filtrar nulos y vacíos
+      // Extraer la ruta del archivo del final de la URL pública
+      const toPath = (url: string) => url.split('training-materials/')[1] ?? '';
+
+      // No se borran los archivos que siguen en la lista nueva ni los que otra
+      // capacitación referencia: las versiones comparten materiales (TKT-827).
+      const keptUrls = new Set((materials ?? []).map((material) => material.url));
+      const candidateUrls: string[] = existingMaterials
+        .map((material: any) => material.file_url as string)
+        .filter((url: string) => Boolean(url) && !keptUrls.has(url));
+      const sharedElsewhere = candidateUrls.length
+        ? await prisma.training_materials.findMany({
+            where: { training_id: { not: trainingId }, file_url: { in: candidateUrls } },
+            select: { file_url: true },
+          })
+        : [];
+      const filePathsToDelete = materialPathsSafeToDelete(
+        candidateUrls.map(toPath),
+        sharedElsewhere.map((material) => toPath(material.file_url))
+      );
 
       if (filePathsToDelete.length > 0) {
         try {
@@ -1334,12 +1348,18 @@ export const updateTraining = async (
   }
 ) => {
   try {
+    // Publicar no se hace acá: va por updateTrainingStatus al final, que valida
+    // el acta y, si es una versión nueva, reemplaza a la anterior (TKT-827).
+    const current = await prisma.trainings.findUnique({ where: { id: trainingId }, select: { status: true } });
+    const publishing = data.status === 'Publicado' && current?.status !== 'Publicado';
+    const status = publishing ? ((current?.status ?? null) as typeof data.status) : data.status;
+
     // Actualizar información básica
-    if (data.title || data.description || data.status) {
+    if (data.title || data.description || status) {
       const basicInfoResult = await updateTrainingBasicInfo(trainingId, {
         title: data.title,
         description: data.description,
-        status: data.status,
+        status,
       });
 
       if (!basicInfoResult.success) {
@@ -1371,6 +1391,11 @@ export const updateTraining = async (
       }
     }
 
+    if (publishing) {
+      const publishResult = await updateTrainingStatus(trainingId, 'Publicado');
+      if (!publishResult.success) return publishResult;
+    }
+
     revalidatePath('/dashboard/hse');
     revalidatePath(`/dashboard/hse/detail/${trainingId}`);
 
@@ -1391,6 +1416,16 @@ export const updateTrainingStatus = async (trainingId: string, status: 'Borrador
   try {
     const supabase = (await supabaseServer()) as any;
 
+    // Publicar una versión nueva reemplaza a la anterior (TKT-827): es otra
+    // operación, que valida el acta, cierra la anterior y vence sus constancias.
+    if (status === 'Publicado') {
+      const current = await prisma.trainings.findUnique({
+        where: { id: trainingId },
+        select: { previous_version_id: true },
+      });
+      if (current?.previous_version_id) return publishTrainingVersion(trainingId);
+    }
+
     // Publicar exige los datos del acta cargados (tsk-540). La validación vive
     // acá y no solo en el diálogo porque también se publica desde el listado.
     if (status === 'Publicado') {
@@ -1409,7 +1444,7 @@ export const updateTrainingStatus = async (trainingId: string, status: 'Borrador
 
     const { data: updated, error: updateError } = await supabase
       .from('trainings')
-      .update({ status })
+      .update(status === 'Publicado' ? { status, published_at: new Date().toISOString() } : { status })
       .eq('id', trainingId)
       .select('id');
 
@@ -1453,15 +1488,36 @@ export const deleteTraining = async (trainingId: string) => {
       return { success: false, error: 'Error al eliminar materiales de la capacitación' };
     }
 
-    const documentsUrl = materials
+    const ownUrls: string[] = materials
       .map((material: any) => material.file_url)
       .filter((url: string | null): url is string => Boolean(url));
+    // Una versión en preparación comparte archivos con la anterior (TKT-827):
+    // solo se borran los que ninguna otra capacitación referencia.
+    const sharedElsewhere = ownUrls.length
+      ? await prisma.training_materials.findMany({
+          where: { training_id: { not: trainingId }, file_url: { in: ownUrls } },
+          select: { file_url: true },
+        })
+      : [];
+    const documentsUrl = materialPathsSafeToDelete(
+      ownUrls,
+      sharedElsewhere.map((material) => material.file_url)
+    );
     // Supabase Storage rechaza un array vacío (body/prefixes must NOT have fewer
     // than 1 items), así que solo intentamos borrar si hay archivos.
     if (documentsUrl.length > 0) {
       await storageServer.remove('documents', documentsUrl);
     }
     await supabase.from('training_materials').delete().eq('training_id', trainingId);
+
+    // Las FKs de preguntas, opciones y etiquetas no tienen ON DELETE CASCADE en
+    // las migraciones. Una versión en borrador las tiene copiadas: sin esto, su
+    // eliminación falla.
+    await prisma.$transaction([
+      prisma.training_question_options.deleteMany({ where: { question: { training_id: trainingId } } }),
+      prisma.training_questions.deleteMany({ where: { training_id: trainingId } }),
+      prisma.training_tag_assignments.deleteMany({ where: { training_id: trainingId } }),
+    ]);
 
     // 5. Finalmente eliminar la capacitación
     const { error: deleteError } = await supabase.from('trainings').delete().eq('id', trainingId);
