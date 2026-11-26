@@ -245,6 +245,8 @@ export default function PurchaseOrderDetail({ order, linkedExpenses = [], attach
 
       <PurchaseOrderImputations
         orderId={order.id}
+        orderCurrency={order.currency ?? 'ARS'}
+        orderExchangeRate={Number(order.exchange_rate) || 1}
         canUpdate={canUpdate}
         linkedInvoices={order.purchase_invoices ?? []}
         linkedExpenses={linkedExpenses}

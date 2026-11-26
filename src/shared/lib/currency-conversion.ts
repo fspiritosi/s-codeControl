@@ -121,6 +121,43 @@ export function sumInOrderCurrency(
 }
 
 /**
+ * Una factura necesita su propio TC hacia la OC cuando está en pesos y la OC en
+ * moneda extranjera: el proveedor factura en pesos al cambio de la fecha de la
+ * factura, y ese TC es el que descuenta el saldo de la OC. Al revés (factura en
+ * USD, OC en pesos) alcanza con el `exchange_rate` propio de la factura.
+ */
+export function invoiceNeedsOrderRate(invoiceCurrency: string | null | undefined, orderCurrency: string): boolean {
+  return (invoiceCurrency || BASE_CURRENCY) === BASE_CURRENCY && orderCurrency !== BASE_CURRENCY;
+}
+
+/**
+ * Decide el `order_exchange_rate` que queda en cada factura al imputarla a una
+ * OC. Solo devuelve las que lo necesitan (ver `invoiceNeedsOrderRate`): el TC
+ * ingresado manda; si no hay uno válido se conserva el que ya tenía la factura.
+ * Si alguna queda sin TC válido falla con sus números, para no imputar pesos
+ * como si fueran dólares.
+ */
+export function resolveInvoiceOrderRates(
+  invoices: Array<{ id: string; full_number: string; currency: string | null; order_exchange_rate: number | null }>,
+  orderCurrency: string,
+  provided: Record<string, number | null | undefined>
+): { ok: true; rates: Record<string, number> } | { ok: false; missing: string[] } {
+  const rates: Record<string, number> = {};
+  const missing: string[] = [];
+  const valid = (n: unknown): n is number => isValidExchangeRate(n) && Number(n) > 1;
+
+  for (const inv of invoices) {
+    if (!invoiceNeedsOrderRate(inv.currency, orderCurrency)) continue;
+    const input = provided[inv.id];
+    if (valid(input)) rates[inv.id] = Number(input);
+    else if (valid(inv.order_exchange_rate)) rates[inv.id] = Number(inv.order_exchange_rate);
+    else missing.push(inv.full_number);
+  }
+
+  return missing.length > 0 ? { ok: false, missing } : { ok: true, rates };
+}
+
+/**
  * Importe de una factura de compra expresado en la moneda de su OC: es lo que la
  * factura le descuenta al saldo (en montos) de la orden.
  *
