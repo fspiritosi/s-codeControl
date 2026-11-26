@@ -35,6 +35,18 @@ export const DEBIT_NOTE_VOUCHER_TYPES = [
 /** Estados de una NC en los que su crédito ya es efectivo (no borrador ni anulada). */
 export const ACTIVE_CREDIT_NOTE_STATUSES = ['CONFIRMED', 'PARTIAL_PAID', 'PAID'] as const;
 
+/**
+ * Estados de una factura de compra emitida en firme: confirmada, y después
+ * pagada en parte o del todo. El pago no la des-factura, así que cuenta para
+ * todo lo que mide lo facturado (estado de facturación de la OC, remitos).
+ * Quedan afuera el borrador y la anulada.
+ */
+export const ISSUED_PURCHASE_INVOICE_STATUSES = ['CONFIRMED', 'PARTIAL_PAID', 'PAID'] as const;
+
+export function isIssuedPurchaseInvoiceStatus(status: string): boolean {
+  return (ISSUED_PURCHASE_INVOICE_STATUSES as readonly string[]).includes(status);
+}
+
 export function isCreditNoteVoucherType(voucherType: string): boolean {
   return (CREDIT_NOTE_VOUCHER_TYPES as readonly string[]).includes(voucherType);
 }
