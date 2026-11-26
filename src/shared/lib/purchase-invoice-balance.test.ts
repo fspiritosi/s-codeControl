@@ -7,6 +7,7 @@ import {
   derivePurchaseInvoiceStatus,
   isCreditNoteVoucherType,
   isDebitNoteVoucherType,
+  isIssuedPurchaseInvoiceStatus,
   type SupplierAccountCredit,
   type SupplierVoucherInput,
   type SupplierVoucherRow,
@@ -504,5 +505,18 @@ describe('buildSupplierAccountRows', () => {
       expect(byNumber(rows, 'F-VIEJA').total_in_base).toBe(1000);
       expect(totals.hasForeignCurrency).toBe(false);
     });
+  });
+});
+
+describe('isIssuedPurchaseInvoiceStatus', () => {
+  it('cuenta la factura confirmada aunque ya esté pagada total o parcialmente', () => {
+    expect(isIssuedPurchaseInvoiceStatus('CONFIRMED')).toBe(true);
+    expect(isIssuedPurchaseInvoiceStatus('PARTIAL_PAID')).toBe(true);
+    expect(isIssuedPurchaseInvoiceStatus('PAID')).toBe(true);
+  });
+
+  it('deja afuera borradores y anuladas', () => {
+    expect(isIssuedPurchaseInvoiceStatus('DRAFT')).toBe(false);
+    expect(isIssuedPurchaseInvoiceStatus('CANCELLED')).toBe(false);
   });
 });
