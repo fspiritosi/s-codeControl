@@ -10,6 +10,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { ScrollArea } from '@/shared/components/ui/scroll-area';
+import { Input } from '@/shared/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,8 @@ import {
   DialogTitle,
 } from '@/shared/components/ui/dialog';
 import { formatCurrencyARS, formatCurrencyIn, formatDateUTC } from '@/shared/lib/utils/formatters';
+import { convertAmount, invoiceNeedsOrderRate } from '@/shared/lib/currency-conversion';
+import { getLatestExchangeRate } from '@/shared/actions/exchange-rates';
 import {
   getImputableInvoices,
   getImputableExpenses,
@@ -41,16 +44,31 @@ type ImputationSummary = {
 
 interface Props {
   orderId: string;
+  /** Moneda de la OC y su TC de referencia (1 USD = ? ARS). */
+  orderCurrency: string;
+  orderExchangeRate: number;
   canUpdate: boolean;
   linkedInvoices: LinkedInvoice[];
   linkedExpenses: LinkedExpense[];
   summary: ImputationSummary;
 }
 
-type Candidate = { id: string; primary: string; secondary: string; amount: number; currency?: string | null };
+type Candidate = {
+  id: string;
+  primary: string;
+  secondary: string;
+  amount: number;
+  currency?: string | null;
+  /** Solo facturas en pesos de una OC en moneda extranjera: piden su TC. */
+  needsRate?: boolean;
+};
+
+const isValidRate = (v: string | undefined) => Number(v) > 1;
 
 export default function PurchaseOrderImputations({
   orderId,
+  orderCurrency,
+  orderExchangeRate,
   canUpdate,
   linkedInvoices,
   linkedExpenses,
@@ -63,23 +81,40 @@ export default function PurchaseOrderImputations({
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  /** TC por factura (texto del input), para las que lo necesitan. */
+  const [rates, setRates] = useState<Record<string, string>>({});
 
   const openDialog = async (kind: 'invoice' | 'expense') => {
     setDialogKind(kind);
     setSelected(new Set());
+    setRates({});
     setLoadingCandidates(true);
     try {
       if (kind === 'invoice') {
         const data = await getImputableInvoices(orderId);
-        setCandidates(
-          data.map((i) => ({
-            id: i.id,
-            primary: i.full_number,
-            secondary: formatDateUTC(i.issue_date),
-            amount: i.total,
-            currency: i.currency,
-          }))
-        );
+        const mapped = data.map((i) => ({
+          id: i.id,
+          primary: i.full_number,
+          secondary: formatDateUTC(i.issue_date),
+          amount: i.total,
+          currency: i.currency,
+          needsRate: invoiceNeedsOrderRate(i.currency, orderCurrency),
+        }));
+        // Precarga del TC: el que la factura ya tenga, si no la última
+        // cotización cargada, si no el de referencia de la OC. Es una sugerencia:
+        // el que vale es el TC al que facturó el proveedor.
+        if (mapped.some((c) => c.needsRate)) {
+          const latest = await getLatestExchangeRate(orderCurrency);
+          const fallback = latest && latest.valor > 1 ? latest.valor : orderExchangeRate > 1 ? orderExchangeRate : null;
+          const initial: Record<string, string> = {};
+          for (const i of data) {
+            if (!invoiceNeedsOrderRate(i.currency, orderCurrency)) continue;
+            const rate = i.order_exchange_rate && i.order_exchange_rate > 1 ? i.order_exchange_rate : fallback;
+            initial[i.id] = rate ? String(rate) : '';
+          }
+          setRates(initial);
+        }
+        setCandidates(mapped);
       } else {
         const data = await getImputableExpenses(orderId);
         setCandidates(
@@ -106,14 +141,25 @@ export default function PurchaseOrderImputations({
       return next;
     });
 
+  const selectedMissingRate = candidates.filter(
+    (c) => c.needsRate && selected.has(c.id) && !isValidRate(rates[c.id])
+  );
+
   const confirmImpute = () => {
     const ids = Array.from(selected);
     if (ids.length === 0) return;
     const kind = dialogKind;
+    if (kind === 'invoice' && selectedMissingRate.length > 0) {
+      toast.error(`Ingresá el tipo de cambio de ${selectedMissingRate.map((c) => c.primary).join(', ')}`);
+      return;
+    }
+    const invoiceRates = Object.fromEntries(
+      ids.filter((id) => isValidRate(rates[id])).map((id) => [id, Number(rates[id])])
+    );
     startTransition(async () => {
       const res =
         kind === 'invoice'
-          ? await imputeInvoicesToOrder(orderId, ids)
+          ? await imputeInvoicesToOrder(orderId, ids, invoiceRates)
           : await imputeExpensesToOrder(orderId, ids);
       if (res.error) {
         toast.error(res.error);
@@ -307,19 +353,53 @@ export default function PurchaseOrderImputations({
           ) : (
             <ScrollArea className="max-h-72 pr-3">
               <div className="space-y-1">
-                {candidates.map((c) => (
-                  <label
-                    key={c.id}
-                    className="flex items-center gap-3 rounded-md border p-2 cursor-pointer hover:bg-muted/50"
-                  >
-                    <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggle(c.id)} />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-mono text-sm">{c.primary}</p>
-                      <p className="text-xs text-muted-foreground truncate">{c.secondary}</p>
+                {candidates.map((c) => {
+                  const showRate = c.needsRate && selected.has(c.id);
+                  const rateOk = isValidRate(rates[c.id]);
+                  return (
+                    <div key={c.id} className="rounded-md border">
+                      <label className="flex items-center gap-3 p-2 cursor-pointer hover:bg-muted/50">
+                        <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggle(c.id)} />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-mono text-sm">{c.primary}</p>
+                          <p className="text-xs text-muted-foreground truncate">{c.secondary}</p>
+                        </div>
+                        <span className="font-mono text-sm">{formatCurrencyIn(c.amount, c.currency)}</span>
+                      </label>
+                      {showRate && (
+                        <div className="flex items-center gap-2 border-t bg-muted/30 px-2 py-2 text-xs">
+                          <label htmlFor={`rate-${c.id}`} className="shrink-0 text-muted-foreground">
+                            TC de la factura (1 {orderCurrency} = ? ARS)
+                          </label>
+                          <Input
+                            id={`rate-${c.id}`}
+                            type="number"
+                            step="0.0001"
+                            min="0"
+                            placeholder="1200.0000"
+                            className="h-7 w-28 text-xs"
+                            value={rates[c.id] ?? ''}
+                            onChange={(e) => setRates((prev) => ({ ...prev, [c.id]: e.target.value }))}
+                            aria-invalid={!rateOk}
+                          />
+                          <span className={rateOk ? 'ml-auto font-mono' : 'ml-auto text-destructive'}>
+                            {rateOk
+                              ? `= ${formatCurrencyIn(
+                                  convertAmount({
+                                    amount: c.amount,
+                                    from: 'ARS',
+                                    to: orderCurrency,
+                                    rate: Number(rates[c.id]),
+                                  }),
+                                  orderCurrency
+                                )}`
+                              : 'Falta el TC'}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    <span className="font-mono text-sm">{formatCurrencyIn(c.amount, c.currency)}</span>
-                  </label>
-                ))}
+                  );
+                })}
               </div>
             </ScrollArea>
           )}
@@ -328,7 +408,10 @@ export default function PurchaseOrderImputations({
             <Button variant="outline" onClick={() => setDialogKind(null)} disabled={pending}>
               Cancelar
             </Button>
-            <Button onClick={confirmImpute} disabled={pending || selected.size === 0}>
+            <Button
+              onClick={confirmImpute}
+              disabled={pending || selected.size === 0 || (dialogKind === 'invoice' && selectedMissingRate.length > 0)}
+            >
               {pending ? 'Imputando…' : `Imputar (${selected.size})`}
             </Button>
           </DialogFooter>

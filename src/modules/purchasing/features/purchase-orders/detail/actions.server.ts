@@ -11,7 +11,12 @@ import {
   PURCHASE_INVOICE_ATTACHMENT_MAX_BYTES,
 } from '@/modules/purchasing/shared/validators';
 import { recalcInvoicingStatus } from '@/modules/purchasing/shared/recalc-invoicing-status';
-import { BASE_CURRENCY, invoiceAmountInOrderCurrency, sumInOrderCurrency } from '@/shared/lib/currency-conversion';
+import {
+  BASE_CURRENCY,
+  invoiceAmountInOrderCurrency,
+  resolveInvoiceOrderRates,
+  sumInOrderCurrency,
+} from '@/shared/lib/currency-conversion';
 import { revalidatePath } from 'next/cache';
 
 const ALLOWED_MIME_SET = new Set<string>(PURCHASE_INVOICE_ATTACHMENT_ALLOWED_MIME as readonly string[]);
@@ -27,7 +32,7 @@ function getExtensionFromMime(mime: string): string {
 async function getOrderOrThrow(orderId: string, companyId: string) {
   const order = await prisma.purchase_orders.findFirst({
     where: { id: orderId, company_id: companyId },
-    select: { id: true, supplier_id: true, total: true },
+    select: { id: true, supplier_id: true, total: true, currency: true },
   });
   if (!order) throw new Error('Orden de compra no encontrada');
   return order;
@@ -57,11 +62,23 @@ export async function getImputableInvoices(orderId: string) {
       original_invoice_id: null,
       status: { not: 'CANCELLED' },
     },
-    select: { id: true, full_number: true, total: true, currency: true, issue_date: true, status: true },
+    select: {
+      id: true,
+      full_number: true,
+      total: true,
+      currency: true,
+      order_exchange_rate: true,
+      issue_date: true,
+      status: true,
+    },
     orderBy: { issue_date: 'desc' },
   });
 
-  return invoices.map((i) => ({ ...i, total: Number(i.total) }));
+  return invoices.map((i) => ({
+    ...i,
+    total: Number(i.total),
+    order_exchange_rate: i.order_exchange_rate != null ? Number(i.order_exchange_rate) : null,
+  }));
 }
 
 /** Gastos del mismo proveedor (o sin proveedor), sin OC asignada. */
@@ -155,7 +172,17 @@ export async function getOrderImputationSummary(orderId: string) {
 // MUTATIONS — imputación
 // ============================================================
 
-export async function imputeInvoicesToOrder(orderId: string, invoiceIds: string[]) {
+/**
+ * Imputa facturas a la OC. Si la OC está en moneda extranjera y una factura en
+ * pesos, `invoiceRates[id]` es el TC de esa factura (1 USD = ? ARS): se guarda
+ * en `order_exchange_rate` y es el que descuenta el saldo de la OC. Sin un TC
+ * válido (ni ingresado ni ya cargado en la factura) no se imputa.
+ */
+export async function imputeInvoicesToOrder(
+  orderId: string,
+  invoiceIds: string[],
+  invoiceRates: Record<string, number | null | undefined> = {}
+) {
   const { companyId } = await getActionContext();
   if (!companyId) return { error: 'No company selected' };
   if (!invoiceIds?.length) return { error: 'Sin facturas para imputar' };
@@ -167,7 +194,14 @@ export async function imputeInvoicesToOrder(orderId: string, invoiceIds: string[
     // Validar que todas pertenezcan al mismo proveedor y estén libres.
     const invoices = await prisma.purchase_invoices.findMany({
       where: { id: { in: invoiceIds }, company_id: companyId },
-      select: { id: true, supplier_id: true, purchase_order_id: true },
+      select: {
+        id: true,
+        full_number: true,
+        supplier_id: true,
+        purchase_order_id: true,
+        currency: true,
+        order_exchange_rate: true,
+      },
     });
     if (invoices.length !== invoiceIds.length) return { error: 'Alguna factura no existe' };
     const invalidSupplier = invoices.some((i) => i.supplier_id !== order.supplier_id);
@@ -175,10 +209,33 @@ export async function imputeInvoicesToOrder(orderId: string, invoiceIds: string[
     const alreadyImputed = invoices.some((i) => i.purchase_order_id && i.purchase_order_id !== orderId);
     if (alreadyImputed) return { error: 'Alguna factura ya está imputada a otra OC' };
 
-    await prisma.purchase_invoices.updateMany({
-      where: { id: { in: invoiceIds }, company_id: companyId },
-      data: { purchase_order_id: orderId },
-    });
+    const resolved = resolveInvoiceOrderRates(
+      invoices.map((i) => ({
+        id: i.id,
+        full_number: i.full_number,
+        currency: i.currency,
+        order_exchange_rate: i.order_exchange_rate != null ? Number(i.order_exchange_rate) : null,
+      })),
+      order.currency,
+      invoiceRates
+    );
+    if (!resolved.ok) {
+      return {
+        error: `La OC está en ${order.currency}: ingresá el tipo de cambio de ${
+          resolved.missing.length === 1 ? 'la factura' : 'las facturas'
+        } ${resolved.missing.join(', ')}`,
+      };
+    }
+
+    await prisma.$transaction([
+      prisma.purchase_invoices.updateMany({
+        where: { id: { in: invoiceIds }, company_id: companyId },
+        data: { purchase_order_id: orderId },
+      }),
+      ...Object.entries(resolved.rates).map(([id, rate]) =>
+        prisma.purchase_invoices.update({ where: { id }, data: { order_exchange_rate: rate } })
+      ),
+    ]);
 
     await recalcInvoicingStatus(orderId);
 
