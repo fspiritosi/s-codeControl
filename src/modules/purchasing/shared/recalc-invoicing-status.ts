@@ -1,5 +1,6 @@
 import { prisma } from '@/shared/lib/prisma';
 import { BASE_CURRENCY, invoiceAmountInOrderCurrency } from '@/shared/lib/currency-conversion';
+import { ISSUED_PURCHASE_INVOICE_STATUSES } from '@/shared/lib/purchase-invoice-balance';
 
 /**
  * Recálculo unificado del estado de facturación (invoicing_status) de una OC.
@@ -9,7 +10,9 @@ import { BASE_CURRENCY, invoiceAmountInOrderCurrency } from '@/shared/lib/curren
  * facturas), que diferían en criterio y dejaban OCs con estado incorrecto.
  *
  * Criterios (fix tsk-478):
- *  - Solo cuentan facturas CONFIRMED (las DRAFT no mueven el estado — decisión de negocio).
+ *  - Solo cuentan facturas emitidas: CONFIRMED, PARTIAL_PAID y PAID (las DRAFT no mueven
+ *    el estado — decisión de negocio). Pagar una factura no la des-factura: antes se
+ *    filtraba solo CONFIRMED y una OC pagada volvía a NOT_INVOICED al recalcular.
  *  - Considera el vínculo por CABECERA (purchase_order_id) Y por LÍNEA
  *    (purchase_invoice_lines.purchase_order_line_id). Antes el confirm solo miraba
  *    las líneas, por lo que una factura ligada solo por cabecera dejaba la OC en NOT_INVOICED.
@@ -38,7 +41,7 @@ export async function recalcInvoicingStatus(orderId: string): Promise<InvoicingS
     // convertirla antes de sumar.
     prisma.purchase_invoices.findMany({
       where: {
-        status: 'CONFIRMED',
+        status: { in: [...ISSUED_PURCHASE_INVOICE_STATUSES] },
         OR: [
           { purchase_order_id: orderId },
           { lines: { some: { purchase_order_line: { order_id: orderId } } } },
@@ -49,7 +52,7 @@ export async function recalcInvoicingStatus(orderId: string): Promise<InvoicingS
     prisma.purchase_invoice_lines.findMany({
       where: {
         purchase_order_line: { order_id: orderId },
-        invoice: { status: 'CONFIRMED' },
+        invoice: { status: { in: [...ISSUED_PURCHASE_INVOICE_STATUSES] } },
       },
       select: { purchase_order_line_id: true, quantity: true },
     }),
@@ -74,7 +77,7 @@ export async function recalcInvoicingStatus(orderId: string): Promise<InvoicingS
     0
   );
 
-  // Cantidad facturada (confirmada) acumulada por línea de OC, desde la fuente.
+  // Cantidad facturada (facturas emitidas) acumulada por línea de OC, desde la fuente.
   const qtyByLine = new Map<string, number>();
   for (const il of confirmedInvoiceLines) {
     if (!il.purchase_order_line_id) continue;

@@ -9,7 +9,11 @@ import {
   PURCHASE_INVOICE_ATTACHMENT_ALLOWED_MIME,
   PURCHASE_INVOICE_ATTACHMENT_MAX_BYTES,
 } from '@/modules/purchasing/shared/validators';
-import { isCreditNoteVoucherType, CREDIT_NOTE_VOUCHER_TYPES } from '@/modules/purchasing/shared/types';
+import {
+  isCreditNoteVoucherType,
+  CREDIT_NOTE_VOUCHER_TYPES,
+  ISSUED_PURCHASE_INVOICE_STATUSES,
+} from '@/modules/purchasing/shared/types';
 import { recalcInvoicingStatusMany } from '@/modules/purchasing/shared/recalc-invoicing-status';
 import {
   recalcPurchaseInvoiceStatus,
@@ -930,7 +934,8 @@ export async function getInvoicesForReceiving(supplierId: string) {
     where: {
       company_id: companyId,
       supplier_id: supplierId,
-      status: 'CONFIRMED',
+      // Una factura pagada antes de recibir la mercadería también se puede remitir.
+      status: { in: [...ISSUED_PURCHASE_INVOICE_STATUSES] },
       receiving_status: { in: ['NOT_RECEIVED', 'PARTIALLY_RECEIVED'] },
       voucher_type: {
         in: ['FACTURA_A', 'FACTURA_B', 'FACTURA_C', 'NOTA_DEBITO_A', 'NOTA_DEBITO_B', 'NOTA_DEBITO_C'] as any,

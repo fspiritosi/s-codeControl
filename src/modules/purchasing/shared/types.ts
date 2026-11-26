@@ -52,6 +52,7 @@ export {
   CREDIT_NOTE_VOUCHER_TYPES,
   DEBIT_NOTE_VOUCHER_TYPES,
   ACTIVE_CREDIT_NOTE_STATUSES,
+  ISSUED_PURCHASE_INVOICE_STATUSES,
   isCreditNoteVoucherType,
   isDebitNoteVoucherType,
 } from '@/shared/lib/purchase-invoice-balance';
