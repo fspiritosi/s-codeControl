@@ -616,8 +616,8 @@ export default function SalesInvoiceForm({ customers, pointsOfSale, perceptionTy
                         <Input
                           className="h-8 text-sm"
                           type="number"
-                          step="1"
-                          min="1"
+                          step="0.001"
+                          min="0.001"
                           {...form.register(`lines.${index}.quantity`, { valueAsNumber: true })}
                         />
                       </TableCell>

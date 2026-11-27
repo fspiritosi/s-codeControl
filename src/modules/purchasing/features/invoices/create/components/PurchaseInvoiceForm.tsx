@@ -965,7 +965,7 @@ export default function PurchaseInvoiceForm({ suppliers: initialSuppliers, produ
                         )}
                       </TableCell>
                       <TableCell><Input className="h-8 text-sm" {...form.register(`lines.${index}.description`)} /></TableCell>
-                      <TableCell><Input className="h-8 text-sm" type="number" step="1" min="1" {...form.register(`lines.${index}.quantity`, { valueAsNumber: true })} /></TableCell>
+                      <TableCell><Input className="h-8 text-sm" type="number" step="0.001" min="0.001" {...form.register(`lines.${index}.quantity`, { valueAsNumber: true })} /></TableCell>
                       <TableCell><Input className="h-8 text-sm" type="number" step="0.001" {...form.register(`lines.${index}.unit_cost`, { valueAsNumber: true })} /></TableCell>
                       <TableCell><Input className="h-8 text-sm" type="number" step="0.5" {...form.register(`lines.${index}.vat_rate`, { valueAsNumber: true })} /></TableCell>
                       <TableCell>
